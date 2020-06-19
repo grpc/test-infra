@@ -67,12 +67,12 @@ func (k *kubeExecutor) Execute(ctx context.Context, session *types.Session) erro
 	}
 
 endSession:
-	logs, logErr := k.getDriverLogs()
+	logs, logErr := k.getDriverLogs(ctx)
 	if logErr != nil {
 		logErr = fmt.Errorf("failed to fetch logs from driver: %v", logErr)
 	}
 
-	cleanErr := k.clean()
+	cleanErr := k.clean(ctx)
 	if cleanErr != nil {
 		cleanErr = fmt.Errorf("failed to tear-down resources: %v", cleanErr)
 	}
@@ -112,7 +112,7 @@ func (k *kubeExecutor) provision(ctx context.Context) error {
 		glog.Infof("kubeExecutor[%v]: creating %v component %v", k.name, kind, component.Name)
 
 		pod := newSpecBuilder(k.session, component).Pod()
-		if _, err := k.pcd.Create(pod); err != nil {
+		if _, err := k.pcd.Create(ctx, pod, metav1.CreateOptions{}); err != nil {
 			return fmt.Errorf("could not create %v component %v: %v", component.Name, kind, err)
 		}
 
@@ -167,14 +167,14 @@ func (k *kubeExecutor) monitor(ctx context.Context) error {
 	}
 }
 
-func (k *kubeExecutor) clean() error {
+func (k *kubeExecutor) clean(ctx context.Context) error {
 	glog.Infof("kubeExecutor[%v]: deleting components for session %v", k.name, k.session.Name)
 
 	listOpts := metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("session-name=%v", k.session.Name),
 	}
 
-	err := k.pcd.DeleteCollection(&metav1.DeleteOptions{}, listOpts)
+	err := k.pcd.DeleteCollection(ctx, metav1.DeleteOptions{}, listOpts)
 	if err != nil {
 		return fmt.Errorf("unable to delete components: %v", err)
 	}
@@ -182,13 +182,13 @@ func (k *kubeExecutor) clean() error {
 	return nil
 }
 
-func (k *kubeExecutor) getDriverLogs() ([]byte, error) {
-	return k.getLogs(k.session.Driver.Name)
+func (k *kubeExecutor) getDriverLogs(ctx context.Context) ([]byte, error) {
+	return k.getLogs(ctx, k.session.Driver.Name)
 }
 
-func (k *kubeExecutor) getLogs(podName string) ([]byte, error) {
+func (k *kubeExecutor) getLogs(ctx context.Context, podName string) ([]byte, error) {
 	req := k.pcd.GetLogs(podName, &corev1.PodLogOptions{})
-	return req.DoRaw()
+	return req.DoRaw(ctx)
 }
 
 func (k *kubeExecutor) setSession(session *types.Session) {

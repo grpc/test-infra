@@ -15,6 +15,7 @@
 package orch
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -75,7 +76,7 @@ func NewWatcher(pw podWatcher, options *WatcherOptions) *Watcher {
 // Start creates a new thread that listens for kubernetes events, forwarding them to subscribers.
 // It returns an error if there is a problem with kubernetes.
 func (w *Watcher) Start() error {
-	wi, err := w.pw.Watch(metav1.ListOptions{Watch: true})
+	wi, err := w.pw.Watch(context.Background(), metav1.ListOptions{Watch: true})
 	if err != nil {
 		return fmt.Errorf("could not start watcher: %v", err)
 	}

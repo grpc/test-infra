@@ -15,6 +15,8 @@
 package orch
 
 import (
+	"context"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -22,11 +24,11 @@ import (
 )
 
 type podCreator interface {
-	Create(*corev1.Pod) (*corev1.Pod, error)
+	Create(context.Context, *corev1.Pod, metav1.CreateOptions) (*corev1.Pod, error)
 }
 
 type podDeleter interface {
-	DeleteCollection(*metav1.DeleteOptions, metav1.ListOptions) error
+	DeleteCollection(context.Context, metav1.DeleteOptions, metav1.ListOptions) error
 }
 
 type podLogGetter interface {
@@ -40,5 +42,5 @@ type podCreateDeleter interface {
 }
 
 type podWatcher interface {
-	Watch(metav1.ListOptions) (watch.Interface, error)
+	Watch(context.Context, metav1.ListOptions) (watch.Interface, error)
 }

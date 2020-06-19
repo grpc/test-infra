@@ -113,7 +113,7 @@ type podWatcherMock struct {
 	err error
 }
 
-func (pwm *podWatcherMock) Watch(listOpts metav1.ListOptions) (watch.Interface, error) {
+func (pwm *podWatcherMock) Watch(_ context.Context, listOpts metav1.ListOptions) (watch.Interface, error) {
 	if pwm.err != nil {
 		return nil, pwm.err
 	}
@@ -130,7 +130,7 @@ type nodeListerMock struct {
 	err   error
 }
 
-func (nlm *nodeListerMock) List(_ metav1.ListOptions) (*corev1.NodeList, error) {
+func (nlm *nodeListerMock) List(_ context.Context, _ metav1.ListOptions) (*corev1.NodeList, error) {
 	if nlm.err != nil {
 		return nil, nlm.err
 	}

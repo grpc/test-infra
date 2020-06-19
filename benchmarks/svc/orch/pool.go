@@ -15,6 +15,8 @@
 package orch
 
 import (
+	"context"
+
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -44,14 +46,14 @@ type PoolAdder interface {
 // the kubernetes type that implements the v1.NodeInterface.
 type NodeLister interface {
 	// List returns a list of Kubernetes nodes or an error.
-	List(opts metav1.ListOptions) (*v1.NodeList, error)
+	List(context.Context, metav1.ListOptions) (*v1.NodeList, error)
 }
 
 // FindPools uses a NodeLister to find all nodes, determine their pools and produce Pool instances
 // with their capacities. It returns a map where the string is the name of the pool and the value is
 // the Pool instance. An error is returned if the List operation on the NodeLister errors.
 func FindPools(nl NodeLister) (map[string]Pool, error) {
-	nodeList, err := nl.List(metav1.ListOptions{})
+	nodeList, err := nl.List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -328,7 +328,7 @@ type fakeWatchEvent struct {
 func listPods(t *testing.T, fakePodInf *corev1Fake.FakePods) ([]corev1.Pod, error) {
 	t.Helper()
 
-	podList, err := fakePodInf.List(metav1.ListOptions{})
+	podList, err := fakePodInf.List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, errors.New("setup failed, could not fetch pod list from kubernetes fake")
 	}
