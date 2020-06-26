@@ -111,7 +111,7 @@ func (k *kubeExecutor) provision(ctx context.Context) error {
 
 		glog.Infof("kubeExecutor[%v]: creating %v component %v", k.name, kind, component.Name)
 
-		pod := newSpecBuilder(k.session, component).Pod()
+		pod := makePod(k.session, component)
 		if _, err := k.pcd.Create(pod); err != nil {
 			return fmt.Errorf("could not create %v component %v: %v", component.Name, kind, err)
 		}
