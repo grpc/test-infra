@@ -104,7 +104,7 @@ func makePod(session *types.Session, component *types.Component) *apiv1.Pod {
 	if component.Kind == types.DriverComponent {
 		if gcpSecret != "" {
 			volumeName := fmt.Sprintf("%s-%s", session.Name, gcpSecret)
-			volumeMountPath := "/var/secrets/google/key.json"
+			volumeMountPath := "/var/secrets/google"
 			spec.Volumes = append(spec.Volumes, apiv1.Volume{
 				Name: volumeName,
 				VolumeSource: apiv1.VolumeSource{
@@ -119,7 +119,7 @@ func makePod(session *types.Session, component *types.Component) *apiv1.Pod {
 			})
 			mainContainer.Env = append(mainContainer.Env, apiv1.EnvVar{
 				Name:  "GOOGLE_APPLICATION_CREDENTIALS",
-				Value: volumeMountPath,
+				Value: volumeMountPath + "/key.json",
 			})
 		}
 
