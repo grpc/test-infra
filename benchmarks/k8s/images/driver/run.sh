@@ -16,9 +16,10 @@
 set -ex
 
 SCENARIOS="{\"scenarios\":[$(echo $SCENARIO_JSON)]}"
-bins/opt/qps_json_driver --scenarios_json=$SCENARIOS
+bazel-bin/test/cpp/qps/qps_json_driver --scenarios_json=$SCENARIOS --scenario_result_file='scenario_result.json'
 
 if [ "$BQ_RESULT_TABLE" != "" ]
 then
-  tools/run_tests/performance/bq_upload_result.py --bq_result_table="$BQ_RESULT_TABLE"
+  python3 tools/run_tests/performance/bq_upload_result.py --bq_result_table="$BQ_RESULT_TABLE"
 fi
+
