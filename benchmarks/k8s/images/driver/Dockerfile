@@ -24,6 +24,7 @@ WORKDIR /grpc/grpc
 
 RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
+
 FROM l.gcr.io/google/bazel:0.17.1
 
 COPY --from=0 /grpc/grpc /src/workspace
