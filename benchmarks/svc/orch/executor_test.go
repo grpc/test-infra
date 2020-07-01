@@ -153,9 +153,13 @@ func TestKubeExecutorProvision(t *testing.T) {
 				}
 			}()
 
-			ctx, cancel := context.WithCancel(context.Background())
+			var ctx context.Context
+			var cancel context.CancelFunc
+
 			if tc.ctxTimeout > 0 {
-				ctx, _ = context.WithTimeout(ctx, tc.ctxTimeout)
+				ctx, cancel = context.WithTimeout(context.Background(), tc.ctxTimeout)
+			} else {
+				ctx, cancel = context.WithCancel(context.Background())
 			}
 			defer cancel()
 
@@ -254,9 +258,13 @@ func TestKubeExecutorMonitor(t *testing.T) {
 				}
 			}()
 
-			ctx, cancel := context.WithCancel(context.Background())
+			var ctx context.Context
+			var cancel context.CancelFunc
+
 			if tc.ctxTimeout > 0 {
-				ctx, _ = context.WithTimeout(ctx, tc.ctxTimeout)
+				ctx, cancel = context.WithTimeout(context.Background(), tc.ctxTimeout)
+			} else {
+				ctx, cancel = context.WithCancel(context.Background())
 			}
 			defer cancel()
 

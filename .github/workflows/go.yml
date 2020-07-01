@@ -1,0 +1,56 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.14
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: |
+        go get -v -t -d ./...
+        go get -v -u golang.org/x/lint/golint
+        go get -v -u golang.org/x/tools/cmd/goimports
+        if [ -f Gopkg.toml ]; then
+            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            dep ensure
+        fi
+
+    - name: Check for format and lint issues
+      run: |
+        test -z $(gofmt -s -d -l .) # see https://github.com/golang/go/issues/24230
+        golint ./...
+
+    - name: Check imports
+      run: goimports -l .
+
+    - name: Build
+      run: go build -v ./...
+
+    - name: Vet
+      run: go vet -all -v ./...
+
+    - name: Test
+      run: go test -v ./...
+
+    - name: Test race conditions
+      run: go test -race ./...
+
+    - name: Test coverage
+      run: go test -cover ./...

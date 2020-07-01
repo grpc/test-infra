@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/grpc/test-infra/proto/grpc/testing"
 	"github.com/google/uuid"
+	pb "github.com/grpc/test-infra/proto/grpc/testing"
 )
 
 // Session is a test scenario, its components and metdata.
