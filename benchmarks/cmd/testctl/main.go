@@ -23,11 +23,11 @@ import (
 	"reflect"
 	"time"
 
-	grpcpb "github.com/grpc/test-infra/proto/grpc/testing"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	svcpb "github.com/grpc/test-infra/benchmarks/proto/scheduling/v1"
+	grpcpb "github.com/grpc/test-infra/proto/grpc/testing"
 	lrpb "google.golang.org/genproto/googleapis/longrunning"
 	"google.golang.org/grpc"
 )

@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/golang/glog"
+	"github.com/google/uuid"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -45,7 +45,7 @@ type Controller struct {
 	wg              sync.WaitGroup
 	mux             sync.Mutex
 	newExecutorFunc func() Executor
-	testTimeout	time.Duration
+	testTimeout     time.Duration
 }
 
 // ControllerOptions overrides the defaults of the controller, allowing it to be
@@ -111,10 +111,10 @@ func NewController(clientset kubernetes.Interface, store store.Store, options *C
 
 	c.newExecutorFunc = func() Executor {
 		return &kubeExecutor{
-			name:             uuid.New().String(),
-			pcd:              c.pcd,
-			watcher:          c.watcher,
-			store:            c.store,
+			name:    uuid.New().String(),
+			pcd:     c.pcd,
+			watcher: c.watcher,
+			store:   c.store,
 		}
 	}
 

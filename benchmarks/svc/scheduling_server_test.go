@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"testing"
 
-	pb "github.com/grpc/test-infra/proto/grpc/testing"
 	svcpb "github.com/grpc/test-infra/benchmarks/proto/scheduling/v1"
 	"github.com/grpc/test-infra/benchmarks/svc/store"
 	"github.com/grpc/test-infra/benchmarks/svc/types"
+	pb "github.com/grpc/test-infra/proto/grpc/testing"
 )
 
 type schedulingTestExpected struct {

@@ -24,10 +24,10 @@ import (
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/jsonpb"
 
-	grpcpb "github.com/grpc/test-infra/proto/grpc/testing"
 	"github.com/grpc/test-infra/benchmarks/k8s"
 	"github.com/grpc/test-infra/benchmarks/svc/orch"
 	"github.com/grpc/test-infra/benchmarks/svc/types"
+	grpcpb "github.com/grpc/test-infra/proto/grpc/testing"
 )
 
 func main() {

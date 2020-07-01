@@ -21,11 +21,11 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/grpc/test-infra/proto/grpc/testing"
 	"github.com/golang/protobuf/ptypes"
 	svcpb "github.com/grpc/test-infra/benchmarks/proto/scheduling/v1"
 	"github.com/grpc/test-infra/benchmarks/svc/store"
 	"github.com/grpc/test-infra/benchmarks/svc/types"
+	pb "github.com/grpc/test-infra/proto/grpc/testing"
 	lrpb "google.golang.org/genproto/googleapis/longrunning"
 	codepb "google.golang.org/genproto/googleapis/rpc/code"
 )
