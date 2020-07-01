@@ -277,9 +277,13 @@ func (c *Controller) spawnExecutor(session *types.Session) {
 	c.incExecutors()
 
 	go func() {
-		ctx, cancel := context.WithCancel(context.Background())
+		var ctx context.Context
+		var cancel context.CancelFunc
+
 		if c.testTimeout > 0 {
-			ctx, _ = context.WithTimeout(ctx, c.testTimeout)
+			ctx, cancel = context.WithTimeout(context.Background(), c.testTimeout)
+		} else {
+			ctx, cancel = context.WithCancel(context.Background())
 		}
 
 		defer cancel()
