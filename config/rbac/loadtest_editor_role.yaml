@@ -1,0 +1,24 @@
+# permissions for end users to edit loadtests.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: loadtest-editor-role
+rules:
+- apiGroups:
+  - e2etest.grpc.io.e2etest.grpc.io
+  resources:
+  - loadtests
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - e2etest.grpc.io.e2etest.grpc.io
+  resources:
+  - loadtests/status
+  verbs:
+  - get

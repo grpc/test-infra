@@ -1,0 +1,7 @@
+apiVersion: e2etest.grpc.io.e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  name: loadtest-sample
+spec:
+  # Add fields here
+  foo: bar
