@@ -3,5 +3,9 @@ kind: LoadTest
 metadata:
   name: loadtest-sample
 spec:
-  # Add fields here
-  foo: bar
+  driver:
+    language: cxx
+    run:
+      image: debian:stretch
+      command: ["/bin/bash"]
+      args: ["-c", "sleep", "25m"]

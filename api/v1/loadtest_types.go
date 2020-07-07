@@ -118,6 +118,11 @@ type Component struct {
 	// image field on the Build and Run objects to be inferred.
 	Language string `json:"language"`
 
+	// Pool specifies the name of the set of nodes where this component should
+	// be scheduled. If unset, the controller will choose a pool based on the
+	// type of component.
+	Pool *string `json:"pool,omitempty"`
+
 	// Clone specifies the repository and snapshot where the code can be
 	// found. This is used to build and run tests.
 	// +optional
@@ -185,6 +190,7 @@ type LoadTestSpec struct {
 	Scenarios []Scenario `json:"scenarios,omitempty"`
 }
 
+// +kubebuilder:default=Unrecognized
 type LoadTestState string
 
 const (
@@ -247,6 +253,7 @@ type LoadTestStatus struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // LoadTest is the Schema for the loadtests API
 type LoadTest struct {
