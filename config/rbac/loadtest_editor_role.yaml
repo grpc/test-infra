@@ -5,7 +5,7 @@ metadata:
   name: loadtest-editor-role
 rules:
 - apiGroups:
-  - e2etest.grpc.io.e2etest.grpc.io
+  - e2etest.grpc.io
   resources:
   - loadtests
   verbs:
@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - e2etest.grpc.io.e2etest.grpc.io
+  - e2etest.grpc.io
   resources:
   - loadtests/status
   verbs:

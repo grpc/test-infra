@@ -26,7 +26,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	e2etestgrpciov1 "github.com/grpc/test-infra/api/v1"
+	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/controllers"
 	// +kubebuilder:scaffold:imports
 )
@@ -39,7 +39,7 @@ var (
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
-	_ = e2etestgrpciov1.AddToScheme(scheme)
+	_ = grpcv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
