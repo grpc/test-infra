@@ -11,8 +11,9 @@ require (
 	github.com/onsi/gomega v1.8.1
 	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
 	google.golang.org/grpc v1.29.1
-	k8s.io/api v0.17.2
-	k8s.io/apimachinery v0.17.2
-	k8s.io/client-go v0.17.2
+	k8s.io/api v0.17.3
+	k8s.io/apimachinery v0.17.3
+	k8s.io/client-go v0.17.3
 	sigs.k8s.io/controller-runtime v0.5.0
+	sigs.k8s.io/kustomize/kustomize/v3 v3.8.0 // indirect
 )
