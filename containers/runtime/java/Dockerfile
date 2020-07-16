@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# WHEN EDITING THIS FILE, ALSO UPDATE ../README.md TO REFLECT CHANGES!
-
 FROM openjdk:8
 
 RUN mkdir -p /src/workspace
@@ -23,8 +21,7 @@ RUN apt-get update && apt-get install -y \
   bash \
   curl \
   git \
-  time
-
-RUN apt-get clean
+  time && \
+  apt-get clean
 
 CMD ["bash"]

@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# WHEN EDITING THIS FILE, ALSO UPDATE ../README.md TO REFLECT CHANGES!
-
-FROM debian:stretch
+FROM debian:buster
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
@@ -31,19 +29,17 @@ RUN apt-get update && apt-get install -y \
   pkg-config \
   gnupg \
   apt-transport-https \
-  ca-certificates
-
-RUN apt-get update && apt-get install -y \
+  ca-certificates \
   python3-dev \
   python3-pip \
   python3-setuptools \
-  python3-yaml
+  python3-yaml && \
+  apt-get clean
 
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | \
   tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-  apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-sdk -y
-
-RUN apt-get clean
+  apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-sdk -y && \
+  apt-get clean
 
 RUN pip3 install \
   protobuf \

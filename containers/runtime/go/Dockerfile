@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# WHEN EDITING THIS FILE, ALSO UPDATE ../README.md TO REFLECT CHANGES!
-
 FROM golang:1.14
 
 RUN mkdir -p /src/workspace
@@ -21,8 +19,7 @@ WORKDIR /src/workspace
 
 RUN apt-get update && apt-get install -y \
   git \
-  make
-
-RUN apt-get clean
+  make && \
+  apt-get clean
 
 CMD ["bash"]

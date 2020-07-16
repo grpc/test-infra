@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# WHEN EDITING THIS FILE, ALSO UPDATE ../README.md TO REFLECT CHANGES!
-
-FROM debian:stretch
+FROM debian:buster
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
@@ -27,8 +25,7 @@ RUN apt-get update && apt-get install -y \
   make \
   libtool \
   libgflags-dev \
-  pkg-config
-
-RUN apt-get clean
+  pkg-config && \
+  apt-get clean
 
 CMD ["bash"]
