@@ -14,8 +14,7 @@
 
 FROM debian:buster
 
-RUN apt-get update && apt-get install -y git
-RUN apt-get clean
+RUN apt-get update && apt-get install -y git && apt-get clean
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
