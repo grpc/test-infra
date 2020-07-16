@@ -14,14 +14,16 @@
 # limitations under the License.
 
 git clone --recursive $CLONE_REPO /src/workspace
-if [[ $? -ne 0 ]]; then
+code=$?
+if [[ $code -ne 0 ]]; then
   echo "Failed to clone repository at \"$CLONE_REPO\""
-  exit $?
+  exit $code
 fi
 
 git checkout $CLONE_GIT_REF
-if [[ $? -ne 0 ]]; then
+code=$?
+if [[ $code -ne 0 ]]; then
   echo "Failed to checkout git-ref \"$CLONE_GIT_REF\""
   echo "The git-ref must be a commit hash, branch or tag"
-  exit $?
+  exit $code
 fi
