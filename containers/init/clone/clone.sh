@@ -14,5 +14,6 @@
 # limitations under the License.
 
 set -ex
+rm -fr /src/workspace/*
 git clone --recursive $CLONE_REPO /src/workspace
 git checkout $CLONE_GIT_REF
