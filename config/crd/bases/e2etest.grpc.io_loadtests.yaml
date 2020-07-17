@@ -210,6 +210,11 @@ spec:
                       It allows the image field on the Build and Run objects to be
                       inferred."
                     type: string
+                  name:
+                    description: Name is a string which uniquely identifies the component
+                      when compared to other components in the load test. If omitted,
+                      the system will assign a globally unique name.
+                    type: string
                   pool:
                     description: Pool specifies the name of the set of nodes where
                       this component should be scheduled. If unset, the controller
@@ -571,6 +576,11 @@ spec:
                     language used by the component. For example, \"cxx\" may represent
                     C++. \n Specifying a language is required. Aside from metadata,
                     It allows the image field on the Build and Run objects to be inferred."
+                  type: string
+                name:
+                  description: Name is a string which uniquely identifies the component
+                    when compared to other components in the load test. If omitted,
+                    the system will assign a globally unique name.
                   type: string
                 pool:
                   description: Pool specifies the name of the set of nodes where this
@@ -965,6 +975,11 @@ spec:
                       C++. \n Specifying a language is required. Aside from metadata,
                       It allows the image field on the Build and Run objects to be
                       inferred."
+                    type: string
+                  name:
+                    description: Name is a string which uniquely identifies the component
+                      when compared to other components in the load test. If omitted,
+                      the system will assign a globally unique name.
                     type: string
                   pool:
                     description: Pool specifies the name of the set of nodes where

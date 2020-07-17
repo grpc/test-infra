@@ -113,6 +113,12 @@ type Run struct {
 
 // Component defines a runnable unit of the test.
 type Component struct {
+	// Name is a string which uniquely identifies the component when
+	// compared to other components in the load test. If omitted, the
+	// system will assign a globally unique name.
+	// +optional
+	Name *string `json:"name,omitempty"`
+
 	// Language is the code that identifies the programming language used by
 	// the component. For example, "cxx" may represent C++.
 	//
