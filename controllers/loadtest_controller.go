@@ -35,42 +35,12 @@ const (
 	podOwnerKey = ".metadata.controller"
 )
 
-type LoadTestSet struct {
-	tests map[string]bool
-}
-
-func (lts *LoadTestSet) initialize() {
-	if lts.tests == nil {
-		lts.tests = make(map[string]bool)
-	}
-}
-
-func (lts *LoadTestSet) Add(name string) {
-	lts.initialize()
-	lts.tests[name] = true
-}
-
-func (lts *LoadTestSet) Includes(loadtest grpcv1.LoadTest) bool {
-	lts.initialize()
-	_, ok := lts.tests[loadtest.Name]
-	return ok
-}
-
-func getPendingTests(podList corev1.PodList) *LoadTestSet {
-	pendingTestNames := &LoadTestSet{}
-	for _, pod := range podList.Items {
-		if name, ok := pod.Labels[LoadTestLabel]; ok {
-			pendingTestNames.Add(name)
-		}
-	}
-	return pendingTestNames
-}
-
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Defaults ControllerDefaults
+	Log      logr.Logger
+	Scheme   *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
@@ -318,20 +288,3 @@ func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Pod{}).
 		Complete(r)
 }
-
-// type NodePool struct {
-// 	Nodes []*corev1.Node
-// 	Available int
-// 	Capacity int
-// }
-
-// type ClusterGraph struct {
-// 	nodes []*corev1.Node
-// 	pools []*NodePool
-// 	pods []*corev1.Pod
-// 	tests []*grpcv1.LoadTest
-// }
-
-// func (c *ClusterGraph) AddNodes(nodes []corev1.Node) {
-
-// }

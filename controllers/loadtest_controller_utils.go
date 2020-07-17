@@ -154,3 +154,162 @@ func scenarioJSON(session *types.Session) string {
 
 	return json
 }
+
+func getComponents(loadtest *grpcv1.LoadTest) []*grpcv1.Component {
+	spec := &loadtest.Spec
+
+	if spec.Driver.Pool == nil {
+		spec.Driver.Pool = &DefaultDriverPool
+	}
+
+	components := []*grpcv1.Component{&spec.Driver.Component}
+
+	for _, server := range spec.Servers {
+		server.Pool = &DefaultWorkerPool
+		components = append(components, &server.Component)
+	}
+
+	for _, client := range spec.Clients {
+		client.Pool = &DefaultWorkerPool
+		components = append(components, &client.Component)
+	}
+
+	return components
+}
+
+type NodePool struct {
+	Nodes []*corev1.Node
+	Available int
+	Capacity int
+}
+
+type LoadTestGraph struct {
+	name *string
+	test *grpcv1.Test
+	driver *corev1.Pod
+	clients []*corev1.Pod
+	servers []*corev1.Pod
+}
+
+type ClusterGraph struct {
+	nodes []*corev1.Node
+	pools map[string]*NodePool
+	pods []*corev1.Pod
+	allTests []*grpcv1.LoadTest
+	pendingTests map[string]bool
+	testGraph *LoadTestGraph
+}
+
+func New(nodeList *corev1.nodeList, podList *corev1.PodList, loadTestList *grpcv1.loadTestList, currentTestName string) *ClusterGraph {
+	graph := &ClusterGraph{
+		pools: make(map[string]*NodePool),
+		pendingTests: make(map[string]bool),
+	}
+
+	graph.AddNodes(nodeList)
+	graph.AddPods(podList)
+	graph.AddLoadTests(loadTestList)
+
+	return graph
+}
+
+func (c *ClusterGraph) AddNodes(nodes []corev1.Node) {
+	for _, node := range nodes {
+		c.nodes = append(c.nodes, node)
+
+		labels := node.ObjectMeta.Labels
+		if labels == nil {
+			continue
+		}
+
+		poolName, ok := labels["pool"]
+		if !ok {
+			continue
+		}
+
+		pool, ok := c.pools[poolName]
+		if !ok {
+			c.pools[poolName] = &NodePool{}
+		}
+
+		pool.Available++
+		pool.Capacity++
+		pool.Nodes = append(pool.Nodes, &node)
+	}
+}
+
+func (c *ClusterGraph) AddPods(pods []corev1.Pod) {
+	for _, pod := range pods {
+		if name, ok := pod.Labels[LoadTestLabel]; ok {
+			c.pendingTests[name] = true
+		}
+	}
+}
+
+func (c *ClusterGraph) AddLoadTests(loadtests []grpcv1.LoadTest) error {
+	for _, loadtest := range loadtests {
+		if !c.IsPending(&loadTest) {
+			continue
+		}
+
+		components := getComponents(&loadtest)
+		for _, component := range components {
+			if err := c.addAvailableNodes(*component.Pool, -1); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (c *ClusterGraph) Fits(loadtest *grpcv1.LoadTest) bool {
+	// build up a map of pool names to number of nodes that the test requires
+	requirements := make(map[string]int)
+
+	components := getComponents(&loadTest)
+	for _, component := range components {
+		c, ok := requirements[*component.Pool]
+		if !ok {
+			requirements[*component.Pool] = 1
+		} else {
+			requirements[*component.Pool] = c + 1
+		}
+	}
+
+	for poolName, requiredNodes := range requirements {
+		pool, ok := c.pools[poolName]
+		if !ok {
+			return false
+		}
+
+		if requiredNodes > pool.Available {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (c *ClusterGraph) IsPending(loadtest *grpcv1.LoadTest) bool {
+	_, ok := c.pendingTests[loadtest.Name]
+	return ok
+}
+
+func (c *ClusterGraph) addAvailableNodes(poolName string, count int) error {
+	pool, ok := c.pools[poolName]
+	if !ok {
+		return fmt.Errorf("pool %q does not exist", pool)
+	}
+
+	nowAvailable := pool.Available + count
+
+	if nowAvailable < 0 {
+		return fmt.Errorf("pool %q availability cannot drop below zero", poolName)
+	}
+	if nowAvailable > pool.Capacity {
+		return fmt.Errorf("pool %q availability cannot exceed its capacity (%d nodes)", poolName, pool.Capacity)
+	}
+
+	pool.Available = nowAvailable
+	return nil
+}
