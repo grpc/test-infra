@@ -1,3 +1,7 @@
 domain: e2etest.grpc.io
 repo: github.com/grpc/test-infra
+resources:
+- group: e2etest.grpc.io
+  kind: LoadTest
+  version: v1
 version: "2"
