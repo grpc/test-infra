@@ -176,10 +176,8 @@ type Results struct {
 // Scenario references a ConfigMap with the configuration for the driver
 // and the server clients under test.
 type Scenario struct {
-	// ConfigMapRef points to a Kubernetes ConfigMap which specifies the
-	// parameters for the test.
-	// +optional
-	ConfigMapRef *corev1.ConfigMapEnvSource `json:"configMapRef,omitempty"`
+	// Name identifies the name of the ConfigMap with the scenario data.
+	Name string `json:"name"`
 }
 
 // LoadTestSpec defines the desired state of LoadTest
