@@ -28,6 +28,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/controllers"
+	"github.com/grpc/test-infra/pkg/defaults"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -35,6 +36,25 @@ var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
+
+var defaultOptions = &defaults.Defaults{
+	DriverPool:  "drivers",
+	WorkerPool:  "workers-8core",
+	DriverPort:  10000,
+	ServerPort:  10010,
+	CloneImage:  "docker.pkg.github.com/grpc/test-infra/clone",
+	DriverImage: "docker.pkg.github.com/grpc/test-infra/driver",
+	BuildImages: defaults.ImageMap{
+		CXX:  "l.gcr.io/google/bazel:latest",
+		Go:   "golang:1.14",
+		Java: "gradle:jdk8",
+	},
+	RuntimeImages: defaults.ImageMap{
+		CXX:  "docker.pkg.github.com/grpc/test-infra/cxx",
+		Go:   "docker.pkg.github.com/grpc/test-infra/go",
+		Java: "docker.pkg.github.com/grpc/test-infra/java",
+	},
+}
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
@@ -67,9 +87,10 @@ func main() {
 	}
 
 	if err = (&controllers.LoadTestReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("LoadTest"),
-		Scheme: mgr.GetScheme(),
+		Defaults: defaultOptions,
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("LoadTest"),
+		Scheme:   mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LoadTest")
 		os.Exit(1)
