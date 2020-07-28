@@ -17,7 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"flag"
+	"io/ioutil"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +27,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/yaml"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/controllers"
@@ -37,25 +40,6 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
-var defaultOptions = &defaults.Defaults{
-	DriverPool:  "drivers",
-	WorkerPool:  "workers-8core",
-	DriverPort:  10000,
-	ServerPort:  10010,
-	CloneImage:  "docker.pkg.github.com/grpc/test-infra/clone",
-	DriverImage: "docker.pkg.github.com/grpc/test-infra/driver",
-	BuildImages: defaults.ImageMap{
-		CXX:  "l.gcr.io/google/bazel:latest",
-		Go:   "golang:1.14",
-		Java: "gradle:jdk8",
-	},
-	RuntimeImages: defaults.ImageMap{
-		CXX:  "docker.pkg.github.com/grpc/test-infra/cxx",
-		Go:   "docker.pkg.github.com/grpc/test-infra/go",
-		Java: "docker.pkg.github.com/grpc/test-infra/java",
-	},
-}
-
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
@@ -64,8 +48,10 @@ func init() {
 }
 
 func main() {
+	var defaultsFile string
 	var metricsAddr string
 	var enableLeaderElection bool
+	flag.StringVar(&defaultsFile, "defaults-file", "", "The path to a YAML file with a default configuration")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
@@ -73,6 +59,23 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	if defaultsFile == "" {
+		setupLog.Error(errors.New("missing defaultsFile flag"), "cannot start without defaults")
+		os.Exit(1)
+	}
+
+	defaultsBytes, err := ioutil.ReadFile(defaultsFile)
+	if err != nil {
+		setupLog.Error(err, "could not read defaults file")
+		os.Exit(1)
+	}
+
+	defaults := defaults.Defaults{}
+	if err := yaml.Unmarshal(defaultsBytes, &defaults); err != nil {
+		setupLog.Error(err, "could not parse the defaults file contents")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -87,7 +90,7 @@ func main() {
 	}
 
 	if err = (&controllers.LoadTestReconciler{
-		Defaults: defaultOptions,
+		Defaults: &defaults,
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("LoadTest"),
 		Scheme:   mgr.GetScheme(),

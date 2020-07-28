@@ -788,6 +788,8 @@ spec:
                   for the driver and the server clients under test.
                 properties:
                   name:
+                    description: Name identifies the name of the ConfigMap with the
+                      scenario data.
                     type: string
                 required:
                 - name

@@ -1,24 +1,20 @@
-// Copyright 2020 gRPC authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     https://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+Copyright 2020 gRPC authors.
 
-// Package defaults provides overridable, default settings for load
-// tests, as well as, constants for consistent labels.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package defaults
-
-import (
-	"fmt"
-)
 
 const (
 	// LoadTestLabel is a label which contains the test's unique name.
@@ -45,71 +41,53 @@ const (
 	DriverRole = "driver"
 )
 
-type ImageMap struct {
-	CSharp string
-	CXX    string
-	Go     string
-	Java   string
-	Node   string
-	PHP    string
-	Python string
-	Ruby   string
-}
+// LanguageDefault defines a programming language, as well as its
+// default container images.
+type LanguageDefault struct {
+	// Language uniquely identifies a programming language. When the
+	// system encounters this name, it will select the build image and
+	// run image as the defaults.
+	Language string `json:"name"`
 
-func (im *ImageMap) ImageFor(language string) (string, error) {
-	switch language {
-	case "csharp":
-		return im.CSharp, nil
-	case "cxx":
-		return im.CXX, nil
-	case "go":
-		return im.Go, nil
-	case "java":
-		return im.Java, nil
-	case "node":
-		return im.Node, nil
-	case "php":
-		return im.PHP, nil
-	case "python":
-		return im.Python, nil
-	case "ruby":
-		return im.Ruby, nil
-	default:
-		return "", fmt.Errorf("cannot find image for language %q", language)
-	}
+	// BuildImage specifies the default container image for building or
+	// assembling an executable or bundle for a language. This image
+	// likely contains a compiler and any required libraries for
+	// compilation.
+	BuildImage string `json:"buildImage"`
+
+	// RunImage specifies the default container image for the
+	// environment for the runtime of the test. It should provide any
+	// necessary interpreters or dependencies to run or use the output
+	// of the build image.
+	RunImage string `json:"runImage"`
 }
 
 type Defaults struct {
 	// DriverPool is the name of a pool where driver components should
 	// be scheduled by default.
-	DriverPool string
+	DriverPool string `json:"driverPool"`
 
 	// WorkerPool is the name of a pool where server and client
 	// components should be scheduled by default.
-	WorkerPool string
+	WorkerPool string `json:"workerPool"`
 
 	// DriverPort is the port through which the driver and workers
 	// communicate.
-	DriverPort int32
+	DriverPort int32 `json:"driverPort"`
 
 	// ServerPort is the port through which a server component accepts
 	// traffic from a client component.
-	ServerPort int32
+	ServerPort int32 `json:"serverPort"`
 
 	// CloneImage specifies the default container image to use for
 	// cloning Git repositories at a specific snapshot.
-	CloneImage string
+	CloneImage string `json:"cloneImage"`
 
 	// DriverImage specifies a default driver image. This image will
 	// be used to orchestrate a test.
-	DriverImage string
+	DriverImage string `json:"driverImage"`
 
-	// BuildImages specifies the default container image for building
-	// each language. This image should contain a compiler.
-	BuildImages ImageMap
-
-	// RuntimeImages specifies the default container image with the
-	// runtime for each language. This is the image that supplies the
-	// environment for the test.
-	RuntimeImages ImageMap
+	// Languages specifies the default build and run container images
+	// for each known language.
+	Languages []LanguageDefault `json:"buildImages,omitempty"`
 }

@@ -7,6 +7,7 @@ import (
 )
 
 func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest, error) {
+	im := newImageMap(d.Languages)
 	test := loadtest.DeepCopy()
 	spec := &test.Spec
 
@@ -35,7 +36,7 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 		if spec.Driver.Build.Image == nil {
 			language := spec.Driver.Language
 
-			image, err := d.BuildImages.ImageFor(language)
+			image, err := im.buildImage(language)
 			if err != nil {
 				return nil, errors.Wrap(err, "could not set default driver build image for unknown language")
 			}
@@ -53,7 +54,7 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 		if server.Run.Image == nil {
 			language := server.Language
 
-			image, err := d.RuntimeImages.ImageFor(language)
+			image, err := im.runImage(language)
 			if err != nil {
 				return nil, errors.Wrap(err, "could not set default runtime image for server in unknown language")
 			}
@@ -71,7 +72,7 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 			if server.Build.Image == nil {
 				language := server.Language
 
-				image, err := d.BuildImages.ImageFor(language)
+				image, err := im.buildImage(language)
 				if err != nil {
 					return nil, errors.Wrap(err, "could not set default server build image for unknown language")
 				}
@@ -93,7 +94,7 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 		if client.Run.Image == nil {
 			language := client.Language
 
-			image, err := d.RuntimeImages.ImageFor(language)
+			image, err := im.runImage(language)
 			if err != nil {
 				return nil, errors.Wrap(err, "could not set default runtime image for client in unknown language")
 			}
@@ -111,7 +112,7 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 			if client.Build.Image == nil {
 				language := client.Language
 
-				image, err := d.BuildImages.ImageFor(language)
+				image, err := im.buildImage(language)
 				if err != nil {
 					return nil, errors.Wrap(err, "could not set default client build image for unknown language")
 				}
