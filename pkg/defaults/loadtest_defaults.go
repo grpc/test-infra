@@ -6,6 +6,12 @@ import (
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 )
 
+// CopyWithDefaults makes a deep copy of a load test, applying default values
+// for fields.
+//
+// This returns an error if the system has no viable default. For example, the
+// system cannot infer a run image for "fortran" if a build image was not
+// declared for this language in the Defaults object.
 func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest, error) {
 	im := newImageMap(d.Languages)
 	test := loadtest.DeepCopy()

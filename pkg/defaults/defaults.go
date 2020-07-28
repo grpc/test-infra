@@ -62,6 +62,7 @@ type LanguageDefault struct {
 	RunImage string `json:"runImage"`
 }
 
+// Defaults defines the default settings for the system.
 type Defaults struct {
 	// DriverPool is the name of a pool where driver components should
 	// be scheduled by default.
