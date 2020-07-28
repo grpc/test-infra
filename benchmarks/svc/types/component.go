@@ -50,7 +50,6 @@ type Component struct {
 // NewComponent creates a Component instance, given a container image
 // and kind.
 //
-
 // The container image string should contain the path to a docker
 // image in a registry, versioned by an explicit tag or hash.
 //

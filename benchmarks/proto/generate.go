@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The proto package contains the proto definitions for the service, as well
-// as, their generated code. In addition, it contains generated code for the
-// gRPC third party protos.
+// Package proto contains the proto definitions for the service, as well
+// as, its generated code.
 //
 // The protos can be rebuilt using the `go generate` command.
 package proto
