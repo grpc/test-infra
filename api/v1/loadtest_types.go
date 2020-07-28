@@ -209,6 +209,8 @@ type LoadTestSpec struct {
 	Scenarios []Scenario `json:"scenarios,omitempty"`
 }
 
+// LoadTestState is a possible state, conveying the progress of setting
+// up, running and tearing down a load test.
 // +kubebuilder:default=Unrecognized
 type LoadTestState string
 

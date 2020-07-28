@@ -28,7 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Executors can run a test session by provisioning its components, monitoring
+// Executor can run a test session by provisioning its components, monitoring
 // its health and cleaning up after its termination.
 type Executor interface {
 	// Execute runs a test session. It accepts a context that can prevent
