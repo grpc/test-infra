@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package k8s contains kubernetes helper functions.
 package k8s
 
 import (
 	"k8s.io/client-go/kubernetes"
+
+	// This side-effect import is required by GKE.
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )

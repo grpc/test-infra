@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// The validator package provides a library for validating sessions before they
-// are trusted to run on physical machines.
+// Package validator provides a library for validating sessions before
+// they are trusted to run on physical machines.
 package validator

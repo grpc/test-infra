@@ -39,6 +39,9 @@ type LoadTestReconciler struct {
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests/status,verbs=get;update;patch
 
+// Reconcile attempts to bring the current state of the load test into agreement
+// with its declared spec. This may mean provisioning resources, doing nothing
+// or handling the termination of its pods.
 func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
 	_ = r.Log.WithValues("loadtest", req.NamespacedName)
@@ -48,6 +51,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
+// SetupWithManager configures a controller-runtime manager.
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grpcv1.LoadTest{}).
