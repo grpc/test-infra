@@ -71,8 +71,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaults := defaults.Defaults{}
-	if err := yaml.Unmarshal(defaultsBytes, &defaults); err != nil {
+	defaultOptions := defaults.Defaults{}
+	if err := yaml.Unmarshal(defaultsBytes, &defaultOptions); err != nil {
 		setupLog.Error(err, "could not parse the defaults file contents")
 		os.Exit(1)
 	}
@@ -90,7 +90,7 @@ func main() {
 	}
 
 	if err = (&controllers.LoadTestReconciler{
-		Defaults: &defaults,
+		Defaults: &defaultOptions,
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("LoadTest"),
 		Scheme:   mgr.GetScheme(),
