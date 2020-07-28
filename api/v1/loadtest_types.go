@@ -23,19 +23,19 @@ import (
 
 // NOTE: AFTER EDITS, YOU MUST RUN `make` TO REGENERATE CODE.
 
-// Clone defines expectations regarding which repository and snapshot
-// the test should use.
+// Clone defines expectations regarding which repository and snapshot the test
+// should use.
 type Clone struct {
-	// Image is the name of the container image that can clone code,
-	// placing it in a /src/workspace directory.
+	// Image is the name of the container image that can clone code placing
+	// it in a /src/workspace directory.
 	//
 	// This field is optional. When omitted, a container that can clone
 	// public GitHub repos over HTTPs is used.
 	// +optional
 	Image *string `json:"image,omitempty"`
 
-	// Repo is the URL to clone a git repository. With GitHub, this
-	// should end in a `.git` extension.
+	// Repo is the URL to clone a git repository. With GitHub, this should
+	// end in a `.git` extension.
 	// +optional
 	Repo *string `json:"repo,omitempty"`
 
