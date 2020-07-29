@@ -1,4 +1,4 @@
-package defaults_test
+package defaults
 
 import (
 	"testing"
