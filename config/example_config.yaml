@@ -13,14 +13,14 @@ cloneImage: docker.pkg.github.com/grpc/test-infra/clone
 driverImage: docker.pkg.github.com/grpc/test-infra/driver
 
 languages:
-  - name: cxx
+  - language: cxx
     buildImage: l.gcr.io/google/bazel:latest
     runImage: docker.pkg.github.com/grpc/test-infra/cxx
 
-  - name: java
+  - language: java
     buildImage: gradle:jdk8
     runImage: docker.pkg.github.com/grpc/test-infra/java
 
-  - name: go
+  - language: go
     buildImage: golang:1.14
     runImage: docker.pkg.github.com/grpc/test-infra/go

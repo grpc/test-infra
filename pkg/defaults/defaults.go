@@ -90,5 +90,5 @@ type Defaults struct {
 
 	// Languages specifies the default build and run container images
 	// for each known language.
-	Languages []LanguageDefault `json:"buildImages,omitempty"`
+	Languages []LanguageDefault `json:"languages,omitempty"`
 }
