@@ -20,10 +20,14 @@ import (
 	"fmt"
 )
 
+// imageMap is a structure with a map that allows internal code to efficiently
+// find the default build and runtime container images for a language. It is
+// not intended to be a public API.
 type imageMap struct {
 	m map[string]*LanguageDefault
 }
 
+// newImageMap constructs an imageMap object.
 func newImageMap(lds []LanguageDefault) *imageMap {
 	m := make(map[string]*LanguageDefault)
 
@@ -34,6 +38,8 @@ func newImageMap(lds []LanguageDefault) *imageMap {
 	return &imageMap{m}
 }
 
+// buildImage returns the default build container image for a language. If the
+// language has no default, an error is returned.
 func (im *imageMap) buildImage(language string) (string, error) {
 	ld, ok := im.m[language]
 	if !ok {
@@ -43,6 +49,8 @@ func (im *imageMap) buildImage(language string) (string, error) {
 	return ld.BuildImage, nil
 }
 
+// runImage returns the default runtime container image for a language. If the
+// language has no default, an error is returned.
 func (im *imageMap) runImage(language string) (string, error) {
 	ld, ok := im.m[language]
 	if !ok {
