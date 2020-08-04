@@ -787,18 +787,12 @@ spec:
                 description: Scenario references a ConfigMap with the configuration
                   for the driver and the server clients under test.
                 properties:
-                  configMapRef:
-                    description: ConfigMapRef points to a Kubernetes ConfigMap which
-                      specifies the parameters for the test.
-                    properties:
-                      name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
-                        type: string
-                      optional:
-                        description: Specify whether the ConfigMap must be defined
-                        type: boolean
-                    type: object
+                  name:
+                    description: Name identifies the name of the ConfigMap with the
+                      scenario data.
+                    type: string
+                required:
+                - name
                 type: object
               type: array
             servers:

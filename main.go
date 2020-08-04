@@ -17,7 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"flag"
+	"io/ioutil"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,9 +27,11 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/yaml"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/controllers"
+	"github.com/grpc/test-infra/pkg/defaults"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -44,8 +48,10 @@ func init() {
 }
 
 func main() {
+	var defaultsFile string
 	var metricsAddr string
 	var enableLeaderElection bool
+	flag.StringVar(&defaultsFile, "defaults-file", "", "The path to a YAML file with a default configuration")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
@@ -53,6 +59,23 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+
+	if defaultsFile == "" {
+		setupLog.Error(errors.New("missing defaultsFile flag"), "cannot start without defaults")
+		os.Exit(1)
+	}
+
+	defaultsBytes, err := ioutil.ReadFile(defaultsFile)
+	if err != nil {
+		setupLog.Error(err, "could not read defaults file")
+		os.Exit(1)
+	}
+
+	defaultOptions := defaults.Defaults{}
+	if err := yaml.Unmarshal(defaultsBytes, &defaultOptions); err != nil {
+		setupLog.Error(err, "could not parse the defaults file contents")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -67,9 +90,10 @@ func main() {
 	}
 
 	if err = (&controllers.LoadTestReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("LoadTest"),
-		Scheme: mgr.GetScheme(),
+		Defaults: &defaultOptions,
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("LoadTest"),
+		Scheme:   mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LoadTest")
 		os.Exit(1)
