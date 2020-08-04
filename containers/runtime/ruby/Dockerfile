@@ -17,7 +17,7 @@ RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
 RUN apt-get update && apt-get install -y \
-  git\
+  git \
   time && \
   apt-get clean
 
