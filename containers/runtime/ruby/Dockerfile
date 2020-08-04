@@ -17,25 +17,8 @@ RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
 RUN apt-get update && apt-get install -y \
-  zip\
+  git\
   time && \
   apt-get clean
 
 CMD ["bash"]
-
-#Things missing from the oringal interop test ruby image when installed with ruby:2.5
-#build enssential
-#ccache
-#gcc
-#gcc-multilib
-#dnsutils
-#golang
-#gyp
-#lcov
-#libc 6-d6g
-#libtest-dev
-#strace
-#python
-#python-dev
-
-#Question: if debian:latest always give the latest supported stable version why we have to specify it with actual tags
