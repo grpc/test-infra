@@ -54,15 +54,6 @@ var _ = Describe("Pod Creation", func() {
 			Expect(pod.Labels[defaults.LoadTestLabel]).To(Equal(loadtest.Name))
 		})
 
-		It("sets component-name label", func() {
-			name := "foo-bar-buzz"
-			component.Name = &name
-
-			pod, err := newClientPod(loadtest, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.ComponentNameLabel]).To(Equal(name))
-		})
-
 		It("sets node selector for appropriate pool", func() {
 			customPool := "custom-pool"
 			component.Pool = &customPool
