@@ -71,6 +71,12 @@ var _ = Describe("CopyWithDefaults", func() {
 	})
 
 	Context("driver", func() {
+		It("sets default name when unspecified", func() {
+			loadtest.Spec.Driver.Name = nil
+			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
+			Expect(copy.Spec.Driver.Name).ToNot(BeNil())
+		})
+
 		It("sets default when nil", func() {
 			loadtest.Spec.Driver = nil
 			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
@@ -138,6 +144,23 @@ var _ = Describe("CopyWithDefaults", func() {
 	})
 
 	Context("servers", func() {
+		It("sets default name when unspecified", func() {
+			loadtest.Spec.Servers[0].Name = nil
+			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
+			Expect(copy.Spec.Servers[0].Name).ToNot(BeNil())
+		})
+
+		It("sets default name that is unique", func() {
+			server2 := loadtest.Spec.Servers[0].DeepCopy()
+			loadtest.Spec.Servers = append(loadtest.Spec.Servers, *server2)
+
+			loadtest.Spec.Servers[0].Name = nil
+			loadtest.Spec.Servers[1].Name = nil
+
+			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
+			Expect(copy.Spec.Servers[0].Name).ToNot(Equal(copy.Spec.Servers[1].Name))
+		})
+
 		It("sets clone image when missing", func() {
 			loadtest.Spec.Servers[0].Clone.Image = nil
 			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
@@ -187,6 +210,23 @@ var _ = Describe("CopyWithDefaults", func() {
 	})
 
 	Context("clients", func() {
+		It("sets default name when unspecified", func() {
+			loadtest.Spec.Clients[0].Name = nil
+			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
+			Expect(copy.Spec.Clients[0].Name).ToNot(BeNil())
+		})
+
+		It("sets default name that is unique", func() {
+			client2 := loadtest.Spec.Clients[0].DeepCopy()
+			loadtest.Spec.Clients = append(loadtest.Spec.Clients, *client2)
+
+			loadtest.Spec.Clients[0].Name = nil
+			loadtest.Spec.Clients[1].Name = nil
+
+			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
+			Expect(copy.Spec.Clients[0].Name).ToNot(Equal(copy.Spec.Clients[1].Name))
+		})
+
 		It("sets clone image when missing", func() {
 			loadtest.Spec.Clients[0].Clone.Image = nil
 			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
@@ -256,10 +296,15 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 	driverPool := "drivers"
 	workerPool := "workers-8core"
 
+	driverComponentName := "driver"
+	serverComponentName := "server"
+	clientComponentName := "client-1"
+
 	return &grpcv1.LoadTest{
 		Spec: grpcv1.LoadTestSpec{
 			Driver: &grpcv1.Driver{
 				Component: grpcv1.Component{
+					Name: &driverComponentName,
 					Language: "cxx",
 					Pool:     &driverPool,
 					Run: grpcv1.Run{
@@ -271,6 +316,7 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 			Servers: []grpcv1.Server{
 				{
 					Component: grpcv1.Component{
+						Name: &serverComponentName,
 						Language: "cxx",
 						Pool:     &workerPool,
 						Clone: &grpcv1.Clone{
@@ -295,6 +341,7 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 			Clients: []grpcv1.Client{
 				{
 					Component: grpcv1.Component{
+						Name: &clientComponentName,
 						Language: "cxx",
 						Pool:     &workerPool,
 						Clone: &grpcv1.Clone{
