@@ -21,7 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// NOTE: AFTER EDITING, RUN `make manifests` AND `make` TO REGENERATE CODE.
+// NOTE: AFTER EDITS, YOU MUST RUN `make manifests` AND `make` TO REGENERATE
+// CODE.
 
 // Clone defines expectations regarding which repository and snapshot the test
 // should use.
