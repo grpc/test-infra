@@ -147,6 +147,7 @@ func newLoadTest() *grpcv1.LoadTest {
 	driverImage := "docker.pkg.github.com/grpc/test-infra/driver"
 	runImage := "docker.pkg.github.com/grpc/test-infra/cxx"
 	runCommand := []string{"bazel-bin/test/cpp/qps/qps_worker"}
+
 	clientRunArgs := []string{"--driver_port=10000"}
 	serverRunArgs := append(clientRunArgs, "--server_port=10010")
 
@@ -154,6 +155,10 @@ func newLoadTest() *grpcv1.LoadTest {
 
 	driverPool := "drivers"
 	workerPool := "workers-8core"
+
+	clientComponentName := "client-1"
+	serverComponentName := "server-1"
+	driverComponentName := "driver-1"
 
 	return &grpcv1.LoadTest{
 		ObjectMeta: metav1.ObjectMeta{
@@ -164,6 +169,7 @@ func newLoadTest() *grpcv1.LoadTest {
 		Spec: grpcv1.LoadTestSpec{
 			Driver: &grpcv1.Driver{
 				Component: grpcv1.Component{
+					Name:     &driverComponentName,
 					Language: "cxx",
 					Pool:     &driverPool,
 					Run: grpcv1.Run{
@@ -175,6 +181,7 @@ func newLoadTest() *grpcv1.LoadTest {
 			Servers: []grpcv1.Server{
 				{
 					Component: grpcv1.Component{
+						Name:     &serverComponentName,
 						Language: "cxx",
 						Pool:     &workerPool,
 						Clone: &grpcv1.Clone{
@@ -199,6 +206,7 @@ func newLoadTest() *grpcv1.LoadTest {
 			Clients: []grpcv1.Client{
 				{
 					Component: grpcv1.Component{
+						Name:     &clientComponentName,
 						Language: "cxx",
 						Pool:     &workerPool,
 						Clone: &grpcv1.Clone{
