@@ -1,6 +1,7 @@
 package defaults
 
 import (
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
@@ -28,6 +29,10 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 		}
 	}
 
+	if spec.Driver.Name == nil {
+		setRandomName(&spec.Driver.Component)
+	}
+
 	if spec.Driver.Pool == nil {
 		spec.Driver.Pool = &d.DriverPool
 	}
@@ -53,6 +58,10 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 
 	var servers []grpcv1.Server
 	for _, server := range spec.Servers {
+		if server.Name == nil {
+			setRandomName(&server.Component)
+		}
+
 		if server.Pool == nil {
 			server.Pool = &d.WorkerPool
 		}
@@ -93,6 +102,10 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 
 	var clients []grpcv1.Client
 	for _, client := range spec.Clients {
+		if client.Name == nil {
+			setRandomName(&client.Component)
+		}
+
 		if client.Pool == nil {
 			client.Pool = &d.WorkerPool
 		}
@@ -132,4 +145,15 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 	spec.Clients = clients
 
 	return test, nil
+}
+
+// setRandomName generates a new globally unique name and sets it on a
+// component.
+//
+// Note this function will panic if given a nil pointer. The caller should
+// ensure it is not passed nil arguments. This is meant to be an internal helper
+// to CopyWithDefaults, and it is likely to be inlined by the Go compiler.
+func setRandomName(component *grpcv1.Component) {
+	name := uuid.New().String()
+	component.Name = &name
 }
