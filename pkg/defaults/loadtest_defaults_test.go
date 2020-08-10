@@ -304,7 +304,7 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 		Spec: grpcv1.LoadTestSpec{
 			Driver: &grpcv1.Driver{
 				Component: grpcv1.Component{
-					Name: &driverComponentName,
+					Name:     &driverComponentName,
 					Language: "cxx",
 					Pool:     &driverPool,
 					Run: grpcv1.Run{
@@ -316,7 +316,7 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 			Servers: []grpcv1.Server{
 				{
 					Component: grpcv1.Component{
-						Name: &serverComponentName,
+						Name:     &serverComponentName,
 						Language: "cxx",
 						Pool:     &workerPool,
 						Clone: &grpcv1.Clone{
@@ -341,7 +341,7 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 			Clients: []grpcv1.Client{
 				{
 					Component: grpcv1.Component{
-						Name: &clientComponentName,
+						Name:     &clientComponentName,
 						Language: "cxx",
 						Pool:     &workerPool,
 						Clone: &grpcv1.Clone{

@@ -157,4 +157,3 @@ func setRandomName(component *grpcv1.Component) {
 	name := uuid.New().String()
 	component.Name = &name
 }
-
