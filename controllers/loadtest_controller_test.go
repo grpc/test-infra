@@ -338,6 +338,11 @@ var _ = Describe("Pod Creation", func() {
 			}
 		})
 
+		It("sets the name of the container", func() {
+			container := newCloneContainer(clone)
+			Expect(container.Name).To(Equal(cloneInitContainer))
+		})
+
 		It("returns empty container given nil pointer", func() {
 			clone = nil
 			container := newCloneContainer(clone)
@@ -387,6 +392,11 @@ var _ = Describe("Pod Creation", func() {
 				Args:    nil,
 				Env:     nil,
 			}
+		})
+
+		It("sets the name of the container", func() {
+			container := newBuildContainer(build)
+			Expect(container.Name).To(Equal(buildInitContainer))
 		})
 
 		It("returns empty container given nil pointer", func() {
@@ -445,6 +455,11 @@ var _ = Describe("Pod Creation", func() {
 				Image:   &image,
 				Command: command,
 			}
+		})
+
+		It("sets the name of the container", func() {
+			container := newRunContainer(run)
+			Expect(container.Name).To(Equal(runContainer))
 		})
 
 		It("sets image", func() {

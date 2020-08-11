@@ -36,6 +36,17 @@ import (
 // requests should take for a single invocation of the Reconcile method.
 const reconcileTimeout = 1 * time.Minute
 
+// cloneInitContainer holds the name of the init container that obtains a copy
+// of the code at a specific point in time.
+const cloneInitContainer = "clone"
+
+// buildInitContainer holds the name of the init container that assembles a
+// binary or other bundle required to run the tests.
+const buildInitContainer = "build"
+
+// runContainer holds the name of the main container where the test is executed.
+const runContainer = "run"
+
 // CloneRepoEnv specifies the name of the env variable that contains the git
 // repository to clone.
 const CloneRepoEnv = "CLONE_REPO"
@@ -201,6 +212,7 @@ func newCloneContainer(clone *grpcv1.Clone) corev1.Container {
 	}
 
 	return corev1.Container{
+		Name:  cloneInitContainer,
 		Image: safeStrUnwrap(clone.Image),
 		Env:   env,
 	}
@@ -214,6 +226,7 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 	}
 
 	return corev1.Container{
+		Name:    buildInitContainer,
 		Image:   *build.Image,
 		Command: build.Command,
 		Args:    build.Args,
@@ -224,6 +237,7 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 // newRunContainer constructs a container given a grpcv1.Run object.
 func newRunContainer(run grpcv1.Run) corev1.Container {
 	return corev1.Container{
+		Name:    runContainer,
 		Image:   *run.Image,
 		Command: run.Command,
 		Args:    run.Args,
