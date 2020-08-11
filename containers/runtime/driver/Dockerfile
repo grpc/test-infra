@@ -14,8 +14,29 @@
 
 FROM debian:buster
 
-RUN mkdir -p /src/workspace
+ARG REPOSITORY=grpc/grpc
+ARG GITREF=master
+
+RUN apt-get update && apt-get install -y git
+
+RUN mkdir -p /grpc/grpc
+WORKDIR /grpc/grpc
+
+RUN git clone https://github.com/$REPOSITORY.git .
+RUN git submodule update --init
+
+FROM l.gcr.io/google/bazel:0.17.1
+
+COPY --from=0 /grpc/grpc /src/workspace
+RUN mkdir -p /tmp/build_output
 WORKDIR /src/workspace
+RUN bazel --output_user_root=/tmp/build_output build //test/cpp/qps:qps_json_driver
+
+FROM debian:buster
+
+WORKDIR /grpc/grpc
+COPY --from=1 /tmp/build_output /tmp/build_output
+COPY --from=1 /src/workspace .
 
 RUN apt-get update && apt-get install -y \
   autoconf \
@@ -29,17 +50,19 @@ RUN apt-get update && apt-get install -y \
   pkg-config \
   gnupg \
   apt-transport-https \
-  ca-certificates \
+  ca-certificates
+
+RUN apt-get update && apt-get install -y \
   python3-dev \
   python3-pip \
   python3-setuptools \
-  python3-yaml && \
-  apt-get clean
+  python3-yaml
 
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | \
   tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-  apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-sdk -y && \
-  apt-get clean
+  apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-sdk -y
+
+RUN apt-get clean
 
 RUN pip3 install \
   protobuf \
@@ -51,4 +74,11 @@ RUN pip3 install \
   pyasn1_modules==0.2.2 \
   pyasn1==0.4.2
 
-CMD ["bash"]
+COPY . .
+RUN chmod a+x run.sh
+
+ENV QPS_WORKERS=""
+ENV SCENARIOS_FILE="example.json"
+ENV BQ_RESULT_TABLE=""
+
+CMD ["./run.sh"]
