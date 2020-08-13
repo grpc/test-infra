@@ -17,6 +17,7 @@ bin/*
 # Editor files
 *~
 *.orig
+.idea/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
