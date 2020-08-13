@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"go/ast"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -147,25 +146,30 @@ func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.P
 	// Iterate through all existing pod, once found remove the pod from the map
 	//The leftover entries would be the ones are missing
 	for _, eachPod := range allRunningPods.Items {
-		// go to next if the pod doesn't belong to current load test
-		if eachPod.Labels[defaults.LoadTestLabel] != currentLoadTest.Name {
+
+		loadTestLabelForEachPod := eachPod.Labels[defaults.LoadTestLabel]
+		roleLabelForEachPod := eachPod.Labels[defaults.RoleLabel]
+		componentNameLabelForEachPod := eachPod.Labels[defaults.ComponentNameLabel]
+
+		// ignore pods don't belong to current loadtest
+		if loadTestLabelForEachPod != currentLoadTest.Name {
 			continue
 		}
 
-		if eachPod.Labels[defaults.RoleLabel] == "driver" {
+		if roleLabelForEachPod == "driver" {
 			// check if it is a driver
-			if *currentLoadTest.Spec.Driver.Component.Name == eachPod.Labels[defaults.ComponentNameLabel] {
+			if *currentLoadTest.Spec.Driver.Component.Name == roleLabelForEachPod {
 				foundDriver = true
 			}
-		} else if eachPod.Labels[defaults.RoleLabel] == "client" {
+		} else if roleLabelForEachPod == "client" {
 			// check if it is a client
-			if _, ok := CurrentLoadTestClientPodMap[eachPod.Labels[defaults.ComponentNameLabel]]; ok {
-				delete(CurrentLoadTestClientPodMap, eachPod.Labels[defaults.ComponentNameLabel])
+			if _, ok := CurrentLoadTestClientPodMap[componentNameLabelForEachPod]; ok {
+				delete(CurrentLoadTestClientPodMap, componentNameLabelForEachPod)
 			}
-		} else if eachPod.Labels[defaults.RoleLabel] == "server" {
+		} else if roleLabelForEachPod == "server" {
 			//check if it is a server
-			if _, ok := CurrentLoadTestServerPodMap[eachPod.Labels[defaults.ComponentNameLabel]]; ok {
-				delete(CurrentLoadTestServerPodMap, eachPod.Labels[defaults.ComponentNameLabel])
+			if _, ok := CurrentLoadTestServerPodMap[componentNameLabelForEachPod]; ok {
+				delete(CurrentLoadTestServerPodMap, componentNameLabelForEachPod)
 			}
 		}
 	}
