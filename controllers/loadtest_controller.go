@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"go/ast"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -123,6 +124,67 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = loadtests
 	_ = loadtest
 	return ctrl.Result{}, nil
+}
+
+// CheckMissingPods attempts to check if any pods is missing for current
+// LoadTest.
+func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.PodList) []*grpcv1.Component {
+
+	//Creat maps for Clients and Servers for current currentLoadTest
+	CurrentLoadTestClientPodMap := make(map[string]*grpcv1.Component)
+	CurrentLoadTestServerPodMap := make(map[string]*grpcv1.Component)
+	foundDriver := false
+	var missingComponents []*grpcv1.Component
+
+	//populate the client and server map
+	for _, eachClient := range currentLoadTest.Spec.Clients {
+		CurrentLoadTestClientPodMap[*eachClient.Name] = &eachClient.Component
+	}
+	for _, eachServer := range currentLoadTest.Spec.Servers {
+		CurrentLoadTestServerPodMap[*eachServer.Name] = &eachServer.Component
+	}
+
+	// Iterate through all existing pod, once found remove the pod from the map
+	//The leftover entries would be the ones are missing
+	for _, eachPod := range allRunningPods.Items {
+		// go to next if the pod doesn't belong to current load test
+		if eachPod.Labels[defaults.LoadTestLabel] != currentLoadTest.Name {
+			continue
+		}
+
+		if eachPod.Labels[defaults.RoleLabel] == "driver" {
+			// check if it is a driver
+			if *currentLoadTest.Spec.Driver.Component.Name == eachPod.Labels[defaults.ComponentNameLabel] {
+				foundDriver = true
+			}
+		} else if eachPod.Labels[defaults.RoleLabel] == "client" {
+			// check if it is a client
+			if _, ok := CurrentLoadTestClientPodMap[eachPod.Labels[defaults.ComponentNameLabel]]; ok {
+				delete(CurrentLoadTestClientPodMap, eachPod.Labels[defaults.ComponentNameLabel])
+			}
+		} else if eachPod.Labels[defaults.RoleLabel] == "server" {
+			//check if it is a server
+			if _, ok := CurrentLoadTestServerPodMap[eachPod.Labels[defaults.ComponentNameLabel]]; ok {
+				delete(CurrentLoadTestServerPodMap, eachPod.Labels[defaults.ComponentNameLabel])
+			}
+		}
+	}
+
+	// add missing client component
+	for _, eachMissingComponents := range CurrentLoadTestClientPodMap {
+		missingComponents = append(missingComponents, eachMissingComponents)
+	}
+	// add missing server component
+	for _, eachMissingComponents := range CurrentLoadTestServerPodMap {
+		missingComponents = append(missingComponents, eachMissingComponents)
+	}
+
+	// check if we need to add driver component
+	if !foundDriver {
+		missingComponents = append(missingComponents, &currentLoadTest.Spec.Driver.Component)
+	}
+
+	return missingComponents
 }
 
 // SetupWithManager configures a controller-runtime manager.

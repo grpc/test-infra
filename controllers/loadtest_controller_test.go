@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -442,6 +443,128 @@ var _ = Describe("Pod Creation", func() {
 			Expect(env[0]).To(BeElementOf(container.Env))
 			Expect(env[1]).To(BeElementOf(container.Env))
 		})
+	})
+
+	Describe("CheckMissingPods", func() {
+
+		// newLoadTestWithMultipleClientsAndServers() create a loadtest with 3 clients, 3 servers and 1 driver
+		var currentLoadTest *grpcv1.LoadTest
+		//full list of components from the aforementioned loadtest was extracted
+		var expectedReturnList []*grpcv1.Component
+		var allRunningPods *corev1.PodList
+
+		BeforeEach(func() {
+			currentLoadTest = newLoadTestWithMultipleClientsAndServers()
+		})
+
+		Context("no pods is running", func() {
+			It("should return the full list", func() {
+				//Set up empty podlist
+				var emptyPodList *corev1.PodList
+				allRunningPods = emptyPodList
+
+				//Set up the expected returned list, in this case should be full list
+				for _, eachClient := range currentLoadTest.Spec.Clients {
+					expectedReturnList = append(expectedReturnList, &eachClient.Component)
+				}
+				for _, eachServer := range currentLoadTest.Spec.Clients {
+					expectedReturnList = append(expectedReturnList, &eachServer.Component)
+				}
+				expectedReturnList = append(expectedReturnList, &currentLoadTest.Spec.Driver.Component)
+
+				returnedList := CheckMissingPods(currentLoadTest, allRunningPods)
+
+				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+
+			})
+		})
+
+		Context("other pods are running but none of them came from current load test", func() {
+			It("should return the full list", func() {
+				// create podlist with all irrelevant pods
+				allRunningPods = createPodListWithIrrelevantPod()
+
+				//Set up the expected returned list, in this case should be full list
+				for _, eachClient := range currentLoadTest.Spec.Clients {
+					expectedReturnList = append(expectedReturnList, &eachClient.Component)
+				}
+				for _, eachServer := range currentLoadTest.Spec.Clients {
+					expectedReturnList = append(expectedReturnList, &eachServer.Component)
+				}
+				expectedReturnList = append(expectedReturnList, &currentLoadTest.Spec.Driver.Component)
+
+				returnedList := CheckMissingPods(currentLoadTest, allRunningPods)
+
+				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+
+			})
+		})
+
+		Context("combination of pods from current load test and other pods are running", func() {
+			It("should return the a list of pods missing from collection of running pods", func() {
+				// create podlist with all irrelevant pods
+				allRunningPods = createPodListWithIrrelevantPod()
+
+				//Add pod with defaults.ComponentNameLabel: server-1, pod with defaults.ComponentNameLabel: client-2, driver
+				//to running podlist
+				allRunningPods.Items = append(allRunningPods.Items,
+
+					corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "random_name",
+							Labels: map[string]string{
+								defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+								defaults.RoleLabel:          "server",
+								defaults.ComponentNameLabel: "server-1",
+							},
+						},
+					},
+					corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "random_name",
+							Labels: map[string]string{
+								defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+								defaults.RoleLabel:          "client",
+								defaults.ComponentNameLabel: "client-2",
+							},
+						},
+					},
+
+					corev1.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "random_name",
+							Labels: map[string]string{
+								defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+								defaults.RoleLabel:          "driver",
+								defaults.ComponentNameLabel: "driver-1",
+							},
+						},
+					},
+				)
+
+				returnedList := CheckMissingPods(currentLoadTest, allRunningPods)
+				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+			})
+		})
+
+		Context("only pods expected from current load test was running but still have missing pods", func() {
+			It("should return the a list of pods missing from collection of running pods", func() {
+
+			})
+		})
+
+		Context("only pods from current load test were running and all of them are running", func() {
+			It("should return empty list", func() {
+
+			})
+		})
+
+		Context("combination of all pods expected from current load test and other pods are running", func() {
+			It("should return empty list", func() {
+
+			})
+		})
+
 	})
 
 	Describe("newRunContainer", func() {
