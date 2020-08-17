@@ -128,6 +128,41 @@ var _ = Describe("Pod Creation", func() {
 			component = &loadtest.Spec.Driver.Component
 		})
 
+		It("adds a scenario volume", func() {
+			scenario := "example"
+			loadtest.Spec.Scenarios[0] = grpcv1.Scenario{Name: scenario}
+
+			pod, err := newDriverPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			expectedVolume := newScenarioVolume(scenario)
+			Expect(expectedVolume).To(BeElementOf(pod.Spec.Volumes))
+		})
+
+		It("adds a scenario volume mount", func() {
+			scenario := "example"
+			loadtest.Spec.Scenarios[0] = grpcv1.Scenario{Name: scenario}
+
+			pod, err := newDriverPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			rc := &pod.Spec.Containers[0]
+			expectedMount := newScenarioVolumeMount(scenario)
+			Expect(expectedMount).To(BeElementOf(rc.VolumeMounts))
+		})
+
+		It("sets scenario file environment variable", func() {
+			scenario := "example-scenario"
+			loadtest.Spec.Scenarios[0] = grpcv1.Scenario{Name: scenario}
+
+			pod, err := newDriverPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			rc := &pod.Spec.Containers[0]
+			expectedEnv := newScenarioFileEnvVar(scenario)
+			Expect(expectedEnv).To(BeElementOf(rc.Env))
+		})
+
 		It("mounts GCP secrets", func() {
 			// TODO: Add tests for mounting of GCP secrets
 			Skip("complete this task when adding GCP secrets to pkg/defaults")
@@ -137,11 +172,6 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newDriverPod(loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Labels[defaults.RoleLabel]).To(Equal(defaults.DriverRole))
-		})
-
-		It("sets scenario environment variable", func() {
-			// TODO: Add tests for configmap retrieval and scenario env variable
-			Skip("add this when handling scenario ConfigMaps")
 		})
 
 		It("sets loadtest label", func() {
@@ -197,6 +227,9 @@ var _ = Describe("Pod Creation", func() {
 		})
 
 		It("sets run container", func() {
+			scenario := "example"
+			loadtest.Spec.Scenarios[0] = grpcv1.Scenario{Name: scenario}
+
 			image := "golang:1.14"
 			run := grpcv1.Run{
 				Image:   &image,
@@ -208,9 +241,15 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newDriverPod(loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 
-			expectedContainer := newRunContainer(run)
-			addDriverPort(&expectedContainer)
-			Expect(pod.Spec.Containers).To(ContainElement(expectedContainer))
+			rc := newRunContainer(run)
+
+			// since it is a driver, we need to expect a driver port,
+			// volume mount and the scenario file env var
+			addDriverPort(&rc)
+			rc.VolumeMounts = append(rc.VolumeMounts, newScenarioVolumeMount(scenario))
+			rc.Env = append(rc.Env, newScenarioFileEnvVar(scenario))
+
+			Expect(pod.Spec.Containers).To(ContainElement(rc))
 		})
 
 		It("disables retries", func() {

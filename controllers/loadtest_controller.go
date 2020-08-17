@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -46,6 +47,14 @@ const buildInitContainer = "build"
 
 // runContainer holds the name of the main container where the test is executed.
 const runContainer = "run"
+
+// scenarioMountPath specifies where the JSON file with the scenario should be
+// mounted in the driver container.
+const scenarioMountPath = "/src/scenarios"
+
+// scenarioFileEnv specifies the name of an env variable that specifies the path
+// to a JSON file with a scenario.
+const scenarioFileEnv = "SCENARIO_FILE"
 
 // CloneRepoEnv specifies the name of the env variable that contains the git
 // repository to clone.
@@ -145,6 +154,47 @@ func newClientPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*core
 	return pod, nil
 }
 
+// scenarioVolumeName accepts the name of a ConfigMap with a scenario and
+// generates a name for a volume.
+func scenarioVolumeName(scenario string) string {
+	return fmt.Sprintf("scenario-%s", scenario)
+}
+
+// newScenarioVolume accepts the name of a scenario ConfigMap and returns a
+// volume that can mount it.
+func newScenarioVolume(scenario string) corev1.Volume {
+	return corev1.Volume{
+		Name: scenarioVolumeName(scenario),
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: scenario,
+				},
+			},
+		},
+	}
+}
+
+// newScenarioVolumeMount accepts the name of a scenario ConfigMap and returns a
+// volume mount that will place it at /src/scenarios.
+func newScenarioVolumeMount(scenario string) corev1.VolumeMount {
+	return corev1.VolumeMount{
+		Name:      scenarioVolumeName(scenario),
+		MountPath: scenarioMountPath,
+		ReadOnly:  true,
+	}
+}
+
+// newScenarioEnvVar accepts the name of a scenario ConfigMap and returns a
+// an environment variable used to locate the scenario in a mounted volume.
+func newScenarioFileEnvVar(scenario string) corev1.EnvVar {
+	scenarioFile := strings.ReplaceAll(scenario, "-", "_") + ".json"
+	return corev1.EnvVar{
+		Name:  scenarioFileEnv,
+		Value: scenarioMountPath + "/" + scenarioFile,
+	}
+}
+
 // newDriverPod creates a driver given a load test and a reference to its
 // component. It returns an error if a pod cannot be constructed.
 func newDriverPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
@@ -153,7 +203,21 @@ func newDriverPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*core
 		return nil, err
 	}
 
-	addDriverPort(&pod.Spec.Containers[0])
+	podSpec := &pod.Spec
+	testSpec := &loadtest.Spec
+
+	// TODO: Avoid referencing containers by index, use names
+	testContainer := &podSpec.Containers[0]
+
+	addDriverPort(testContainer)
+
+	// TODO: Handle more than 1 scenario
+	if len(testSpec.Scenarios) > 0 {
+		scenario := testSpec.Scenarios[0].Name
+		podSpec.Volumes = append(podSpec.Volumes, newScenarioVolume(scenario))
+		testContainer.VolumeMounts = append(testContainer.VolumeMounts, newScenarioVolumeMount(scenario))
+		testContainer.Env = append(testContainer.Env, newScenarioFileEnvVar(scenario))
+	}
 
 	return pod, nil
 }
