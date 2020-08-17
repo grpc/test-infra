@@ -136,10 +136,10 @@ func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.P
 	var missingComponents []*grpcv1.Component
 
 	//populate the client and server map
-	for i := 0; i < len(currentLoadTest.Spec.Clients); i ++ {
+	for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
 		CurrentLoadTestClientPodMap[*currentLoadTest.Spec.Clients[i].Name] = &currentLoadTest.Spec.Clients[i].Component
 	}
-	for i := 0; i < len(currentLoadTest.Spec.Servers); i ++ {
+	for i := 0; i < len(currentLoadTest.Spec.Servers); i++ {
 		CurrentLoadTestServerPodMap[*currentLoadTest.Spec.Servers[i].Name] = &currentLoadTest.Spec.Servers[i].Component
 	}
 

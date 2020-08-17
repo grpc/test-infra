@@ -504,10 +504,10 @@ var _ = Describe("Pod Creation", func() {
 
 var _ = Describe("CheckMissingPods", func() {
 
-	var currentLoadTest = newLoadTestWithMultipleClientsAndServers()// nothing modify this --> okay
-	var expectedReturnList []*grpcv1.Component //initialized every time after a test -->okay
+	var currentLoadTest = newLoadTestWithMultipleClientsAndServers() // nothing modify this --> okay
+	var expectedReturnList []*grpcv1.Component                       //initialized every time after a test -->okay
 	var allRunningPods = &corev1.PodList{Items: []corev1.Pod{}}
-	var returnedList []*grpcv1.Component// it was a newlist generated form myfun everytime, address are different --> okay
+	var returnedList []*grpcv1.Component // it was a newlist generated form myfun everytime, address are different --> okay
 
 	JustBeforeEach(func() {
 		returnedList = CheckMissingPods(currentLoadTest, allRunningPods)
