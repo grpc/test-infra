@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"testing"
 
 	"github.com/grpc/test-infra/pkg/defaults"
@@ -261,8 +262,6 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 	driverPool := "drivers"
 	workerPool := "workers-8core"
 
-	clientComponentName := "client-"
-	serverComponentName := "server-"
 	driverComponentName := "driver-1"
 
 	//Create load test with 1 driver
@@ -292,12 +291,11 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 			},
 		},
 	}
-
+	serverNames := []string{"server-1", "server-2", "server-3"}
 	for i := 1; i <= 3; i++ {
-		name := serverComponentName + string(i)
 		createdLoadTest.Spec.Servers = append(createdLoadTest.Spec.Servers, grpcv1.Server{
 			Component: grpcv1.Component{
-				Name:     &name,
+				Name:     &serverNames[i-1],
 				Language: "cxx",
 				Pool:     &workerPool,
 				Clone: &grpcv1.Clone{
@@ -318,12 +316,11 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 			},
 		})
 	}
-
+	clientName := []string{"client-1", "client-2", "client-3"}
 	for i := 1; i <= 3; i++ {
-		name := clientComponentName + string(i)
 		createdLoadTest.Spec.Clients = append(createdLoadTest.Spec.Clients, grpcv1.Client{
 			Component: grpcv1.Component{
-				Name:     &name,
+				Name:     &clientName[i-1],
 				Language: "cxx",
 				Pool:     &workerPool,
 				Clone: &grpcv1.Clone{
@@ -350,8 +347,8 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 
 //populatePodListWithIrrelevantPod attempt to create pod list and populate it with
 //irrelevant pods
-func populatePodListWithIrrelevantPod(currentPodList *corev1.PodList) *corev1.PodList {
-
+func createPodListWithIrrelevantPod() *corev1.PodList {
+	currentPodList := &corev1.PodList{Items: []corev1.Pod{}}
 	currentPodList.Items = append(currentPodList.Items,
 		//add pods without metav1.ObjectMeta
 		corev1.Pod{},
@@ -430,7 +427,8 @@ func populatePodListWithIrrelevantPod(currentPodList *corev1.PodList) *corev1.Po
 	return currentPodList
 }
 
-func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest, currentPodList *corev1.PodList) *corev1.PodList {
+func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *corev1.PodList {
+	currentPodList := &corev1.PodList{Items: []corev1.Pod{}}
 	//add all clients
 	for _, eachClient := range currentLoadTest.Spec.Clients {
 		currentPodList.Items = append(currentPodList.Items,
@@ -466,7 +464,7 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest, cur
 				Name: "random_name",
 				Labels: map[string]string{
 					defaults.LoadTestLabel:      currentLoadTest.Name,
-					defaults.RoleLabel:          "Driver",
+					defaults.RoleLabel:          "driver",
 					defaults.ComponentNameLabel: *currentLoadTest.Spec.Driver.Name,
 				},
 			},
@@ -477,11 +475,26 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest, cur
 //checkIfEqual attempts to check if the two list is the same by going through
 //each element.
 func checkIfEqual(test []*grpcv1.Component, expected []*grpcv1.Component) bool {
+	var testString []string
+	var expectedString []string
+
 	if len(test) != len(expected) {
 		return false
 	}
+
 	for i := 0; i < len(test); i++ {
-		if test[i].Name != expected[i].Name {
+		testString = append(testString, *test[i].Name)
+	}
+
+	for i := 0; i < len(expected); i++ {
+		expectedString = append(expectedString, *expected[i].Name)
+	}
+
+	sort.Strings(testString)
+	sort.Strings(expectedString)
+
+	for i := 0; i < len(expectedString); i++ {
+		if expectedString[i] != testString[i] {
 			return false
 		}
 	}

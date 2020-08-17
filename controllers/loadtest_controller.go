@@ -136,17 +136,16 @@ func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.P
 	var missingComponents []*grpcv1.Component
 
 	//populate the client and server map
-	for _, eachClient := range currentLoadTest.Spec.Clients {
-		CurrentLoadTestClientPodMap[*eachClient.Name] = &eachClient.Component
+	for i := 0; i < len(currentLoadTest.Spec.Clients); i ++ {
+		CurrentLoadTestClientPodMap[*currentLoadTest.Spec.Clients[i].Name] = &currentLoadTest.Spec.Clients[i].Component
 	}
-	for _, eachServer := range currentLoadTest.Spec.Servers {
-		CurrentLoadTestServerPodMap[*eachServer.Name] = &eachServer.Component
+	for i := 0; i < len(currentLoadTest.Spec.Servers); i ++ {
+		CurrentLoadTestServerPodMap[*currentLoadTest.Spec.Servers[i].Name] = &currentLoadTest.Spec.Servers[i].Component
 	}
 
 	// Iterate through all existing pod, once found remove the pod from the map
 	//The leftover entries would be the ones are missing
 	for _, eachPod := range allRunningPods.Items {
-
 		loadTestLabelForEachPod := eachPod.Labels[defaults.LoadTestLabel]
 		roleLabelForEachPod := eachPod.Labels[defaults.RoleLabel]
 		componentNameLabelForEachPod := eachPod.Labels[defaults.ComponentNameLabel]
@@ -155,10 +154,9 @@ func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.P
 		if loadTestLabelForEachPod != currentLoadTest.Name {
 			continue
 		}
-
 		if roleLabelForEachPod == "driver" {
 			// check if it is a driver
-			if *currentLoadTest.Spec.Driver.Component.Name == roleLabelForEachPod {
+			if *currentLoadTest.Spec.Driver.Component.Name == componentNameLabelForEachPod {
 				foundDriver = true
 			}
 		} else if roleLabelForEachPod == "client" {
