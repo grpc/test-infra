@@ -506,17 +506,17 @@ var _ = Describe("checkMissingPods", func() {
 
 	var currentLoadTest *grpcv1.LoadTest
 	var allRunningPods *corev1.PodList
-	var actualReturn *grpcv1.LoadTestMissing
-	var expectedReturn *grpcv1.LoadTestMissing
+	var actualReturn *LoadTestMissing
+	var expectedReturn *LoadTestMissing
 
 	BeforeEach(func() {
 		currentLoadTest = newLoadTestWithMultipleClientsAndServers()
 		newListRef := corev1.PodList{Items: []corev1.Pod{}}
 		allRunningPods = &newListRef
-		expectedReturn = &grpcv1.LoadTestMissing{Clients: []grpcv1.Client{}, Servers: []grpcv1.Server{}}
+		expectedReturn = &LoadTestMissing{Clients: []grpcv1.Client{}, Servers: []grpcv1.Server{}}
 	})
 
-	Describe("no pods from current loadtest is running", func() {
+	Describe("no pods from the current load test is running", func() {
 		BeforeEach(func() {
 			for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
 				expectedReturn.Clients = append(expectedReturn.Clients, currentLoadTest.Spec.Clients[i])
@@ -527,8 +527,8 @@ var _ = Describe("checkMissingPods", func() {
 			expectedReturn.Driver = currentLoadTest.Spec.Driver
 		})
 
-		Context("allRunningPods is empty", func() {
-			It("returns the full list", func() {
+		Context("no pod is running", func() {
+			It("returns the full pod list from the current load test", func() {
 				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
 				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
 				Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
@@ -537,7 +537,7 @@ var _ = Describe("checkMissingPods", func() {
 		})
 
 		Context("irrelevant pods are running", func() {
-			It("returns the full list", func() {
+			It("returns the full pod list from the current load test", func() {
 				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
 				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
 				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
@@ -547,7 +547,7 @@ var _ = Describe("checkMissingPods", func() {
 		})
 	})
 
-	Describe("some of pods from current loadtest is running", func() {
+	Describe("some of pods from the current load test is running", func() {
 
 		BeforeEach(func() {
 			allRunningPods.Items = append(allRunningPods.Items,
@@ -595,7 +595,7 @@ var _ = Describe("checkMissingPods", func() {
 			}
 		})
 
-		Context("only pods from current loadtest are running", func() {
+		Context("only pods from the current load test are running", func() {
 			It("returns the list of pods missing from collection of running pods", func() {
 				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
 				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
@@ -604,7 +604,7 @@ var _ = Describe("checkMissingPods", func() {
 			})
 		})
 
-		Context("there are irrelevant pods running together", func() {
+		Context("there are also irrelevant pods running", func() {
 			It("returns the list of pods missing from collection of running pods", func() {
 				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
 				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
@@ -615,13 +615,13 @@ var _ = Describe("checkMissingPods", func() {
 		})
 	})
 
-	Describe("all of pods from current loadtest is running", func() {
+	Describe("all of pods from the current load test is running", func() {
 
 		BeforeEach(func() {
 			allRunningPods = populatePodListWithCurrentLoadTestPod(currentLoadTest)
 		})
 
-		Context("only pods from current loadtest are running", func() {
+		Context("only pods from the current load test are running", func() {
 			It("returns a empty list", func() {
 				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
 				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
@@ -630,7 +630,7 @@ var _ = Describe("checkMissingPods", func() {
 			})
 		})
 
-		Context("there are irrelevant pods running together", func() {
+		Context("there are also irrelevant pods running", func() {
 
 			It("returns an empty list", func() {
 				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)

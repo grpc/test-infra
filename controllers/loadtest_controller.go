@@ -66,6 +66,23 @@ type LoadTestReconciler struct {
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests/status,verbs=get;update;patch
 
+// LoadTestMissing categorize missing components based on their roles at specific
+// moment. The struct is a wrapper to help us get role information associate
+// with components.
+type LoadTestMissing struct {
+	// Driver is the component that orchestrates the test. If Driver is not set
+	// that means we already have the Driver running.
+	Driver *grpcv1.Driver `json:"driver,omitempty"`
+
+	// Servers are a list of components that receive traffic from. The list
+	// indicates the Servers still in need.
+	Servers []grpcv1.Server `json:"servers,omitempty"`
+
+	// Clients are a list of components that send traffic to servers. The list
+	// indicates the Clients still in need.
+	Clients []grpcv1.Client `json:"clients,omitempty"`
+}
+
 // Reconcile attempts to bring the current state of the load test into agreement
 // with its declared spec. This may mean provisioning resources, doing nothing
 // or handling the termination of its pods.
@@ -124,11 +141,13 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-// checkMissingPods attempts to check if any pods is missing for current
-// loadtest.
-func checkMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.PodList) *grpcv1.LoadTestMissing {
+// checkMissingPods attempts to check if any required component is missing from
+// the current load test. It takes reference of the current load test and a pod
+// list that contains all running pods at the moment returns all missing
+// components required from the current load test with their roles.
+func checkMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.PodList) *LoadTestMissing {
 
-	currentMissing := &grpcv1.LoadTestMissing{Servers: []grpcv1.Server{}, Clients: []grpcv1.Client{}}
+	currentMissing := &LoadTestMissing{Servers: []grpcv1.Server{}, Clients: []grpcv1.Client{}}
 
 	requiredClientMap := make(map[string]*grpcv1.Client)
 	requiredServerMap := make(map[string]*grpcv1.Server)
