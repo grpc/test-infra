@@ -143,7 +143,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 // checkMissingPods attempts to check if any required component is missing from
 // the current load test. It takes reference of the current load test and a pod
-// list that contains all running pods at the moment returns all missing
+// list that contains all running pods at the moment, returning all missing
 // components required from the current load test with their roles.
 func checkMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.PodList) *LoadTestMissing {
 
