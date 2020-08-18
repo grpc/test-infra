@@ -502,47 +502,55 @@ var _ = Describe("Pod Creation", func() {
 	})
 })
 
-var _ = Describe("CheckMissingPods", func() {
+var _ = Describe("checkMissingPods", func() {
 
-	var currentLoadTest = newLoadTestWithMultipleClientsAndServers() // nothing modify this --> okay
-	var expectedReturnList []*grpcv1.Component                       //initialized every time after a test -->okay
-	var allRunningPods = &corev1.PodList{Items: []corev1.Pod{}}
-	var returnedList []*grpcv1.Component // it was a newlist generated form myfun everytime, address are different --> okay
+	var currentLoadTest *grpcv1.LoadTest
+	var allRunningPods *corev1.PodList
+	var actualReturn *grpcv1.LoadTestMissing
+	var expectedReturn *grpcv1.LoadTestMissing
 
-	JustBeforeEach(func() {
-		returnedList = CheckMissingPods(currentLoadTest, allRunningPods)
-	})
-
-	AfterEach(func() {
-		expectedReturnList = []*grpcv1.Component{}
-		newThing := corev1.PodList{Items: []corev1.Pod{}}
-		allRunningPods = &newThing
+	BeforeEach(func() {
+		currentLoadTest = newLoadTestWithMultipleClientsAndServers()
+		newListRef := corev1.PodList{Items: []corev1.Pod{}}
+		allRunningPods = &newListRef
+		expectedReturn = &grpcv1.LoadTestMissing{Clients: []grpcv1.Client{}, Servers: []grpcv1.Server{}}
 	})
 
 	Describe("no pods from current loadtest is running", func() {
 		BeforeEach(func() {
-			//Set up the expected returned list, in these cases should be full list
 			for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
-				expectedReturnList = append(expectedReturnList, &currentLoadTest.Spec.Clients[i].Component)
+				expectedReturn.Clients = append(expectedReturn.Clients, currentLoadTest.Spec.Clients[i])
 			}
 			for i := 0; i < len(currentLoadTest.Spec.Servers); i++ {
-				expectedReturnList = append(expectedReturnList, &currentLoadTest.Spec.Servers[i].Component)
+				expectedReturn.Servers = append(expectedReturn.Servers, currentLoadTest.Spec.Servers[i])
 			}
-			expectedReturnList = append(expectedReturnList, &currentLoadTest.Spec.Driver.Component)
+			expectedReturn.Driver = currentLoadTest.Spec.Driver
 		})
 
 		Context("allRunningPods is empty", func() {
-			allRunningPods = &corev1.PodList{Items: []corev1.Pod{}}
-			It("return the full list", func() {
-				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+			It("returns the full list", func() {
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ContainElements(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ContainElements(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+				// Optional, just to make sure the actualReturn is absolute the same
+				// with expectedReturn
+				Expect(expectedReturn.Clients).To(ContainElements(actualReturn.Clients))
+				Expect(expectedReturn.Servers).To(ContainElements(actualReturn.Servers))
 			})
 		})
 
 		Context("irrelevant pods are running", func() {
-			allRunningPods = &corev1.PodList{Items: []corev1.Pod{}}
-			allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
-			It("return the full list", func() {
-				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+			It("returns the full list", func() {
+				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ContainElements(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ContainElements(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+				// Optional, just to make sure the actualReturn is absolute the same
+				// with expectedReturn
+				Expect(expectedReturn.Clients).To(ContainElements(actualReturn.Clients))
+				Expect(expectedReturn.Servers).To(ContainElements(actualReturn.Servers))
 			})
 		})
 	})
@@ -550,12 +558,10 @@ var _ = Describe("CheckMissingPods", func() {
 	Describe("some of pods from current loadtest is running", func() {
 
 		BeforeEach(func() {
-			//Add pod with defaults.ComponentNameLabel: server-1, pod with defaults.ComponentNameLabel: client-2, driver
-			//to running podlist
 			allRunningPods.Items = append(allRunningPods.Items,
 				corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "random_name",
+						Name: "random-name",
 						Labels: map[string]string{
 							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
 							defaults.RoleLabel:          "server",
@@ -565,7 +571,7 @@ var _ = Describe("CheckMissingPods", func() {
 				},
 				corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "random_name",
+						Name: "random-name",
 						Labels: map[string]string{
 							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
 							defaults.RoleLabel:          "client",
@@ -575,7 +581,7 @@ var _ = Describe("CheckMissingPods", func() {
 				},
 				corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "random_name",
+						Name: "random-name",
 						Labels: map[string]string{
 							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
 							defaults.RoleLabel:          "driver",
@@ -586,27 +592,41 @@ var _ = Describe("CheckMissingPods", func() {
 			)
 			for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
 				if *currentLoadTest.Spec.Clients[i].Name != "client-2" {
-					expectedReturnList = append(expectedReturnList, &currentLoadTest.Spec.Clients[i].Component)
+					expectedReturn.Clients = append(expectedReturn.Clients, currentLoadTest.Spec.Clients[i])
 				}
 			}
 
 			for i := 0; i < len(currentLoadTest.Spec.Servers); i++ {
 				if *currentLoadTest.Spec.Servers[i].Name != "server-1" {
-					expectedReturnList = append(expectedReturnList, &currentLoadTest.Spec.Servers[i].Component)
+					expectedReturn.Servers = append(expectedReturn.Servers, currentLoadTest.Spec.Servers[i])
 				}
 			}
 		})
 
 		Context("only pods from current loadtest are running", func() {
-			It("return the a list of pods missing from collection of running pods", func() {
-				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+			It("returns the list of pods missing from collection of running pods", func() {
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ContainElements(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ContainElements(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+				// Optional, just to make sure the actualReturn is absolute the same
+				// with expectedReturn
+				Expect(expectedReturn.Clients).To(ContainElements(actualReturn.Clients))
+				Expect(expectedReturn.Servers).To(ContainElements(actualReturn.Servers))
 			})
 		})
 
 		Context("there are irrelevant pods running together", func() {
-			allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
-			It("return the a list of pods missing from collection of running pods", func() {
-				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+			It("returns the list of pods missing from collection of running pods", func() {
+				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ContainElements(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ContainElements(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+				// Optional, just to make sure the actualReturn is absolute the same
+				// with expectedReturn
+				Expect(expectedReturn.Clients).To(ContainElements(actualReturn.Clients))
+				Expect(expectedReturn.Servers).To(ContainElements(actualReturn.Servers))
 			})
 		})
 	})
@@ -618,17 +638,31 @@ var _ = Describe("CheckMissingPods", func() {
 		})
 
 		Context("only pods from current loadtest are running", func() {
-			It("return empty list", func() {
-				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+			It("returns a empty list", func() {
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ContainElements(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ContainElements(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+				// Optional, just to make sure the actualReturn is absolute the same
+				// with expectedReturn
+				Expect(expectedReturn.Clients).To(ContainElements(actualReturn.Clients))
+				Expect(expectedReturn.Servers).To(ContainElements(actualReturn.Servers))
 			})
 		})
 
 		Context("there are irrelevant pods running together", func() {
-			allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
-			It("should return empty list", func() {
-				Expect(checkIfEqual(returnedList, expectedReturnList)).To(Equal(true))
+
+			It("returns an empty list", func() {
+				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ContainElements(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ContainElements(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+				// Optional, just to make sure the actualReturn is absolute the same
+				// with expectedReturn
+				Expect(expectedReturn.Clients).To(ContainElements(actualReturn.Clients))
+				Expect(expectedReturn.Servers).To(ContainElements(actualReturn.Servers))
 			})
 		})
 	})
-
 })

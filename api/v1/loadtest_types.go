@@ -208,6 +208,24 @@ type LoadTestSpec struct {
 	Scenarios []Scenario `json:"scenarios,omitempty"`
 }
 
+// LoadTestMissing categorize missing components base on their roles at
+// the moment.
+type LoadTestMissing struct {
+	// Driver is the component that orchestrates the test. It may be
+	// unspecified, allowing the system to choose the appropriate driver.
+	// +optional
+	Driver *Driver `json:"driver,omitempty"`
+
+	// Servers are a list of components that receive traffic from
+	// clients.
+	// +optional
+	Servers []Server `json:"servers,omitempty"`
+
+	// Clients are a list of components that send traffic to servers.
+	// +optional
+	Clients []Client `json:"clients,omitempty"`
+}
+
 // LoadTestState is a possible state, conveying the progress of setting
 // up, running and tearing down a load test.
 // +kubebuilder:default=Unrecognized

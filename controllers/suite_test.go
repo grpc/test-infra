@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"sort"
 	"testing"
 
 	"github.com/grpc/test-infra/pkg/defaults"
@@ -241,6 +240,8 @@ func newLoadTest() *grpcv1.LoadTest {
 	}
 }
 
+// newLoadTestWithMultipleClientsAndServers attempts to create a
+// loadtest with multiple clients and servers for test.
 func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 	cloneImage := "docker.pkg.github.com/grpc/test-infra/clone"
 	cloneRepo := "https://github.com/grpc/grpc.git"
@@ -264,7 +265,6 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 
 	driverComponentName := "driver-1"
 
-	//Create load test with 1 driver
 	createdLoadTest := &grpcv1.LoadTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-loadtest-multiple-clients-and-servers",
@@ -291,8 +291,9 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 			},
 		},
 	}
+
 	serverNames := []string{"server-1", "server-2", "server-3"}
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= len(serverNames); i++ {
 		createdLoadTest.Spec.Servers = append(createdLoadTest.Spec.Servers, grpcv1.Server{
 			Component: grpcv1.Component{
 				Name:     &serverNames[i-1],
@@ -316,8 +317,9 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 			},
 		})
 	}
+
 	clientName := []string{"client-1", "client-2", "client-3"}
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= len(clientName); i++ {
 		createdLoadTest.Spec.Clients = append(createdLoadTest.Spec.Clients, grpcv1.Client{
 			Component: grpcv1.Component{
 				Name:     &clientName[i-1],
@@ -345,52 +347,42 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 	return createdLoadTest
 }
 
-//populatePodListWithIrrelevantPod attempt to create pod list and populate it with
-//irrelevant pods
+// populatePodListWithIrrelevantPod attempt to create pod list and populate it with
+// irrelevant pods
 func createPodListWithIrrelevantPod() *corev1.PodList {
 	currentPodList := &corev1.PodList{Items: []corev1.Pod{}}
 	currentPodList.Items = append(currentPodList.Items,
-		//add pods without metav1.ObjectMeta
 		corev1.Pod{},
 
-		//add pods with empty metav1.ObjectMeta
 		corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{},
 		},
-
-		//add pods with metav1.ObjectMeta but no labels are set
 		corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "random_name",
+				Name: "random-name",
 			},
 		},
-
-		//add pods with metav1.ObjectMeta set with irrelevant keys
 		corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "random_name",
+				Name: "random-name",
 				Labels: map[string]string{
 					"keyOne": "random-task",
 					"KeyTwo": "irrelevant role",
 				},
 			},
 		},
-
-		//add pods with metav1.ObjectMeta but defaults.ComponentNameLabel labels are set
 		corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "random_name",
+				Name: "random-name",
 				Labels: map[string]string{
 					defaults.LoadTestLabel: "random-task",
 					defaults.RoleLabel:     "irrelevant role",
 				},
 			},
 		},
-
-		//add pods with metav1.ObjectMeta but defaults.ComponentNameLabel labels are set to random string
 		corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "random_name",
+				Name: "random-name",
 				Labels: map[string]string{
 					defaults.LoadTestLabel:      "random-task",
 					defaults.RoleLabel:          "irrelevant role",
@@ -398,11 +390,9 @@ func createPodListWithIrrelevantPod() *corev1.PodList {
 				},
 			},
 		},
-
-		//correct loadtest name, wrong role, possible component name
 		corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "random_name",
+				Name: "random-name",
 				Labels: map[string]string{
 					defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
 					defaults.RoleLabel:          "driver",
@@ -410,11 +400,9 @@ func createPodListWithIrrelevantPod() *corev1.PodList {
 				},
 			},
 		},
-
-		//correct loadtest name, wrong component name
 		corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "random_name",
+				Name: "random-name",
 				Labels: map[string]string{
 					defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
 					defaults.RoleLabel:          "server",
@@ -427,14 +415,16 @@ func createPodListWithIrrelevantPod() *corev1.PodList {
 	return currentPodList
 }
 
+// populatePodListWithCurrentLoadTestPod attempts to create a Podlist and populate
+// it with the pods came from current loadtest.
 func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *corev1.PodList {
 	currentPodList := &corev1.PodList{Items: []corev1.Pod{}}
-	//add all clients
+
 	for _, eachClient := range currentLoadTest.Spec.Clients {
 		currentPodList.Items = append(currentPodList.Items,
 			corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "random_name",
+					Name: "random-name",
 					Labels: map[string]string{
 						defaults.LoadTestLabel:      currentLoadTest.Name,
 						defaults.RoleLabel:          "client",
@@ -443,12 +433,12 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *co
 				},
 			})
 	}
-	//add all severs
+
 	for _, eachServer := range currentLoadTest.Spec.Servers {
 		currentPodList.Items = append(currentPodList.Items,
 			corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "random_name",
+					Name: "random-name",
 					Labels: map[string]string{
 						defaults.LoadTestLabel:      currentLoadTest.Name,
 						defaults.RoleLabel:          "server",
@@ -461,7 +451,7 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *co
 	currentPodList.Items = append(currentPodList.Items,
 		corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "random_name",
+				Name: "random-name",
 				Labels: map[string]string{
 					defaults.LoadTestLabel:      currentLoadTest.Name,
 					defaults.RoleLabel:          "driver",
@@ -469,34 +459,6 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *co
 				},
 			},
 		})
+
 	return currentPodList
-}
-
-//checkIfEqual attempts to check if the two list is the same by going through
-//each element.
-func checkIfEqual(test []*grpcv1.Component, expected []*grpcv1.Component) bool {
-	var testString []string
-	var expectedString []string
-
-	if len(test) != len(expected) {
-		return false
-	}
-
-	for i := 0; i < len(test); i++ {
-		testString = append(testString, *test[i].Name)
-	}
-
-	for i := 0; i < len(expected); i++ {
-		expectedString = append(expectedString, *expected[i].Name)
-	}
-
-	sort.Strings(testString)
-	sort.Strings(expectedString)
-
-	for i := 0; i < len(expectedString); i++ {
-		if expectedString[i] != testString[i] {
-			return false
-		}
-	}
-	return true
 }

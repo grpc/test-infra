@@ -114,7 +114,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Create any missing pods that the loadtest needs.
 
-	// TODO: Add method to detect what is missing on the load test.
 	// TODO: Add logic to schedule the next missing pod.
 
 	// PLACEHOLDERS!
@@ -125,68 +124,67 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-// CheckMissingPods attempts to check if any pods is missing for current
-// LoadTest.
-func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.PodList) []*grpcv1.Component {
+// checkMissingPods attempts to check if any pods is missing for current
+// loadtest.
+func checkMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.PodList) *grpcv1.LoadTestMissing {
 
-	//Creat maps for Clients and Servers for current currentLoadTest
-	CurrentLoadTestClientPodMap := make(map[string]*grpcv1.Component)
-	CurrentLoadTestServerPodMap := make(map[string]*grpcv1.Component)
+	currentMissing := &grpcv1.LoadTestMissing{Servers: []grpcv1.Server{}, Clients: []grpcv1.Client{}}
+
+	requiredClientMap := make(map[string]*grpcv1.Client)
+	requiredServerMap := make(map[string]*grpcv1.Server)
 	foundDriver := false
-	var missingComponents []*grpcv1.Component
 
-	//populate the client and server map
 	for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
-		CurrentLoadTestClientPodMap[*currentLoadTest.Spec.Clients[i].Name] = &currentLoadTest.Spec.Clients[i].Component
+		requiredClientMap[*currentLoadTest.Spec.Clients[i].Name] = &currentLoadTest.Spec.Clients[i]
 	}
 	for i := 0; i < len(currentLoadTest.Spec.Servers); i++ {
-		CurrentLoadTestServerPodMap[*currentLoadTest.Spec.Servers[i].Name] = &currentLoadTest.Spec.Servers[i].Component
+		requiredServerMap[*currentLoadTest.Spec.Servers[i].Name] = &currentLoadTest.Spec.Servers[i]
 	}
 
-	// Iterate through all existing pod, once found remove the pod from the map
-	//The leftover entries would be the ones are missing
-	for _, eachPod := range allRunningPods.Items {
-		loadTestLabelForEachPod := eachPod.Labels[defaults.LoadTestLabel]
-		roleLabelForEachPod := eachPod.Labels[defaults.RoleLabel]
-		componentNameLabelForEachPod := eachPod.Labels[defaults.ComponentNameLabel]
+	if allRunningPods != nil {
 
-		// ignore pods don't belong to current loadtest
-		if loadTestLabelForEachPod != currentLoadTest.Name {
-			continue
+		for _, eachPod := range allRunningPods.Items {
+
+			if eachPod.Labels == nil {
+				continue
+			}
+
+			loadTestLabel := eachPod.Labels[defaults.LoadTestLabel]
+			roleLabel := eachPod.Labels[defaults.RoleLabel]
+			componentNameLabel := eachPod.Labels[defaults.ComponentNameLabel]
+
+			if loadTestLabel != currentLoadTest.Name {
+				continue
+			}
+			if roleLabel == defaults.DriverRole {
+				if *currentLoadTest.Spec.Driver.Component.Name == componentNameLabel {
+					foundDriver = true
+				}
+			} else if roleLabel == defaults.ClientRole {
+				if _, ok := requiredClientMap[componentNameLabel]; ok {
+					delete(requiredClientMap, componentNameLabel)
+				}
+			} else if roleLabel == defaults.ServerRole {
+				if _, ok := requiredServerMap[componentNameLabel]; ok {
+					delete(requiredServerMap, componentNameLabel)
+				}
+			}
 		}
-		if roleLabelForEachPod == "driver" {
-			// check if it is a driver
-			if *currentLoadTest.Spec.Driver.Component.Name == componentNameLabelForEachPod {
-				foundDriver = true
-			}
-		} else if roleLabelForEachPod == "client" {
-			// check if it is a client
-			if _, ok := CurrentLoadTestClientPodMap[componentNameLabelForEachPod]; ok {
-				delete(CurrentLoadTestClientPodMap, componentNameLabelForEachPod)
-			}
-		} else if roleLabelForEachPod == "server" {
-			//check if it is a server
-			if _, ok := CurrentLoadTestServerPodMap[componentNameLabelForEachPod]; ok {
-				delete(CurrentLoadTestServerPodMap, componentNameLabelForEachPod)
-			}
-		}
 	}
 
-	// add missing client component
-	for _, eachMissingComponents := range CurrentLoadTestClientPodMap {
-		missingComponents = append(missingComponents, eachMissingComponents)
-	}
-	// add missing server component
-	for _, eachMissingComponents := range CurrentLoadTestServerPodMap {
-		missingComponents = append(missingComponents, eachMissingComponents)
+	for _, eachMissingClient := range requiredClientMap {
+		currentMissing.Clients = append(currentMissing.Clients, *eachMissingClient)
 	}
 
-	// check if we need to add driver component
+	for _, eachMissingServer := range requiredServerMap {
+		currentMissing.Servers = append(currentMissing.Servers, *eachMissingServer)
+	}
+
 	if !foundDriver {
-		missingComponents = append(missingComponents, &currentLoadTest.Spec.Driver.Component)
+		currentMissing.Driver = currentLoadTest.Spec.Driver
 	}
 
-	return missingComponents
+	return currentMissing
 }
 
 // SetupWithManager configures a controller-runtime manager.
