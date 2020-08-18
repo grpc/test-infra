@@ -1,7 +1,125 @@
 apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
-  name: loadtest-sample
+    # Every load test instance must be assigned a unique name on the
+    # cluster. There are ways we can circumvent naming clashes, such
+    # as using namespaces or dynamically assigning names.
+    name: java-example
+
+    # As a custom resource, it behaves like a native kubernetes object.
+    # This means that users can perform CRUD operations through the
+    # Kubernetes API or kubectl. In addition, it means that the user
+    # can set any metadata on it.
+    labels:
+        language: java
 spec:
-  # Add fields here
-  foo: bar
+    # The driver is required by all tests and should not change often.
+    # For this reason, it can be omitted from the spec. The controller
+    # will then use the driver from grpc/grpc at master.
+    driver:
+        language: cxx
+        clone:
+            # Clone is an init container that knows how to obtain a
+            # specific snapshot of code and place it in the
+            # /src/workspace path. When no "image" is specified, the
+            # controller uses a default that can clone public GitHub
+            # repositories.
+            #
+            # A user can circumvent the requirement for GitHub by
+            # using a custom image here. Any image which places code in
+            # a /src/workspace directory is compatible with the system.
+            repo: https://github.com/grpc/grpc.git
+            gitRef: master
+        build:
+            # Build is an init container that contains a compiler
+            # to build code in /src/workspace. Any image that compiles
+            # code, placing an executable in /src/workspace is
+            # compatible.
+            #
+            # In this case, image is inferred to be the latest "bazel"
+            # image, since it is omitted and the language is c++.
+            #
+            # The bazel image requires an output_user_root flag. To
+            # resist magical behavior, we require its inclusion in
+            # the listed args. I plan to open a ticket with the Bazel
+            # team to see if we can extract this into an env variable.
+            command: ["bazel"]
+            args: ["build","//test/cpp/qps:qps_json_driver", "--output_user_root=/src/workspace"]
+        run:
+            # Run describes the runtime of the test. The image is
+            # inferred to be the latest c++ runtime image, since it
+            # is omitted and the language is set to c++. A user can
+            # specify any runtime image, however.
+            #
+            # By design, the built executable and code is available
+            # over a shared volume at the /src/workspace path.
+            command: ["/src/workspace/bazel-bin/test/cpp/qps/qps_json_driver"]
+            # The controller is smart regarding a driver, passing the
+            # appropriate arguments to configure the scenario. The
+            # user does not need to specify any. If they do, their
+            # arguments will override the defaults.
+            args: []
+
+    # The user can specify servers to use when running tests. The
+    # initial version only supports 1 server to limit scope. Servers
+    # is an array for future expansion.
+    #
+    # There are many designs and systems to pursue load balancing,
+    # organizing and monitoring a mesh of servers. Therefore, this
+    # will likely be expanded in the future.
+    servers:
+        - language: java
+          # Any driver, server or client component can specify a node
+          # pool. This permits testing with many architectures. When
+          # omitted (as with the driver and client), the system will
+          # choose defaults.
+          pool: workers-32core
+          clone:
+            repo: https://github.com/grpc/grpc-java.git
+            gitRef: master
+          build:
+            command: ["./gradlew"]
+            args: ["--no-daemon", "-PskipCodegen=true", "-PskipAndroid=true", ":grpc-benchmarks:installDist"]
+          run:
+            command: ["/src/workspace/benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker"]
+            # The controller is smart regarding ports. If args
+            # are omitted, the system will pass appropriate args
+            # to assign ports and permit driver communication.
+            #
+            # In the future, I would like to move ports out of
+            # args and into env variables. This would make the
+            # system feel less fragile.
+            args: []
+
+    # Users can specify multiple clients. They are bound by the
+    # number of nodes.
+    clients:
+      - language: java
+        clone:
+          repo: https://github.com/grpc/grpc-java.git
+          gitRef: master
+        build:
+          command: ["./gradlew"]
+          args: ["--no-daemon", "-PskipCodegen=true", "-PskipAndroid=true", ":grpc-benchmarks:installDist"]
+        run:
+          command: ["/src/workspace/benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker"]
+          args: []
+
+    # We can optionally specify where to place the results. The
+    # controller will attempt to mount a service account in the driver.
+    # This can be used for uploading results to GCS or BigQuery.
+    results:
+        bigQueryTable: "example-project.foo.demo_dataset"
+
+    # Scenarios are separate objects under this proposal. While
+    # they specify configuration for clients and servers, they are
+    # highly specialized. I doubt we want to modify controller logic
+    # whenever the Scenario proto is changed. This is open to
+    # discussion, however.
+    #
+    # These can be stored in ConfigMaps or they can be high-level
+    # Kubernetes objects themselves. If we did want to couple, they
+    # could also be inlined.
+    scenarios:
+        - name: java-example-generic-async-streaming-ping-pong-secure
+
