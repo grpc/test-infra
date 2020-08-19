@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grpc/test-infra/pkg/defaults"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -237,4 +238,227 @@ func newLoadTest() *grpcv1.LoadTest {
 			},
 		},
 	}
+}
+
+// newLoadTestWithMultipleClientsAndServers attempts to create a
+// loadtest with multiple clients and servers for test.
+func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
+	cloneImage := "docker.pkg.github.com/grpc/test-infra/clone"
+	cloneRepo := "https://github.com/grpc/grpc.git"
+	cloneGitRef := "master"
+
+	buildImage := "l.gcr.io/google/bazel:latest"
+	buildCommand := []string{"bazel"}
+	buildArgs := []string{"build", "//test/cpp/qps:qps_worker"}
+
+	driverImage := "docker.pkg.github.com/grpc/test-infra/driver"
+	runImage := "docker.pkg.github.com/grpc/test-infra/cxx"
+	runCommand := []string{"bazel-bin/test/cpp/qps/qps_worker"}
+
+	clientRunArgs := []string{"--driver_port=10000"}
+	serverRunArgs := append(clientRunArgs, "--server_port=10010")
+
+	bigQueryTable := "grpc-testing.e2e_benchmark.foobarbuzz"
+
+	driverPool := "drivers"
+	workerPool := "workers-8core"
+
+	driverComponentName := "driver-1"
+
+	createdLoadTest := &grpcv1.LoadTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-loadtest-multiple-clients-and-servers",
+			Namespace: "default",
+		},
+
+		Spec: grpcv1.LoadTestSpec{
+			Driver: &grpcv1.Driver{
+				Component: grpcv1.Component{
+					Name:     &driverComponentName,
+					Language: "cxx",
+					Pool:     &driverPool,
+					Run: grpcv1.Run{
+						Image: &driverImage,
+					},
+				},
+			},
+			Results: &grpcv1.Results{
+				BigQueryTable: &bigQueryTable,
+			},
+
+			Scenarios: []grpcv1.Scenario{
+				{Name: "cpp-example-scenario"},
+			},
+		},
+	}
+
+	serverNames := []string{"server-1", "server-2", "server-3"}
+	for i := 1; i <= len(serverNames); i++ {
+		createdLoadTest.Spec.Servers = append(createdLoadTest.Spec.Servers, grpcv1.Server{
+			Component: grpcv1.Component{
+				Name:     &serverNames[i-1],
+				Language: "cxx",
+				Pool:     &workerPool,
+				Clone: &grpcv1.Clone{
+					Image:  &cloneImage,
+					Repo:   &cloneRepo,
+					GitRef: &cloneGitRef,
+				},
+				Build: &grpcv1.Build{
+					Image:   &buildImage,
+					Command: buildCommand,
+					Args:    buildArgs,
+				},
+				Run: grpcv1.Run{
+					Image:   &runImage,
+					Command: runCommand,
+					Args:    serverRunArgs,
+				},
+			},
+		})
+	}
+
+	clientName := []string{"client-1", "client-2", "client-3"}
+	for i := 1; i <= len(clientName); i++ {
+		createdLoadTest.Spec.Clients = append(createdLoadTest.Spec.Clients, grpcv1.Client{
+			Component: grpcv1.Component{
+				Name:     &clientName[i-1],
+				Language: "cxx",
+				Pool:     &workerPool,
+				Clone: &grpcv1.Clone{
+					Image:  &cloneImage,
+					Repo:   &cloneRepo,
+					GitRef: &cloneGitRef,
+				},
+				Build: &grpcv1.Build{
+					Image:   &buildImage,
+					Command: buildCommand,
+					Args:    buildArgs,
+				},
+				Run: grpcv1.Run{
+					Image:   &runImage,
+					Command: runCommand,
+					Args:    clientRunArgs,
+				},
+			},
+		})
+	}
+
+	return createdLoadTest
+}
+
+// populatePodListWithIrrelevantPod attempt to create pod list and populate it with
+// irrelevant pods
+func createPodListWithIrrelevantPod() *corev1.PodList {
+	currentPodList := &corev1.PodList{Items: []corev1.Pod{}}
+	currentPodList.Items = append(currentPodList.Items,
+		corev1.Pod{},
+
+		corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{},
+		},
+		corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random-name",
+			},
+		},
+		corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random-name",
+				Labels: map[string]string{
+					"keyOne": "random-task",
+					"KeyTwo": "irrelevant role",
+				},
+			},
+		},
+		corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random-name",
+				Labels: map[string]string{
+					defaults.LoadTestLabel: "random-task",
+					defaults.RoleLabel:     "irrelevant role",
+				},
+			},
+		},
+		corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random-name",
+				Labels: map[string]string{
+					defaults.LoadTestLabel:      "random-task",
+					defaults.RoleLabel:          "irrelevant role",
+					defaults.ComponentNameLabel: "irrelevant component name",
+				},
+			},
+		},
+		corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random-name",
+				Labels: map[string]string{
+					defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+					defaults.RoleLabel:          "driver",
+					defaults.ComponentNameLabel: "server-1",
+				},
+			},
+		},
+		corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random-name",
+				Labels: map[string]string{
+					defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+					defaults.RoleLabel:          "server",
+					defaults.ComponentNameLabel: "irrelevant component name",
+				},
+			},
+		},
+	)
+
+	return currentPodList
+}
+
+// populatePodListWithCurrentLoadTestPod attempts to create a Podlist and populate
+// it with the pods came from current loadtest.
+func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *corev1.PodList {
+	currentPodList := &corev1.PodList{Items: []corev1.Pod{}}
+
+	for _, eachClient := range currentLoadTest.Spec.Clients {
+		currentPodList.Items = append(currentPodList.Items,
+			corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "random-name",
+					Labels: map[string]string{
+						defaults.LoadTestLabel:      currentLoadTest.Name,
+						defaults.RoleLabel:          "client",
+						defaults.ComponentNameLabel: *eachClient.Name,
+					},
+				},
+			})
+	}
+
+	for _, eachServer := range currentLoadTest.Spec.Servers {
+		currentPodList.Items = append(currentPodList.Items,
+			corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "random-name",
+					Labels: map[string]string{
+						defaults.LoadTestLabel:      currentLoadTest.Name,
+						defaults.RoleLabel:          "server",
+						defaults.ComponentNameLabel: *eachServer.Name,
+					},
+				},
+			})
+	}
+
+	currentPodList.Items = append(currentPodList.Items,
+		corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "random-name",
+				Labels: map[string]string{
+					defaults.LoadTestLabel:      currentLoadTest.Name,
+					defaults.RoleLabel:          "driver",
+					defaults.ComponentNameLabel: *currentLoadTest.Spec.Driver.Name,
+				},
+			},
+		})
+
+	return currentPodList
 }

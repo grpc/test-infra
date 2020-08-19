@@ -3,13 +3,12 @@ package controllers
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
-	corev1 "k8s.io/api/core/v1"
-
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/pkg/defaults"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("Test Environment", func() {
@@ -538,6 +537,147 @@ var _ = Describe("Pod Creation", func() {
 			container := newRunContainer(run)
 			Expect(env[0]).To(BeElementOf(container.Env))
 			Expect(env[1]).To(BeElementOf(container.Env))
+		})
+	})
+})
+
+var _ = Describe("checkMissingPods", func() {
+
+	var currentLoadTest *grpcv1.LoadTest
+	var allRunningPods *corev1.PodList
+	var actualReturn *LoadTestMissing
+	var expectedReturn *LoadTestMissing
+
+	BeforeEach(func() {
+		currentLoadTest = newLoadTestWithMultipleClientsAndServers()
+		newListRef := corev1.PodList{Items: []corev1.Pod{}}
+		allRunningPods = &newListRef
+		expectedReturn = &LoadTestMissing{Clients: []grpcv1.Client{}, Servers: []grpcv1.Server{}}
+	})
+
+	Describe("no pods from the current load test is running", func() {
+		BeforeEach(func() {
+			for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
+				expectedReturn.Clients = append(expectedReturn.Clients, currentLoadTest.Spec.Clients[i])
+			}
+			for i := 0; i < len(currentLoadTest.Spec.Servers); i++ {
+				expectedReturn.Servers = append(expectedReturn.Servers, currentLoadTest.Spec.Servers[i])
+			}
+			expectedReturn.Driver = currentLoadTest.Spec.Driver
+		})
+
+		Context("no pod is running", func() {
+			It("returns the full pod list from the current load test", func() {
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+			})
+		})
+
+		Context("irrelevant pods are running", func() {
+			It("returns the full pod list from the current load test", func() {
+				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+			})
+		})
+	})
+
+	Describe("some of pods from the current load test is running", func() {
+
+		BeforeEach(func() {
+			allRunningPods.Items = append(allRunningPods.Items,
+				corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "random-name",
+						Labels: map[string]string{
+							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+							defaults.RoleLabel:          "server",
+							defaults.ComponentNameLabel: "server-1",
+						},
+					},
+				},
+				corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "random-name",
+						Labels: map[string]string{
+							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+							defaults.RoleLabel:          "client",
+							defaults.ComponentNameLabel: "client-2",
+						},
+					},
+				},
+				corev1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "random-name",
+						Labels: map[string]string{
+							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+							defaults.RoleLabel:          "driver",
+							defaults.ComponentNameLabel: "driver-1",
+						},
+					},
+				},
+			)
+			for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
+				if *currentLoadTest.Spec.Clients[i].Name != "client-2" {
+					expectedReturn.Clients = append(expectedReturn.Clients, currentLoadTest.Spec.Clients[i])
+				}
+			}
+
+			for i := 0; i < len(currentLoadTest.Spec.Servers); i++ {
+				if *currentLoadTest.Spec.Servers[i].Name != "server-1" {
+					expectedReturn.Servers = append(expectedReturn.Servers, currentLoadTest.Spec.Servers[i])
+				}
+			}
+		})
+
+		Context("only pods from the current load test are running", func() {
+			It("returns the list of pods missing from collection of running pods", func() {
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+			})
+		})
+
+		Context("there are also irrelevant pods running", func() {
+			It("returns the list of pods missing from collection of running pods", func() {
+				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+			})
+		})
+	})
+
+	Describe("all of pods from the current load test is running", func() {
+
+		BeforeEach(func() {
+			allRunningPods = populatePodListWithCurrentLoadTestPod(currentLoadTest)
+		})
+
+		Context("only pods from the current load test are running", func() {
+			It("returns a empty list", func() {
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+			})
+		})
+
+		Context("there are also irrelevant pods running", func() {
+
+			It("returns an empty list", func() {
+				allRunningPods.Items = append(allRunningPods.Items, createPodListWithIrrelevantPod().Items...)
+				actualReturn = checkMissingPods(currentLoadTest, allRunningPods)
+				Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
+				Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
+				Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+			})
 		})
 	})
 })
