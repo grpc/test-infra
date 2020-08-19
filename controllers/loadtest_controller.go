@@ -75,23 +75,6 @@ type LoadTestReconciler struct {
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests/status,verbs=get;update;patch
 
-// LoadTestMissing categorize missing components based on their roles at specific
-// moment. The struct is a wrapper to help us get role information associate
-// with components.
-type LoadTestMissing struct {
-	// Driver is the component that orchestrates the test. If Driver is not set
-	// that means we already have the Driver running.
-	Driver *grpcv1.Driver `json:"driver,omitempty"`
-
-	// Servers are a list of components that receive traffic from. The list
-	// indicates the Servers still in need.
-	Servers []grpcv1.Server `json:"servers,omitempty"`
-
-	// Clients are a list of components that send traffic to servers. The list
-	// indicates the Clients still in need.
-	Clients []grpcv1.Client `json:"clients,omitempty"`
-}
-
 // Reconcile attempts to bring the current state of the load test into agreement
 // with its declared spec. This may mean provisioning resources, doing nothing
 // or handling the termination of its pods.
@@ -148,6 +131,23 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = loadtests
 	_ = loadtest
 	return ctrl.Result{}, nil
+}
+
+// LoadTestMissing categorize missing components based on their roles at specific
+// moment. The struct is a wrapper to help us get role information associate
+// with components.
+type LoadTestMissing struct {
+	// Driver is the component that orchestrates the test. If Driver is not set
+	// that means we already have the Driver running.
+	Driver *grpcv1.Driver `json:"driver,omitempty"`
+
+	// Servers are a list of components that receive traffic from. The list
+	// indicates the Servers still in need.
+	Servers []grpcv1.Server `json:"servers,omitempty"`
+
+	// Clients are a list of components that send traffic to servers. The list
+	// indicates the Clients still in need.
+	Clients []grpcv1.Client `json:"clients,omitempty"`
 }
 
 // checkMissingPods attempts to check if any required component is missing from
