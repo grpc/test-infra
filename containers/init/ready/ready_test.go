@@ -44,6 +44,7 @@ var _ = Describe("WaitForReadyPods", func() {
 
 		driverPod = corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
+				Name: "driver",
 				Labels: map[string]string{
 					"role": "driver",
 				},
@@ -55,6 +56,7 @@ var _ = Describe("WaitForReadyPods", func() {
 
 		serverPod = corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
+				Name: "server",
 				Labels: map[string]string{
 					"role": "server",
 				},
@@ -66,6 +68,7 @@ var _ = Describe("WaitForReadyPods", func() {
 
 		clientPod = corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
+				Name: "client-1",
 				Labels: map[string]string{
 					"role": "client",
 				},
@@ -136,9 +139,31 @@ var _ = Describe("WaitForReadyPods", func() {
 		Expect(err).To(HaveOccurred())
 	})
 
+	It("does not match the same pod twice", func() {
+		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
+		defer cancel()
+
+		mock := &PodListerMock{
+			PodList: &corev1.PodList{
+				Items: []corev1.Pod{
+					clientPod,
+				},
+			},
+		}
+
+		_, err := WaitForReadyPods(ctx, mock, []string{
+			"role=client",
+			"role=client",
+		})
+		Expect(err).To(HaveOccurred())
+	})
+
 	It("returns successfully when all matching pods are found", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
 		defer cancel()
+
+		client2Pod := clientPod
+		client2Pod.Name = "client-2"
 
 		mock := &PodListerMock{
 			PodList: &corev1.PodList{
@@ -146,7 +171,7 @@ var _ = Describe("WaitForReadyPods", func() {
 					driverPod,
 					serverPod,
 					clientPod,
-					clientPod,
+					client2Pod,
 				},
 			},
 		}

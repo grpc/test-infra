@@ -133,6 +133,7 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, args []string) ([]strin
 	}
 
 	matchCount := 0
+	matchingPods := make(map[string]bool)
 
 	for {
 		if timeoutsEnabled && time.Now().After(deadline) {
@@ -149,6 +150,10 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, args []string) ([]strin
 				continue
 			}
 
+			if _, alreadyMatched := matchingPods[pod.Name]; alreadyMatched {
+				continue
+			}
+
 			for i, selector := range selectors {
 				if podIPs[i] != "" {
 					continue
@@ -156,6 +161,7 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, args []string) ([]strin
 
 				if selector.Matches(labels.Set(pod.Labels)) {
 					podIPs[i] = pod.Status.PodIP
+					matchingPods[pod.Name] = true
 					matchCount++
 					break
 				}
