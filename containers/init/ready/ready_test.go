@@ -76,7 +76,7 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		_, err := WaitForReadyPods(ctx, mock, []string{"hello-anyone-out-there"})
+		_, err := WaitForReadyPods(ctx, mock, []string{"hello=anyone-out-there"})
 		Expect(err).To(HaveOccurred())
 	})
 
