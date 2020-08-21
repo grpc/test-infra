@@ -148,11 +148,12 @@ var _ = Describe("WaitForReadyPods", func() {
 	})
 
 	It("returns successfully when all matching pods are found", func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
 		defer cancel()
 
-		client2Pod := clientPod
+		client2Pod := newTestPod("client")
 		client2Pod.Name = "client-2"
+		client2Pod.Status.PodIP = "127.0.0.4"
 
 		mock := &PodListerMock{
 			PodList: &corev1.PodList{
@@ -176,7 +177,7 @@ var _ = Describe("WaitForReadyPods", func() {
 			fmt.Sprintf("%s:%d", driverPod.Status.PodIP, DefaultDriverPort),
 			fmt.Sprintf("%s:%d", serverPod.Status.PodIP, DefaultDriverPort),
 			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
-			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
+			fmt.Sprintf("%s:%d", client2Pod.Status.PodIP, DefaultDriverPort),
 		}))
 	})
 
