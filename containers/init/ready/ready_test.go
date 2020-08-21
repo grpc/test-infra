@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -26,6 +27,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
+
 
 var _ = Describe("WaitForReadyPods", func() {
 	var fastDuration time.Duration
@@ -38,46 +40,18 @@ var _ = Describe("WaitForReadyPods", func() {
 
 	BeforeEach(func() {
 		fastDuration = 1 * time.Millisecond * timeMultiplier
-		slowDuration = 1000 * time.Millisecond * timeMultiplier
+		slowDuration = 100 * time.Millisecond * timeMultiplier
 
 		irrelevantPod = corev1.Pod{}
 
-		driverPod = corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "driver",
-				Labels: map[string]string{
-					"role": "driver",
-				},
-			},
-			Status: corev1.PodStatus{
-				PodIP: "127.0.0.1",
-			},
-		}
+		driverPod = newTestPod("driver")
+		driverPod.Spec.Containers[0].Ports = nil
 
-		serverPod = corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "server",
-				Labels: map[string]string{
-					"role": "server",
-				},
-			},
-			Status: corev1.PodStatus{
-				PodIP: "127.0.0.2",
-			},
-		}
+		serverPod = newTestPod("server")
+		serverPod.Status.PodIP = "127.0.0.2"
 
-		clientPod = corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "client-1",
-				Labels: map[string]string{
-					"role": "client",
-				},
-			},
-			Status: corev1.PodStatus{
-				PodIP: "127.0.0.3",
-			},
-		}
-
+		clientPod = newTestPod("client")
+		clientPod.Status.PodIP = "127.0.0.3"
 	})
 
 	It("returns successfully without args", func() {
@@ -88,9 +62,9 @@ var _ = Describe("WaitForReadyPods", func() {
 			PodList: &corev1.PodList{},
 		}
 
-		podIPs, err := WaitForReadyPods(ctx, mock, []string{})
+		podAddresses, err := WaitForReadyPods(ctx, mock, []string{})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(podIPs).To(BeEmpty())
+		Expect(podAddresses).To(BeEmpty())
 	})
 
 	It("timeout reached when no matching pods are found", func() {
@@ -139,6 +113,22 @@ var _ = Describe("WaitForReadyPods", func() {
 		Expect(err).To(HaveOccurred())
 	})
 
+	It("timeout reached when not ready pod matches", func() {
+		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
+		defer cancel()
+
+		driverPod.Status.ContainerStatuses[0].Ready = false
+
+		mock := &PodListerMock{
+			PodList: &corev1.PodList{
+				Items: []corev1.Pod{driverPod},
+			},
+		}
+
+		_, err := WaitForReadyPods(ctx, mock, []string{"role=driver"})
+		Expect(err).To(HaveOccurred())
+	})
+
 	It("does not match the same pod twice", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
 		defer cancel()
@@ -159,7 +149,7 @@ var _ = Describe("WaitForReadyPods", func() {
 	})
 
 	It("returns successfully when all matching pods are found", func() {
-		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 		defer cancel()
 
 		client2Pod := clientPod
@@ -176,18 +166,47 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		podIPs, err := WaitForReadyPods(ctx, mock, []string{
+		podAddresses, err := WaitForReadyPods(ctx, mock, []string{
 			"role=driver",
 			"role=server",
 			"role=client",
 			"role=client",
 		})
 		Expect(err).ToNot(HaveOccurred())
-		Expect(podIPs).To(Equal([]string{
-			driverPod.Status.PodIP,
-			serverPod.Status.PodIP,
-			clientPod.Status.PodIP,
-			clientPod.Status.PodIP,
+		Expect(podAddresses).To(Equal([]string{
+			fmt.Sprintf("%s:%d", driverPod.Status.PodIP, DefaultDriverPort),
+			fmt.Sprintf("%s:%d", serverPod.Status.PodIP, DefaultDriverPort),
+			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
+			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
+		}))
+	})
+
+	It("returns with correct ports for matching pods", func() {
+		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
+		defer cancel()
+
+		var customPort int32 = 9542
+		client2Pod := newTestPod("client")
+		client2Pod.Name = "client-2"
+		client2Pod.Spec.Containers[0].Ports[0].ContainerPort = customPort
+
+		mock := &PodListerMock{
+			PodList: &corev1.PodList{
+				Items: []corev1.Pod{
+					clientPod,
+					client2Pod,
+				},
+			},
+		}
+
+		podAddresses, err := WaitForReadyPods(ctx, mock, []string{
+			"role=client",
+			"role=client",
+		})
+		Expect(err).ToNot(HaveOccurred())
+		Expect(podAddresses).To(Equal([]string{
+			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
+			fmt.Sprintf("%s:%d", client2Pod.Status.PodIP, customPort),
 		}))
 	})
 
@@ -220,4 +239,37 @@ func (plm *PodListerMock) List(opts metav1.ListOptions) (*corev1.PodList, error)
 	}
 
 	return plm.PodList, nil
+}
+
+func newTestPod(role string) corev1.Pod {
+	return corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: role,
+			Labels: map[string]string{
+				"role": role,
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name: "run",
+					Ports: []corev1.ContainerPort{
+						{
+							Name: "driver",
+							Protocol: corev1.ProtocolTCP,
+							ContainerPort: DefaultDriverPort,
+						},
+					},
+				},
+			},
+		},
+		Status: corev1.PodStatus{
+			PodIP: "127.0.0.1",
+			ContainerStatuses: []corev1.ContainerStatus{
+				{
+					Ready: true,
+				},
+			},
+		},
+	}
 }

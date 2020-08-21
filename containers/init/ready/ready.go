@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -49,6 +50,11 @@ const OutputFileEnv = "READY_OUTPUT_FILE"
 // DefaultOutputFile is the name of the default file where the executable should
 // write the comma-separated list of IP addresses.
 const DefaultOutputFile = "/tmp/loadtest_workers"
+
+// DefaultDriverPort is the default port for communication between the driver
+// and worker pods. When another port could not be found on a pod, this port is
+// included in the addresses returned by the WaitForReadyPods function.
+const DefaultDriverPort int32 = 10000
 
 // KubeConfigEnv is the name of the environment variable that may contain a
 // path to a kubeconfig file. This environment variable does not need to be set
@@ -104,13 +110,32 @@ func isPodReady(pod *corev1.Pod) bool {
 	return true
 }
 
+// findDriverPort searches through a pod's list of containers and their ports to
+// locate a port named "driver". If discovered, it's number is returned. If not
+// found, DefaultDriverPort is returned.
+func findDriverPort(pod *corev1.Pod) int32 {
+	for _, container := range pod.Spec.Containers {
+		for _, port := range container.Ports {
+			if port.Name == "driver" {
+				return port.ContainerPort
+			}
+		}
+	}
+
+	return DefaultDriverPort
+}
+
 // WaitForReadyPods blocks until pods with matching label selectors are ready.
 // It accepts a context, allowing a timeout or deadline to be specified. When
-// all pods are ready, it returns a slice of strings with their IP addresses.
-// The order will match the label selectors.
+// all pods are ready, it returns a slice of strings with the IP address and
+// driver port for each matching pod. The order will match the label selectors.
 //
 // The syntax for the selectors is defined in the Parse function documented at
 // pkg.go.dev/k8s.io/apimachinery/pkg/labels.
+//
+// The driver port is determined by searching the pod for a container with a TCP
+// port named "driver". If there is no port named "driver" exposed on any of the
+// matching pod's containers, the value of defaults.DriverPort will be used.
 //
 // If the timeout is exceeded or there is a problem communicating with the
 // Kubernetes API, an error is returned.
@@ -127,9 +152,9 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, args []string) ([]strin
 		return nil, err
 	}
 
-	var podIPs []string
+	var podAddresses []string
 	for range selectors {
-		podIPs = append(podIPs, "")
+		podAddresses = append(podAddresses, "")
 	}
 
 	matchCount := 0
@@ -155,12 +180,14 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, args []string) ([]strin
 			}
 
 			for i, selector := range selectors {
-				if podIPs[i] != "" {
+				if podAddresses[i] != "" {
 					continue
 				}
 
 				if selector.Matches(labels.Set(pod.Labels)) {
-					podIPs[i] = pod.Status.PodIP
+					ip := pod.Status.PodIP
+					driverPort := findDriverPort(&pod)
+					podAddresses[i] = fmt.Sprintf("%s:%d", ip, driverPort)
 					matchingPods[pod.Name] = true
 					matchCount++
 					break
@@ -175,7 +202,7 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, args []string) ([]strin
 		time.Sleep(pollInterval)
 	}
 
-	return podIPs, nil
+	return podAddresses, nil
 }
 
 func main() {
