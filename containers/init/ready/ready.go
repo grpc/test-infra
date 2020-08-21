@@ -72,10 +72,10 @@ type PodLister interface {
 
 // parseSelectors accepts a slice of strings and converts them into Kubernetes
 // selectors. It returns an error if any of the strings is not a valid selector.
-func parseSelectors(args []string) ([]labels.Selector, error) {
+func parseSelectors(sels []string) ([]labels.Selector, error) {
 	var selectors []labels.Selector
 
-	for i, arg := range args {
+	for i, arg := range sels {
 		selector, err := labels.Parse(arg)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse selector #%d (%s): %v", i+1, arg, err)
@@ -139,7 +139,7 @@ func findDriverPort(pod *corev1.Pod) int32 {
 //
 // If the timeout is exceeded or there is a problem communicating with the
 // Kubernetes API, an error is returned.
-func WaitForReadyPods(ctx context.Context, pl PodLister, args []string) ([]string, error) {
+func WaitForReadyPods(ctx context.Context, pl PodLister, sels []string) ([]string, error) {
 	timeoutsEnabled := true
 	deadline, ok := ctx.Deadline()
 	if !ok {
@@ -147,7 +147,7 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, args []string) ([]strin
 		log.Printf("no timeout is set; this could block forever")
 	}
 
-	selectors, err := parseSelectors(args)
+	selectors, err := parseSelectors(sels)
 	if err != nil {
 		return nil, err
 	}
