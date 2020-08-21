@@ -111,7 +111,7 @@ func isPodReady(pod *corev1.Pod) bool {
 }
 
 // findDriverPort searches through a pod's list of containers and their ports to
-// locate a port named "driver". If discovered, it's number is returned. If not
+// locate a port named "driver". If discovered, its number is returned. If not
 // found, DefaultDriverPort is returned.
 func findDriverPort(pod *corev1.Pod) int32 {
 	for _, container := range pod.Spec.Containers {
@@ -135,7 +135,7 @@ func findDriverPort(pod *corev1.Pod) int32 {
 //
 // The driver port is determined by searching the pod for a container with a TCP
 // port named "driver". If there is no port named "driver" exposed on any of the
-// matching pod's containers, the value of defaults.DriverPort will be used.
+// matching pod's containers, the value of DefaultDriverPort will be used.
 //
 // If the timeout is exceeded or there is a problem communicating with the
 // Kubernetes API, an error is returned.
