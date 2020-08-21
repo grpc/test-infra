@@ -31,3 +31,36 @@ func TestReady(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Ready Suite")
 }
+
+func newTestPod(role string) corev1.Pod {
+	return corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: role,
+			Labels: map[string]string{
+				"role": role,
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name: "run",
+					Ports: []corev1.ContainerPort{
+						{
+							Name:          "driver",
+							Protocol:      corev1.ProtocolTCP,
+							ContainerPort: DefaultDriverPort,
+						},
+					},
+				},
+			},
+		},
+		Status: corev1.PodStatus{
+			PodIP: "127.0.0.1",
+			ContainerStatuses: []corev1.ContainerStatus{
+				{
+					Ready: true,
+				},
+			},
+		},
+	}
+}
