@@ -20,6 +20,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
@@ -75,6 +76,12 @@ var _ = Describe("CopyWithDefaults", func() {
 			loadtest.Spec.Driver.Name = nil
 			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
 			Expect(copy.Spec.Driver.Name).ToNot(BeNil())
+		})
+
+		It("sets default namespace when unspecified", func() {
+			loadtest.Namespace = ""
+			copy, _ := CopyWithDefaults(defaultOptions, loadtest)
+			Expect(copy.Namespace).To(Equal(corev1.NamespaceDefault))
 		})
 
 		It("sets default when nil", func() {
