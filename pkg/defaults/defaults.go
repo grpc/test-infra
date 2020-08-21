@@ -47,7 +47,7 @@ type LanguageDefault struct {
 	// Language uniquely identifies a programming language. When the
 	// system encounters this name, it will select the build image and
 	// run image as the defaults.
-	Language string `json:"name"`
+	Language string `json:"language"`
 
 	// BuildImage specifies the default container image for building or
 	// assembling an executable or bundle for a language. This image
