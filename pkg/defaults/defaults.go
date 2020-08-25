@@ -16,6 +16,13 @@ limitations under the License.
 
 package defaults
 
+import (
+	"github.com/google/uuid"
+	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+)
+
 const (
 	// LoadTestLabel is a label which contains the test's unique name.
 	LoadTestLabel = "loadtest"
@@ -91,4 +98,93 @@ type Defaults struct {
 	// Languages specifies the default build and run container images
 	// for each known language.
 	Languages []LanguageDefault `json:"languages,omitempty"`
+}
+
+// SetLoadTestDefaults applies default values for missing fields that are
+// required to reconcile a load test.
+//
+// This returns an error if the system has no viable default. For example, the
+// system cannot infer a run image for "fortran" if a build image was not
+// declared for this language in the Defaults object.
+func (d *Defaults) SetLoadTestDefaults(test *grpcv1.LoadTest) error {
+	var err error
+
+	spec := &test.Spec
+
+	if test.Namespace == "" {
+		test.Namespace = corev1.NamespaceDefault
+	}
+
+	if spec.Driver == nil {
+		spec.Driver = new(grpcv1.Driver)
+	}
+
+	if spec.Driver.Language == "" {
+		// TODO: Make default driver language a configuration option
+		spec.Driver.Language = "cxx"
+	}
+
+	if spec.Driver.Run.Image == nil {
+		spec.Driver.Run.Image = &d.DriverImage
+	}
+	if err = d.setComponentDefaults(&spec.Driver.Component, d.DriverPool); err != nil {
+		return errors.Wrap(err, "could not set defaults for driver")
+	}
+
+	for i := range spec.Servers {
+		if err = d.setComponentDefaults(&spec.Servers[i].Component, d.WorkerPool); err != nil {
+			return errors.Wrapf(err, "could not set defaults for server at index %d", i)
+		}
+	}
+
+	for i := range spec.Clients {
+		if err = d.setComponentDefaults(&spec.Clients[i].Component, d.WorkerPool); err != nil {
+			return errors.Wrapf(err, "could not set defaults for client at index %d", i)
+		}
+	}
+
+	return nil
+}
+
+// setComponentDefaults sets default name, pool and container images for a
+// component. An error is returned if a default could not be inferred for a
+// field.
+func (d *Defaults) setComponentDefaults(component *grpcv1.Component, defaultPool string) error {
+	language := component.Language
+	im := newImageMap(d.Languages)
+
+	if component.Name == nil {
+		name := uuid.New().String()
+		component.Name = &name
+	}
+
+	if component.Pool == nil {
+		component.Pool = &defaultPool
+	}
+
+	if component.Clone != nil && component.Clone.Image == nil {
+		component.Clone.Image = &d.CloneImage
+	}
+
+	build := component.Build
+	if build != nil && build.Image == nil {
+		buildImage, err := im.buildImage(language)
+		if err != nil {
+			return errors.Wrap(err, "could not infer default build image")
+		}
+
+		build.Image = &buildImage
+	}
+
+	run := &component.Run
+	if run.Image == nil {
+		runImage, err := im.runImage(language)
+		if err != nil {
+			return errors.Wrap(err, "could not infer default run image")
+		}
+
+		run.Image = &runImage
+	}
+
+	return nil
 }
