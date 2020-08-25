@@ -4,6 +4,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	corev1 "k8s.io/api/core/v1"
+
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 )
 
@@ -17,6 +19,10 @@ func CopyWithDefaults(d *Defaults, loadtest *grpcv1.LoadTest) (*grpcv1.LoadTest,
 	im := newImageMap(d.Languages)
 	test := loadtest.DeepCopy()
 	spec := &test.Spec
+
+	if test.Namespace == "" {
+		test.Namespace = corev1.NamespaceDefault
+	}
 
 	if spec.Driver == nil {
 		spec.Driver = &grpcv1.Driver{

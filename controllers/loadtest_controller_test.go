@@ -32,6 +32,15 @@ var _ = Describe("Pod Creation", func() {
 			component = &loadtest.Spec.Clients[0].Component
 		})
 
+		It("sets namespace to match loadtest", func() {
+			namespace := "foobar"
+			loadtest.Namespace = namespace
+
+			pod, err := newClientPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(pod.Namespace).To(Equal(namespace))
+		})
+
 		It("sets component-name label", func() {
 			name := "foo-bar-buzz"
 			component.Name = &name
@@ -125,6 +134,15 @@ var _ = Describe("Pod Creation", func() {
 
 		BeforeEach(func() {
 			component = &loadtest.Spec.Driver.Component
+		})
+
+		It("sets namespace to match loadtest", func() {
+			namespace := "foobar"
+			loadtest.Namespace = namespace
+
+			pod, err := newDriverPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(pod.Namespace).To(Equal(namespace))
 		})
 
 		It("adds a scenario volume", func() {
@@ -263,6 +281,15 @@ var _ = Describe("Pod Creation", func() {
 
 		BeforeEach(func() {
 			component = &loadtest.Spec.Servers[0].Component
+		})
+
+		It("sets namespace to match loadtest", func() {
+			namespace := "foobar"
+			loadtest.Namespace = namespace
+
+			pod, err := newServerPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(pod.Namespace).To(Equal(namespace))
 		})
 
 		It("sets loadtest-role label to server", func() {

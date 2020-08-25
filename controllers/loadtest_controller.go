@@ -404,7 +404,8 @@ func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string)
 
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%s-%s", loadtest.Name, role, *component.Name),
+			Name:      fmt.Sprintf("%s-%s-%s", loadtest.Name, role, *component.Name),
+			Namespace: loadtest.Namespace,
 			Labels: map[string]string{
 				defaults.LoadTestLabel:      loadtest.Name,
 				defaults.RoleLabel:          role,
