@@ -79,6 +79,8 @@ type LoadTestReconciler struct {
 // with its declared spec. This may mean provisioning resources, doing nothing
 // or handling the termination of its pods.
 func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	var err error
+
 	log := r.Log.WithValues("loadtest", req.NamespacedName)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
@@ -86,31 +88,39 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Fetch the current state of the world.
 
 	var nodes corev1.NodeList
-	if err := r.List(ctx, &nodes); err != nil {
+	if err = r.List(ctx, &nodes); err != nil {
 		log.Error(err, "failed to list nodes")
 		// attempt to requeue with exponential back-off
 		return ctrl.Result{Requeue: true}, err
 	}
 
 	var pods corev1.PodList
-	if err := r.List(ctx, &pods, client.InNamespace(req.Namespace)); err != nil {
+	if err = r.List(ctx, &pods, client.InNamespace(req.Namespace)); err != nil {
 		log.Error(err, "failed to list pods", "namespace", req.Namespace)
 		// attempt to requeue with exponential back-off
 		return ctrl.Result{Requeue: true}, err
 	}
 
 	var loadtests grpcv1.LoadTestList
-	if err := r.List(ctx, &loadtests); err != nil {
+	if err = r.List(ctx, &loadtests); err != nil {
 		log.Error(err, "failed to list loadtests")
 		// attempt to requeue with exponential back-off
 		return ctrl.Result{Requeue: true}, err
 	}
 
 	var loadtest grpcv1.LoadTest
-	if err := r.Get(ctx, req.NamespacedName, &loadtest); err != nil {
+	if err = r.Get(ctx, req.NamespacedName, &loadtest); err != nil {
 		log.Error(err, "failed to get loadtest", "name", req.NamespacedName)
 		// do not requeue, may have been garbage collected
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	err = r.Defaults.SetLoadTestDefaults(&loadtest)
+	if err != nil {
+		log.Error(err, "failed to set defaults on loadtest")
+
+		// do not requeue, something has gone horribly wrong
+		return ctrl.Result{}, err
 	}
 
 	// Check if the loadtest has terminated.
