@@ -69,16 +69,12 @@ spec:
     # will likely be expanded in the future.
     servers:
         - language: java
-          # Any driver, server or client component can specify a node
-          # pool. This permits testing with many architectures. When
-          # omitted (as with the driver and client), the system will
-          # choose defaults.
-          pool: workers-32core
           clone:
             repo: https://github.com/grpc/grpc-java.git
             gitRef: master
           build:
-            command: ["./gradlew"]
+            image: gradle:jdk8
+            command: ["gradle"]
             args: ["--no-daemon", "-PskipCodegen=true", "-PskipAndroid=true", ":grpc-benchmarks:installDist"]
           run:
             command: ["/src/workspace/benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker"]
@@ -99,7 +95,8 @@ spec:
           repo: https://github.com/grpc/grpc-java.git
           gitRef: master
         build:
-          command: ["./gradlew"]
+          image: gradle:jdk8
+          command: ["gradle"]
           args: ["--no-daemon", "-PskipCodegen=true", "-PskipAndroid=true", ":grpc-benchmarks:installDist"]
         run:
           command: ["/src/workspace/benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker"]

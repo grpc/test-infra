@@ -31,7 +31,8 @@ type imageMap struct {
 func newImageMap(lds []LanguageDefault) *imageMap {
 	m := make(map[string]*LanguageDefault)
 
-	for _, ld := range lds {
+	for i := range lds {
+		ld := lds[i]
 		m[ld.Language] = &ld
 	}
 

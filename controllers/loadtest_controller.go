@@ -87,40 +87,48 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Fetch the current state of the world.
 
-	var nodes corev1.NodeList
-	if err = r.List(ctx, &nodes); err != nil {
+	nodes := new(corev1.NodeList)
+	if err = r.List(ctx, nodes); err != nil {
 		log.Error(err, "failed to list nodes")
+
 		// attempt to requeue with exponential back-off
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	var pods corev1.PodList
-	if err = r.List(ctx, &pods, client.InNamespace(req.Namespace)); err != nil {
+	pods := new(corev1.PodList)
+	if err = r.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
 		log.Error(err, "failed to list pods", "namespace", req.Namespace)
+
 		// attempt to requeue with exponential back-off
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	var loadtests grpcv1.LoadTestList
-	if err = r.List(ctx, &loadtests); err != nil {
+	loadtests := new(grpcv1.LoadTestList)
+	if err = r.List(ctx, loadtests); err != nil {
 		log.Error(err, "failed to list loadtests")
+
 		// attempt to requeue with exponential back-off
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	var loadtest grpcv1.LoadTest
-	if err = r.Get(ctx, req.NamespacedName, &loadtest); err != nil {
+	fetchedLoadTest := new(grpcv1.LoadTest)
+	if err = r.Get(ctx, req.NamespacedName, fetchedLoadTest); err != nil {
 		log.Error(err, "failed to get loadtest", "name", req.NamespacedName)
+
 		// do not requeue, may have been garbage collected
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	err = r.Defaults.SetLoadTestDefaults(&loadtest)
-	if err != nil {
-		log.Error(err, "failed to set defaults on loadtest")
+	loadtest := fetchedLoadTest.DeepCopy()
+	if err = r.Defaults.SetLoadTestDefaults(loadtest); err != nil {
+		log.Error(err, "failed to find defaults for loadtest")
 
 		// do not requeue, something has gone horribly wrong
 		return ctrl.Result{}, err
+	}
+	if err = r.Update(ctx, loadtest); err != nil {
+		log.Error(err, "failed to update loadtest with defaults")
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	// Check if the loadtest has terminated.
@@ -132,6 +140,32 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// TODO: Add method to get list of owned pods and method to check their status.
 
 	// Create any missing pods that the loadtest needs.
+
+	var pod *corev1.Pod
+	missingPods := checkMissingPods(loadtest, pods)
+
+	if len(missingPods.Servers) > 0 {
+		pod, err = newServerPod(loadtest, &missingPods.Servers[0].Component)
+	} else if len(missingPods.Clients) > 0 {
+		pod, err = newClientPod(loadtest, &missingPods.Clients[0].Component)
+	} else if missingPods.Driver != nil {
+		pod, err = newDriverPod(loadtest, &missingPods.Driver.Component)
+	}
+
+	if err != nil {
+		log.Error(err, "could not initialize new pod", "pod", pod)
+	}
+	if pod != nil {
+		if err = ctrl.SetControllerReference(loadtest, pod, r.Scheme); err != nil {
+			log.Error(err, "could not set controller reference on pod", "pod", pod)
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		if err = r.Create(ctx, pod); err != nil {
+			log.Error(err, "could not create new pod", "pod", pod)
+			return ctrl.Result{Requeue: true}, err
+		}
+	}
 
 	// TODO: Add logic to schedule the next missing pod.
 
@@ -229,6 +263,7 @@ func checkMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.P
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grpcv1.LoadTest{}).
+		Owns(&corev1.Pod{}).
 		Complete(r)
 }
 
@@ -370,6 +405,12 @@ func newCloneContainer(clone *grpcv1.Clone) corev1.Container {
 		Name:  cloneInitContainer,
 		Image: safeStrUnwrap(clone.Image),
 		Env:   env,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "workspace",
+				MountPath: "/src/workspace",
+			},
+		},
 	}
 }
 
@@ -381,11 +422,18 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 	}
 
 	return corev1.Container{
-		Name:    buildInitContainer,
-		Image:   *build.Image,
-		Command: build.Command,
-		Args:    build.Args,
-		Env:     build.Env,
+		Name:       buildInitContainer,
+		Image:      *build.Image,
+		Command:    build.Command,
+		Args:       build.Args,
+		Env:        build.Env,
+		WorkingDir: "/src/workspace",
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "workspace",
+				MountPath: "/src/workspace",
+			},
+		},
 	}
 }
 
@@ -397,6 +445,12 @@ func newRunContainer(run grpcv1.Run) corev1.Container {
 		Command: run.Command,
 		Args:    run.Args,
 		Env:     run.Env,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "workspace",
+				MountPath: "/src/workspace",
+			},
+		},
 	}
 }
 
@@ -444,6 +498,11 @@ func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string)
 							TopologyKey: "kubernetes.io/hostname",
 						},
 					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name: "workspace",
 				},
 			},
 		},
