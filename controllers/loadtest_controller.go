@@ -105,20 +105,24 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	fetchedLoadtest := new(grpcv1.LoadTest)
-	if err = r.Get(ctx, req.NamespacedName, fetchedLoadtest); err != nil {
+	loadtest := new(grpcv1.LoadTest)
+	if err = r.Get(ctx, req.NamespacedName, loadtest); err != nil {
 		log.Error(err, "failed to get loadtest", "name", req.NamespacedName)
 
 		// do not requeue, the load test may have been deleted
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	err = r.Defaults.SetLoadTestDefaults(&loadtest)
-	if err != nil {
+	loadtest = loadtest.DeepCopy()
+	if err = r.Defaults.SetLoadTestDefaults(loadtest); err != nil {
 		log.Error(err, "failed to set defaults on loadtest")
 
 		// do not requeue, something has gone horribly wrong
 		return ctrl.Result{}, err
+	}
+	if err = r.Update(ctx, loadtest); err != nil {
+		log.Error(err, "failed to update loadtest with defaults")
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	// Check if the loadtest has terminated.
