@@ -64,6 +64,14 @@ const CloneRepoEnv = "CLONE_REPO"
 // commit, tag or branch to checkout after cloning a git repository.
 const CloneGitRefEnv = "CLONE_GIT_REF"
 
+// workspaceVolume contains the name of the volume that is shared between the
+// init containers and containers for a driver or worker pod.
+const workspaceVolume = "workspace"
+
+// workspaceMountPath contains the path to mount the volume identified by
+// `workspaceVolume`.
+const workspaceMountPath = "/src/workspace"
+
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
@@ -301,6 +309,23 @@ func newScenarioVolumeMount(scenario string) corev1.VolumeMount {
 	}
 }
 
+// newWorkspaceVolume returns an emptyDir volume with `workspaceVolume` as its
+// name.
+func newWorkspaceVolume() corev1.Volume {
+	return corev1.Volume{Name: workspaceVolume}
+}
+
+// newWorkspaceVolumeMount returns a volume mount with `workspaceMountPath` as
+// the path and a reference to the `workspaceVolume`. This volume mount grants
+// read/write access.
+func newWorkspaceVolumeMount() corev1.VolumeMount {
+	return corev1.VolumeMount{
+		Name:      workspaceVolume,
+		MountPath: workspaceMountPath,
+		ReadOnly:  false,
+	}
+}
+
 // newScenarioEnvVar accepts the name of a scenario ConfigMap and returns a
 // an environment variable used to locate the scenario in a mounted volume.
 func newScenarioFileEnvVar(scenario string) corev1.EnvVar {
@@ -395,6 +420,9 @@ func newCloneContainer(clone *grpcv1.Clone) corev1.Container {
 		Name:  cloneInitContainer,
 		Image: safeStrUnwrap(clone.Image),
 		Env:   env,
+		VolumeMounts: []corev1.VolumeMount{
+			newWorkspaceVolumeMount(),
+		},
 	}
 }
 
@@ -411,6 +439,9 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 		Command: build.Command,
 		Args:    build.Args,
 		Env:     build.Env,
+		VolumeMounts: []corev1.VolumeMount{
+			newWorkspaceVolumeMount(),
+		},
 	}
 }
 
@@ -422,6 +453,9 @@ func newRunContainer(run grpcv1.Run) corev1.Container {
 		Command: run.Command,
 		Args:    run.Args,
 		Env:     run.Env,
+		VolumeMounts: []corev1.VolumeMount{
+			newWorkspaceVolumeMount(),
+		},
 	}
 }
 
@@ -470,6 +504,9 @@ func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string)
 						},
 					},
 				},
+			},
+			Volumes: []corev1.Volume{
+				newWorkspaceVolume(),
 			},
 		},
 	}, nil

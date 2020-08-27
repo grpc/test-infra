@@ -127,6 +127,14 @@ var _ = Describe("Pod Creation", func() {
 			Expect(err).To(BeNil())
 			Expect(pod.Spec.Containers[0].Ports).To(ContainElement(port))
 		})
+
+		It("sets workspace volume", func() {
+			pod, err := newClientPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			volume := newWorkspaceVolume()
+			Expect(pod.Spec.Volumes).To(ContainElement(volume))
+		})
 	})
 
 	Describe("newDriverPod", func() {
@@ -274,6 +282,14 @@ var _ = Describe("Pod Creation", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Spec.RestartPolicy).To(Equal(corev1.RestartPolicyNever))
 		})
+
+		It("sets workspace volume", func() {
+			pod, err := newDriverPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			volume := newWorkspaceVolume()
+			Expect(pod.Spec.Volumes).To(ContainElement(volume))
+		})
 	})
 
 	Describe("newServerPod", func() {
@@ -386,6 +402,14 @@ var _ = Describe("Pod Creation", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Spec.RestartPolicy).To(Equal(corev1.RestartPolicyNever))
 		})
+
+		It("sets workspace volume", func() {
+			pod, err := newServerPod(loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			volume := newWorkspaceVolume()
+			Expect(pod.Spec.Volumes).To(ContainElement(volume))
+		})
 	})
 
 	Describe("newCloneContainer", func() {
@@ -406,6 +430,12 @@ var _ = Describe("Pod Creation", func() {
 		It("sets the name of the container", func() {
 			container := newCloneContainer(clone)
 			Expect(container.Name).To(Equal(cloneInitContainer))
+		})
+
+		It("sets workspace volume mount", func() {
+			container := newCloneContainer(clone)
+			volumeMount := newWorkspaceVolumeMount()
+			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
 		})
 
 		It("returns empty container given nil pointer", func() {
@@ -462,6 +492,12 @@ var _ = Describe("Pod Creation", func() {
 		It("sets the name of the container", func() {
 			container := newBuildContainer(build)
 			Expect(container.Name).To(Equal(buildInitContainer))
+		})
+
+		It("sets workspace volume mount", func() {
+			container := newBuildContainer(build)
+			volumeMount := newWorkspaceVolumeMount()
+			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
 		})
 
 		It("returns empty container given nil pointer", func() {
@@ -527,6 +563,12 @@ var _ = Describe("Pod Creation", func() {
 			Expect(container.Name).To(Equal(runContainer))
 		})
 
+		It("sets workspace volume mount", func() {
+			container := newRunContainer(run)
+			volumeMount := newWorkspaceVolumeMount()
+			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
+		})
+
 		It("sets image", func() {
 			image := "golang:1.14"
 			run.Image = &image
@@ -564,6 +606,13 @@ var _ = Describe("Pod Creation", func() {
 			container := newRunContainer(run)
 			Expect(env[0]).To(BeElementOf(container.Env))
 			Expect(env[1]).To(BeElementOf(container.Env))
+		})
+	})
+
+	Describe("newWorkspaceVolumeMount", func() {
+		It("grants read and write access", func() {
+			volumeMount := newWorkspaceVolumeMount()
+			Expect(volumeMount.ReadOnly).To(BeFalse())
 		})
 	})
 })
