@@ -78,7 +78,7 @@ spec:
             repo: https://github.com/grpc/grpc-java.git
             gitRef: master
           build:
-            command: ["./gradlew"]
+            command: ["gradle"]
             args: ["--no-daemon", "-PskipCodegen=true", "-PskipAndroid=true", ":grpc-benchmarks:installDist"]
           run:
             command: ["/src/workspace/benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker"]
@@ -99,11 +99,10 @@ spec:
           repo: https://github.com/grpc/grpc-java.git
           gitRef: master
         build:
-          command: ["./gradlew"]
+          command: ["gradle"]
           args: ["--no-daemon", "-PskipCodegen=true", "-PskipAndroid=true", ":grpc-benchmarks:installDist"]
         run:
           command: ["/src/workspace/benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker"]
-          args: []
 
     # We can optionally specify where to place the results. The
     # controller will attempt to mount a service account in the driver.
@@ -121,5 +120,5 @@ spec:
     # Kubernetes objects themselves. If we did want to couple, they
     # could also be inlined.
     scenarios:
-        - name: java-example-generic-async-streaming-ping-pong-secure
+        - name: java-example-scenario
 
