@@ -434,11 +434,12 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 	}
 
 	return corev1.Container{
-		Name:    buildInitContainer,
-		Image:   *build.Image,
-		Command: build.Command,
-		Args:    build.Args,
-		Env:     build.Env,
+		Name:       buildInitContainer,
+		Image:      *build.Image,
+		Command:    build.Command,
+		Args:       build.Args,
+		Env:        build.Env,
+		WorkingDir: workspaceMountPath,
 		VolumeMounts: []corev1.VolumeMount{
 			newWorkspaceVolumeMount(),
 		},
@@ -448,11 +449,12 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 // newRunContainer constructs a container given a grpcv1.Run object.
 func newRunContainer(run grpcv1.Run) corev1.Container {
 	return corev1.Container{
-		Name:    runContainer,
-		Image:   *run.Image,
-		Command: run.Command,
-		Args:    run.Args,
-		Env:     run.Env,
+		Name:       runContainer,
+		Image:      *run.Image,
+		Command:    run.Command,
+		Args:       run.Args,
+		Env:        run.Env,
+		WorkingDir: workspaceMountPath,
 		VolumeMounts: []corev1.VolumeMount{
 			newWorkspaceVolumeMount(),
 		},

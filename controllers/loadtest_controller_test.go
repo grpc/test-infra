@@ -500,6 +500,11 @@ var _ = Describe("Pod Creation", func() {
 			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
 		})
 
+		It("sets workspace as working directory", func() {
+			container := newBuildContainer(build)
+			Expect(container.WorkingDir).To(Equal(workspaceMountPath))
+		})
+
 		It("returns empty container given nil pointer", func() {
 			build = nil
 			container := newBuildContainer(build)
@@ -567,6 +572,11 @@ var _ = Describe("Pod Creation", func() {
 			container := newRunContainer(run)
 			volumeMount := newWorkspaceVolumeMount()
 			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
+		})
+
+		It("sets workspace as working directory", func() {
+			container := newRunContainer(run)
+			Expect(container.WorkingDir).To(Equal(workspaceMountPath))
 		})
 
 		It("sets image", func() {
