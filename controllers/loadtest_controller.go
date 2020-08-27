@@ -131,9 +131,31 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Check the status of any running pods.
 
-	// TODO: Add method to get list of owned pods and method to check their status.
+	var pod *corev1.Pod
+	missingPods := checkMissingPods(loadtest, pods)
 
-	// Create any missing pods that the loadtest needs.
+	if len(missingPods.Servers) > 0 {
+		pod, err = newServerPod(loadtest, &missingPods.Servers[0].Component)
+	} else if len(missingPods.Clients) > 0 {
+		pod, err = newClientPod(loadtest, &missingPods.Clients[0].Component)
+	} else if missingPods.Driver != nil {
+		pod, err = newDriverPod(loadtest, &missingPods.Driver.Component)
+	}
+
+	if err != nil {
+		log.Error(err, "could not initialize new pod", "pod", pod)
+	}
+	if pod != nil {
+		if err = ctrl.SetControllerReference(loadtest, pod, r.Scheme); err != nil {
+			log.Error(err, "could not set controller reference on pod", "pod", pod)
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		if err = r.Create(ctx, pod); err != nil {
+			log.Error(err, "could not create new pod", "pod", pod)
+			return ctrl.Result{Requeue: true}, err
+		}
+	}
 
 	// TODO: Add logic to schedule the next missing pod.
 
@@ -231,6 +253,7 @@ func checkMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.P
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grpcv1.LoadTest{}).
+		Owns(&corev1.Pod{}).
 		Complete(r)
 }
 
