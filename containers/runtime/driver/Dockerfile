@@ -19,24 +19,28 @@ ARG GITREF=master
 
 RUN apt-get update && apt-get install -y git
 
-RUN mkdir -p /grpc/grpc
-WORKDIR /grpc/grpc
+RUN mkdir -p /src/code
+WORKDIR /src/code
 
 RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 
 FROM l.gcr.io/google/bazel:0.17.1
 
-COPY --from=0 /grpc/grpc /src/workspace
+COPY --from=0 /src/code /src/code
 RUN mkdir -p /tmp/build_output
-WORKDIR /src/workspace
+WORKDIR /src/code
 RUN bazel --output_user_root=/tmp/build_output build //test/cpp/qps:qps_json_driver
 
 FROM debian:buster
 
-WORKDIR /grpc/grpc
+RUN mkdir -p /src/driver
+RUN mkdir -p /src/code
+RUN mkdir -p /src/workspace
+WORKDIR /src/workspace
+
 COPY --from=1 /tmp/build_output /tmp/build_output
-COPY --from=1 /src/workspace .
+COPY --from=1 /src/code /src/code
 
 RUN apt-get update && apt-get install -y \
   autoconf \
@@ -74,12 +78,12 @@ RUN pip3 install \
   pyasn1_modules==0.2.2 \
   pyasn1==0.4.2
 
-COPY . .
-RUN chmod a+x run.sh
+COPY . /src/driver
+RUN chmod a+x /src/driver/run.sh
 
 ENV QPS_WORKERS=""
 ENV QPS_WORKERS_FILE=""
-ENV SCENARIOS_FILE="example.json"
+ENV SCENARIOS_FILE="/src/driver/example.json"
 ENV BQ_RESULT_TABLE=""
 
-CMD ["./run.sh"]
+CMD ["/src/driver/run.sh"]
