@@ -78,6 +78,7 @@ COPY . .
 RUN chmod a+x run.sh
 
 ENV QPS_WORKERS=""
+ENV QPS_WORKERS_FILE=""
 ENV SCENARIOS_FILE="example.json"
 ENV BQ_RESULT_TABLE=""
 
