@@ -19,11 +19,11 @@ if [ -n "$QPS_WORKERS_FILE" ]; then
   export QPS_WORKERS=$(cat $QPS_WORKERS_FILE)
 fi
 
-bazel-bin/test/cpp/qps/qps_json_driver --scenarios_file=$SCENARIOS_FILE \
+/src/code/bazel-bin/test/cpp/qps/qps_json_driver --scenarios_file=$SCENARIOS_FILE \
   --scenario_result_file='scenario_result.json'
 
 if [ "$BQ_RESULT_TABLE" != "" ]
 then
-  python3 tools/run_tests/performance/bq_upload_result.py --bq_result_table="$BQ_RESULT_TABLE"
+  python3 /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="$BQ_RESULT_TABLE"
 fi
 
