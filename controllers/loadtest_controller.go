@@ -143,11 +143,11 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	missingPods := checkMissingPods(loadtest, pods)
 
 	if len(missingPods.Servers) > 0 {
-		pod, err = newServerPod(loadtest, &missingPods.Servers[0].Component)
+		pod, err = newServerPod(r.Defaults, loadtest, &missingPods.Servers[0].Component)
 	} else if len(missingPods.Clients) > 0 {
-		pod, err = newClientPod(loadtest, &missingPods.Clients[0].Component)
+		pod, err = newClientPod(r.Defaults, loadtest, &missingPods.Clients[0].Component)
 	} else if missingPods.Driver != nil {
-		pod, err = newDriverPod(loadtest, &missingPods.Driver.Component)
+		pod, err = newDriverPod(r.Defaults, loadtest, &missingPods.Driver.Component)
 	}
 
 	if err != nil {
@@ -265,15 +265,15 @@ func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// newClientPod creates a client given a load test and a reference to its
-// component. It returns an error if a pod cannot be constructed.
-func newClientPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+// newClientPod creates a client given defaults, a load test and a reference to
+// the client's component. It returns an error if a pod cannot be constructed.
+func newClientPod(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
 	pod, err := newPod(loadtest, component, defaults.ClientRole)
 	if err != nil {
 		return nil, err
 	}
 
-	addDriverPort(&pod.Spec.Containers[0])
+	addDriverPort(&pod.Spec.Containers[0], defs.DriverPort)
 
 	return pod, nil
 }
@@ -336,9 +336,9 @@ func newScenarioFileEnvVar(scenario string) corev1.EnvVar {
 	}
 }
 
-// newDriverPod creates a driver given a load test and a reference to its
-// component. It returns an error if a pod cannot be constructed.
-func newDriverPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+// newDriverPod creates a driver given defaults, a load test and a reference to
+// the driver's component. It returns an error if a pod cannot be constructed.
+func newDriverPod(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
 	pod, err := newPod(loadtest, component, defaults.DriverRole)
 	if err != nil {
 		return nil, err
@@ -350,7 +350,7 @@ func newDriverPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*core
 	// TODO: Avoid referencing containers by index, use names
 	testContainer := &podSpec.Containers[0]
 
-	addDriverPort(testContainer)
+	addDriverPort(testContainer, defs.DriverPort)
 
 	// TODO: Handle more than 1 scenario
 	if len(testSpec.Scenarios) > 0 {
@@ -363,14 +363,18 @@ func newDriverPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*core
 	return pod, nil
 }
 
-// addDriverPort decorates a container with an additional port for the driver.
-func addDriverPort(container *corev1.Container) {
-	container.Ports = append(container.Ports, newContainerPort("driver", 10000))
+// addDriverPort decorates a container with an additional port for the driver
+// and `--driver_port` flag set to its number.
+func addDriverPort(container *corev1.Container, portNumber int32) {
+	container.Ports = append(container.Ports, newContainerPort("driver", portNumber))
+	container.Args = append(container.Args, fmt.Sprintf("--driver_port=%d", portNumber))
 }
 
-// addServerPort decorates a container with an additional port for the server.
-func addServerPort(container *corev1.Container) {
-	container.Ports = append(container.Ports, newContainerPort("server", 10010))
+// addServerPort decorates a container with an additional port for the server
+// and `--server_port` flag set to its number.
+func addServerPort(container *corev1.Container, portNumber int32) {
+	container.Ports = append(container.Ports, newContainerPort("server", portNumber))
+	container.Args = append(container.Args, fmt.Sprintf("--server_port=%d", portNumber))
 }
 
 // newContainerPort creates a Kubernetes ContainerPort object with the provided
@@ -385,16 +389,17 @@ func newContainerPort(name string, portNumber int32) corev1.ContainerPort {
 	}
 }
 
-// newServerPod creates a server given a load test and a reference to its
-// component. It returns an error if a pod cannot be constructed.
-func newServerPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+// newServerPod creates a server given defaults, a load test and a reference to
+// the server's component. It returns an error if a pod cannot be constructed.
+func newServerPod(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
 	pod, err := newPod(loadtest, component, defaults.ServerRole)
 	if err != nil {
 		return nil, err
 	}
 
-	addDriverPort(&pod.Spec.Containers[0])
-	addServerPort(&pod.Spec.Containers[0])
+	rc := &pod.Spec.Containers[0]
+	addDriverPort(rc, defs.DriverPort)
+	addServerPort(rc, defs.ServerPort)
 
 	return pod, nil
 }
