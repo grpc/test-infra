@@ -27,7 +27,7 @@ import (
 // Clone defines expectations regarding which repository and snapshot the test
 // should use.
 type Clone struct {
-	// Image is the name of the container image that can clone code placing
+	// Image is the name of the container image that can clone code, placing
 	// it in a /src/workspace directory.
 	//
 	// This field is optional. When omitted, a container that can clone
