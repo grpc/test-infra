@@ -52,9 +52,9 @@ const runContainer = "run"
 // mounted in the driver container.
 const scenarioMountPath = "/src/scenarios"
 
-// scenarioFileEnv specifies the name of an env variable that specifies the path
-// to a JSON file with a scenario.
-const scenarioFileEnv = "SCENARIO_FILE"
+// scenariosFileEnv specifies the name of an env variable that specifies the
+// path to a JSON file with scenarios.
+const scenariosFileEnv = "SCENARIOS_FILE"
 
 // CloneRepoEnv specifies the name of the env variable that contains the git
 // repository to clone.
@@ -331,7 +331,7 @@ func newWorkspaceVolumeMount() corev1.VolumeMount {
 func newScenarioFileEnvVar(scenario string) corev1.EnvVar {
 	scenarioFile := strings.ReplaceAll(scenario, "-", "_") + ".json"
 	return corev1.EnvVar{
-		Name:  scenarioFileEnv,
+		Name:  scenariosFileEnv,
 		Value: scenarioMountPath + "/" + scenarioFile,
 	}
 }
