@@ -51,7 +51,7 @@ func main() {
 	var defaultsFile string
 	var metricsAddr string
 	var enableLeaderElection bool
-	flag.StringVar(&defaultsFile, "defaults-file", "", "The path to a YAML file with a default configuration")
+	flag.StringVar(&defaultsFile, "defaults-file", "config/defaults.yaml", "The path to a YAML file with a default configuration")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":3777", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
