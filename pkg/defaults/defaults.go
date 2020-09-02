@@ -91,6 +91,10 @@ type Defaults struct {
 	// cloning Git repositories at a specific snapshot.
 	CloneImage string `json:"cloneImage"`
 
+	// ReadyImage specifies the container image to use to block the driver from
+	// starting before all worker pods are ready.
+	ReadyImage string `json:"readyImage"`
+
 	// DriverImage specifies a default driver image. This image will
 	// be used to orchestrate a test.
 	DriverImage string `json:"driverImage"`
