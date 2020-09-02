@@ -32,6 +32,7 @@ var _ = Describe("Pod Creation", func() {
 			DriverPort:  10000,
 			ServerPort:  10010,
 			CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
+			ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
 			DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
 			Languages: []defaults.LanguageDefault{
 				{
@@ -292,6 +293,14 @@ var _ = Describe("Pod Creation", func() {
 			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
 		})
 
+		It("sets ready init container", func() {
+			pod, err := newDriverPod(defs, loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			expectedContainer := newReadyContainer(defs, loadtest)
+			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
+		})
+
 		It("sets run container", func() {
 			scenario := "example"
 			loadtest.Spec.Scenarios[0] = grpcv1.Scenario{Name: scenario}
@@ -308,10 +317,8 @@ var _ = Describe("Pod Creation", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			rc := newRunContainer(run)
+			addReadyInitContainer(defs, loadtest, &pod.Spec, &rc)
 
-			// since it is a driver, we need to expect a driver port,
-			// volume mount and the scenario file env var
-			addDriverPort(&rc, defs.DriverPort)
 			rc.VolumeMounts = append(rc.VolumeMounts, newScenarioVolumeMount(scenario))
 			rc.Env = append(rc.Env, newScenarioFileEnvVar(scenario))
 

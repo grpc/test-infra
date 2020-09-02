@@ -45,6 +45,22 @@ const cloneInitContainer = "clone"
 // binary or other bundle required to run the tests.
 const buildInitContainer = "build"
 
+// readyInitContainer holds the name of the init container that blocks a driver
+// from running until all worker pods are ready.
+const readyInitContainer = "ready"
+
+// readyVolume is the name of the volume that permits sharing files between the
+// ready init container and the driver's run container.
+const readyVolume = "worker-addresses"
+
+// readyMountPath is the absolute path where the ready volume should be mounted
+// in both the ready init container and the driver's run container.
+const readyMountPath = "/var/data/qps_workers"
+
+// readyOutputFile is the name of the file where the ready init container should
+// write all IP addresses and port numbers for ready workers.
+const readyOutputFile = readyMountPath + "/addresses"
+
 // runContainer holds the name of the main container where the test is executed.
 const runContainer = "run"
 
@@ -52,9 +68,9 @@ const runContainer = "run"
 // mounted in the driver container.
 const scenarioMountPath = "/src/scenarios"
 
-// scenarioFileEnv specifies the name of an env variable that specifies the path
-// to a JSON file with a scenario.
-const scenarioFileEnv = "SCENARIO_FILE"
+// scenariosFileEnv specifies the name of an env variable that specifies the
+// path to a JSON file with scenarios.
+const scenariosFileEnv = "SCENARIOS_FILE"
 
 // CloneRepoEnv specifies the name of the env variable that contains the git
 // repository to clone.
@@ -333,9 +349,40 @@ func newWorkspaceVolumeMount() corev1.VolumeMount {
 func newScenarioFileEnvVar(scenario string) corev1.EnvVar {
 	scenarioFile := strings.ReplaceAll(scenario, "-", "_") + ".json"
 	return corev1.EnvVar{
-		Name:  scenarioFileEnv,
+		Name:  scenariosFileEnv,
 		Value: scenarioMountPath + "/" + scenarioFile,
 	}
+}
+
+// addReadyInitContainer configures a ready init container. This container is
+// meant to wait for workers to become ready, writing the IP address and port of
+// these workers to a file. This file is then shared over a volume with the
+// driver's run container.
+//
+// This method also sets the $QPS_WORKERS_FILE environment variable on the
+// driver's run container. Its value will point to the aforementioned, shared
+// file.
+func addReadyInitContainer(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, podspec *corev1.PodSpec, container *corev1.Container) {
+	if defs == nil || podspec == nil || container == nil {
+		return
+	}
+
+	readyCont := newReadyContainer(defs, loadtest)
+	podspec.InitContainers = append(podspec.InitContainers, readyCont)
+
+	container.Env = append(container.Env, corev1.EnvVar{
+		Name:  "QPS_WORKERS_FILE",
+		Value: readyOutputFile,
+	})
+
+	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+		Name:      readyVolume,
+		MountPath: readyMountPath,
+	})
+
+	podspec.Volumes = append(podspec.Volumes, corev1.Volume{
+		Name: readyVolume,
+	})
 }
 
 // newDriverPod creates a driver given defaults, a load test and a reference to
@@ -351,8 +398,7 @@ func newDriverPod(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, component 
 
 	// TODO: Avoid referencing containers by index, use names
 	testContainer := &podSpec.Containers[0]
-
-	addDriverPort(testContainer, defs.DriverPort)
+	addReadyInitContainer(defs, loadtest, podSpec, testContainer)
 
 	// TODO: Handle more than 1 scenario
 	if len(testSpec.Scenarios) > 0 {
@@ -449,6 +495,49 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 		WorkingDir: workspaceMountPath,
 		VolumeMounts: []corev1.VolumeMount{
 			newWorkspaceVolumeMount(),
+		},
+	}
+}
+
+// newReadyContainer constructs a container using the default ready container
+// image. If defaults parameter is nil, an empty container is returned.
+func newReadyContainer(defs *defaults.Defaults, loadtest *grpcv1.LoadTest) corev1.Container {
+	if defs == nil {
+		return corev1.Container{}
+	}
+
+	var args []string
+	for _, server := range loadtest.Spec.Servers {
+		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
+			defaults.LoadTestLabel, loadtest.Name,
+			defaults.RoleLabel, defaults.ServerRole,
+			defaults.ComponentNameLabel, *server.Name,
+		))
+	}
+	for _, client := range loadtest.Spec.Clients {
+		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
+			defaults.LoadTestLabel, loadtest.Name,
+			defaults.RoleLabel, defaults.ClientRole,
+			defaults.ComponentNameLabel, *client.Name,
+		))
+	}
+
+	return corev1.Container{
+		Name:    readyInitContainer,
+		Image:   defs.ReadyImage,
+		Command: []string{"ready"},
+		Args:    args,
+		Env: []corev1.EnvVar{
+			{
+				Name:  "READY_OUTPUT_FILE",
+				Value: readyOutputFile,
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      readyVolume,
+				MountPath: readyMountPath,
+			},
 		},
 	}
 }

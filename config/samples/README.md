@@ -1,15 +1,15 @@
 # Examples
 
-This directory contains a [LoadTest](e2etest.grpc.io_v1_loadtest.yaml) and an
-example [scenario](java_example_scenario.json) for Java.
+This directory contains a [LoadTest](e2etest.grpc.io_v1_loadtest.yaml) and some
+example scenarios.
 
-The LoadTest references a ConfigMap named *java-example-scenario*, which should
+The LoadTest references a ConfigMap named *go-example-scenario*, which should
 contain the contents of the scenario protobuf as JSON. Once you have
 authenticated with a Kubernetes cluster, this command will create it:
 
 ```
-$ kubectl create configmap java-example-scenario \
-    --from-file=java_example_scenario.json
+$ kubectl create configmap go-example-scenario \
+    --from-file=go_example_scenario.json
 ```
 
 Every ConfigMap must have a unique name. You will need to choose a different
@@ -31,5 +31,5 @@ grpc/test-infra's api/v1 directory:
 After testing, you can delete the ConfigMap using:
 
 ```
-$ kubectl delete configmap java-example-scenario
+$ kubectl delete configmap go-example-scenario
 ```
