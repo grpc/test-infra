@@ -75,7 +75,11 @@ var _ = BeforeSuite(func(done Done) {
 	err = grpcv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{Scheme: scheme.Scheme})
+	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:             scheme.Scheme,
+		MetricsBindAddress: ":3777",
+		Port:               9443,
+	})
 	Expect(err).ToNot(HaveOccurred())
 
 	reconciler := &LoadTestReconciler{
