@@ -22,7 +22,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grpc/test-infra/pkg/defaults"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -40,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -379,8 +379,8 @@ func createPodListWithIrrelevantPod() *corev1.PodList {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "random-name",
 				Labels: map[string]string{
-					defaults.LoadTestLabel: "random-task",
-					defaults.RoleLabel:     "irrelevant role",
+					config.LoadTestLabel: "random-task",
+					config.RoleLabel:     "irrelevant role",
 				},
 			},
 		},
@@ -388,9 +388,9 @@ func createPodListWithIrrelevantPod() *corev1.PodList {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "random-name",
 				Labels: map[string]string{
-					defaults.LoadTestLabel:      "random-task",
-					defaults.RoleLabel:          "irrelevant role",
-					defaults.ComponentNameLabel: "irrelevant component name",
+					config.LoadTestLabel:      "random-task",
+					config.RoleLabel:          "irrelevant role",
+					config.ComponentNameLabel: "irrelevant component name",
 				},
 			},
 		},
@@ -398,9 +398,9 @@ func createPodListWithIrrelevantPod() *corev1.PodList {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "random-name",
 				Labels: map[string]string{
-					defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
-					defaults.RoleLabel:          "driver",
-					defaults.ComponentNameLabel: "server-1",
+					config.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+					config.RoleLabel:          "driver",
+					config.ComponentNameLabel: "server-1",
 				},
 			},
 		},
@@ -408,9 +408,9 @@ func createPodListWithIrrelevantPod() *corev1.PodList {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "random-name",
 				Labels: map[string]string{
-					defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
-					defaults.RoleLabel:          "server",
-					defaults.ComponentNameLabel: "irrelevant component name",
+					config.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+					config.RoleLabel:          "server",
+					config.ComponentNameLabel: "irrelevant component name",
 				},
 			},
 		},
@@ -430,9 +430,9 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *co
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "random-name",
 					Labels: map[string]string{
-						defaults.LoadTestLabel:      currentLoadTest.Name,
-						defaults.RoleLabel:          "client",
-						defaults.ComponentNameLabel: *eachClient.Name,
+						config.LoadTestLabel:      currentLoadTest.Name,
+						config.RoleLabel:          "client",
+						config.ComponentNameLabel: *eachClient.Name,
 					},
 				},
 			})
@@ -444,9 +444,9 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *co
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "random-name",
 					Labels: map[string]string{
-						defaults.LoadTestLabel:      currentLoadTest.Name,
-						defaults.RoleLabel:          "server",
-						defaults.ComponentNameLabel: *eachServer.Name,
+						config.LoadTestLabel:      currentLoadTest.Name,
+						config.RoleLabel:          "server",
+						config.ComponentNameLabel: *eachServer.Name,
 					},
 				},
 			})
@@ -457,9 +457,9 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) *co
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "random-name",
 				Labels: map[string]string{
-					defaults.LoadTestLabel:      currentLoadTest.Name,
-					defaults.RoleLabel:          "driver",
-					defaults.ComponentNameLabel: *currentLoadTest.Spec.Driver.Name,
+					config.LoadTestLabel:      currentLoadTest.Name,
+					config.RoleLabel:          "driver",
+					config.ComponentNameLabel: *currentLoadTest.Spec.Driver.Name,
 				},
 			},
 		})

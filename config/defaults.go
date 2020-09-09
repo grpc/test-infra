@@ -14,59 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package defaults
+package config
 
 import (
 	"github.com/google/uuid"
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/pkg/errors"
 )
-
-const (
-	// LoadTestLabel is a label which contains the test's unique name.
-	LoadTestLabel = "loadtest"
-
-	// RoleLabel is a label with the role  of a test component. For
-	// example, "loadtest-role=server" indicates a server component.
-	RoleLabel = "loadtest-role"
-
-	// ComponentNameLabel is a label used to distinguish between test
-	// components with the same role.
-	ComponentNameLabel = "loadtest-component"
-
-	// ServerRole is the value the controller expects for the RoleLabel
-	// on a server component.
-	ServerRole = "server"
-
-	// ClientRole is the value the controller expects for the RoleLabel
-	// on a client component.
-	ClientRole = "client"
-
-	// DriverRole is the value the controller expects for the RoleLabel
-	// on a driver component.
-	DriverRole = "driver"
-)
-
-// LanguageDefault defines a programming language, as well as its
-// default container images.
-type LanguageDefault struct {
-	// Language uniquely identifies a programming language. When the
-	// system encounters this name, it will select the build image and
-	// run image as the defaults.
-	Language string `json:"language"`
-
-	// BuildImage specifies the default container image for building or
-	// assembling an executable or bundle for a language. This image
-	// likely contains a compiler and any required libraries for
-	// compilation.
-	BuildImage string `json:"buildImage"`
-
-	// RunImage specifies the default container image for the
-	// environment for the runtime of the test. It should provide any
-	// necessary interpreters or dependencies to run or use the output
-	// of the build image.
-	RunImage string `json:"runImage"`
-}
 
 // Defaults defines the default settings for the system.
 type Defaults struct {
@@ -194,4 +148,25 @@ func (d *Defaults) setComponentDefaults(component *grpcv1.Component, defaultPool
 	}
 
 	return nil
+}
+
+// LanguageDefault defines a programming language, as well as its
+// default container images.
+type LanguageDefault struct {
+	// Language uniquely identifies a programming language. When the
+	// system encounters this name, it will select the build image and
+	// run image as the defaults.
+	Language string `json:"language"`
+
+	// BuildImage specifies the default container image for building or
+	// assembling an executable or bundle for a language. This image
+	// likely contains a compiler and any required libraries for
+	// compilation.
+	BuildImage string `json:"buildImage"`
+
+	// RunImage specifies the default container image for the
+	// environment for the runtime of the test. It should provide any
+	// necessary interpreters or dependencies to run or use the output
+	// of the build image.
+	RunImage string `json:"runImage"`
 }

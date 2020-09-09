@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/pkg/defaults"
+	"github.com/grpc/test-infra/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -21,12 +21,12 @@ var _ = Describe("Test Environment", func() {
 
 var _ = Describe("Pod Creation", func() {
 	var loadtest *grpcv1.LoadTest
-	var defs *defaults.Defaults
+	var defs *config.Defaults
 
 	BeforeEach(func() {
 		loadtest = newLoadTest()
 
-		defs = &defaults.Defaults{
+		defs = &config.Defaults{
 			DriverPool:  "drivers",
 			WorkerPool:  "workers-8core",
 			DriverPort:  10000,
@@ -34,7 +34,7 @@ var _ = Describe("Pod Creation", func() {
 			CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
 			ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
 			DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
-			Languages: []defaults.LanguageDefault{
+			Languages: []config.LanguageDefault{
 				{
 					Language:   "cxx",
 					BuildImage: "l.gcr.io/google/bazel:latest",
@@ -76,19 +76,19 @@ var _ = Describe("Pod Creation", func() {
 
 			pod, err := newClientPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.ComponentNameLabel]).To(Equal(name))
+			Expect(pod.Labels[config.ComponentNameLabel]).To(Equal(name))
 		})
 
 		It("sets loadtest-role label to client", func() {
 			pod, err := newClientPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.RoleLabel]).To(Equal(defaults.ClientRole))
+			Expect(pod.Labels[config.RoleLabel]).To(Equal(config.ClientRole))
 		})
 
 		It("sets loadtest label", func() {
 			pod, err := newClientPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.LoadTestLabel]).To(Equal(loadtest.Name))
+			Expect(pod.Labels[config.LoadTestLabel]).To(Equal(loadtest.Name))
 		})
 
 		It("sets node selector for appropriate pool", func() {
@@ -238,13 +238,13 @@ var _ = Describe("Pod Creation", func() {
 		It("sets loadtest-role label to driver", func() {
 			pod, err := newDriverPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.RoleLabel]).To(Equal(defaults.DriverRole))
+			Expect(pod.Labels[config.RoleLabel]).To(Equal(config.DriverRole))
 		})
 
 		It("sets loadtest label", func() {
 			pod, err := newDriverPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.LoadTestLabel]).To(Equal(loadtest.Name))
+			Expect(pod.Labels[config.LoadTestLabel]).To(Equal(loadtest.Name))
 		})
 
 		It("sets component-name label", func() {
@@ -253,7 +253,7 @@ var _ = Describe("Pod Creation", func() {
 
 			pod, err := newDriverPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.ComponentNameLabel]).To(Equal(name))
+			Expect(pod.Labels[config.ComponentNameLabel]).To(Equal(name))
 		})
 
 		It("sets node selector for appropriate pool", func() {
@@ -359,7 +359,7 @@ var _ = Describe("Pod Creation", func() {
 		It("sets loadtest-role label to server", func() {
 			pod, err := newServerPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.RoleLabel]).To(Equal(defaults.ServerRole))
+			Expect(pod.Labels[config.RoleLabel]).To(Equal(config.ServerRole))
 		})
 
 		It("exposes a driver port", func() {
@@ -405,7 +405,7 @@ var _ = Describe("Pod Creation", func() {
 		It("sets loadtest label", func() {
 			pod, err := newServerPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.LoadTestLabel]).To(Equal(loadtest.Name))
+			Expect(pod.Labels[config.LoadTestLabel]).To(Equal(loadtest.Name))
 		})
 
 		It("sets component-name label", func() {
@@ -414,7 +414,7 @@ var _ = Describe("Pod Creation", func() {
 
 			pod, err := newServerPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[defaults.ComponentNameLabel]).To(Equal(name))
+			Expect(pod.Labels[config.ComponentNameLabel]).To(Equal(name))
 		})
 
 		It("sets node selector for appropriate pool", func() {
@@ -754,9 +754,9 @@ var _ = Describe("checkMissingPods", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "random-name",
 						Labels: map[string]string{
-							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
-							defaults.RoleLabel:          "server",
-							defaults.ComponentNameLabel: "server-1",
+							config.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+							config.RoleLabel:          "server",
+							config.ComponentNameLabel: "server-1",
 						},
 					},
 				},
@@ -764,9 +764,9 @@ var _ = Describe("checkMissingPods", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "random-name",
 						Labels: map[string]string{
-							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
-							defaults.RoleLabel:          "client",
-							defaults.ComponentNameLabel: "client-2",
+							config.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+							config.RoleLabel:          "client",
+							config.ComponentNameLabel: "client-2",
 						},
 					},
 				},
@@ -774,9 +774,9 @@ var _ = Describe("checkMissingPods", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "random-name",
 						Labels: map[string]string{
-							defaults.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
-							defaults.RoleLabel:          "driver",
-							defaults.ComponentNameLabel: "driver-1",
+							config.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
+							config.RoleLabel:          "driver",
+							config.ComponentNameLabel: "driver-1",
 						},
 					},
 				},

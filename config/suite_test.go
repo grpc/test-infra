@@ -1,4 +1,4 @@
-package defaults
+package config
 
 import (
 	"testing"
@@ -9,5 +9,5 @@ import (
 
 func TestDefaults(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Defaults Suite")
+	RunSpecs(t, "Config Suite")
 }
