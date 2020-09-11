@@ -208,40 +208,39 @@ type LoadTestSpec struct {
 	Scenarios []Scenario `json:"scenarios,omitempty"`
 }
 
-// LoadTestState is a possible state, conveying the progress of setting
-// up, running and tearing down a load test.
+// LoadTestState reflects the derived state of the load test from its
+// components. If any one component has errored or failed, the load test will
+// be marked in a Failed or Errored state, too. This will occur even if the
+// other components are running or succeeded.
 // +kubebuilder:default=Unrecognized
 type LoadTestState string
 
 const (
-	// UnrecognizedState indicates that the controller has not yet
-	// acknowledged or started reconiling the load test.
-	UnrecognizedState LoadTestState = "Unrecognized"
+	// Initializing states indicate that load test's pods are under construction.
+	// This may mean that code is being cloned, built or assembled.
+	Initializing LoadTestState = "Initializing"
 
-	// WaitingState indicates that the load test is waiting for
-	// sufficient machine availability in order to be scheduled.
-	WaitingState = "Waiting"
+	// Running states indicate that the initialization for a load test's pods has
+	// completed successfully. The run container has started.
+	Running = "Running"
 
-	// ProvisioningState indicates that the load test's resources are
-	// being created.
-	ProvisioningState = "Provisioning"
+	// Succeeded states indicate the driver pod's run container has terminated
+	// successfully, signaled by a zero exit code.
+	Succeeded = "Succeeded"
 
-	// PendingState indicates that the load test's resources are healthy
-	// The load test will remain in this state until the status of one
-	// of its resources changes.
-	PendingState = "Pending"
+	// Failed states indicate the driver pod's run container has terminated
+	// unsuccessfully, signaled by a non-zero exit code.
+	//
+	// The Failed state is different from the Errored state, because Failed
+	// guarantees that the problem originated in the driver at runtime. An Errored
+	// state indicates any other problem, such as an inability to compile the
+	// driver or a failed worker..
+	Failed = "Failed"
 
-	// FailState indicates that a resource in the load test has
-	// terminated unsuccessfully.
-	FailState = "Failed"
-
-	// SuccessState indicates that a resource terminated with a
-	// successful status.
-	SuccessState = "Succeeded"
-
-	// ErrorState indicates that something went wrong, preventing the
-	// controller for reconciling the load test.
-	ErrorState = "Error"
+	// Errored states indicate the load test failed to run successfully. This may
+	// signal a problem with the initialization of a load test, including
+	// cloning and compiling, or the runtime of one of the workers.
+	Errored = "Errored"
 )
 
 // LoadTestStatus defines the observed state of LoadTest
@@ -251,25 +250,25 @@ type LoadTestStatus struct {
 	// transition is non-deterministic.
 	State LoadTestState `json:"state"`
 
-	// AcknowledgeTime marks when the controller first responded to the
-	// load test.
+	// Reason is a camel-case string that indicates the reasoning behind the
+	// current state.
 	// +optional
-	AcknowledgeTime *metav1.Time `json:"acknowledgeTime,omitempty"`
+	Reason string `json:"reason,omitempty"`
 
-	// ProvisionTime marks the time when the controller began to
-	// provision the resources for the load test.
+	// Message is a human legible string that describes the current state.
 	// +optional
-	ProvisionTime *metav1.Time `json:"provisionTime,omitempty"`
+	Message string `json:"message,omitempty"`
 
-	// PendingTime marks the time when the load test's resources were
-	// found to be in the pending state.
+	// StartTime is the time when the controller first reconciled the load test.
+	// It is maintained in a best-attempt effort; meaning, it is not guaranteed to
+	// be correct.
 	// +optional
-	PendingTime *metav1.Time `json:"pendingTime,omitempty"`
+	StartTime *metav1.Time `json:"startTime,omitempty"`
 
-	// TerminateTime marks the time when a resource for the load test
-	// was marked as terminated.
+	// StopTime is the time when the controller last entered the Succeeded,
+	// Failed or Errored states.
 	// +optional
-	TerminateTime *metav1.Time `json:"terminateTime,omitempty"`
+	StopTime *metav1.Time `json:"stopTime,omitempty"`
 }
 
 // +kubebuilder:object:root=true
