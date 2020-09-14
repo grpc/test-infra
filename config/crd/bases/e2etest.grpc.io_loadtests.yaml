@@ -1170,19 +1170,18 @@ spec:
         status:
           description: LoadTestStatus defines the observed state of LoadTest
           properties:
-            acknowledgeTime:
-              description: AcknowledgeTime marks when the controller first responded
-                to the load test.
-              format: date-time
+            message:
+              description: Message is a human legible string that describes the current
+                state.
               type: string
-            pendingTime:
-              description: PendingTime marks the time when the load test's resources
-                were found to be in the pending state.
-              format: date-time
+            reason:
+              description: Reason is a camel-case string that indicates the reasoning
+                behind the current state.
               type: string
-            provisionTime:
-              description: ProvisionTime marks the time when the controller began
-                to provision the resources for the load test.
+            startTime:
+              description: StartTime is the time when the controller first reconciled
+                the load test. It is maintained in a best-attempt effort; meaning,
+                it is not guaranteed to be correct.
               format: date-time
               type: string
             state:
@@ -1190,9 +1189,9 @@ spec:
                 is important to note that this state is level-based. This means its
                 transition is non-deterministic.
               type: string
-            terminateTime:
-              description: TerminateTime marks the time when a resource for the load
-                test was marked as terminated.
+            stopTime:
+              description: StopTime is the time when the controller last entered the
+                Succeeded, Failed or Errored states.
               format: date-time
               type: string
           required:
