@@ -30,8 +30,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/controllers"
-	"github.com/grpc/test-infra/pkg/defaults"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -73,7 +73,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultOptions := defaults.Defaults{}
+	defaultOptions := config.Defaults{}
 	if err := yaml.Unmarshal(defaultsBytes, &defaultOptions); err != nil {
 		setupLog.Error(err, "could not parse the defaults file contents")
 		os.Exit(1)

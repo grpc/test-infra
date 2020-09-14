@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/grpc/test-infra/internal/kubehelpers"
+	"github.com/grpc/test-infra/kubehelpers"
 )
 
 // TimeoutEnv is the name of the environment variable that will contain the

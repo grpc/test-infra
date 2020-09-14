@@ -1,0 +1,3 @@
+resources:
+- auth_proxy_service.yaml
+

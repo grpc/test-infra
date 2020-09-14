@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/pkg/defaults"
+	"github.com/grpc/test-infra/config"
 )
 
 // reconcileTimeout specifies the maximum amount of time any set of API
@@ -91,7 +91,7 @@ const workspaceMountPath = "/src/workspace"
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
-	Defaults *defaults.Defaults
+	Defaults *config.Defaults
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
 }
@@ -239,22 +239,22 @@ func checkMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.P
 				continue
 			}
 
-			loadTestLabel := eachPod.Labels[defaults.LoadTestLabel]
-			roleLabel := eachPod.Labels[defaults.RoleLabel]
-			componentNameLabel := eachPod.Labels[defaults.ComponentNameLabel]
+			loadTestLabel := eachPod.Labels[config.LoadTestLabel]
+			roleLabel := eachPod.Labels[config.RoleLabel]
+			componentNameLabel := eachPod.Labels[config.ComponentNameLabel]
 
 			if loadTestLabel != currentLoadTest.Name {
 				continue
 			}
-			if roleLabel == defaults.DriverRole {
+			if roleLabel == config.DriverRole {
 				if *currentLoadTest.Spec.Driver.Component.Name == componentNameLabel {
 					foundDriver = true
 				}
-			} else if roleLabel == defaults.ClientRole {
+			} else if roleLabel == config.ClientRole {
 				if _, ok := requiredClientMap[componentNameLabel]; ok {
 					delete(requiredClientMap, componentNameLabel)
 				}
-			} else if roleLabel == defaults.ServerRole {
+			} else if roleLabel == config.ServerRole {
 				if _, ok := requiredServerMap[componentNameLabel]; ok {
 					delete(requiredServerMap, componentNameLabel)
 				}
@@ -287,8 +287,8 @@ func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // newClientPod creates a client given defaults, a load test and a reference to
 // the client's component. It returns an error if a pod cannot be constructed.
-func newClientPod(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
-	pod, err := newPod(loadtest, component, defaults.ClientRole)
+func newClientPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+	pod, err := newPod(loadtest, component, config.ClientRole)
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +364,7 @@ func newScenarioFileEnvVar(scenario string) corev1.EnvVar {
 // This method also sets the $QPS_WORKERS_FILE environment variable on the
 // driver's run container. Its value will point to the aforementioned, shared
 // file.
-func addReadyInitContainer(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, podspec *corev1.PodSpec, container *corev1.Container) {
+func addReadyInitContainer(defs *config.Defaults, loadtest *grpcv1.LoadTest, podspec *corev1.PodSpec, container *corev1.Container) {
 	if defs == nil || podspec == nil || container == nil {
 		return
 	}
@@ -389,8 +389,8 @@ func addReadyInitContainer(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, p
 
 // newDriverPod creates a driver given defaults, a load test and a reference to
 // the driver's component. It returns an error if a pod cannot be constructed.
-func newDriverPod(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
-	pod, err := newPod(loadtest, component, defaults.DriverRole)
+func newDriverPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+	pod, err := newPod(loadtest, component, config.DriverRole)
 	if err != nil {
 		return nil, err
 	}
@@ -441,8 +441,8 @@ func newContainerPort(name string, portNumber int32) corev1.ContainerPort {
 
 // newServerPod creates a server given defaults, a load test and a reference to
 // the server's component. It returns an error if a pod cannot be constructed.
-func newServerPod(defs *defaults.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
-	pod, err := newPod(loadtest, component, defaults.ServerRole)
+func newServerPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+	pod, err := newPod(loadtest, component, config.ServerRole)
 	if err != nil {
 		return nil, err
 	}
@@ -503,7 +503,7 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 
 // newReadyContainer constructs a container using the default ready container
 // image. If defaults parameter is nil, an empty container is returned.
-func newReadyContainer(defs *defaults.Defaults, loadtest *grpcv1.LoadTest) corev1.Container {
+func newReadyContainer(defs *config.Defaults, loadtest *grpcv1.LoadTest) corev1.Container {
 	if defs == nil {
 		return corev1.Container{}
 	}
@@ -511,16 +511,16 @@ func newReadyContainer(defs *defaults.Defaults, loadtest *grpcv1.LoadTest) corev
 	var args []string
 	for _, server := range loadtest.Spec.Servers {
 		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
-			defaults.LoadTestLabel, loadtest.Name,
-			defaults.RoleLabel, defaults.ServerRole,
-			defaults.ComponentNameLabel, *server.Name,
+			config.LoadTestLabel, loadtest.Name,
+			config.RoleLabel, config.ServerRole,
+			config.ComponentNameLabel, *server.Name,
 		))
 	}
 	for _, client := range loadtest.Spec.Clients {
 		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
-			defaults.LoadTestLabel, loadtest.Name,
-			defaults.RoleLabel, defaults.ClientRole,
-			defaults.ComponentNameLabel, *client.Name,
+			config.LoadTestLabel, loadtest.Name,
+			config.RoleLabel, config.ClientRole,
+			config.ComponentNameLabel, *client.Name,
 		))
 	}
 
@@ -576,9 +576,9 @@ func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string)
 			Name:      fmt.Sprintf("%s-%s-%s", loadtest.Name, role, *component.Name),
 			Namespace: loadtest.Namespace,
 			Labels: map[string]string{
-				defaults.LoadTestLabel:      loadtest.Name,
-				defaults.RoleLabel:          role,
-				defaults.ComponentNameLabel: *component.Name,
+				config.LoadTestLabel:      loadtest.Name,
+				config.RoleLabel:          role,
+				config.ComponentNameLabel: *component.Name,
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -595,7 +595,7 @@ func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string)
 							LabelSelector: &metav1.LabelSelector{
 								MatchExpressions: []metav1.LabelSelectorRequirement{
 									{
-										Key:      defaults.LoadTestLabel,
+										Key:      config.LoadTestLabel,
 										Operator: metav1.LabelSelectorOpExists,
 									},
 								},
