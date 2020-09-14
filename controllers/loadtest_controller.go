@@ -595,7 +595,7 @@ func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string)
 							LabelSelector: &metav1.LabelSelector{
 								MatchExpressions: []metav1.LabelSelectorRequirement{
 									{
-										Key:      "generated",
+										Key:      defaults.LoadTestLabel,
 										Operator: metav1.LabelSelectorOpExists,
 									},
 								},
