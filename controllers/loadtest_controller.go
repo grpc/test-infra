@@ -37,57 +37,6 @@ import (
 // requests should take for a single invocation of the Reconcile method.
 const reconcileTimeout = 1 * time.Minute
 
-// cloneInitContainer holds the name of the init container that obtains a copy
-// of the code at a specific point in time.
-const cloneInitContainer = "clone"
-
-// buildInitContainer holds the name of the init container that assembles a
-// binary or other bundle required to run the tests.
-const buildInitContainer = "build"
-
-// readyInitContainer holds the name of the init container that blocks a driver
-// from running until all worker pods are ready.
-const readyInitContainer = "ready"
-
-// readyVolume is the name of the volume that permits sharing files between the
-// ready init container and the driver's run container.
-const readyVolume = "worker-addresses"
-
-// readyMountPath is the absolute path where the ready volume should be mounted
-// in both the ready init container and the driver's run container.
-const readyMountPath = "/var/data/qps_workers"
-
-// readyOutputFile is the name of the file where the ready init container should
-// write all IP addresses and port numbers for ready workers.
-const readyOutputFile = readyMountPath + "/addresses"
-
-// runContainer holds the name of the main container where the test is executed.
-const runContainer = "run"
-
-// scenarioMountPath specifies where the JSON file with the scenario should be
-// mounted in the driver container.
-const scenarioMountPath = "/src/scenarios"
-
-// scenariosFileEnv specifies the name of an env variable that specifies the
-// path to a JSON file with scenarios.
-const scenariosFileEnv = "SCENARIOS_FILE"
-
-// CloneRepoEnv specifies the name of the env variable that contains the git
-// repository to clone.
-const CloneRepoEnv = "CLONE_REPO"
-
-// CloneGitRefEnv specifies the name of the env variable that contains the
-// commit, tag or branch to checkout after cloning a git repository.
-const CloneGitRefEnv = "CLONE_GIT_REF"
-
-// workspaceVolume contains the name of the volume that is shared between the
-// init containers and containers for a driver or worker pod.
-const workspaceVolume = "workspace"
-
-// workspaceMountPath contains the path to mount the volume identified by
-// `workspaceVolume`.
-const workspaceMountPath = "/src/workspace"
-
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
@@ -324,24 +273,24 @@ func newScenarioVolume(scenario string) corev1.Volume {
 func newScenarioVolumeMount(scenario string) corev1.VolumeMount {
 	return corev1.VolumeMount{
 		Name:      scenarioVolumeName(scenario),
-		MountPath: scenarioMountPath,
+		MountPath: config.ScenariosMountPath,
 		ReadOnly:  true,
 	}
 }
 
-// newWorkspaceVolume returns an emptyDir volume with `workspaceVolume` as its
-// name.
+// newWorkspaceVolume returns an emptyDir volume with `config.WorkspaceVolumeName`
+// as its name.
 func newWorkspaceVolume() corev1.Volume {
-	return corev1.Volume{Name: workspaceVolume}
+	return corev1.Volume{Name: config.WorkspaceVolumeName}
 }
 
-// newWorkspaceVolumeMount returns a volume mount with `workspaceMountPath` as
-// the path and a reference to the `workspaceVolume`. This volume mount grants
-// read/write access.
+// newWorkspaceVolumeMount returns a volume mount with
+// `config.WorkspaceMountPath` as the path and a reference to the
+// `config.WorkspaceVolumeName`. This volume mount grants read/write access.
 func newWorkspaceVolumeMount() corev1.VolumeMount {
 	return corev1.VolumeMount{
-		Name:      workspaceVolume,
-		MountPath: workspaceMountPath,
+		Name:      config.WorkspaceVolumeName,
+		MountPath: config.WorkspaceMountPath,
 		ReadOnly:  false,
 	}
 }
@@ -351,8 +300,8 @@ func newWorkspaceVolumeMount() corev1.VolumeMount {
 func newScenarioFileEnvVar(scenario string) corev1.EnvVar {
 	scenarioFile := strings.ReplaceAll(scenario, "-", "_") + ".json"
 	return corev1.EnvVar{
-		Name:  scenariosFileEnv,
-		Value: scenarioMountPath + "/" + scenarioFile,
+		Name:  config.ScenariosFileEnv,
+		Value: config.ScenariosMountPath + "/" + scenarioFile,
 	}
 }
 
@@ -374,16 +323,16 @@ func addReadyInitContainer(defs *config.Defaults, loadtest *grpcv1.LoadTest, pod
 
 	container.Env = append(container.Env, corev1.EnvVar{
 		Name:  "QPS_WORKERS_FILE",
-		Value: readyOutputFile,
+		Value: config.ReadyOutputFile,
 	})
 
 	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
-		Name:      readyVolume,
-		MountPath: readyMountPath,
+		Name:      config.ReadyVolumeName,
+		MountPath: config.ReadyMountPath,
 	})
 
 	podspec.Volumes = append(podspec.Volumes, corev1.Volume{
-		Name: readyVolume,
+		Name: config.ReadyVolumeName,
 	})
 }
 
@@ -464,15 +413,15 @@ func newCloneContainer(clone *grpcv1.Clone) corev1.Container {
 	var env []corev1.EnvVar
 
 	if clone.Repo != nil {
-		env = append(env, corev1.EnvVar{Name: CloneRepoEnv, Value: *clone.Repo})
+		env = append(env, corev1.EnvVar{Name: config.CloneRepoEnv, Value: *clone.Repo})
 	}
 
 	if clone.GitRef != nil {
-		env = append(env, corev1.EnvVar{Name: CloneGitRefEnv, Value: *clone.GitRef})
+		env = append(env, corev1.EnvVar{Name: config.CloneGitRefEnv, Value: *clone.GitRef})
 	}
 
 	return corev1.Container{
-		Name:  cloneInitContainer,
+		Name:  config.CloneInitContainerName,
 		Image: safeStrUnwrap(clone.Image),
 		Env:   env,
 		VolumeMounts: []corev1.VolumeMount{
@@ -489,12 +438,12 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 	}
 
 	return corev1.Container{
-		Name:       buildInitContainer,
+		Name:       config.BuildInitContainerName,
 		Image:      *build.Image,
 		Command:    build.Command,
 		Args:       build.Args,
 		Env:        build.Env,
-		WorkingDir: workspaceMountPath,
+		WorkingDir: config.WorkspaceMountPath,
 		VolumeMounts: []corev1.VolumeMount{
 			newWorkspaceVolumeMount(),
 		},
@@ -525,20 +474,20 @@ func newReadyContainer(defs *config.Defaults, loadtest *grpcv1.LoadTest) corev1.
 	}
 
 	return corev1.Container{
-		Name:    readyInitContainer,
+		Name:    config.ReadyInitContainerName,
 		Image:   defs.ReadyImage,
 		Command: []string{"ready"},
 		Args:    args,
 		Env: []corev1.EnvVar{
 			{
 				Name:  "READY_OUTPUT_FILE",
-				Value: readyOutputFile,
+				Value: config.ReadyOutputFile,
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
-				Name:      readyVolume,
-				MountPath: readyMountPath,
+				Name:      config.ReadyVolumeName,
+				MountPath: config.ReadyMountPath,
 			},
 		},
 	}
@@ -547,12 +496,12 @@ func newReadyContainer(defs *config.Defaults, loadtest *grpcv1.LoadTest) corev1.
 // newRunContainer constructs a container given a grpcv1.Run object.
 func newRunContainer(run grpcv1.Run) corev1.Container {
 	return corev1.Container{
-		Name:       runContainer,
+		Name:       config.RunContainerName,
 		Image:      *run.Image,
 		Command:    run.Command,
 		Args:       run.Args,
 		Env:        run.Env,
-		WorkingDir: workspaceMountPath,
+		WorkingDir: config.WorkspaceMountPath,
 		VolumeMounts: []corev1.VolumeMount{
 			newWorkspaceVolumeMount(),
 		},
