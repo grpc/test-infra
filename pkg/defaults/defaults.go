@@ -20,7 +20,6 @@ import (
 	"github.com/google/uuid"
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -71,6 +70,10 @@ type LanguageDefault struct {
 
 // Defaults defines the default settings for the system.
 type Defaults struct {
+	// ComponentNamespace is the default namespace for load test components. Note
+	// this is not the namespace for the manager.
+	ComponentNamespace string `json:"componentNamespace"`
+
 	// DriverPool is the name of a pool where driver components should
 	// be scheduled by default.
 	DriverPool string `json:"driverPool"`
@@ -116,7 +119,7 @@ func (d *Defaults) SetLoadTestDefaults(test *grpcv1.LoadTest) error {
 	spec := &test.Spec
 
 	if test.Namespace == "" {
-		test.Namespace = corev1.NamespaceDefault
+		test.Namespace = d.ComponentNamespace
 	}
 
 	if spec.Driver == nil {

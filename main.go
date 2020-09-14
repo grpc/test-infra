@@ -51,8 +51,10 @@ func main() {
 	var defaultsFile string
 	var metricsAddr string
 	var enableLeaderElection bool
+	var namespace string
 	flag.StringVar(&defaultsFile, "defaults-file", "config/defaults.yaml", "The path to a YAML file with a default configuration")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":3777", "The address the metric endpoint binds to.")
+	flag.StringVar(&namespace, "namespace", "", "Limits resources considered to a specific namespace")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -83,6 +85,7 @@ func main() {
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
 		LeaderElectionID:   "284e7070.e2etest.grpc.io",
+		Namespace:          namespace,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

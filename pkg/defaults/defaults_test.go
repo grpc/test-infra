@@ -19,7 +19,6 @@ package defaults
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 )
@@ -33,12 +32,13 @@ var _ = Describe("Defaults", func() {
 		loadtest = completeLoadTest.DeepCopy()
 
 		defaults = &Defaults{
-			DriverPool:  "drivers",
-			WorkerPool:  "workers-8core",
-			DriverPort:  10000,
-			ServerPort:  10010,
-			CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
-			DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
+			ComponentNamespace: "component-default",
+			DriverPool:         "drivers",
+			WorkerPool:         "workers-8core",
+			DriverPort:         10000,
+			ServerPort:         10010,
+			CloneImage:         "gcr.io/grpc-fake-project/test-infra/clone",
+			DriverImage:        "gcr.io/grpc-fake-project/test-infra/driver",
 			Languages: []LanguageDefault{
 				{
 					Language:   "cxx",
@@ -65,9 +65,12 @@ var _ = Describe("Defaults", func() {
 		It("sets default namespace when unset", func() {
 			loadtest.Namespace = ""
 
+			namespace := "foobar-buzz"
+			defaults.ComponentNamespace = namespace
+
 			err := defaults.SetLoadTestDefaults(loadtest)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(loadtest.Namespace).To(Equal(corev1.NamespaceDefault))
+			Expect(loadtest.Namespace).To(Equal(namespace))
 		})
 
 		It("does not override namespace when set", func() {

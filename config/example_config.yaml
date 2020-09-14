@@ -1,5 +1,7 @@
 # See ../pkg/defaults/defaults.go for documentation on each field.
 
+componentNamespace: default
+
 driverPool: drivers
 
 workerPool: workers-16core
