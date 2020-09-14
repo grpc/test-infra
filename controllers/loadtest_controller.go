@@ -113,11 +113,14 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Fetch the current state of the world.
 
-	nodes := new(corev1.NodeList)
-	if err = r.List(ctx, nodes); err != nil {
-		log.Error(err, "failed to list nodes")
-		return ctrl.Result{Requeue: true}, err
-	}
+	// Listing nodes will be required to achieve gang scheduling; however, this is
+	// not implemented at this time. Therefore, it is commented here for later:
+	//
+	//nodes := new(corev1.NodeList)
+	//if err = r.List(ctx, nodes); err != nil {
+	//	log.Error(err, "failed to list nodes")
+	//	return ctrl.Result{Requeue: true}, err
+	//}
 
 	pods := new(corev1.PodList)
 	if err = r.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
@@ -186,7 +189,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// TODO: Add logic to schedule the next missing pod.
 
 	// PLACEHOLDERS!
-	_ = nodes
 	_ = pods
 	_ = loadtests
 	_ = loadtest
