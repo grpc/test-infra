@@ -243,6 +243,18 @@ const (
 	Errored = "Errored"
 )
 
+// InitContainerError is the reason string when an init container has failed on
+// one of the load test's pods.
+var InitContainerError = "InitContainerError"
+
+// ContainerError is the reason string when a container has failed on one of the
+// load test's pods.
+var ContainerError = "ContainerError"
+
+// PodsMissing is the reason string when the load test is missing pods and is still
+// in the Initializing state.
+var PodsMissing = "PodsMissing"
+
 // LoadTestStatus defines the observed state of LoadTest
 type LoadTestStatus struct {
 	// State identifies the current state of the load test. It is
