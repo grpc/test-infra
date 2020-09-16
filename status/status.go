@@ -16,8 +16,10 @@ limitations under the License.
 package status
 
 import (
+	"fmt"
 	"strings"
 
+	grpcv1 "github.com/grpc/test-infra/api/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -59,4 +61,39 @@ func StateForContainerStatus(status *corev1.ContainerStatus) (State, *int32) {
 	}
 
 	return Pending, nil
+}
+
+// StateForPodStatus accepts the status of a pod and returns a State, as well
+// as the reason and message. The reason is a camel-case word that is machine
+// comparable. The message is a human-legible description. If the pod has not
+// terminated or it terminated successfully, the reason and message strings will
+// be empty.
+func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, message string) {
+	podState := Pending
+
+	for i := range status.InitContainerStatuses {
+		initContStat := &status.InitContainerStatuses[i]
+		contState, exitCode := StateForContainerStatus(initContStat)
+
+		if contState == Errored {
+			message := fmt.Sprintf("init container %q terminated with exit code %d", initContStat.Name, *exitCode)
+			return Errored, grpcv1.InitContainerError, message
+		}
+	}
+
+	for i := range status.ContainerStatuses {
+		contStat := &status.ContainerStatuses[i]
+		contState, exitCode := StateForContainerStatus(contStat)
+
+		if contState == Errored {
+			message := fmt.Sprintf("container %q terminated with exit code %d", contStat.Name, *exitCode)
+			return Errored, grpcv1.ContainerError, message
+		}
+
+		if contState != Pending {
+			podState = contState
+		}
+	}
+
+	return podState, "", ""
 }
