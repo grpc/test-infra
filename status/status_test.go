@@ -16,6 +16,7 @@ package status
 import (
 	corev1 "k8s.io/api/core/v1"
 
+	grpcv1 "github.com/grpc/test-infra/api/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -97,6 +98,97 @@ var _ = Describe("StateForContainerStatus", func() {
 				Expect(exitCode).ToNot(BeNil())
 				Expect(*exitCode).To(BeEquivalentTo(127))
 			})
+		})
+	})
+})
+
+var _ = Describe("StateForPodStatus", func() {
+	var podStatus *corev1.PodStatus
+	var initContainer1, initContainer2, container *corev1.ContainerStatus
+
+	BeforeEach(func() {
+		podStatus = &corev1.PodStatus{
+			InitContainerStatuses: []corev1.ContainerStatus{
+				{
+					State: corev1.ContainerState{},
+				},
+				{
+					State: corev1.ContainerState{},
+				},
+			},
+			ContainerStatuses: []corev1.ContainerStatus{
+				{
+					State: corev1.ContainerState{},
+				},
+			},
+		}
+
+		initContainer1 = &podStatus.InitContainerStatuses[0]
+		initContainer2 = &podStatus.InitContainerStatuses[1]
+		container = &podStatus.ContainerStatuses[0]
+	})
+
+	Context("init containers running", func() {
+		BeforeEach(func() {
+			container.State.Waiting = &corev1.ContainerStateWaiting{}
+		})
+
+		It("marks pod as pending when init containers are pending", func() {
+			// Set the first init container as succeeded to ensure we do not just rely
+			// on the first init container's success.
+			initContainer1.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
+
+			initContainer2.State.Running = &corev1.ContainerStateRunning{}
+
+			state, _, _ := StateForPodStatus(podStatus)
+			Expect(state).To(Equal(Pending))
+		})
+
+		It("marks pod as pending when init containers succeeded", func() {
+			initContainer1.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
+			initContainer2.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
+
+			state, _, _ := StateForPodStatus(podStatus)
+			Expect(state).To(Equal(Pending))
+		})
+
+		It("marks pod as errored when init containers errored", func() {
+			// Set the first init container as succeeded to ensure we do not just rely
+			// on the first init container's success.
+			initContainer1.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
+
+			initContainer2.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 127}
+
+			state, reason, _ := StateForPodStatus(podStatus)
+			Expect(state).To(Equal(Errored))
+			Expect(reason).To(Equal(grpcv1.InitContainerError))
+		})
+	})
+
+	Context("init containers succeeded", func() {
+		It("marks pod as pending when containers are pending", func() {
+			initContainer1.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
+			initContainer2.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
+
+			container.State.Running = &corev1.ContainerStateRunning{}
+
+			state, _, _ := StateForPodStatus(podStatus)
+			Expect(state).To(Equal(Pending))
+		})
+
+		It("marks pod as succeeded when containers succeeded", func() {
+			container.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
+
+			state, _, _ := StateForPodStatus(podStatus)
+			Expect(state).To(Equal(Succeeded))
+		})
+
+		It("marks pod as errored when containers errored", func() {
+			container.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 127}
+
+			state, reason, _ := StateForPodStatus(podStatus)
+			Expect(state).To(Equal(Errored))
+			Expect(reason).To(Equal(grpcv1.ContainerError))
 		})
 	})
 })
