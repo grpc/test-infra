@@ -15,8 +15,12 @@ package status
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/optional"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -190,5 +194,341 @@ var _ = Describe("StateForPodStatus", func() {
 			Expect(state).To(Equal(Errored))
 			Expect(reason).To(Equal(grpcv1.ContainerError))
 		})
+	})
+})
+
+var _ = Describe("ForLoadTest", func() {
+	var loadtest *grpcv1.LoadTest
+	var pods []*corev1.Pod
+	var driverPod, serverPod, clientPod *corev1.Pod
+
+	BeforeEach(func() {
+		loadtest = &grpcv1.LoadTest{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "loadtest-for-unit-tests",
+			},
+			Spec: grpcv1.LoadTestSpec{
+				Driver: &grpcv1.Driver{
+					Component: grpcv1.Component{
+						Name: optional.StringPtr("driver"),
+						Run: grpcv1.Run{
+							Image: optional.StringPtr("fake-driver-image"),
+						},
+					},
+				},
+				Servers: []grpcv1.Server{
+					{
+						Component: grpcv1.Component{
+							Name: optional.StringPtr("server-1"),
+							Run: grpcv1.Run{
+								Image: optional.StringPtr("fake-server-image"),
+							},
+						},
+					},
+				},
+				Clients: []grpcv1.Client{
+					{
+						Component: grpcv1.Component{
+							Name: optional.StringPtr("client-1"),
+							Run: grpcv1.Run{
+								Image: optional.StringPtr("fake-client-image"),
+							},
+						},
+					},
+				},
+			},
+		}
+
+		pods = []*corev1.Pod{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "driver",
+					Labels: map[string]string{
+						config.LoadTestLabel:      loadtest.Name,
+						config.RoleLabel:          config.DriverRole,
+						config.ComponentNameLabel: "driver",
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "server-1",
+					Labels: map[string]string{
+						config.LoadTestLabel:      loadtest.Name,
+						config.RoleLabel:          config.ServerRole,
+						config.ComponentNameLabel: "server-1",
+					},
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "client-1",
+					Labels: map[string]string{
+						config.LoadTestLabel:      loadtest.Name,
+						config.RoleLabel:          config.ClientRole,
+						config.ComponentNameLabel: "client-1",
+					},
+				},
+			},
+		}
+
+		driverPod = pods[0]
+		serverPod = pods[1]
+		clientPod = pods[2]
+
+		_ = driverPod
+		_ = serverPod
+		_ = clientPod
+	})
+
+	It("sets start time when unset", func() {
+		testStart := metav1.Now()
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.StartTime).ToNot(BeNil())
+		Expect(testStart.Before(status.StartTime)).To(BeTrue())
+	})
+
+	It("does not override start time when set", func() {
+		fakeStartTime := metav1.Now()
+		loadtest.Status.StartTime = &fakeStartTime
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.StartTime).To(Equal(&fakeStartTime))
+	})
+
+	It("sets succeeded state when driver pod succeeded", func() {
+		driverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+				},
+			},
+		}
+
+		serverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		clientPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.State).To(BeEquivalentTo(grpcv1.Succeeded))
+	})
+
+	It("does not set succeeded state when worker pods succeeded", func() {
+		driverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		serverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+				},
+			},
+		}
+
+		clientPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+				},
+			},
+		}
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.State).ToNot(BeEquivalentTo(grpcv1.Succeeded))
+	})
+
+	It("sets failed state when driver pod errored", func() {
+		driverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 1},
+				},
+			},
+		}
+
+		serverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		clientPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.State).To(BeEquivalentTo(grpcv1.Failed))
+	})
+
+	It("sets errored state when driver pod init container errored", func() {
+		driverPod.Status.InitContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 127},
+				},
+			},
+		}
+
+		driverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Waiting: &corev1.ContainerStateWaiting{},
+				},
+			},
+		}
+
+		serverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		clientPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
+	})
+
+	It("sets errored state when worker pod errored", func() {
+		driverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		serverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		clientPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 1},
+				},
+			},
+		}
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
+	})
+
+	It("sets stop time when unset", func() {
+		testStart := metav1.Now()
+
+		driverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		serverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		clientPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 1},
+				},
+			},
+		}
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.StopTime).ToNot(BeNil())
+		Expect(testStart.Before(status.StopTime)).To(BeTrue())
+	})
+
+	It("does not override stop time when set", func() {
+		driverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		serverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			},
+		}
+
+		clientPod.Status.ContainerStatuses = []corev1.ContainerStatus{
+			{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 1},
+				},
+			},
+		}
+
+		stopTime := optional.CurrentTimePtr()
+		loadtest.Status.StopTime = stopTime
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.StopTime).ToNot(BeNil())
+		Expect(*status.StopTime).To(Equal(*stopTime))
+	})
+
+	It("sets initializing state when pods are missing", func() {
+		pods = pods[1:] // remove the driver from the world
+
+		status := ForLoadTest(loadtest, pods)
+
+		Expect(status.State).To(BeEquivalentTo(grpcv1.Initializing))
 	})
 })
