@@ -278,8 +278,8 @@ func newScenarioVolumeMount(scenario string) corev1.VolumeMount {
 	}
 }
 
-// newWorkspaceVolume returns an emptyDir volume with `config.WorkspaceVolumeName`
-// as its name.
+// newWorkspaceVolume returns an emptyDir volume with
+// `config.WorkspaceVolumeName` as its name.
 func newWorkspaceVolume() corev1.Volume {
 	return corev1.Volume{Name: config.WorkspaceVolumeName}
 }
