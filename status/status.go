@@ -19,8 +19,11 @@ import (
 	"fmt"
 	"strings"
 
-	grpcv1 "github.com/grpc/test-infra/api/v1"
 	corev1 "k8s.io/api/core/v1"
+
+	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/optional"
 )
 
 // State reflects the observed state of a resource.
@@ -96,4 +99,72 @@ func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, me
 	}
 
 	return podState, "", ""
+}
+
+// ForLoadTest creates and returns a LoadTestStatus, given a load test and the
+// pods it owns. This sets the state, reason and message for the load test. In
+// addition, it attempts to set the start and stop times based on what has been
+// previously encountered.
+func ForLoadTest(loadtest *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatus {
+	status := grpcv1.LoadTestStatus{}
+
+	if loadtest.Status.StartTime == nil {
+		status.StartTime = optional.CurrentTimePtr()
+	} else {
+		status.StartTime = loadtest.Status.StartTime
+	}
+
+	for _, pod := range pods {
+		role, ok := pod.Labels[config.RoleLabel]
+		if !ok {
+			continue
+		}
+
+		podState, reason, message := StateForPodStatus(&pod.Status)
+
+		if podState != Succeeded && podState != Errored {
+			continue
+		}
+
+		status.Reason = reason
+		status.Message = message
+
+		if role == config.DriverRole {
+			if podState == Succeeded {
+				status.State = grpcv1.Succeeded
+			} else if reason == grpcv1.InitContainerError {
+				status.State = grpcv1.Errored
+			} else {
+				status.State = grpcv1.Failed
+			}
+		} else {
+			if podState == Succeeded {
+				// ignore workers that complete "successfully" for now
+				continue
+			}
+
+			status.State = grpcv1.Errored
+		}
+
+		if loadtest.Status.StopTime == nil {
+			status.StopTime = optional.CurrentTimePtr()
+		} else {
+			status.StopTime = loadtest.Status.StopTime
+		}
+
+		return status
+	}
+
+	currentPods := len(pods)
+	requiredPods := len(loadtest.Spec.Servers) + len(loadtest.Spec.Clients) + 1
+
+	if currentPods < requiredPods {
+		status.State = grpcv1.Initializing
+		status.Reason = grpcv1.PodsMissing
+		status.Message = fmt.Sprintf("load test has created %d/%d required pods", currentPods, requiredPods)
+		return status
+	}
+
+	status.State = grpcv1.Running
+	return status
 }
