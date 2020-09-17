@@ -503,7 +503,7 @@ var _ = Describe("Pod Creation", func() {
 
 		It("sets the name of the container", func() {
 			container := newCloneContainer(clone)
-			Expect(container.Name).To(Equal(cloneInitContainer))
+			Expect(container.Name).To(Equal(config.CloneInitContainerName))
 		})
 
 		It("sets workspace volume mount", func() {
@@ -532,7 +532,7 @@ var _ = Describe("Pod Creation", func() {
 
 			container := newCloneContainer(clone)
 			Expect(container.Env).To(ContainElement(corev1.EnvVar{
-				Name:  CloneRepoEnv,
+				Name:  config.CloneRepoEnv,
 				Value: repo,
 			}))
 		})
@@ -543,7 +543,7 @@ var _ = Describe("Pod Creation", func() {
 
 			container := newCloneContainer(clone)
 			Expect(container.Env).To(ContainElement(corev1.EnvVar{
-				Name:  CloneGitRefEnv,
+				Name:  config.CloneGitRefEnv,
 				Value: gitRef,
 			}))
 		})
@@ -565,7 +565,7 @@ var _ = Describe("Pod Creation", func() {
 
 		It("sets the name of the container", func() {
 			container := newBuildContainer(build)
-			Expect(container.Name).To(Equal(buildInitContainer))
+			Expect(container.Name).To(Equal(config.BuildInitContainerName))
 		})
 
 		It("sets workspace volume mount", func() {
@@ -576,7 +576,7 @@ var _ = Describe("Pod Creation", func() {
 
 		It("sets workspace as working directory", func() {
 			container := newBuildContainer(build)
-			Expect(container.WorkingDir).To(Equal(workspaceMountPath))
+			Expect(container.WorkingDir).To(Equal(config.WorkspaceMountPath))
 		})
 
 		It("returns empty container given nil pointer", func() {
@@ -639,7 +639,7 @@ var _ = Describe("Pod Creation", func() {
 
 		It("sets the name of the container", func() {
 			container := newRunContainer(run)
-			Expect(container.Name).To(Equal(runContainer))
+			Expect(container.Name).To(Equal(config.RunContainerName))
 		})
 
 		It("sets workspace volume mount", func() {
@@ -650,7 +650,7 @@ var _ = Describe("Pod Creation", func() {
 
 		It("sets workspace as working directory", func() {
 			container := newRunContainer(run)
-			Expect(container.WorkingDir).To(Equal(workspaceMountPath))
+			Expect(container.WorkingDir).To(Equal(config.WorkspaceMountPath))
 		})
 
 		It("sets image", func() {
