@@ -243,6 +243,12 @@ const (
 	Errored = "Errored"
 )
 
+// IsTerminated returns true if the test has finished due to a success, failure
+// or error. Otherwise, it returns false.
+func (lts LoadTestState) IsTerminated() bool {
+	return lts == Succeeded || lts == Failed || lts == Errored
+}
+
 // InitContainerError is the reason string when an init container has failed on
 // one of the load test's pods.
 var InitContainerError = "InitContainerError"

@@ -92,6 +92,11 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if loadtest.Status.State.IsTerminated() {
+		// the load test has already completed, this is probably garbage collection
+		return ctrl.Result{}, nil
+	}
+
 	loadtest = loadtest.DeepCopy()
 	if err = r.Defaults.SetLoadTestDefaults(loadtest); err != nil {
 		log.Error(err, "failed to set defaults on loadtest")
@@ -111,10 +116,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		log.Error(err, "failed to update loadtest status")
 		return ctrl.Result{Requeue: true}, err
 	}
-
-	// Check if the loadtest has terminated.
-
-	// TODO: Do nothing if the loadtest has terminated.
 
 	var pod *corev1.Pod
 	missingPods := checkMissingPods(loadtest, pods)
