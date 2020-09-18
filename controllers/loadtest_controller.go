@@ -31,6 +31,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/status"
 )
 
 // reconcileTimeout specifies the maximum amount of time any set of API
@@ -103,11 +104,17 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	ownedPods := status.PodsForLoadTest(loadtest, pods.Items)
+	loadtest.Status = status.ForLoadTest(loadtest, ownedPods)
+
+	if err = r.Status().Update(ctx, loadtest); err != nil {
+		log.Error(err, "failed to update loadtest status")
+		return ctrl.Result{Requeue: true}, err
+	}
+
 	// Check if the loadtest has terminated.
 
 	// TODO: Do nothing if the loadtest has terminated.
-
-	// Check the status of any running pods.
 
 	var pod *corev1.Pod
 	missingPods := checkMissingPods(loadtest, pods)
