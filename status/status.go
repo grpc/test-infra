@@ -93,7 +93,7 @@ func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, me
 			return Errored, grpcv1.ContainerError, message
 		}
 
-		if contState != Pending {
+		if (i == 0 && podState == Pending) || contState != Succeeded {
 			podState = contState
 		}
 	}

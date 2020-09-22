@@ -194,6 +194,23 @@ var _ = Describe("StateForPodStatus", func() {
 			Expect(state).To(Equal(Errored))
 			Expect(reason).To(Equal(grpcv1.ContainerError))
 		})
+
+		It("marks a pod as pending if not all containers have finished", func() {
+			container.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
+			podStatus.ContainerStatuses = append(podStatus.ContainerStatuses, corev1.ContainerStatus{
+				State: corev1.ContainerState{
+					Running: &corev1.ContainerStateRunning{},
+				},
+			})
+			podStatus.ContainerStatuses = append(podStatus.ContainerStatuses, corev1.ContainerStatus{
+				State: corev1.ContainerState{
+					Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+				},
+			})
+
+			state, _, _ := StateForPodStatus(podStatus)
+			Expect(state).To(Equal(Pending))
+		})
 	})
 })
 
