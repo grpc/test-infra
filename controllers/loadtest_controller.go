@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/grpc/test-infra/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,7 +32,6 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
-	"github.com/grpc/test-infra/status"
 )
 
 // reconcileTimeout specifies the maximum amount of time any set of API
@@ -118,7 +118,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	var pod *corev1.Pod
-	missingPods := checkMissingPods(loadtest, pods)
+	missingPods := status.CheckMissingPods(loadtest, ownedPods)
 
 	if len(missingPods.Servers) > 0 {
 		pod, err = newServerPod(r.Defaults, loadtest, &missingPods.Servers[0].Component)
@@ -155,84 +155,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 // LoadTestMissing categorize missing components based on their roles at specific
 // moment. The struct is a wrapper to help us get role information associate
 // with components.
-type LoadTestMissing struct {
-	// Driver is the component that orchestrates the test. If Driver is not set
-	// that means we already have the Driver running.
-	Driver *grpcv1.Driver `json:"driver,omitempty"`
-
-	// Servers are a list of components that receive traffic from. The list
-	// indicates the Servers still in need.
-	Servers []grpcv1.Server `json:"servers,omitempty"`
-
-	// Clients are a list of components that send traffic to servers. The list
-	// indicates the Clients still in need.
-	Clients []grpcv1.Client `json:"clients,omitempty"`
-}
-
-// checkMissingPods attempts to check if any required component is missing from
-// the current load test. It takes reference of the current load test and a pod
-// list that contains all running pods at the moment, returning all missing
-// components required from the current load test with their roles.
-func checkMissingPods(currentLoadTest *grpcv1.LoadTest, allRunningPods *corev1.PodList) *LoadTestMissing {
-
-	currentMissing := &LoadTestMissing{Servers: []grpcv1.Server{}, Clients: []grpcv1.Client{}}
-
-	requiredClientMap := make(map[string]*grpcv1.Client)
-	requiredServerMap := make(map[string]*grpcv1.Server)
-	foundDriver := false
-
-	for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
-		requiredClientMap[*currentLoadTest.Spec.Clients[i].Name] = &currentLoadTest.Spec.Clients[i]
-	}
-	for i := 0; i < len(currentLoadTest.Spec.Servers); i++ {
-		requiredServerMap[*currentLoadTest.Spec.Servers[i].Name] = &currentLoadTest.Spec.Servers[i]
-	}
-
-	if allRunningPods != nil {
-
-		for _, eachPod := range allRunningPods.Items {
-
-			if eachPod.Labels == nil {
-				continue
-			}
-
-			loadTestLabel := eachPod.Labels[config.LoadTestLabel]
-			roleLabel := eachPod.Labels[config.RoleLabel]
-			componentNameLabel := eachPod.Labels[config.ComponentNameLabel]
-
-			if loadTestLabel != currentLoadTest.Name {
-				continue
-			}
-			if roleLabel == config.DriverRole {
-				if *currentLoadTest.Spec.Driver.Component.Name == componentNameLabel {
-					foundDriver = true
-				}
-			} else if roleLabel == config.ClientRole {
-				if _, ok := requiredClientMap[componentNameLabel]; ok {
-					delete(requiredClientMap, componentNameLabel)
-				}
-			} else if roleLabel == config.ServerRole {
-				if _, ok := requiredServerMap[componentNameLabel]; ok {
-					delete(requiredServerMap, componentNameLabel)
-				}
-			}
-		}
-	}
-
-	for _, eachMissingClient := range requiredClientMap {
-		currentMissing.Clients = append(currentMissing.Clients, *eachMissingClient)
-	}
-
-	for _, eachMissingServer := range requiredServerMap {
-		currentMissing.Servers = append(currentMissing.Servers, *eachMissingServer)
-	}
-
-	if !foundDriver {
-		currentMissing.Driver = currentLoadTest.Spec.Driver
-	}
-
-	return currentMissing
-}
 
 // SetupWithManager configures a controller-runtime manager.
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
