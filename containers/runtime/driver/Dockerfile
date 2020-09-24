@@ -24,6 +24,7 @@ WORKDIR /src/code
 
 RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
+RUN git checkout $GITREF
 
 FROM l.gcr.io/google/bazel:0.17.1
 
