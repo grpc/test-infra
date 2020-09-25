@@ -18,7 +18,6 @@ RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
 RUN apt-get update && apt-get install -y \
-  gcc \
   git \
   time && \
   apt-get clean
