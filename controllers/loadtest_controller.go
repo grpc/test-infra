@@ -266,6 +266,15 @@ func addReadyInitContainer(defs *config.Defaults, loadtest *grpcv1.LoadTest, pod
 	})
 }
 
+// newBigQueryTableEnvVar accepts a table name and returns the environment
+// variable that must be set on the driver to write to the table.
+func newBigQueryTableEnvVar(tableName string) corev1.EnvVar {
+	return corev1.EnvVar{
+		Name:  config.BigQueryTableEnv,
+		Value: tableName,
+	}
+}
+
 // newDriverPod creates a driver given defaults, a load test and a reference to
 // the driver's component. It returns an error if a pod cannot be constructed.
 func newDriverPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
@@ -287,6 +296,12 @@ func newDriverPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *g
 		podSpec.Volumes = append(podSpec.Volumes, newScenarioVolume(scenario))
 		testContainer.VolumeMounts = append(testContainer.VolumeMounts, newScenarioVolumeMount(scenario))
 		testContainer.Env = append(testContainer.Env, newScenarioFileEnvVar(scenario))
+	}
+
+	if results := testSpec.Results; results != nil {
+		if bigQueryTable := results.BigQueryTable; bigQueryTable != nil {
+			testContainer.Env = append(testContainer.Env, newBigQueryTableEnvVar(*bigQueryTable))
+		}
 	}
 
 	return pod, nil

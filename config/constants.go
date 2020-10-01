@@ -17,6 +17,10 @@ limitations under the License.
 package config
 
 const (
+	// BigQueryTableEnv specifies the name of the env variable that holds the name
+	// of the table where results should be written.
+	BigQueryTableEnv = "BQ_RESULT_TABLE"
+
 	// BuildInitContainerName holds the name of the init container that assembles
 	// a binary or other bundle required to run the tests.
 	BuildInitContainerName = "build"
