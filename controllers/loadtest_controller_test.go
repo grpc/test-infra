@@ -229,11 +229,6 @@ var _ = Describe("Pod Creation", func() {
 			Expect(expectedEnv).To(BeElementOf(rc.Env))
 		})
 
-		It("mounts GCP secrets", func() {
-			// TODO: Add tests for mounting of GCP secrets
-			Skip("complete this task when adding GCP secrets to pkg/defaults")
-		})
-
 		It("sets loadtest-role label to driver", func() {
 			pod, err := newDriverPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
