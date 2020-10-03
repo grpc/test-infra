@@ -75,9 +75,9 @@ RUN pip3 install \
   oauth2client \
   google-auth-oauthlib \
   tabulate \
-  six==1.10.0 \
   pyasn1_modules==0.2.2 \
-  pyasn1==0.4.2
+  pyasn1==0.4.2 \
+  six==1.15.0
 
 COPY . /src/driver
 RUN chmod a+x /src/driver/run.sh

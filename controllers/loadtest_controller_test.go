@@ -6,6 +6,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/optional"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
@@ -315,6 +316,7 @@ var _ = Describe("Pod Creation", func() {
 
 			rc.VolumeMounts = append(rc.VolumeMounts, newScenarioVolumeMount(scenario))
 			rc.Env = append(rc.Env, newScenarioFileEnvVar(scenario))
+			rc.Env = append(rc.Env, newBigQueryTableEnvVar(*loadtest.Spec.Results.BigQueryTable))
 
 			Expect(pod.Spec.Containers).To(ContainElement(rc))
 		})
@@ -331,6 +333,30 @@ var _ = Describe("Pod Creation", func() {
 
 			volume := newWorkspaceVolume()
 			Expect(pod.Spec.Volumes).To(ContainElement(volume))
+		})
+
+		It("sets big query table env variable", func() {
+			table := "example-dataset.table1"
+			loadtest.Spec.Results = &grpcv1.Results{
+				BigQueryTable: optional.StringPtr(table),
+			}
+
+			pod, err := newDriverPod(defs, loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			expectedVar := newBigQueryTableEnvVar(table)
+			Expect(pod.Spec.Containers[0].Env).To(ContainElement(expectedVar))
+		})
+
+		It("does not set big query table env variable when table name not specified", func() {
+			loadtest.Spec.Results = nil
+
+			pod, err := newDriverPod(defs, loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			for _, env := range pod.Spec.Containers[0].Env {
+				Expect(env.Name).ToNot(Equal(config.BigQueryTableEnv))
+			}
 		})
 	})
 
