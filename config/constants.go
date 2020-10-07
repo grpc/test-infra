@@ -17,6 +17,15 @@ limitations under the License.
 package config
 
 const (
+	// BazelCacheVolumeName holds the name of the volume which allows images to
+	// share a bazel cache.
+	BazelCacheVolumeName = "bazel-cache"
+
+	// BazelCacheMountPath stores the directory where the bazel cache resides. For
+	// a description of the bazel image and its cache/output directories, see
+	// https://docs.bazel.build/versions/master/output_directories.html.
+	BazelCacheMountPath = "/root/.cache/bazel"
+
 	// BigQueryTableEnv specifies the name of the env variable that holds the name
 	// of the table where results should be written.
 	BigQueryTableEnv = "BQ_RESULT_TABLE"
