@@ -170,6 +170,14 @@ var _ = Describe("Pod Creation", func() {
 			Expect(container.Args).To(ContainElement(portFlag))
 		})
 
+		It("sets bazel cache volume", func() {
+			pod, err := newClientPod(defs, loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			volume := newBazelCacheVolume()
+			Expect(pod.Spec.Volumes).To(ContainElement(volume))
+		})
+
 		It("sets workspace volume", func() {
 			pod, err := newClientPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
@@ -325,6 +333,14 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newDriverPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Spec.RestartPolicy).To(Equal(corev1.RestartPolicyNever))
+		})
+
+		It("sets bazel cache volume", func() {
+			pod, err := newDriverPod(defs, loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			volume := newBazelCacheVolume()
+			Expect(pod.Spec.Volumes).To(ContainElement(volume))
 		})
 
 		It("sets workspace volume", func() {
@@ -497,6 +513,14 @@ var _ = Describe("Pod Creation", func() {
 			Expect(pod.Spec.RestartPolicy).To(Equal(corev1.RestartPolicyNever))
 		})
 
+		It("sets bazel cache volume", func() {
+			pod, err := newServerPod(defs, loadtest, component)
+			Expect(err).ToNot(HaveOccurred())
+
+			volume := newBazelCacheVolume()
+			Expect(pod.Spec.Volumes).To(ContainElement(volume))
+		})
+
 		It("sets workspace volume", func() {
 			pod, err := newServerPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
@@ -588,6 +612,12 @@ var _ = Describe("Pod Creation", func() {
 			Expect(container.Name).To(Equal(config.BuildInitContainerName))
 		})
 
+		It("sets bazel cache volume mount", func() {
+			container := newBuildContainer(build)
+			volumeMount := newBazelCacheVolumeMount()
+			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
+		})
+
 		It("sets workspace volume mount", func() {
 			container := newBuildContainer(build)
 			volumeMount := newWorkspaceVolumeMount()
@@ -660,6 +690,12 @@ var _ = Describe("Pod Creation", func() {
 		It("sets the name of the container", func() {
 			container := newRunContainer(run)
 			Expect(container.Name).To(Equal(config.RunContainerName))
+		})
+
+		It("sets bazel cache volume mount", func() {
+			container := newRunContainer(run)
+			volumeMount := newBazelCacheVolumeMount()
+			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
 		})
 
 		It("sets workspace volume mount", func() {

@@ -183,6 +183,24 @@ func scenarioVolumeName(scenario string) string {
 	return fmt.Sprintf("scenario-%s", scenario)
 }
 
+// newBazelCacheVolume returns an emptyDir volume for the bazel cache. It uses
+// the `config.BazelCacheVolumeName` constant as the name of the volume.
+func newBazelCacheVolume() corev1.Volume {
+	return corev1.Volume{
+		Name: config.BazelCacheVolumeName,
+	}
+}
+
+// newBazelCacheVolumeMount returns a volume mount for the bazel cache. It uses
+// the `config.BazelCacheVolumeName` constant as the name of the volume and the
+// `config.BazelCacheMountPath` constant as the mount path.
+func newBazelCacheVolumeMount() corev1.VolumeMount {
+	return corev1.VolumeMount{
+		Name:      config.BazelCacheVolumeName,
+		MountPath: config.BazelCacheMountPath,
+	}
+}
+
 // newScenarioVolume accepts the name of a scenario ConfigMap and returns a
 // volume that can mount it.
 func newScenarioVolume(scenario string) corev1.Volume {
@@ -391,6 +409,11 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 		WorkingDir: config.WorkspaceMountPath,
 		VolumeMounts: []corev1.VolumeMount{
 			newWorkspaceVolumeMount(),
+
+			// We mount an emptyDir volume for the bazel cache in all images, because
+			// bazel-bin/bazel-out symlink to it. This has no effect on images not
+			// built by bazel, since it will become an empty directory.
+			newBazelCacheVolumeMount(),
 		},
 	}
 }
@@ -449,6 +472,7 @@ func newRunContainer(run grpcv1.Run) corev1.Container {
 		WorkingDir: config.WorkspaceMountPath,
 		VolumeMounts: []corev1.VolumeMount{
 			newWorkspaceVolumeMount(),
+			newBazelCacheVolumeMount(),
 		},
 	}
 }
@@ -501,6 +525,7 @@ func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string)
 			},
 			Volumes: []corev1.Volume{
 				newWorkspaceVolume(),
+				newBazelCacheVolume(),
 			},
 		},
 	}, nil
