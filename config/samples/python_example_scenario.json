@@ -1,6 +1,7 @@
 {
   "scenarios": [
     {
+      "name": "python_example_scenario",
       "benchmark_seconds": 30,
       "client_config": {
         "async_client_threads": 1,
@@ -34,7 +35,6 @@
         },
         "threads_per_cq": 0
       },
-      "name": "python_example_scenario",
       "num_clients": 1,
       "num_servers": 1,
       "server_config": {
