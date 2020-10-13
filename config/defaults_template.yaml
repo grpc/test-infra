@@ -27,3 +27,7 @@ languages:
     buildImage: golang:1.14
     runImage: "{{ .ImagePrefix }}go:{{ .Version }}"
 
+  - language: python
+    buildImage: l.gcr.io/google/bazel:latest
+    runImage: "{{ .ImagePrefix }}python:{{ .Version }}"
+
