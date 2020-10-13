@@ -27,7 +27,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"text/template"
+
+	"github.com/grpc/test-infra/config"
+	"sigs.k8s.io/yaml"
 )
 
 // DefaultsData contains the values for fields that are accessible by the
@@ -55,7 +59,7 @@ is the input YAML file with placeholders for string interpolation. The second is
 
 The string interpolation is based on Go's text/template package. See
 https://pkg.go.dev/text/template for a description of the syntax. All flags
-passed to the script are accessible within the template.
+passed to the script (except -validate) are accessible within the template.
 `)
 
 		fmt.Fprintf(flag.CommandLine.Output(), "\nFlags:\n")
@@ -65,6 +69,7 @@ passed to the script are accessible within the template.
 
 func main() {
 	var data DefaultsData
+	var validate bool
 
 	flag.StringVar(&data.Version, "version", "latest", "version of all docker images to use")
 
@@ -87,6 +92,8 @@ init container images.`)
 
 This -image-prefix flag allows a specific prefix to apply to all
 container images that are not used as init containers.`)
+
+	flag.BoolVar(&validate, "validate", true, "validate the output configuration for correctness")
 
 	flag.Parse()
 
@@ -112,7 +119,25 @@ container images that are not used as init containers.`)
 		exitWithErrorf(1, true, "could not create <output-file>: %v", err)
 	}
 
-	if err := templ.Execute(outputFile, data); err != nil {
+	outputBuilder := &strings.Builder{}
+	if err := templ.Execute(outputBuilder, data); err != nil {
+		exitWithErrorf(1, false, "could not generate config from template: %v", err)
+	}
+	output := outputBuilder.String()
+
+	if validate {
+		var defs config.Defaults
+
+		if err := yaml.Unmarshal([]byte(output), &defs); err != nil {
+			exitWithErrorf(1, false, "generated config is not parsable as YAML: %v", err)
+		}
+
+		if err := defs.Validate(); err != nil {
+			exitWithErrorf(1, false, "generated config is invalid: %v", err)
+		}
+	}
+
+	if _, err := outputFile.WriteString(output); err != nil {
 		exitWithErrorf(1, false, "could not write config to output file: %v", err)
 	}
 }

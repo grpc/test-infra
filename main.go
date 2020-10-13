@@ -79,6 +79,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := defaultOptions.Validate(); err != nil {
+		setupLog.Error(err, "failed to start due to invalid defaults")
+		os.Exit(1)
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
