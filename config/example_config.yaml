@@ -26,3 +26,7 @@ languages:
   - language: go
     buildImage: golang:1.14
     runImage: docker.pkg.github.com/grpc/test-infra/go
+
+  - language: python
+    buildImage: l.gcr.io/google/bazel:latest
+    runImage: docker.pkg.github.com/grpc/test-infra/python
