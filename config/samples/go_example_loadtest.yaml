@@ -47,8 +47,8 @@ spec:
   # We can optionally specify where to place the results. The
   # controller will attempt to mount a service account in the driver.
   # This can be used for uploading results to GCS or BigQuery.
-  results:
-    bigQueryTable: "example-project.foo.demo_dataset"
+  # results:
+  #   bigQueryTable: "example-project.foo.demo_dataset"
 
   # Scenarios are separate objects under this proposal. While
   # they specify configuration for clients and servers, they are
