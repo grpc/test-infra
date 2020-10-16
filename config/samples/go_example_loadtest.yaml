@@ -1,64 +1,63 @@
 apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
-    # Every load test instance must be assigned a unique name on the
-    # cluster. There are ways we can circumvent naming clashes, such
-    # as using namespaces or dynamically assigning names.
-    name: go-example
+  # Every load test instance must be assigned a unique name on the
+  # cluster. There are ways we can circumvent naming clashes, such
+  # as using namespaces or dynamically assigning names.
+  name: go-example
 
-    # As a custom resource, it behaves like a native kubernetes object.
-    # This means that users can perform CRUD operations through the
-    # Kubernetes API or kubectl. In addition, it means that the user
-    # can set any metadata on it.
-    labels:
-        language: go
+  # As a custom resource, it behaves like a native kubernetes object.
+  # This means that users can perform CRUD operations through the
+  # Kubernetes API or kubectl. In addition, it means that the user
+  # can set any metadata on it.
+  labels:
+    language: go
 spec:
-    # The user can specify servers to use when running tests. The
-    # initial version only supports 1 server to limit scope. Servers
-    # is an array for future expansion.
-    #
-    # There are many designs and systems to pursue load balancing,
-    # organizing and monitoring a mesh of servers. Therefore, this
-    # will likely be expanded in the future.
-    servers:
-        - language: go
-          clone:
-            repo: https://github.com/grpc/grpc-go.git
-            gitRef: master
-          build:
-            command: ["go"]
-            args: ["build", "-o", "/src/workspace/bin/worker", "./benchmark/worker"]
-          run:
-            command: ["/src/workspace/bin/worker"]
+  # The user can specify servers to use when running tests. The
+  # initial version only supports 1 server to limit scope. Servers
+  # is an array for future expansion.
+  #
+  # There are many designs and systems to pursue load balancing,
+  # organizing and monitoring a mesh of servers. Therefore, this
+  # will likely be expanded in the future.
+  servers:
+    - language: go
+      clone:
+        repo: https://github.com/grpc/grpc-go.git
+        gitRef: master
+      build:
+        command: ["go"]
+        args: ["build", "-o", "/src/workspace/bin/worker", "./benchmark/worker"]
+      run:
+        command: ["/src/workspace/bin/worker"]
 
-    # Users can specify multiple clients. They are bound by the
-    # number of nodes.
-    clients:
-        - language: go
-          clone:
-            repo: https://github.com/grpc/grpc-go.git
-            gitRef: master
-          build:
-            command: ["go"]
-            args: ["build", "-o", "/src/workspace/bin/worker", "./benchmark/worker"]
-          run:
-            command: ["/src/workspace/bin/worker"]
+  # Users can specify multiple clients. They are bound by the
+  # number of nodes.
+  clients:
+    - language: go
+      clone:
+        repo: https://github.com/grpc/grpc-go.git
+        gitRef: master
+      build:
+        command: ["go"]
+        args: ["build", "-o", "/src/workspace/bin/worker", "./benchmark/worker"]
+      run:
+        command: ["/src/workspace/bin/worker"]
 
-    # We can optionally specify where to place the results. The
-    # controller will attempt to mount a service account in the driver.
-    # This can be used for uploading results to GCS or BigQuery.
-    results:
-        bigQueryTable: "example-project.foo.demo_dataset"
+  # We can optionally specify where to place the results. The
+  # controller will attempt to mount a service account in the driver.
+  # This can be used for uploading results to GCS or BigQuery.
+  # results:
+  #   bigQueryTable: "example-project.foo.demo_dataset"
 
-    # Scenarios are separate objects under this proposal. While
-    # they specify configuration for clients and servers, they are
-    # highly specialized. I doubt we want to modify controller logic
-    # whenever the Scenario proto is changed. This is open to
-    # discussion, however.
-    #
-    # These can be stored in ConfigMaps or they can be high-level
-    # Kubernetes objects themselves. If we did want to couple, they
-    # could also be inlined.
-    scenarios:
-        - name: go-example-scenario
-
+  # Scenarios are separate objects under this proposal. While
+  # they specify configuration for clients and servers, they are
+  # highly specialized. I doubt we want to modify controller logic
+  # whenever the Scenario proto is changed. This is open to
+  # discussion, however.
+  #
+  # These can be stored in ConfigMaps or they can be high-level
+  # Kubernetes objects themselves. If we did want to couple, they
+  # could also be inlined.
+  scenarios:
+    - name: go-example-scenario
