@@ -23,22 +23,22 @@ Will wait for three pods:
 
 Meanwhile, users can set environment variables to override some defaults:
 
--   `$READY_TIMEOUT` specifies the maximum amount of time the container should
-    wait for pods to become ready. This time is specified in a human-readable
-    format that is parsable by Go's
-    [time.ParseDuration](https://pkg.go.dev/time?tab=doc#ParseDuration). For
-    example, "1m" represents 1 minute and "3h" represents 3 hours. If this
-    timeout is reached before the pods are ready, the container will exit with a
-    code of 1.
+- `$READY_TIMEOUT` specifies the maximum amount of time the container should
+  wait for pods to become ready. This time is specified in a human-readable
+  format that is parsable by Go's
+  [time.ParseDuration](https://pkg.go.dev/time?tab=doc#ParseDuration). For
+  example, "1m" represents 1 minute and "3h" represents 3 hours. If this
+  timeout is reached before the pods are ready, the container will exit with a
+  code of 1.
 
--   `$READY_OUTPUT_FILE` specifies the absolute path of the output file. This
-    will contain a comma-separated list of IP addresses for matching pods. This
-    defaults to /tmp/loadtest_workers.
+- `$READY_OUTPUT_FILE` specifies the absolute path of the output file. This
+  will contain a comma-separated list of IP addresses for matching pods. This
+  defaults to /tmp/loadtest_workers.
 
--   `$KUBE_CONFIG` specifies the path to a Kubernetes config file. This can be
-    omitted when running in a Kubernetes cluster. If running outside a cluster,
-    this is required. It will likely be ~/.kube/config when developing locally
-    on Linux.
+- `$KUBE_CONFIG` specifies the path to a Kubernetes config file. This can be
+  omitted when running in a Kubernetes cluster. If running outside a cluster,
+  this is required. It will likely be ~/.kube/config when developing locally
+  on Linux.
 
 ## Building
 

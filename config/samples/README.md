@@ -3,7 +3,7 @@
 This directory contains a [LoadTest](e2etest.grpc.io_v1_loadtest.yaml) and some
 example scenarios.
 
-The LoadTest references a ConfigMap named *go-example-scenario*, which should
+The LoadTest references a ConfigMap named _go-example-scenario_, which should
 contain the contents of the scenario protobuf as JSON. Once you have
 authenticated with a Kubernetes cluster, this command will create it:
 

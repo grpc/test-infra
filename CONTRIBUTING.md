@@ -36,57 +36,57 @@ from the community if you ask your questions on
 
 How to get your contributions merged smoothly and quickly.
 
-*   Create smaller PRs that are narrowly focused on addressing a single concern.
-    We often times receive PRs that are trying to fix several things at a time,
-    making the review process difficult. Create more PRs to address different
-    concerns for faster resolution.
+- Create smaller PRs that are narrowly focused on addressing a single concern.
+  We often times receive PRs that are trying to fix several things at a time,
+  making the review process difficult. Create more PRs to address different
+  concerns for faster resolution.
 
-*   Make sure to add new tests for bugs in order to catch regressions and to
-    test any newly added functionality.
+- Make sure to add new tests for bugs in order to catch regressions and to
+  test any newly added functionality.
 
-*   For speculative changes, consider opening an issue and discussing it first.
+- For speculative changes, consider opening an issue and discussing it first.
 
-*   Provide a good PR description as a record of what change is being made and
-    why it was made. Link to a GitHub issue if it exists.
+- Provide a good PR description as a record of what change is being made and
+  why it was made. Link to a GitHub issue if it exists.
 
-*   Don't fix code style and formatting unless you are already changing that
-    line to address an issue. PRs with irrelevant changes won't be merged. If
-    you do want to fix formatting or style, do that in a separate PR.
+- Don't fix code style and formatting unless you are already changing that
+  line to address an issue. PRs with irrelevant changes won't be merged. If
+  you do want to fix formatting or style, do that in a separate PR.
 
-*   Unless your PR is trivial, you should expect there will be reviewer comments
-    that you'll need to address before merging. We expect you to be reasonably
-    responsive to those comments, otherwise the PR will be closed after 2-3
-    weeks of inactivity.
+- Unless your PR is trivial, you should expect there will be reviewer comments
+  that you'll need to address before merging. We expect you to be reasonably
+  responsive to those comments, otherwise the PR will be closed after 2-3
+  weeks of inactivity.
 
-*   Maintain clean commit history and use meaningful commit messages. PRs with
-    messy commit history are difficult to review and won't be merged. Use
-    `rebase -i upstream/master` to curate your commit history and/or to bring in
-    latest changes from master but avoid rebasing in the middle of a code
-    review.
+- Maintain clean commit history and use meaningful commit messages. PRs with
+  messy commit history are difficult to review and won't be merged. Use
+  `rebase -i upstream/master` to curate your commit history and/or to bring in
+  latest changes from master but avoid rebasing in the middle of a code
+  review.
 
-*   Keep your PR up to date with upstream/master. If there are merge conflicts,
-    we can't really merge your change.
+- Keep your PR up to date with upstream/master. If there are merge conflicts,
+  we can't really merge your change.
 
-*   All tests need to be passing before your change can be merged. We recommend
-    you run tests locally before creating your PR to catch breakages early on.
-    To test and check your commits locally, run the following:
+- All tests need to be passing before your change can be merged. We recommend
+  you run tests locally before creating your PR to catch breakages early on.
+  To test and check your commits locally, run the following:
 
-    -   `go test ./...` to run all tests
-    -   `go test -race ./...` to run tests in race mode
-    -   `go vet ./...` to find any functional issues
-    -   `golint ./...` to find any style issues (after installing [golint])
+  - `go test ./...` to run all tests
+  - `go test -race ./...` to run tests in race mode
+  - `go vet ./...` to find any functional issues
+  - `golint ./...` to find any style issues (after installing [golint])
 
-*   Go code should comply with the [Effective Go] guide and try to avoid
-    pitfalls in Go's [Code Review Comments]. It should be checked using [go vet]
-    and formatted using [gofmt]. Comments should adhere to the
-    [Documenting Go Code] post.
+- Go code should comply with the [Effective Go] guide and try to avoid
+  pitfalls in Go's [Code Review Comments]. It should be checked using [go vet]
+  and formatted using [gofmt]. Comments should adhere to the
+  [Documenting Go Code] post.
 
-*   Exceptions to the rules can be made if there's a compelling reason for doing
-    so.
+- Exceptions to the rules can be made if there's a compelling reason for doing
+  so.
 
 [golint]: https://github.com/golang/lint
-[Effective Go]: https://golang.org/doc/effective_go.html
-[Code Review Comments]: https://github.com/golang/go/wiki/CodeReviewComments
+[effective go]: https://golang.org/doc/effective_go.html
+[code review comments]: https://github.com/golang/go/wiki/CodeReviewComments
 [go vet]: https://golang.org/cmd/vet/
 [gofmt]: https://blog.golang.org/gofmt
-[Documenting Go Code]: https://blog.golang.org/godoc
+[documenting go code]: https://blog.golang.org/godoc

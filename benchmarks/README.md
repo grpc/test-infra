@@ -18,10 +18,9 @@ and monitor gRPC benchmarks on a Kubernetes cluster.
 
 ## Dependencies
 
--   [Go 1.14](https://golang.org)
--   [Docker](https://docker.com)
--   [GKE Cluster](https://cloud.google.com/kubernetes-engine)
--   [Protobuf Compiler and Go Plugin](https://developers.google.com/protocol-buffers/docs/gotutorial#compiling-your-protocol-buffers)
--   Go Modules listed in [go.mod](go.mod)
--   [Git Submodules](../.gitmodules): `git submodule update --init`
-
+- [Go 1.14](https://golang.org)
+- [Docker](https://docker.com)
+- [GKE Cluster](https://cloud.google.com/kubernetes-engine)
+- [Protobuf Compiler and Go Plugin](https://developers.google.com/protocol-buffers/docs/gotutorial#compiling-your-protocol-buffers)
+- Go Modules listed in [go.mod](go.mod)
+- [Git Submodules](../.gitmodules): `git submodule update --init`
