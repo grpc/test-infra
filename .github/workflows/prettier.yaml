@@ -1,0 +1,27 @@
+name: Prettier
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  check:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Node.js
+        uses: actions/setup-node@v1
+
+      - name: Install prettier
+        run: npm install -g prettier
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Lint YAML
+        run: prettier -c **/*.yaml
+
+      - name: Lint JSON
+        run: prettier -c **/*.json
