@@ -24,6 +24,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -44,7 +47,8 @@ var _ = Describe("WaitForReadyPods", func() {
 		irrelevantPod = corev1.Pod{}
 
 		driverPod = newTestPod("driver")
-		driverPod.Spec.Containers[0].Ports = nil
+		driverRunContainer := kubehelpers.ContainerForName(config.RunContainerName, driverPod.Spec.Containers)
+		driverRunContainer.Ports = nil
 
 		serverPod = newTestPod("server")
 		serverPod.Status.PodIP = "127.0.0.2"
@@ -188,7 +192,8 @@ var _ = Describe("WaitForReadyPods", func() {
 		var customPort int32 = 9542
 		client2Pod := newTestPod("client")
 		client2Pod.Name = "client-2"
-		client2Pod.Spec.Containers[0].Ports[0].ContainerPort = customPort
+		client2PodContainer := kubehelpers.ContainerForName(config.RunContainerName, client2Pod.Spec.Containers)
+		client2PodContainer.Ports[0].ContainerPort = customPort
 
 		mock := &PodListerMock{
 			PodList: &corev1.PodList{

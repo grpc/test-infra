@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/grpc/test-infra/kubehelpers"
 	"github.com/grpc/test-infra/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -172,8 +173,8 @@ func newClientPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *g
 		return nil, err
 	}
 
-	addDriverPort(&pod.Spec.Containers[0], defs.DriverPort)
-
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	addDriverPort(runContainer, defs.DriverPort)
 	return pod, nil
 }
 
@@ -304,8 +305,7 @@ func newDriverPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *g
 	podSpec := &pod.Spec
 	testSpec := &loadtest.Spec
 
-	// TODO: Avoid referencing containers by index, use names
-	testContainer := &podSpec.Containers[0]
+	testContainer := kubehelpers.ContainerForName(config.RunContainerName, podSpec.Containers)
 	addReadyInitContainer(defs, loadtest, podSpec, testContainer)
 
 	// TODO: Handle more than 1 scenario
@@ -359,10 +359,9 @@ func newServerPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *g
 		return nil, err
 	}
 
-	rc := &pod.Spec.Containers[0]
+	rc := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 	addDriverPort(rc, defs.DriverPort)
 	addServerPort(rc, defs.ServerPort)
-
 	return pod, nil
 }
 
