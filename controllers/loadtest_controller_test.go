@@ -6,6 +6,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
 	"github.com/grpc/test-infra/optional"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -154,7 +155,9 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newClientPod(defs, loadtest, component)
 			port := newContainerPort("driver", 10000)
 			Expect(err).To(BeNil())
-			Expect(pod.Spec.Containers[0].Ports).To(ContainElement(port))
+
+			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+			Expect(container.Ports).To(ContainElement(port))
 		})
 
 		It("sets driver port flag in run container args", func() {
@@ -163,9 +166,7 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newClientPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 
-			// TODO: Remove container lookup by index
-			container := &pod.Spec.Containers[0]
-
+			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 			portFlag := fmt.Sprintf("--driver_port=%d", defs.DriverPort)
 			Expect(container.Args).To(ContainElement(portFlag))
 		})
@@ -221,7 +222,7 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newDriverPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 
-			rc := &pod.Spec.Containers[0]
+			rc := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 			expectedMount := newScenarioVolumeMount(scenario)
 			Expect(expectedMount).To(BeElementOf(rc.VolumeMounts))
 		})
@@ -233,7 +234,7 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newDriverPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 
-			rc := &pod.Spec.Containers[0]
+			rc := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 			expectedEnv := newScenarioFileEnvVar(scenario)
 			Expect(expectedEnv).To(BeElementOf(rc.Env))
 		})
@@ -361,7 +362,8 @@ var _ = Describe("Pod Creation", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			expectedVar := newBigQueryTableEnvVar(table)
-			Expect(pod.Spec.Containers[0].Env).To(ContainElement(expectedVar))
+			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+			Expect(container.Env).To(ContainElement(expectedVar))
 		})
 
 		It("does not set big query table env variable when table name not specified", func() {
@@ -370,7 +372,8 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newDriverPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 
-			for _, env := range pod.Spec.Containers[0].Env {
+			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+			for _, env := range container.Env {
 				Expect(env.Name).ToNot(Equal(config.BigQueryTableEnv))
 			}
 		})
@@ -402,7 +405,9 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newServerPod(defs, loadtest, component)
 			port := newContainerPort("driver", 10000)
 			Expect(err).To(BeNil())
-			Expect(pod.Spec.Containers[0].Ports).To(ContainElement(port))
+
+			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+			Expect(container.Ports).To(ContainElement(port))
 		})
 
 		It("sets driver port flag in run container args", func() {
@@ -411,9 +416,7 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newServerPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 
-			// TODO: Remove container lookup by index
-			container := &pod.Spec.Containers[0]
-
+			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 			portFlag := fmt.Sprintf("--driver_port=%d", defs.DriverPort)
 			Expect(container.Args).To(ContainElement(portFlag))
 		})
@@ -422,7 +425,9 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newServerPod(defs, loadtest, component)
 			port := newContainerPort("server", 10010)
 			Expect(err).To(BeNil())
-			Expect(pod.Spec.Containers[0].Ports).To(ContainElement(port))
+
+			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+			Expect(container.Ports).To(ContainElement(port))
 		})
 
 		It("sets server port flag in run container args", func() {
@@ -431,9 +436,7 @@ var _ = Describe("Pod Creation", func() {
 			pod, err := newServerPod(defs, loadtest, component)
 			Expect(err).ToNot(HaveOccurred())
 
-			// TODO: Remove container lookup by index
-			container := &pod.Spec.Containers[0]
-
+			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 			portFlag := fmt.Sprintf("--server_port=%d", defs.ServerPort)
 			Expect(container.Args).To(ContainElement(portFlag))
 		})
