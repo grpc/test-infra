@@ -1,0 +1,71 @@
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  # Every load test instance must be assigned a unique name on the
+  # cluster. There are ways we can circumvent naming clashes, such
+  # as using namespaces or dynamically assigning names.
+  name: csharp-example
+
+  # As a custom resource, it behaves like a native kubernetes object.
+  # This means that users can perform CRUD operations through the
+  # Kubernetes API or kubectl. In addition, it means that the user
+  # can set any metadata on it.
+  labels:
+    language: csharp
+spec:
+  # The user can specify servers to use when running tests. The
+  # initial version only supports 1 server to limit scope. Servers
+  # is an array for future expansion.
+  #
+  # There are many designs and systems to pursue load balancing,
+  # organizing and monitoring a mesh of servers. Therefore, this
+  # will likely be expanded in the future.
+  servers:
+    - language: csharp
+      clone:
+        repo: https://github.com/jtattermusch/grpc.git
+        # TODO(jtattermusch): we cannot use grpc/grpc master because currently C# qps_worker doesn't accept the --server_port arg
+        gitRef: csharp_qpsworker_server_port
+      build:
+        image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
+        command: ["bash", "/build_scripts/build_qps_worker.sh"]
+      run:
+        # TODO: in the run phase, we can actually use a vanilla dotnet runtime image
+        image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
+        command: ["dotnet"]
+        args: ["exec", "qps_worker/Grpc.IntegrationTesting.QpsWorker.dll"]
+
+  # Users can specify multiple clients. They are bound by the
+  # number of nodes.
+  clients:
+    - language: csharp
+      clone:
+        repo: https://github.com/jtattermusch/grpc.git
+        gitRef: csharp_qpsworker_server_port
+      build:
+        image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
+        command: ["bash", "/build_scripts/build_qps_worker.sh"]
+      run:
+        # TODO: in the run phase, we can actually use a vanilla dotnet runtime image
+        image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
+        command: ["dotnet"]
+        args: ["exec", "qps_worker/Grpc.IntegrationTesting.QpsWorker.dll"]
+
+  # We can optionally specify where to place the results. The
+  # controller will attempt to mount a service account in the driver.
+  # This can be used for uploading results to GCS or BigQuery.
+  # results:
+  #   bigQueryTable: "example-project.foo.demo_dataset"
+
+  # Scenarios are separate objects under this proposal. While
+  # they specify configuration for clients and servers, they are
+  # highly specialized. I doubt we want to modify controller logic
+  # whenever the Scenario proto is changed. This is open to
+  # discussion, however.
+  #
+  # These can be stored in ConfigMaps or they can be high-level
+  # Kubernetes objects themselves. If we did want to couple, they
+  # could also be inlined.
+  scenarios:
+    - name: jtattermusch-csharp-unconstrained-scenario
+    - name: jtattermusch-csharp-unary-ping-pong-scenario
