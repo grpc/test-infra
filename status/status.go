@@ -132,10 +132,8 @@ func ForLoadTest(loadtest *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestS
 		if role == config.DriverRole {
 			if podState == Succeeded {
 				status.State = grpcv1.Succeeded
-			} else if reason == grpcv1.InitContainerError {
-				status.State = grpcv1.Errored
 			} else {
-				status.State = grpcv1.Failed
+				status.State = grpcv1.Errored
 			}
 		} else {
 			if podState == Succeeded {
