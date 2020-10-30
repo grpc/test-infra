@@ -30,10 +30,6 @@ test: generate fmt vet manifests
 manager: generate fmt vet
 	go build -o bin/manager main.go
 
-# Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet manifests
-	go run ./main.go
-
 # Install CRDs into a cluster
 install: manifests
 	kustomize build config/crd | kubectl apply -f -
