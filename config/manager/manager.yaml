@@ -27,6 +27,7 @@ spec:
         - /workspace/manager
         args:
         - --enable-leader-election
+        - --reconciliation-timeout=2m
         image: controller:latest
         name: manager
         resources:
