@@ -17,5 +17,4 @@ set -ex
 
 cd /src/workspace
 ls -A | xargs -r rm -fr
-git clone --recursive $CLONE_REPO .
-git checkout $CLONE_GIT_REF
+git clone --recursive $CLONE_REPO --branch $CLONE_GIT_REF --single-branch .
