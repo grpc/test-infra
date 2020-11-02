@@ -41,7 +41,7 @@ type LoadTestMissing struct {
 // the current load test. It takes reference of the current load test and a pod
 // list that contains all running pods at the moment, returning all missing
 // components required from the current load test with their roles.
-func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, ownedPods []*corev1.Pod) *LoadTestMissing {
+func CheckMissingPods(test *grpcv1.LoadTest, ownedPods []*corev1.Pod) *LoadTestMissing {
 
 	currentMissing := &LoadTestMissing{Servers: []grpcv1.Server{}, Clients: []grpcv1.Client{}}
 
@@ -49,11 +49,11 @@ func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, ownedPods []*corev1.Pod)
 	requiredServerMap := make(map[string]*grpcv1.Server)
 	foundDriver := false
 
-	for i := 0; i < len(currentLoadTest.Spec.Clients); i++ {
-		requiredClientMap[*currentLoadTest.Spec.Clients[i].Name] = &currentLoadTest.Spec.Clients[i]
+	for i := 0; i < len(test.Spec.Clients); i++ {
+		requiredClientMap[*test.Spec.Clients[i].Name] = &test.Spec.Clients[i]
 	}
-	for i := 0; i < len(currentLoadTest.Spec.Servers); i++ {
-		requiredServerMap[*currentLoadTest.Spec.Servers[i].Name] = &currentLoadTest.Spec.Servers[i]
+	for i := 0; i < len(test.Spec.Servers); i++ {
+		requiredServerMap[*test.Spec.Servers[i].Name] = &test.Spec.Servers[i]
 	}
 
 	if ownedPods != nil {
@@ -68,7 +68,7 @@ func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, ownedPods []*corev1.Pod)
 			componentNameLabel := eachPod.Labels[config.ComponentNameLabel]
 
 			if roleLabel == config.DriverRole {
-				if *currentLoadTest.Spec.Driver.Component.Name == componentNameLabel {
+				if *test.Spec.Driver.Component.Name == componentNameLabel {
 					foundDriver = true
 				}
 			} else if roleLabel == config.ClientRole {
@@ -92,7 +92,7 @@ func CheckMissingPods(currentLoadTest *grpcv1.LoadTest, ownedPods []*corev1.Pod)
 	}
 
 	if !foundDriver {
-		currentMissing.Driver = currentLoadTest.Spec.Driver
+		currentMissing.Driver = test.Spec.Driver
 	}
 
 	return currentMissing

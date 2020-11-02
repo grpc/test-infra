@@ -67,24 +67,24 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 	defer cancel()
 
-	rawLoadtest := new(grpcv1.LoadTest)
-	if err = r.Get(ctx, req.NamespacedName, rawLoadtest); err != nil {
-		log.Error(err, "failed to get loadtest", "name", req.NamespacedName)
+	rawTest := new(grpcv1.LoadTest)
+	if err = r.Get(ctx, req.NamespacedName, rawTest); err != nil {
+		log.Error(err, "failed to get test", "name", req.NamespacedName)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if rawLoadtest.Status.State.IsTerminated() {
+	if rawTest.Status.State.IsTerminated() {
 		return ctrl.Result{}, nil
 	}
 
 	// TODO(codeblooded): Consider moving this to a mutating webhook
-	loadtest := rawLoadtest.DeepCopy()
-	if err = r.Defaults.SetLoadTestDefaults(loadtest); err != nil {
+	test := rawTest.DeepCopy()
+	if err = r.Defaults.SetLoadTestDefaults(test); err != nil {
 		log.Error(err, "failed to clone test with defaults")
 		return ctrl.Result{}, err
 	}
-	if !reflect.DeepEqual(rawLoadtest, loadtest) {
-		if err = r.Update(ctx, loadtest); err != nil {
+	if !reflect.DeepEqual(rawTest, test) {
+		if err = r.Update(ctx, test); err != nil {
 			log.Error(err, "failed to update test with defaults")
 			return ctrl.Result{}, err
 		}
@@ -96,22 +96,22 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	ownedPods := status.PodsForLoadTest(loadtest, pods.Items)
-	loadtest.Status = status.ForLoadTest(loadtest, ownedPods)
-	if err = r.Status().Update(ctx, loadtest); err != nil {
+	ownedPods := status.PodsForLoadTest(test, pods.Items)
+	test.Status = status.ForLoadTest(test, ownedPods)
+	if err = r.Status().Update(ctx, test); err != nil {
 		log.Error(err, "failed to update test status")
 		return ctrl.Result{Requeue: true}, err
 	}
 
 	var pod *corev1.Pod
-	missingPods := status.CheckMissingPods(loadtest, ownedPods)
+	missingPods := status.CheckMissingPods(test, ownedPods)
 
 	if len(missingPods.Servers) > 0 {
-		pod, err = newServerPod(r.Defaults, loadtest, &missingPods.Servers[0].Component)
+		pod, err = newServerPod(r.Defaults, test, &missingPods.Servers[0].Component)
 	} else if len(missingPods.Clients) > 0 {
-		pod, err = newClientPod(r.Defaults, loadtest, &missingPods.Clients[0].Component)
+		pod, err = newClientPod(r.Defaults, test, &missingPods.Clients[0].Component)
 	} else if missingPods.Driver != nil {
-		pod, err = newDriverPod(r.Defaults, loadtest, &missingPods.Driver.Component)
+		pod, err = newDriverPod(r.Defaults, test, &missingPods.Driver.Component)
 	}
 
 	if err != nil {
@@ -120,7 +120,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if pod != nil {
-		if err = ctrl.SetControllerReference(loadtest, pod, r.Scheme); err != nil {
+		if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
 			log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
 			return ctrl.Result{}, err
 		}
@@ -148,8 +148,8 @@ func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // newClientPod creates a client given defaults, a load test and a reference to
 // the client's component. It returns an error if a pod cannot be constructed.
-func newClientPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
-	pod, err := newPod(loadtest, component, config.ClientRole)
+func newClientPod(defs *config.Defaults, test *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+	pod, err := newPod(test, component, config.ClientRole)
 	if err != nil {
 		return nil, err
 	}
@@ -243,13 +243,13 @@ func newScenarioFileEnvVar(scenario string) corev1.EnvVar {
 // This method also sets the $QPS_WORKERS_FILE environment variable on the
 // driver's run container. Its value will point to the aforementioned, shared
 // file.
-func addReadyInitContainer(defs *config.Defaults, loadtest *grpcv1.LoadTest, podspec *corev1.PodSpec, container *corev1.Container) {
+func addReadyInitContainer(defs *config.Defaults, test *grpcv1.LoadTest, podspec *corev1.PodSpec, container *corev1.Container) {
 	if defs == nil || podspec == nil || container == nil {
 		return
 	}
 
-	readyCont := newReadyContainer(defs, loadtest)
-	podspec.InitContainers = append(podspec.InitContainers, readyCont)
+	readyContainer := newReadyContainer(defs, test)
+	podspec.InitContainers = append(podspec.InitContainers, readyContainer)
 
 	container.Env = append(container.Env, corev1.EnvVar{
 		Name:  "QPS_WORKERS_FILE",
@@ -277,29 +277,29 @@ func newBigQueryTableEnvVar(tableName string) corev1.EnvVar {
 
 // newDriverPod creates a driver given defaults, a load test and a reference to
 // the driver's component. It returns an error if a pod cannot be constructed.
-func newDriverPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
-	pod, err := newPod(loadtest, component, config.DriverRole)
+func newDriverPod(defs *config.Defaults, test *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+	pod, err := newPod(test, component, config.DriverRole)
 	if err != nil {
 		return nil, err
 	}
 
 	podSpec := &pod.Spec
-	testSpec := &loadtest.Spec
+	testSpec := &test.Spec
 
-	testContainer := kubehelpers.ContainerForName(config.RunContainerName, podSpec.Containers)
-	addReadyInitContainer(defs, loadtest, podSpec, testContainer)
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, podSpec.Containers)
+	addReadyInitContainer(defs, test, podSpec, runContainer)
 
 	// TODO: Handle more than 1 scenario
 	if len(testSpec.Scenarios) > 0 {
 		scenario := testSpec.Scenarios[0].Name
 		podSpec.Volumes = append(podSpec.Volumes, newScenarioVolume(scenario))
-		testContainer.VolumeMounts = append(testContainer.VolumeMounts, newScenarioVolumeMount(scenario))
-		testContainer.Env = append(testContainer.Env, newScenarioFileEnvVar(scenario))
+		runContainer.VolumeMounts = append(runContainer.VolumeMounts, newScenarioVolumeMount(scenario))
+		runContainer.Env = append(runContainer.Env, newScenarioFileEnvVar(scenario))
 	}
 
 	if results := testSpec.Results; results != nil {
 		if bigQueryTable := results.BigQueryTable; bigQueryTable != nil {
-			testContainer.Env = append(testContainer.Env, newBigQueryTableEnvVar(*bigQueryTable))
+			runContainer.Env = append(runContainer.Env, newBigQueryTableEnvVar(*bigQueryTable))
 		}
 	}
 
@@ -334,15 +334,15 @@ func newContainerPort(name string, portNumber int32) corev1.ContainerPort {
 
 // newServerPod creates a server given defaults, a load test and a reference to
 // the server's component. It returns an error if a pod cannot be constructed.
-func newServerPod(defs *config.Defaults, loadtest *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
-	pod, err := newPod(loadtest, component, config.ServerRole)
+func newServerPod(defs *config.Defaults, test *grpcv1.LoadTest, component *grpcv1.Component) (*corev1.Pod, error) {
+	pod, err := newPod(test, component, config.ServerRole)
 	if err != nil {
 		return nil, err
 	}
 
-	rc := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-	addDriverPort(rc, defs.DriverPort)
-	addServerPort(rc, defs.ServerPort)
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	addDriverPort(runContainer, defs.DriverPort)
+	addServerPort(runContainer, defs.ServerPort)
 	return pod, nil
 }
 
@@ -400,22 +400,22 @@ func newBuildContainer(build *grpcv1.Build) corev1.Container {
 
 // newReadyContainer constructs a container using the default ready container
 // image. If defaults parameter is nil, an empty container is returned.
-func newReadyContainer(defs *config.Defaults, loadtest *grpcv1.LoadTest) corev1.Container {
+func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Container {
 	if defs == nil {
 		return corev1.Container{}
 	}
 
 	var args []string
-	for _, server := range loadtest.Spec.Servers {
+	for _, server := range test.Spec.Servers {
 		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
-			config.LoadTestLabel, loadtest.Name,
+			config.LoadTestLabel, test.Name,
 			config.RoleLabel, config.ServerRole,
 			config.ComponentNameLabel, *server.Name,
 		))
 	}
-	for _, client := range loadtest.Spec.Clients {
+	for _, client := range test.Spec.Clients {
 		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
-			config.LoadTestLabel, loadtest.Name,
+			config.LoadTestLabel, test.Name,
 			config.RoleLabel, config.ClientRole,
 			config.ComponentNameLabel, *client.Name,
 		))
@@ -458,7 +458,7 @@ func newRunContainer(run grpcv1.Run) corev1.Container {
 }
 
 // newPod constructs a Kubernetes pod.
-func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string) (*corev1.Pod, error) {
+func newPod(test *grpcv1.LoadTest, component *grpcv1.Component, role string) (*corev1.Pod, error) {
 	var initContainers []corev1.Container
 
 	if component.Clone != nil {
@@ -471,10 +471,10 @@ func newPod(loadtest *grpcv1.LoadTest, component *grpcv1.Component, role string)
 
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s-%s", loadtest.Name, role, *component.Name),
-			Namespace: loadtest.Namespace,
+			Name:      fmt.Sprintf("%s-%s-%s", test.Name, role, *component.Name),
+			Namespace: test.Namespace,
 			Labels: map[string]string{
-				config.LoadTestLabel:      loadtest.Name,
+				config.LoadTestLabel:      test.Name,
 				config.RoleLabel:          role,
 				config.ComponentNameLabel: *component.Name,
 			},

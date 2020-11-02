@@ -105,13 +105,13 @@ func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, me
 // pods it owns. This sets the state, reason and message for the load test. In
 // addition, it attempts to set the start and stop times based on what has been
 // previously encountered.
-func ForLoadTest(loadtest *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatus {
+func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatus {
 	status := grpcv1.LoadTestStatus{}
 
-	if loadtest.Status.StartTime == nil {
+	if test.Status.StartTime == nil {
 		status.StartTime = optional.CurrentTimePtr()
 	} else {
-		status.StartTime = loadtest.Status.StartTime
+		status.StartTime = test.Status.StartTime
 	}
 
 	for _, pod := range pods {
@@ -146,17 +146,17 @@ func ForLoadTest(loadtest *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestS
 			status.State = grpcv1.Errored
 		}
 
-		if loadtest.Status.StopTime == nil {
+		if test.Status.StopTime == nil {
 			status.StopTime = optional.CurrentTimePtr()
 		} else {
-			status.StopTime = loadtest.Status.StopTime
+			status.StopTime = test.Status.StopTime
 		}
 
 		return status
 	}
 
 	currentPods := len(pods)
-	requiredPods := len(loadtest.Spec.Servers) + len(loadtest.Spec.Clients) + 1
+	requiredPods := len(test.Spec.Servers) + len(test.Spec.Clients) + 1
 
 	if currentPods < requiredPods {
 		status.State = grpcv1.Initializing
