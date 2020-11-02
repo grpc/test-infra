@@ -61,6 +61,57 @@ type Defaults struct {
 	Languages []LanguageDefault `json:"languages,omitempty"`
 }
 
+// Validate ensures that the required fields are present and an acceptable
+// value. If an issue is encountered, an error is returned. If the defaults are
+// valid, nil is returned.
+func (d *Defaults) Validate() error {
+	var tcpPortMax int32 = 65535
+
+	if d.DriverPool == "" {
+		return errors.New("missing driver pool")
+	}
+
+	if d.WorkerPool == "" {
+		return errors.New("missing worker pool")
+	}
+
+	if d.DriverPort < 0 || d.DriverPort > tcpPortMax {
+		return errors.Errorf("driver port is outside of TCP range: [0, %d]", tcpPortMax)
+	}
+
+	if d.ServerPort < 0 || d.ServerPort > tcpPortMax {
+		return errors.Errorf("server port is outside of TCP range: [0, %d]", tcpPortMax)
+	}
+
+	if d.CloneImage == "" {
+		return errors.New("missing image for clone init container")
+	}
+
+	if d.ReadyImage == "" {
+		return errors.New("missing image for ready init container")
+	}
+
+	if d.DriverImage == "" {
+		return errors.New("missing image for driver container")
+	}
+
+	for i, ld := range d.Languages {
+		if ld.Language == "" {
+			return errors.Errorf("language (index %d) unnamed", i)
+		}
+
+		if ld.BuildImage == "" {
+			return errors.Errorf("language %q (index %d) missing image for build init container", ld.Language, i)
+		}
+
+		if ld.RunImage == "" {
+			return errors.Errorf("language %q (index %d) missing image for run container", ld.Language, i)
+		}
+	}
+
+	return nil
+}
+
 // SetLoadTestDefaults applies default values for missing fields that are
 // required to reconcile a load test.
 //

@@ -1,0 +1,33 @@
+# See ./defaults.go for documentation on each field.
+
+driverPort: 10000
+
+serverPort: 10010
+
+driverPool: "{{ .DriverPool }}"
+
+workerPool: "{{ .WorkerPool }}"
+
+cloneImage: "{{ .InitImagePrefix }}clone:{{ .Version }}"
+
+readyImage: "{{ .InitImagePrefix }}ready:{{ .Version }}"
+
+driverImage: "{{ .ImagePrefix }}driver:{{ .Version }}"
+
+languages:
+  - language: cxx
+    buildImage: l.gcr.io/google/bazel:latest
+    runImage: "{{ .ImagePrefix }}cxx:{{ .Version }}"
+
+  - language: java
+    buildImage: gradle:jdk8
+    runImage: "{{ .ImagePrefix }}java:{{ .Version }}"
+
+  - language: go
+    buildImage: golang:1.14
+    runImage: "{{ .ImagePrefix }}go:{{ .Version }}"
+
+  - language: python
+    buildImage: l.gcr.io/google/bazel:latest
+    runImage: "{{ .ImagePrefix }}python:{{ .Version }}"
+
