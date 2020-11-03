@@ -70,6 +70,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	rawTest := new(grpcv1.LoadTest)
 	if err = r.Get(ctx, req.NamespacedName, rawTest); err != nil {
 		log.Error(err, "failed to get test", "name", req.NamespacedName)
+		// do not requeue, the test may have been deleted or the cache is invalid
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
