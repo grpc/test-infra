@@ -21,6 +21,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -52,9 +53,11 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var namespace string
+	var reconciliationTimeout time.Duration
 	flag.StringVar(&defaultsFile, "defaults-file", "config/defaults.yaml", "The path to a YAML file with a default configuration")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":3777", "The address the metric endpoint binds to.")
 	flag.StringVar(&namespace, "namespace", "", "Limits resources considered to a specific namespace")
+	flag.DurationVar(&reconciliationTimeout, "reconciliation-timeout", 0, "Timeout for each load test reconciliation")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -102,6 +105,7 @@ func main() {
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("LoadTest"),
 		Scheme:   mgr.GetScheme(),
+		Timeout:  reconciliationTimeout,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "LoadTest")
 		os.Exit(1)

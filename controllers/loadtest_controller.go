@@ -35,16 +35,13 @@ import (
 	"github.com/grpc/test-infra/config"
 )
 
-// reconcileTimeout specifies the maximum amount of time any set of API
-// requests should take for a single invocation of the Reconcile method.
-const reconcileTimeout = 1 * time.Minute
-
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
 	Defaults *config.Defaults
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
+	Timeout  time.Duration
 }
 
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
@@ -56,11 +53,18 @@ type LoadTestReconciler struct {
 // with its declared spec. This may mean provisioning resources, doing nothing
 // or handling the termination of its pods.
 func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+	var ctx context.Context
+	var cancel context.CancelFunc
 	var err error
 
-	log := r.Log.WithValues("loadtest", req.NamespacedName)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	if r.Timeout == 0 {
+		ctx, cancel = context.WithCancel(context.Background())
+	} else {
+		ctx, cancel = context.WithTimeout(context.Background(), r.Timeout)
+	}
 	defer cancel()
+
+	log := r.Log.WithValues("loadtest", req.NamespacedName)
 
 	// Fetch the current state of the world.
 
