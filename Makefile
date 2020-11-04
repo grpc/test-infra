@@ -20,15 +20,15 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: manager
+all: controller
 
 # Run tests
 test: generate fmt vet manifests
 	go test ./... -coverprofile cover.out
 
-# Build manager binary
-manager: generate fmt vet
-	go build -o bin/manager main.go
+# Build controller manager binary
+controller: generate fmt vet
+	go build -o bin/controller cmd/controller/main.go
 
 # Install CRDs into a cluster
 install: manifests
@@ -61,11 +61,11 @@ generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 # Build the manager image with the controller
-manager-image:
-	docker build . -t ${IMG}
+controller-image:
+	docker build -t ${IMG} -f containers/runtime/controller/Dockerfile .
 
-# Push the manager image to a docker registry
-push-manager-image:
+# Push the controller manager image to a docker registry
+push-controller-image:
 	docker push ${IMG}
 
 # Build the clone init container image
@@ -149,7 +149,7 @@ all-images: \
 	java-image \
 	ruby-image \
 	python-image \
-	manager-image
+	controller-image
 
 # Push all init container and runtime container images to a docker registry
 push-all-images: \
@@ -161,7 +161,7 @@ push-all-images: \
 	push-java-image \
 	push-ruby-image \
 	push-python-image \
-	push-manager-image
+	push-controller-image
 
 # find or download controller-gen
 # download controller-gen if necessary

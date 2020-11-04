@@ -14,10 +14,10 @@ COPY . .
 RUN chmod 777 /workspace/config/defaults.yaml
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/controller cmd/controller/main.go
 
 FROM debian:buster
 WORKDIR /workspace
 COPY --from=builder /workspace .
-CMD ["/workspace/manager"]
+CMD ["/workspace/bin/controller"]
 
