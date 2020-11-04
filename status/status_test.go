@@ -215,14 +215,14 @@ var _ = Describe("StateForPodStatus", func() {
 })
 
 var _ = Describe("ForLoadTest", func() {
-	var loadtest *grpcv1.LoadTest
+	var test *grpcv1.LoadTest
 	var pods []*corev1.Pod
 	var driverPod, serverPod, clientPod *corev1.Pod
 
 	BeforeEach(func() {
-		loadtest = &grpcv1.LoadTest{
+		test = &grpcv1.LoadTest{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "loadtest-for-unit-tests",
+				Name: "test-for-unit-tests",
 			},
 			Spec: grpcv1.LoadTestSpec{
 				Driver: &grpcv1.Driver{
@@ -261,7 +261,7 @@ var _ = Describe("ForLoadTest", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "driver",
 					Labels: map[string]string{
-						config.LoadTestLabel:      loadtest.Name,
+						config.LoadTestLabel:      test.Name,
 						config.RoleLabel:          config.DriverRole,
 						config.ComponentNameLabel: "driver",
 					},
@@ -271,7 +271,7 @@ var _ = Describe("ForLoadTest", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "server-1",
 					Labels: map[string]string{
-						config.LoadTestLabel:      loadtest.Name,
+						config.LoadTestLabel:      test.Name,
 						config.RoleLabel:          config.ServerRole,
 						config.ComponentNameLabel: "server-1",
 					},
@@ -281,7 +281,7 @@ var _ = Describe("ForLoadTest", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "client-1",
 					Labels: map[string]string{
-						config.LoadTestLabel:      loadtest.Name,
+						config.LoadTestLabel:      test.Name,
 						config.RoleLabel:          config.ClientRole,
 						config.ComponentNameLabel: "client-1",
 					},
@@ -301,7 +301,7 @@ var _ = Describe("ForLoadTest", func() {
 	It("sets start time when unset", func() {
 		testStart := metav1.Now()
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.StartTime).ToNot(BeNil())
 		Expect(testStart.Before(status.StartTime)).To(BeTrue())
@@ -309,9 +309,9 @@ var _ = Describe("ForLoadTest", func() {
 
 	It("does not override start time when set", func() {
 		fakeStartTime := metav1.Now()
-		loadtest.Status.StartTime = &fakeStartTime
+		test.Status.StartTime = &fakeStartTime
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.StartTime).To(Equal(&fakeStartTime))
 	})
@@ -341,7 +341,7 @@ var _ = Describe("ForLoadTest", func() {
 			},
 		}
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.State).To(BeEquivalentTo(grpcv1.Succeeded))
 	})
@@ -371,7 +371,7 @@ var _ = Describe("ForLoadTest", func() {
 			},
 		}
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.State).ToNot(BeEquivalentTo(grpcv1.Succeeded))
 	})
@@ -401,7 +401,7 @@ var _ = Describe("ForLoadTest", func() {
 			},
 		}
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.State).To(BeEquivalentTo(grpcv1.Failed))
 	})
@@ -439,7 +439,7 @@ var _ = Describe("ForLoadTest", func() {
 			},
 		}
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
 	})
@@ -469,7 +469,7 @@ var _ = Describe("ForLoadTest", func() {
 			},
 		}
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
 	})
@@ -501,7 +501,7 @@ var _ = Describe("ForLoadTest", func() {
 			},
 		}
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.StopTime).ToNot(BeNil())
 		Expect(testStart.Before(status.StopTime)).To(BeTrue())
@@ -533,9 +533,9 @@ var _ = Describe("ForLoadTest", func() {
 		}
 
 		stopTime := optional.CurrentTimePtr()
-		loadtest.Status.StopTime = stopTime
+		test.Status.StopTime = stopTime
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.StopTime).ToNot(BeNil())
 		Expect(*status.StopTime).To(Equal(*stopTime))
@@ -544,7 +544,7 @@ var _ = Describe("ForLoadTest", func() {
 	It("sets initializing state when pods are missing", func() {
 		pods = pods[1:] // remove the driver from the world
 
-		status := ForLoadTest(loadtest, pods)
+		status := ForLoadTest(test, pods)
 
 		Expect(status.State).To(BeEquivalentTo(grpcv1.Initializing))
 	})
