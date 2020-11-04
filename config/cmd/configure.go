@@ -88,7 +88,7 @@ matches this -worker-pool flag.`)
 This -init-image-prefix flag allows a specific prefix to apply to all
 init container images.`)
 
-	flag.StringVar(&data.InitImagePrefix, "image-prefix", "", `prefix to append to container images (optional)
+	flag.StringVar(&data.ImagePrefix, "image-prefix", "", `prefix to append to container images (optional)
 
 This -image-prefix flag allows a specific prefix to apply to all
 container images that are not used as init containers.`)
