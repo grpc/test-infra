@@ -376,7 +376,7 @@ var _ = Describe("ForLoadTest", func() {
 		Expect(status.State).ToNot(BeEquivalentTo(grpcv1.Succeeded))
 	})
 
-	It("sets failed state when driver pod errored", func() {
+	It("sets errored state when driver pod errored", func() {
 		driverPod.Status.ContainerStatuses = []corev1.ContainerStatus{
 			{
 				State: corev1.ContainerState{
@@ -403,7 +403,7 @@ var _ = Describe("ForLoadTest", func() {
 
 		status := ForLoadTest(test, pods)
 
-		Expect(status.State).To(BeEquivalentTo(grpcv1.Failed))
+		Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
 	})
 
 	It("sets errored state when driver pod init container errored", func() {

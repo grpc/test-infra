@@ -209,9 +209,9 @@ type LoadTestSpec struct {
 }
 
 // LoadTestState reflects the derived state of the load test from its
-// components. If any one component has errored or failed, the load test will
-// be marked in a Failed or Errored state, too. This will occur even if the
-// other components are running or succeeded.
+// components. If any one component has errored, the load test will be marked in
+// an Errored state, too. This will occur even if the other components are
+// running or succeeded.
 // +kubebuilder:default=Unrecognized
 type LoadTestState string
 
@@ -228,25 +228,15 @@ const (
 	// successfully, signaled by a zero exit code.
 	Succeeded = "Succeeded"
 
-	// Failed states indicate the driver pod's run container has terminated
-	// unsuccessfully, signaled by a non-zero exit code.
-	//
-	// The Failed state is different from the Errored state, because Failed
-	// guarantees that the problem originated in the driver at runtime. An Errored
-	// state indicates any other problem, such as an inability to compile the
-	// driver or a failed worker..
-	Failed = "Failed"
-
-	// Errored states indicate the load test failed to run successfully. This may
-	// signal a problem with the initialization of a load test, including
-	// cloning and compiling, or the runtime of one of the workers.
+	// Errored states indicate the load test encountered a problem that prevented
+	// a successful run.
 	Errored = "Errored"
 )
 
 // IsTerminated returns true if the test has finished due to a success, failure
 // or error. Otherwise, it returns false.
 func (lts LoadTestState) IsTerminated() bool {
-	return lts == Succeeded || lts == Failed || lts == Errored
+	return lts == Succeeded || lts == Errored
 }
 
 // InitContainerError is the reason string when an init container has failed on
