@@ -247,6 +247,10 @@ var InitContainerError = "InitContainerError"
 // load test's pods.
 var ContainerError = "ContainerError"
 
+// FailedSettingDefaultsError is the reason string when defaults could not be
+// set on a load test.
+var FailedSettingDefaultsError = "FailedSettingDefaults"
+
 // PodsMissing is the reason string when the load test is missing pods and is still
 // in the Initializing state.
 var PodsMissing = "PodsMissing"

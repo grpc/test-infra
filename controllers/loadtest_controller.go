@@ -57,7 +57,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var ctx context.Context
 	var cancel context.CancelFunc
 	var err error
-
 	log := r.Log.WithValues("loadtest", req.NamespacedName)
 
 	if r.Timeout == 0 {
@@ -82,6 +81,14 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	test := rawTest.DeepCopy()
 	if err = r.Defaults.SetLoadTestDefaults(test); err != nil {
 		log.Error(err, "failed to clone test with defaults")
+		test.Status.State = grpcv1.Errored
+		test.Status.Reason = grpcv1.FailedSettingDefaultsError
+		test.Status.Message = fmt.Sprintf("failed to reconcile tests with defaults: %v", err)
+
+		if err = r.Status().Update(ctx, test); err != nil {
+			log.Error(err, "failed to update test status when setting defaults failed")
+		}
+
 		return ctrl.Result{}, err
 	}
 	if !reflect.DeepEqual(rawTest, test) {
