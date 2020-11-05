@@ -14,8 +14,11 @@
 # limitations under the License.
 
 set -ex
-
 cd /src/workspace
 ls -A | xargs -r rm -fr
-git clone --recursive $CLONE_REPO .
-git checkout $CLONE_GIT_REF
+git init
+git remote add origin $CLONE_REPO
+git fetch
+git reset --hard $CLONE_GIT_REF
+git submodule update --init --recursive
+chmod -R 777 .
