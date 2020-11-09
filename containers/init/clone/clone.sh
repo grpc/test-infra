@@ -19,6 +19,6 @@ ls -A | xargs -r rm -fr
 git init
 git remote add origin $CLONE_REPO
 git fetch
-git reset --hard $CLONE_GIT_REF
+git checkout $CLONE_GIT_REF
 git submodule update --init --recursive
 chmod -R 777 .
