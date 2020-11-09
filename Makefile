@@ -93,7 +93,7 @@ push-ready-image:
 # Build the driver container image at the $DRIVER_VERSION
 driver-image:
 	docker build --build-arg GITREF=${DRIVER_VERSION} \
-		-t ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION}-grpc${DRIVER_VERSION} \
+		-t ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION} \
 		containers/runtime/driver
 
 # Push the driver container image to a docker regisry
