@@ -37,13 +37,13 @@ import (
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme             = runtime.NewScheme()
+	setupLog           = ctrl.Log.WithName("setup")
+	errMissingDefaults = errors.New("missing flag -defaults-file")
 )
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
-
 	_ = grpcv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
@@ -54,19 +54,18 @@ func main() {
 	var enableLeaderElection bool
 	var namespace string
 	var reconciliationTimeout time.Duration
-	flag.StringVar(&defaultsFile, "defaults-file", "config/defaults.yaml", "The path to a YAML file with a default configuration")
-	flag.StringVar(&metricsAddr, "metrics-addr", ":3777", "The address the metric endpoint binds to.")
-	flag.StringVar(&namespace, "namespace", "", "Limits resources considered to a specific namespace")
-	flag.DurationVar(&reconciliationTimeout, "reconciliation-timeout", 0, "Timeout for each load test reconciliation")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+
+	flag.StringVar(&defaultsFile, "defaults-file", "config/defaults.yaml", "Path to a YAML file with a default configuration.")
+	flag.StringVar(&metricsAddr, "metrics-addr", ":3777", "Address the metrics endpoint binds to.")
+	flag.StringVar(&namespace, "namespace", "", "Limits resources considered to a specific namespace.")
+	flag.DurationVar(&reconciliationTimeout, "reconciliation-timeout", 0, "Timeout for each load test reconciliation.")
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election (ensures only one controller is active).")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 
 	if defaultsFile == "" {
-		setupLog.Error(errors.New("missing defaultsFile flag"), "cannot start without defaults")
+		setupLog.Error(errMissingDefaults, "cannot start without defaults")
 		os.Exit(1)
 	}
 
