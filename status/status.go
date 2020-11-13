@@ -18,6 +18,7 @@ package status
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -105,13 +106,28 @@ func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, me
 // pods it owns. This sets the state, reason and message for the load test. In
 // addition, it attempts to set the start and stop times based on what has been
 // previously encountered.
-func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatus {
+func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) (grpcv1.LoadTestStatus, bool, bool) {
+
+	isNewlyScheduled := false
+	isNewlyTerminated := false
+	curTimeout := test.Spec.Timeout
+
 	status := grpcv1.LoadTestStatus{}
 
 	if test.Status.StartTime == nil {
 		status.StartTime = optional.CurrentTimePtr()
+		isNewlyScheduled = true
 	} else {
 		status.StartTime = test.Status.StartTime
+	}
+
+	// Here marked the LoadTest running too long as errored. This status update
+	// could trigger cleanup_agent to terminate its workers.
+	if curTimeout != 0 && status.StopTime == nil && status.StartTime != nil && time.Now().Sub(status.StartTime.Time) >= curTimeout {
+		status.StopTime = optional.CurrentTimePtr()
+		status.State = grpcv1.Errored
+		isNewlyTerminated = true
+		return status, isNewlyScheduled, isNewlyTerminated
 	}
 
 	for _, pod := range pods {
@@ -146,11 +162,12 @@ func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatu
 
 		if test.Status.StopTime == nil {
 			status.StopTime = optional.CurrentTimePtr()
+			isNewlyTerminated = true
 		} else {
 			status.StopTime = test.Status.StopTime
 		}
 
-		return status
+		return status, isNewlyScheduled, isNewlyTerminated
 	}
 
 	currentPods := len(pods)
@@ -160,9 +177,9 @@ func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatu
 		status.State = grpcv1.Initializing
 		status.Reason = grpcv1.PodsMissing
 		status.Message = fmt.Sprintf("load test has created %d/%d required pods", currentPods, requiredPods)
-		return status
+		return status, isNewlyScheduled, isNewlyTerminated
 	}
 
 	status.State = grpcv1.Running
-	return status
+	return status, isNewlyScheduled, isNewlyTerminated
 }

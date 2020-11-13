@@ -50,6 +50,12 @@ spec:
   # results:
   #   bigQueryTable: "example-project.foo.demo_dataset"
 
+  # timeout and ttl field only take numbers and converted to duration, the unit
+  # of duration is fixed as ns, for example: 1s = 1000000000 ns, the number
+  # below indicate timeout=30s, ttl=2min
+  timeout: 30000000000
+  ttl: 120000000000
+
   # Scenarios are separate objects under this proposal. While
   # they specify configuration for clients and servers, they are
   # highly specialized. I doubt we want to modify controller logic

@@ -45,6 +45,17 @@ type LoadTestReconciler struct {
 	Timeout  time.Duration
 }
 
+// InputError give a customized input related error
+type InputError struct {
+	customizedError error
+	errorMessage    string
+}
+
+// Error returns customized error
+func (e InputError) Error() string {
+	return e.errorMessage
+}
+
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;patch;delete
@@ -57,6 +68,9 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var ctx context.Context
 	var cancel context.CancelFunc
 	var err error
+	var isNewlyScheduled bool
+	var isNewlyTerminated bool
+
 	log := r.Log.WithValues("loadtest", req.NamespacedName)
 
 	if r.Timeout == 0 {
@@ -73,7 +87,32 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	curTTL := rawTest.Spec.TTL
+	curTimeout := rawTest.Spec.Timeout
+
+	if curTTL == 0 {
+		customizedErr := InputError{errorMessage: "missing ttl, test is not scheduled"}
+		log.Error(customizedErr, "no ttl has been set, test not scheduled", "name", req.NamespacedName)
+		return ctrl.Result{}, customizedErr
+	}
+
+	if curTimeout == 0 {
+		customizedErr := InputError{errorMessage: "missing timeout, test is not scheduled"}
+		log.Error(customizedErr, "no timeout has been set, test not scheduled", "name", req.NamespacedName)
+		return ctrl.Result{}, customizedErr
+	}
+
+	if curTimeout > curTTL {
+		log.Info("ttl is less than timeout", "name", req.NamespacedName)
+	}
+
 	if rawTest.Status.State.IsTerminated() {
+		if time.Now().Sub(rawTest.Status.StartTime.Time) >= curTTL {
+			log.Info("test expired, deleted", "name", req.NamespacedName)
+			if err = r.Delete(ctx, rawTest); err != nil {
+				log.Error(err, "fail to delete test", "name", req.NamespacedName)
+			}
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -88,7 +127,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		if err = r.Status().Update(ctx, test); err != nil {
 			log.Error(err, "failed to update test status when setting defaults failed")
 		}
-
 		return ctrl.Result{}, err
 	}
 	if !reflect.DeepEqual(rawTest, test) {
@@ -105,10 +143,14 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	ownedPods := status.PodsForLoadTest(test, pods.Items)
-	test.Status = status.ForLoadTest(test, ownedPods)
+	test.Status, isNewlyScheduled, isNewlyTerminated = status.ForLoadTest(test, ownedPods)
+
 	if err = r.Status().Update(ctx, test); err != nil {
 		log.Error(err, "failed to update test status")
-		return ctrl.Result{Requeue: true}, err
+		if err = r.Delete(ctx, rawTest); err != nil {
+			log.Error(err, "fail to delete test", "name", req.NamespacedName)
+		}
+		return ctrl.Result{}, err
 	}
 
 	var pod *corev1.Pod
@@ -137,6 +179,15 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			log.Error(err, "could not create new pod", "pod", pod)
 			return ctrl.Result{Requeue: true}, err
 		}
+	}
+
+	if isNewlyScheduled {
+		return ctrl.Result{RequeueAfter: curTimeout}, nil
+	}
+
+	if isNewlyTerminated {
+		timeToRequeue := curTTL - test.Status.StopTime.Sub(test.Status.StartTime.Time)
+		return ctrl.Result{RequeueAfter: timeToRequeue}, nil
 	}
 
 	return ctrl.Result{}, nil
