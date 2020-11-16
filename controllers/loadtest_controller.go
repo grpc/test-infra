@@ -103,7 +103,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	if curTimeout > curTTL {
-		log.Info("ttl is less than timeout", "name", req.NamespacedName)
+		log.Info("ttl is less than timeout")
 	}
 
 	if rawTest.Status.State.IsTerminated() {
