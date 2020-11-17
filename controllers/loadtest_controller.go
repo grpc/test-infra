@@ -98,6 +98,63 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
+	cfgMap := new(corev1.ConfigMap)
+	if err = r.Get(ctx, req.NamespacedName, cfgMap); err != nil {
+		log.Info("failed to find existing scenarios ConfigMap")
+
+		if client.IgnoreNotFound(err) != nil {
+			// The ConfigMap existence was not at issue, so this is likely an
+			// issue with the Kubernetes API. So, we'll update the status, retry
+			// with exponential backoff and allow the timeout to catch it.
+
+			test.Status.State = grpcv1.Unknown
+			test.Status.Reason = grpcv1.KubernetesError
+			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): failed to get scenarios ConfigMap: %v", err)
+
+			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				log.Error(updateErr, "failed to update status after failure to get scenarios ConfigMap: %v", err)
+			}
+
+			return ctrl.Result{}, err
+		}
+
+		cfgMap = &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      req.Name,
+				Namespace: req.Namespace,
+			},
+			Data: map[string]string{
+				"scenarios.json": test.Spec.ScenariosJSON,
+			},
+
+			// TODO: Enable ConfigMap immutability when it becomes available
+			// Immutable: optional.BoolPtr(true),
+		}
+
+		if refError := ctrl.SetControllerReference(test, cfgMap, r.Scheme); refError != nil {
+			// We should retry when we cannot set a controller reference on the
+			// ConfigMap. This breaks garbage collection. If left to continue
+			// for manual cleanup, it could create hidden errors when a load
+			// test with the same name is created.
+			log.Error(refError, "could not set controller reference on scenarios ConfigMap")
+
+			test.Status.State = grpcv1.Unknown
+			test.Status.Reason = grpcv1.KubernetesError
+			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): could not setup garbage collection for scenarios ConfigMap: %v", refError)
+
+			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				log.Error(updateErr, "failed to update status after failure to get and create scenarios ConfigMap")
+			}
+
+			return ctrl.Result{Requeue: true}, refError
+		}
+
+		if createErr := r.Create(ctx, cfgMap); createErr != nil {
+			log.Error(err, "failed to create scenarios ConfigMap")
+			return ctrl.Result{Requeue: true}, createErr
+		}
+	}
+
 	pods := new(corev1.PodList)
 	if err = r.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
 		log.Error(err, "failed to list pods", "namespace", req.Namespace)
@@ -297,13 +354,25 @@ func newDriverPod(defs *config.Defaults, test *grpcv1.LoadTest, component *grpcv
 	runContainer := kubehelpers.ContainerForName(config.RunContainerName, podSpec.Containers)
 	addReadyInitContainer(defs, test, podSpec, runContainer)
 
-	// TODO: Handle more than 1 scenario
-	if len(testSpec.Scenarios) > 0 {
-		scenario := testSpec.Scenarios[0].Name
-		podSpec.Volumes = append(podSpec.Volumes, newScenarioVolume(scenario))
-		runContainer.VolumeMounts = append(runContainer.VolumeMounts, newScenarioVolumeMount(scenario))
-		runContainer.Env = append(runContainer.Env, newScenarioFileEnvVar(scenario))
-	}
+	podSpec.Volumes = append(podSpec.Volumes, corev1.Volume{
+		Name: "scenarios",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: test.Name,
+				},
+			},
+		},
+	})
+	runContainer.VolumeMounts = append(runContainer.VolumeMounts, corev1.VolumeMount{
+		Name:      "scenarios",
+		MountPath: config.ScenariosMountPath,
+		ReadOnly:  true,
+	})
+	runContainer.Env = append(runContainer.Env, corev1.EnvVar{
+		Name:  config.ScenariosFileEnv,
+		Value: config.ScenariosMountPath + "/scenarios.json",
+	})
 
 	if results := testSpec.Results; results != nil {
 		if bigQueryTable := results.BigQueryTable; bigQueryTable != nil {
