@@ -1176,6 +1176,9 @@ spec:
                 luster.
               format: int32
               type: integer
+          required:
+          - timeoutSeconds
+          - ttlSeconds
           type: object
         status:
           description: LoadTestStatus defines the observed state of LoadTest

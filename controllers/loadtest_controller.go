@@ -45,17 +45,6 @@ type LoadTestReconciler struct {
 	Timeout  time.Duration
 }
 
-// InputError give a customized input related error
-type InputError struct {
-	customizedError error
-	errorMessage    string
-}
-
-// Error returns customized error
-func (e InputError) Error() string {
-	return e.errorMessage
-}
-
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;patch;delete
@@ -87,18 +76,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	ttl := time.Duration(*rawTest.Spec.TTLSeconds) * time.Second
 	timeout := time.Duration(*rawTest.Spec.TimeoutSeconds) * time.Second
-
-	if ttl == 0 {
-		customizedErr := InputError{errorMessage: "missing ttl, test is not scheduled"}
-		log.Error(customizedErr, "no ttl has been set, test not scheduled", "name", req.NamespacedName)
-		return ctrl.Result{}, customizedErr
-	}
-
-	if timeout == 0 {
-		customizedErr := InputError{errorMessage: "missing timeout, test is not scheduled"}
-		log.Error(customizedErr, "no timeout has been set, test not scheduled", "name", req.NamespacedName)
-		return ctrl.Result{}, customizedErr
-	}
 
 	if timeout > ttl {
 		log.Info("ttl is less than timeout", "name", req.NamespacedName)

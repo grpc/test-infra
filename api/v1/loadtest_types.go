@@ -208,12 +208,10 @@ type LoadTestSpec struct {
 	Scenarios []Scenario `json:"scenarios,omitempty"`
 
 	// Timeout provides the longest running time allowed for a LoadTest.
-	// +optional
-	TimeoutSeconds *int32 `json:"timeoutSeconds,omitempty"`
+	TimeoutSeconds *int32 `json:"timeoutSeconds"`
 
 	//TTL provide the longest time a LoadTest could live on the luster.
-	// +optional
-	TTLSeconds *int32 `json:"ttlSeconds,omitempty"`
+	TTLSeconds *int32 `json:"ttlSeconds"`
 }
 
 // LoadTestState reflects the derived state of the load test from its
