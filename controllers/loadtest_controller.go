@@ -125,10 +125,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	if err = r.Status().Update(ctx, test); err != nil {
 		log.Error(err, "failed to update test status")
-		if err = r.Delete(ctx, rawTest); err != nil {
-			log.Error(err, "fail to delete test", "name", req.NamespacedName)
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	var pod *corev1.Pod
