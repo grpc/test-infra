@@ -17,8 +17,6 @@ limitations under the License.
 package v1
 
 import (
-	"time"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -211,11 +209,11 @@ type LoadTestSpec struct {
 
 	// Timeout provides the longest running time allowed for a LoadTest.
 	// +optional
-	Timeout time.Duration `json:"timeout,omitempty"`
+	TimeoutSeconds *int32 `json:"timeoutSeconds,omitempty"`
 
 	//TTL provide the longest time a LoadTest could live on the luster.
 	// +optional
-	TTL time.Duration `json:"ttl,omitempty"`
+	TTLSeconds *int32 `json:"ttlSeconds,omitempty"`
 }
 
 // LoadTestState reflects the derived state of the load test from its

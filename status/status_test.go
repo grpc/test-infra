@@ -303,9 +303,8 @@ var _ = Describe("ForLoadTest", func() {
 	It("sets start time when unset, and mark the loadtest as newly started", func() {
 		testStart := metav1.Now()
 
-		status, isNewlyStarted, _ := ForLoadTest(test, pods)
+		status := ForLoadTest(test, pods)
 
-		Expect(isNewlyStarted).To(BeTrue())
 		Expect(status.StartTime).ToNot(BeNil())
 		Expect(testStart.Before(status.StartTime)).To(BeTrue())
 	})
@@ -314,9 +313,7 @@ var _ = Describe("ForLoadTest", func() {
 		fakeStartTime := metav1.Now()
 		test.Status.StartTime = &fakeStartTime
 
-		status, isNewlyStarted, _ := ForLoadTest(test, pods)
-
-		Expect(isNewlyStarted).ToNot(BeTrue())
+		status := ForLoadTest(test, pods)
 		Expect(status.StartTime).To(Equal(&fakeStartTime))
 	})
 
@@ -324,9 +321,10 @@ var _ = Describe("ForLoadTest", func() {
 	Context("when timeout is set and loadtest run longer than Timoout", func() {
 		It("sets error state when running longer than TTL", func() {
 			fakeStartTime := metav1.Time{Time: time.Date(2020, time.October, 23, 15, 0, 0, 0, time.UTC)}
-			test.Spec.Timeout, _ = time.ParseDuration("30s")
+			fakeTimeout := int32(30)
+			test.Spec.TimeoutSeconds = &fakeTimeout
 			test.Status.StartTime = &fakeStartTime
-			status, _, _ := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
 			Expect(status.StartTime).ToNot(BeNil())
 			Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
@@ -359,7 +357,7 @@ var _ = Describe("ForLoadTest", func() {
 				},
 			}
 
-			status, _, _ := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
 			Expect(status.State).To(BeEquivalentTo(grpcv1.Succeeded))
 		})
@@ -389,7 +387,7 @@ var _ = Describe("ForLoadTest", func() {
 				},
 			}
 
-			status, _, _ := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
 			Expect(status.State).ToNot(BeEquivalentTo(grpcv1.Succeeded))
 		})
@@ -419,7 +417,7 @@ var _ = Describe("ForLoadTest", func() {
 				},
 			}
 
-			status, _, _ := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
 			Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
 		})
@@ -457,7 +455,7 @@ var _ = Describe("ForLoadTest", func() {
 				},
 			}
 
-			status, _, _ := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
 			Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
 		})
@@ -487,7 +485,7 @@ var _ = Describe("ForLoadTest", func() {
 				},
 			}
 
-			status, _, _ := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
 			Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
 		})
@@ -519,9 +517,8 @@ var _ = Describe("ForLoadTest", func() {
 				},
 			}
 
-			status, _, isNewlyStopped := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
-			Expect(isNewlyStopped).To(BeTrue())
 			Expect(status.StopTime).ToNot(BeNil())
 			Expect(testStart.Before(status.StopTime)).To(BeTrue())
 		})
@@ -554,9 +551,8 @@ var _ = Describe("ForLoadTest", func() {
 			stopTime := optional.CurrentTimePtr()
 			test.Status.StopTime = stopTime
 
-			status, _, isNewlyStopped := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
-			Expect(isNewlyStopped).ToNot(BeTrue())
 			Expect(status.StopTime).ToNot(BeNil())
 			Expect(*status.StopTime).To(Equal(*stopTime))
 		})
@@ -587,15 +583,15 @@ var _ = Describe("ForLoadTest", func() {
 				},
 			}
 
-			status, _, isNewlyStopped := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
 
-			Expect(isNewlyStopped).ToNot(BeTrue())
 			Expect(status.StopTime).To(BeNil())
 		})
 
 		It("sets initializing state when pods are missing", func() {
 			pods = pods[1:] // remove the driver from the world
-			status, _, _ := ForLoadTest(test, pods)
+			status := ForLoadTest(test, pods)
+
 			Expect(status.State).To(BeEquivalentTo(grpcv1.Initializing))
 		})
 	})

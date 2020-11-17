@@ -106,17 +106,13 @@ func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, me
 // pods it owns. This sets the state, reason and message for the load test. In
 // addition, it attempts to set the start and stop times based on what has been
 // previously encountered.
-func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) (grpcv1.LoadTestStatus, bool, bool) {
-
-	isNewlyScheduled := false
-	isNewlyTerminated := false
-	curTimeout := test.Spec.Timeout
+func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatus {
+	curTimeout := time.Duration(*test.Spec.TimeoutSeconds) * time.Second
 
 	status := grpcv1.LoadTestStatus{}
 
 	if test.Status.StartTime == nil {
 		status.StartTime = optional.CurrentTimePtr()
-		isNewlyScheduled = true
 	} else {
 		status.StartTime = test.Status.StartTime
 	}
@@ -126,8 +122,7 @@ func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) (grpcv1.LoadTestStat
 	if curTimeout != 0 && status.StopTime == nil && status.StartTime != nil && time.Now().Sub(status.StartTime.Time) >= curTimeout {
 		status.StopTime = optional.CurrentTimePtr()
 		status.State = grpcv1.Errored
-		isNewlyTerminated = true
-		return status, isNewlyScheduled, isNewlyTerminated
+		return status
 	}
 
 	for _, pod := range pods {
@@ -162,12 +157,11 @@ func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) (grpcv1.LoadTestStat
 
 		if test.Status.StopTime == nil {
 			status.StopTime = optional.CurrentTimePtr()
-			isNewlyTerminated = true
 		} else {
 			status.StopTime = test.Status.StopTime
 		}
 
-		return status, isNewlyScheduled, isNewlyTerminated
+		return status
 	}
 
 	currentPods := len(pods)
@@ -177,9 +171,9 @@ func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) (grpcv1.LoadTestStat
 		status.State = grpcv1.Initializing
 		status.Reason = grpcv1.PodsMissing
 		status.Message = fmt.Sprintf("load test has created %d/%d required pods", currentPods, requiredPods)
-		return status, isNewlyScheduled, isNewlyTerminated
+		return status
 	}
 
 	status.State = grpcv1.Running
-	return status, isNewlyScheduled, isNewlyTerminated
+	return status
 }

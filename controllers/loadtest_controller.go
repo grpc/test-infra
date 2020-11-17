@@ -68,8 +68,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var ctx context.Context
 	var cancel context.CancelFunc
 	var err error
-	var isNewlyScheduled bool
-	var isNewlyTerminated bool
 
 	log := r.Log.WithValues("loadtest", req.NamespacedName)
 
@@ -86,31 +84,32 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// do not requeue, the test may have been deleted or the cache is invalid
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+	fmt.Println(*rawTest.Spec.TTLSeconds)
+	ttl := time.Duration(*rawTest.Spec.TTLSeconds) * time.Second
+	timeout := time.Duration(*rawTest.Spec.TimeoutSeconds) * time.Second
 
-	curTTL := rawTest.Spec.TTL
-	curTimeout := rawTest.Spec.Timeout
-
-	if curTTL == 0 {
+	if ttl == 0 {
 		customizedErr := InputError{errorMessage: "missing ttl, test is not scheduled"}
 		log.Error(customizedErr, "no ttl has been set, test not scheduled", "name", req.NamespacedName)
 		return ctrl.Result{}, customizedErr
 	}
 
-	if curTimeout == 0 {
+	if timeout == 0 {
 		customizedErr := InputError{errorMessage: "missing timeout, test is not scheduled"}
 		log.Error(customizedErr, "no timeout has been set, test not scheduled", "name", req.NamespacedName)
 		return ctrl.Result{}, customizedErr
 	}
 
-	if curTimeout > curTTL {
+	if timeout > ttl {
 		log.Info("ttl is less than timeout", "name", req.NamespacedName)
 	}
 
 	if rawTest.Status.State.IsTerminated() {
-		if time.Now().Sub(rawTest.Status.StartTime.Time) >= curTTL {
-			log.Info("test expired, deleted", "name", req.NamespacedName)
+		if time.Now().Sub(rawTest.Status.StartTime.Time) >= ttl {
+			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "ttl", ttl)
 			if err = r.Delete(ctx, rawTest); err != nil {
 				log.Error(err, "fail to delete test", "name", req.NamespacedName)
+				return ctrl.Result{}, err
 			}
 		}
 		return ctrl.Result{}, nil
@@ -143,7 +142,9 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	ownedPods := status.PodsForLoadTest(test, pods.Items)
-	test.Status, isNewlyScheduled, isNewlyTerminated = status.ForLoadTest(test, ownedPods)
+
+	previousStatus := test.Status
+	test.Status = status.ForLoadTest(test, ownedPods)
 
 	if err = r.Status().Update(ctx, test); err != nil {
 		log.Error(err, "failed to update test status")
@@ -181,13 +182,16 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-	if isNewlyScheduled {
-		return ctrl.Result{RequeueAfter: curTimeout}, nil
+	if previousStatus.StartTime == nil && test.Status.StartTime != nil {
+		log.Info("just started")
+		return ctrl.Result{RequeueAfter: time.Duration(*test.Spec.TimeoutSeconds) * time.Second}, nil
 	}
 
-	if isNewlyTerminated {
-		timeToRequeue := curTTL - test.Status.StopTime.Sub(test.Status.StartTime.Time)
-		return ctrl.Result{RequeueAfter: timeToRequeue}, nil
+	if previousStatus.StopTime == nil && test.Status.StopTime != nil {
+
+		reQueueTime := time.Duration(*test.Spec.TTLSeconds)*time.Second - test.Status.StopTime.Sub(test.Status.StartTime.Time)
+		log.Info("just end, should be deleted at :" + time.Now().Add(reQueueTime).String())
+		return ctrl.Result{RequeueAfter: reQueueTime}, nil
 	}
 
 	return ctrl.Result{}, nil
