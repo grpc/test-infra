@@ -107,7 +107,6 @@ func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, me
 // addition, it attempts to set the start and stop times based on what has been
 // previously encountered.
 func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatus {
-	curTimeout := time.Duration(*test.Spec.TimeoutSeconds) * time.Second
 
 	status := grpcv1.LoadTestStatus{}
 
@@ -117,9 +116,11 @@ func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatu
 		status.StartTime = test.Status.StartTime
 	}
 
+	timeout := time.Duration(*test.Spec.TimeoutSeconds) * time.Second
+
 	// Here marked the LoadTest running too long as errored. This status update
 	// could trigger cleanup_agent to terminate its workers.
-	if curTimeout != 0 && status.StopTime == nil && status.StartTime != nil && time.Now().Sub(status.StartTime.Time) >= curTimeout {
+	if status.StopTime == nil && status.StartTime != nil && time.Now().Sub(status.StartTime.Time) >= timeout {
 		status.StopTime = optional.CurrentTimePtr()
 		status.State = grpcv1.Errored
 		return status

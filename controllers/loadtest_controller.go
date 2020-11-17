@@ -84,7 +84,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// do not requeue, the test may have been deleted or the cache is invalid
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	fmt.Println(*rawTest.Spec.TTLSeconds)
+
 	ttl := time.Duration(*rawTest.Spec.TTLSeconds) * time.Second
 	timeout := time.Duration(*rawTest.Spec.TimeoutSeconds) * time.Second
 

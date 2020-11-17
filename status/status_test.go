@@ -220,8 +220,12 @@ var _ = Describe("ForLoadTest", func() {
 	var test *grpcv1.LoadTest
 	var pods []*corev1.Pod
 	var driverPod, serverPod, clientPod *corev1.Pod
+	var ttlValue int32
+	var timeoutValue int32
 
 	BeforeEach(func() {
+		ttlValue = int32(120)
+		timeoutValue = int32(30)
 		test = &grpcv1.LoadTest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-for-unit-tests",
@@ -255,6 +259,8 @@ var _ = Describe("ForLoadTest", func() {
 						},
 					},
 				},
+				TTLSeconds:     &ttlValue,
+				TimeoutSeconds: &timeoutValue,
 			},
 		}
 
@@ -300,16 +306,15 @@ var _ = Describe("ForLoadTest", func() {
 		_ = clientPod
 	})
 
-	It("sets start time when unset, and mark the loadtest as newly started", func() {
+	It("sets start time when unset", func() {
 		testStart := metav1.Now()
-
 		status := ForLoadTest(test, pods)
 
 		Expect(status.StartTime).ToNot(BeNil())
 		Expect(testStart.Before(status.StartTime)).To(BeTrue())
 	})
 
-	It("does not override start time when set, and doesn't mark the loadtest is newly scheduled", func() {
+	It("does not override start time when set", func() {
 		fakeStartTime := metav1.Now()
 		test.Status.StartTime = &fakeStartTime
 

@@ -1166,6 +1166,16 @@ spec:
                 - run
                 type: object
               type: array
+            timeoutSeconds:
+              description: Timeout provides the longest running time allowed for a
+                LoadTest.
+              format: int32
+              type: integer
+            ttlSeconds:
+              description: TTL provide the longest time a LoadTest could live on the
+                luster.
+              format: int32
+              type: integer
           type: object
         status:
           description: LoadTestStatus defines the observed state of LoadTest
