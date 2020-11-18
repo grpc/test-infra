@@ -72,24 +72,25 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	loadTestTTL := time.Duration(rawTest.Spec.TTLSeconds) * time.Second
-	loadTestTimeout := time.Duration(rawTest.Spec.TimeoutSeconds) * time.Second
+	testTTL := time.Duration(rawTest.Spec.TTLSeconds) * time.Second
+	testTimeout := time.Duration(rawTest.Spec.TimeoutSeconds) * time.Second
 
-	if loadTestTTL == 0 {
-		log.Info("TTL is invalid", "TTL", loadTestTTL)
+	// TODO(wanlin31): find out what values are not valid and what we want to do with them.
+	if testTTL == 0 {
+		log.Info("testTTL is invalid", "testTTL", testTTL)
 	}
 
-	if loadTestTimeout == 0 {
-		log.Info("Timeout is invalid", "Timeout", loadTestTimeout)
+	if testTimeout == 0 {
+		log.Info("testTimeout is invalid", "testTimeout", testTimeout)
 	}
 
-	if loadTestTimeout > loadTestTTL {
-		log.Info("loadTestTTL is less than loadTestTimeout", "Timeout", loadTestTimeout, "TTL", loadTestTTL)
+	if testTimeout > testTTL {
+		log.Info("testTTL is less than testTimeout", "testTimeout", testTimeout, "testTTL", testTTL)
 	}
 
 	if rawTest.Status.State.IsTerminated() {
-		if time.Now().Sub(rawTest.Status.StartTime.Time) >= loadTestTTL {
-			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "loadTestTTL", loadTestTTL)
+		if time.Now().Sub(rawTest.Status.StartTime.Time) >= testTTL {
+			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "testTTL", testTTL)
 			if err = r.Delete(ctx, rawTest); err != nil {
 				log.Error(err, "fail to delete test")
 				return ctrl.Result{Requeue: true}, err

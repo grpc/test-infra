@@ -261,6 +261,10 @@ var FailedSettingDefaultsError = "FailedSettingDefaults"
 // in the Initializing state.
 var PodsMissing = "PodsMissing"
 
+// TimeoutExceeded is the reason string when the load test has not yet terminated
+// but exceeded the timeout.
+var TimeoutExceeded = "TimeoutExceeded"
+
 // LoadTestStatus defines the observed state of LoadTest
 type LoadTestStatus struct {
 	// State identifies the current state of the load test. It is

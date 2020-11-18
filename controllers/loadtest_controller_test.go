@@ -769,7 +769,7 @@ var _ = Describe("getRequeueTime", func() {
 
 	BeforeEach(func() {
 		test = newLoadTest()
-		reconciler = LoadTestReconciler{
+		reconciler = &LoadTestReconciler{
 			Log: ctrl.Log.WithName("controllers").WithName("LoadTest"),
 		}
 	})

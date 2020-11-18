@@ -50,10 +50,19 @@ spec:
   # results:
   #   bigQueryTable: "example-project.foo.demo_dataset"
 
-  # timeout and ttl field only take numbers and converted to duration, the unit
-  # of duration is fixed as ns, for example: 1s = 1000000000 ns, the number
-  # below indicate timeout=30s, ttl=2min
+  # timeoutSeconds field is to advise the longest time a test
+  # could possibly run, test runs longer than given value will be marked as
+  # Error and would not be allocate more resource. The field takes integer
+  # and convert the supplied value to duration, the unit of duration is fixed as
+  # second, for example: timeoutSeconds: 30 indicates the timeout of this test
+  # is 30s
   timeoutSeconds: 0
+
+  # ttlSeconds field is to advise on how long the test should be alive on the
+  # cluster, test lives longer than given value will be deleted. The field takes
+  # integer and convert the supplied value to duration, the unit of
+  # duration is fixed as second, for example: ttlSeconds: 120 indicates the
+  # timeout of this test is 120s
   ttlSeconds: 0
 
   # Scenarios are separate objects under this proposal. While

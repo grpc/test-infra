@@ -1173,7 +1173,7 @@ spec:
               type: integer
             ttlSeconds:
               description: TTL provide the longest time a LoadTest could live on the
-                luster.
+                cluster.
               format: int32
               type: integer
           required:
