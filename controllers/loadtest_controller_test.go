@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
@@ -11,6 +12,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 var _ = Describe("Test Environment", func() {
@@ -758,4 +761,88 @@ var _ = Describe("Pod Creation", func() {
 			Expect(volumeMount.ReadOnly).To(BeFalse())
 		})
 	})
+})
+
+var _ = Describe("getRequeueTime", func() {
+	var test *grpcv1.LoadTest
+	var reconciler LoadTestReconciler
+
+	BeforeEach(func() {
+		test = newLoadTest()
+		reconciler = LoadTestReconciler{
+			Log: ctrl.Log.WithName("controllers").WithName("LoadTest"),
+		}
+	})
+
+	Context("when find the start time was newly filled", func() {
+		It("returns the test's timeout", func() {
+			var startTime metav1.Time
+			expectedRequeueTime := time.Duration(test.Spec.TimeoutSeconds) * time.Second
+			previousStatus := grpcv1.LoadTestStatus{}
+
+			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
+			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
+
+			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+
+			Expect(requeueTime).To(Equal(expectedRequeueTime))
+		})
+	})
+
+	Context("when find the stop time was newly filled", func() {
+		It("returns the ttl less the actual running time", func() {
+			var startTime metav1.Time
+			var stopTime metav1.Time
+
+			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
+			stopTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:52 GMT-0700")
+
+			previousStatus := grpcv1.LoadTestStatus{StartTime: &startTime}
+			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime, StopTime: &stopTime}
+			expectedRequeueTime := time.Duration(test.Spec.TTLSeconds)*time.Second - test.Status.StopTime.Time.Sub(test.Status.StartTime.Time)
+
+			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+
+			Expect(requeueTime).To(Equal(expectedRequeueTime))
+		})
+	})
+	Context("when neither of start and end time is newly filled", func() {
+		It("returns 0 duration", func() {
+			var startTime metav1.Time
+
+			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
+
+			expectedRequeueTime := time.Duration(0)
+			previousStatus := grpcv1.LoadTestStatus{StartTime: &startTime}
+			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
+
+			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+
+			Expect(requeueTime).To(Equal(expectedRequeueTime))
+		})
+
+		It("returns 0 duration", func() {
+			var stopTime metav1.Time
+
+			expectedRequeueTime := time.Duration(0)
+
+			stopTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:52 GMT-0700")
+			previousStatus := grpcv1.LoadTestStatus{StopTime: &stopTime}
+			test.Status = grpcv1.LoadTestStatus{StopTime: &stopTime}
+
+			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+
+			Expect(requeueTime).To(Equal(expectedRequeueTime))
+		})
+
+		It("returns 0 duration", func() {
+			expectedRequeueTime := time.Duration(0)
+			previousStatus := grpcv1.LoadTestStatus{}
+
+			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+
+			Expect(requeueTime).To(Equal(expectedRequeueTime))
+		})
+	})
+
 })

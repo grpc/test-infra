@@ -164,9 +164,6 @@ func newLoadTest() *grpcv1.LoadTest {
 	serverComponentName := "server-1"
 	driverComponentName := "driver-1"
 
-	timeoutValue := int32(30)
-	ttlValue := int32(120)
-
 	return &grpcv1.LoadTest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-loadtest",
@@ -239,8 +236,8 @@ func newLoadTest() *grpcv1.LoadTest {
 				BigQueryTable: &bigQueryTable,
 			},
 
-			TimeoutSeconds: &timeoutValue,
-			TTLSeconds:     &ttlValue,
+			TimeoutSeconds: int32(30),
+			TTLSeconds:     int32(120),
 
 			Scenarios: []grpcv1.Scenario{
 				{Name: "cpp-example-scenario"},

@@ -24,6 +24,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/kubehelpers"
 	"github.com/grpc/test-infra/status"
 	corev1 "k8s.io/api/core/v1"
@@ -31,9 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/config"
 )
 
 // LoadTestReconciler reconciles a LoadTest object
@@ -57,7 +56,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var ctx context.Context
 	var cancel context.CancelFunc
 	var err error
-
 	log := r.Log.WithValues("loadtest", req.NamespacedName)
 
 	if r.Timeout == 0 {
@@ -74,19 +72,27 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	ttl := time.Duration(*rawTest.Spec.TTLSeconds) * time.Second
-	timeout := time.Duration(*rawTest.Spec.TimeoutSeconds) * time.Second
+	loadTestTTL := time.Duration(rawTest.Spec.TTLSeconds) * time.Second
+	loadTestTimeout := time.Duration(rawTest.Spec.TimeoutSeconds) * time.Second
 
-	if timeout > ttl {
-		log.Info("ttl is less than timeout", "name", req.NamespacedName)
+	if loadTestTTL == 0 {
+		log.Info("TTL is invalid", "TTL", loadTestTTL)
+	}
+
+	if loadTestTimeout == 0 {
+		log.Info("Timeout is invalid", "Timeout", loadTestTimeout)
+	}
+
+	if loadTestTimeout > loadTestTTL {
+		log.Info("loadTestTTL is less than loadTestTimeout", "Timeout", loadTestTimeout, "TTL", loadTestTTL)
 	}
 
 	if rawTest.Status.State.IsTerminated() {
-		if time.Now().Sub(rawTest.Status.StartTime.Time) >= ttl {
-			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "ttl", ttl)
+		if time.Now().Sub(rawTest.Status.StartTime.Time) >= loadTestTTL {
+			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "loadTestTTL", loadTestTTL)
 			if err = r.Delete(ctx, rawTest); err != nil {
 				log.Error(err, "fail to delete test", "name", req.NamespacedName)
-				return ctrl.Result{}, err
+				return ctrl.Result{Requeue: true}, err
 			}
 		}
 		return ctrl.Result{}, nil
@@ -103,6 +109,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		if err = r.Status().Update(ctx, test); err != nil {
 			log.Error(err, "failed to update test status when setting defaults failed")
 		}
+
 		return ctrl.Result{}, err
 	}
 	if !reflect.DeepEqual(rawTest, test) {
@@ -156,24 +163,36 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-	if previousStatus.StartTime == nil && test.Status.StartTime != nil {
-		log.Info("just started")
-		return ctrl.Result{RequeueAfter: time.Duration(*test.Spec.TimeoutSeconds) * time.Second}, nil
-	}
-
-	if previousStatus.StopTime == nil && test.Status.StopTime != nil {
-
-		reQueueTime := time.Duration(*test.Spec.TTLSeconds)*time.Second - test.Status.StopTime.Sub(test.Status.StartTime.Time)
-		log.Info("just end, should be deleted at :" + time.Now().Add(reQueueTime).String())
+	reQueueTime := getRequeueTime(previousStatus, test, log)
+	if reQueueTime != 0 {
 		return ctrl.Result{RequeueAfter: reQueueTime}, nil
 	}
-
 	return ctrl.Result{}, nil
 }
 
-// LoadTestMissing categorize missing components based on their roles at specific
-// moment. The struct is a wrapper to help us get role information associate
-// with components.
+// getRequeueTime compares the previous status of the load test with its updated
+// status and return a calculated requeue time. If the load test has just been
+// assigned a start time, getRequeueTime returns the timeout specified within
+// its spec. If the load test has been just assigned stop time, getRequeueTime
+// returns its ttl specified within its spe less its actual running time. In
+// other cases, returns a 0 value time.duration
+func getRequeueTime(previousStatus grpcv1.LoadTestStatus, updatedLoadTest *grpcv1.LoadTest, log logr.Logger) time.Duration {
+	reQueueTime := time.Duration(0)
+
+	if previousStatus.StartTime == nil && updatedLoadTest.Status.StartTime != nil {
+		reQueueTime = time.Duration(updatedLoadTest.Spec.TimeoutSeconds) * time.Second
+		log.Info("just started, should be marked as error if still running at :" + time.Now().Add(reQueueTime).String())
+		return reQueueTime
+	}
+
+	if previousStatus.StopTime == nil && updatedLoadTest.Status.StopTime != nil {
+		reQueueTime = time.Duration(updatedLoadTest.Spec.TTLSeconds)*time.Second - updatedLoadTest.Status.StopTime.Sub(updatedLoadTest.Status.StartTime.Time)
+		log.Info("just end, should be deleted at :" + time.Now().Add(reQueueTime).String())
+		return reQueueTime
+	}
+
+	return reQueueTime
+}
 
 // SetupWithManager configures a controller-runtime manager.
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {

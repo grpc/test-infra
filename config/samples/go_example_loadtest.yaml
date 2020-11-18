@@ -53,8 +53,8 @@ spec:
   # timeout and ttl field only take numbers and converted to duration, the unit
   # of duration is fixed as ns, for example: 1s = 1000000000 ns, the number
   # below indicate timeout=30s, ttl=2min
-  timeoutSeconds: 30
-  ttlSeconds: 120
+  timeoutSeconds: 0
+  ttlSeconds: 0
 
   # Scenarios are separate objects under this proposal. While
   # they specify configuration for clients and servers, they are
