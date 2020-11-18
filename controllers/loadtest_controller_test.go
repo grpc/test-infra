@@ -765,7 +765,7 @@ var _ = Describe("Pod Creation", func() {
 
 var _ = Describe("getRequeueTime", func() {
 	var test *grpcv1.LoadTest
-	var reconciler LoadTestReconciler
+	var reconciler *LoadTestReconciler
 
 	BeforeEach(func() {
 		test = newLoadTest()
