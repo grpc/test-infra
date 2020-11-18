@@ -91,7 +91,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		if time.Now().Sub(rawTest.Status.StartTime.Time) >= loadTestTTL {
 			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "loadTestTTL", loadTestTTL)
 			if err = r.Delete(ctx, rawTest); err != nil {
-				log.Error(err, "fail to delete test", "name", req.NamespacedName)
+				log.Error(err, "fail to delete test")
 				return ctrl.Result{Requeue: true}, err
 			}
 		}
