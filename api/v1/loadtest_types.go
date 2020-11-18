@@ -210,7 +210,7 @@ type LoadTestSpec struct {
 	// Timeout provides the longest running time allowed for a LoadTest.
 	TimeoutSeconds int32 `json:"timeoutSeconds"`
 
-	//TTL provide the longest time a LoadTest could live on the luster.
+	// TTL provide the longest time a LoadTest could live on the cluster.
 	TTLSeconds int32 `json:"ttlSeconds"`
 }
 
