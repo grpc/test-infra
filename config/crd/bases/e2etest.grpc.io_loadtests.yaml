@@ -1170,11 +1170,13 @@ spec:
               description: Timeout provides the longest running time allowed for a
                 LoadTest.
               format: int32
+              minimum: 1
               type: integer
             ttlSeconds:
               description: TTL provide the longest time a LoadTest could live on the
                 cluster.
               format: int32
+              minimum: 1
               type: integer
           required:
           - timeoutSeconds

@@ -783,7 +783,7 @@ var _ = Describe("getRequeueTime", func() {
 			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
 
-			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -801,7 +801,7 @@ var _ = Describe("getRequeueTime", func() {
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime, StopTime: &stopTime}
 			expectedRequeueTime := time.Duration(test.Spec.TTLSeconds)*time.Second - test.Status.StopTime.Time.Sub(test.Status.StartTime.Time)
 
-			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -816,7 +816,7 @@ var _ = Describe("getRequeueTime", func() {
 			previousStatus := grpcv1.LoadTestStatus{StartTime: &startTime}
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
 
-			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -830,7 +830,7 @@ var _ = Describe("getRequeueTime", func() {
 			previousStatus := grpcv1.LoadTestStatus{StopTime: &stopTime}
 			test.Status = grpcv1.LoadTestStatus{StopTime: &stopTime}
 
-			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -839,7 +839,7 @@ var _ = Describe("getRequeueTime", func() {
 			expectedRequeueTime := time.Duration(0)
 			previousStatus := grpcv1.LoadTestStatus{}
 
-			requeueTime := getRequeueTime(previousStatus, test, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})

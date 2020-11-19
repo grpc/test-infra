@@ -208,9 +208,11 @@ type LoadTestSpec struct {
 	Scenarios []Scenario `json:"scenarios,omitempty"`
 
 	// Timeout provides the longest running time allowed for a LoadTest.
+	// +kubebuilder:validation:Minimum:=1
 	TimeoutSeconds int32 `json:"timeoutSeconds"`
 
 	// TTL provide the longest time a LoadTest could live on the cluster.
+	// +kubebuilder:validation:Minimum:=1
 	TTLSeconds int32 `json:"ttlSeconds"`
 }
 

@@ -54,16 +54,16 @@ spec:
   # could possibly run, test runs longer than given value will be marked as
   # Error and would not be allocate more resource. The field takes integer
   # and convert the supplied value to duration, the unit of duration is fixed as
-  # second, for example: timeoutSeconds: 30 indicates the timeout of this test
-  # is 30s
-  timeoutSeconds: 0
+  # second, for example: timeoutSeconds: 900 indicates the timeout of this test
+  # is 15min. The minimum seconds one can put is 1.
+  timeoutSeconds: 900
 
   # ttlSeconds field is to advise on how long the test should be alive on the
   # cluster, test lives longer than given value will be deleted. The field takes
   # integer and convert the supplied value to duration, the unit of
-  # duration is fixed as second, for example: ttlSeconds: 120 indicates the
-  # timeout of this test is 120s
-  ttlSeconds: 0
+  # duration is fixed as second, for example: ttlSeconds: 86400 indicates the
+  # timeout of this test is 24h. The minimum seconds one can put is 1.
+  ttlSeconds: 86400
 
   # Scenarios are separate objects under this proposal. While
   # they specify configuration for clients and servers, they are

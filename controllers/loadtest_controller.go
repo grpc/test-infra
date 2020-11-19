@@ -75,15 +75,6 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	testTTL := time.Duration(rawTest.Spec.TTLSeconds) * time.Second
 	testTimeout := time.Duration(rawTest.Spec.TimeoutSeconds) * time.Second
 
-	// TODO(wanlin31): find out what values are not valid and what we want to do with them.
-	if testTTL == 0 {
-		log.Info("testTTL is invalid", "testTTL", testTTL)
-	}
-
-	if testTimeout == 0 {
-		log.Info("testTimeout is invalid", "testTimeout", testTimeout)
-	}
-
 	if testTimeout > testTTL {
 		log.Info("testTTL is less than testTimeout", "testTimeout", testTimeout, "testTTL", testTTL)
 	}
@@ -164,20 +155,22 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-	reQueueTime := getRequeueTime(previousStatus, test, log)
+	reQueueTime := getRequeueTime(test, previousStatus, log)
 	if reQueueTime != 0 {
 		return ctrl.Result{RequeueAfter: reQueueTime}, nil
 	}
 	return ctrl.Result{}, nil
 }
 
-// getRequeueTime compares the previous status of the load test with its updated
-// status and return a calculated requeue time. If the load test has just been
-// assigned a start time, getRequeueTime returns the timeout specified within
-// its spec. If the load test has been just assigned stop time, getRequeueTime
-// returns its ttl specified within its spe less its actual running time. In
-// other cases, returns a 0 value time.duration
-func getRequeueTime(previousStatus grpcv1.LoadTestStatus, updatedLoadTest *grpcv1.LoadTest, log logr.Logger) time.Duration {
+// getRequeueTime takes a LoadTest and its previous state, and compares the
+// previous status of the load test with its updated status and return a
+// calculated requeue time. The reason we take the test itself other than
+// its current status is because the ttl and time out are saved in its spec.
+// if the load test has just been assigned a start time, getRequeueTime returns
+// the timeout specified within its spec. If the load test has been just
+// assigned stop time, getRequeueTime returns its ttl specified within its spec
+// less its actual running time. In other cases, returns a 0 value time.duration
+func getRequeueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.LoadTestStatus, log logr.Logger) time.Duration {
 	reQueueTime := time.Duration(0)
 
 	if previousStatus.StartTime == nil && updatedLoadTest.Status.StartTime != nil {
