@@ -165,7 +165,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 // getRequeueTime takes a LoadTest and its previous state, and compares the
 // previous status of the load test with its updated status and return a
 // calculated requeue time. The reason we take the test itself other than
-// its current status is because the ttl and time out are saved in its spec.
+// its current status is because the ttl and timeout are saved in its spec.
 // if the load test has just been assigned a start time, getRequeueTime returns
 // the timeout specified within its spec. If the load test has been just
 // assigned stop time, getRequeueTime returns its ttl specified within its spec
