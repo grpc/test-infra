@@ -155,22 +155,23 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-	reQueueTime := getRequeueTime(test, previousStatus, log)
+	reQueueTime := getReQueueTime(test, previousStatus, log)
 	if reQueueTime != 0 {
 		return ctrl.Result{RequeueAfter: reQueueTime}, nil
 	}
 	return ctrl.Result{}, nil
 }
 
-// getRequeueTime takes a LoadTest and its previous state, and compares the
+// getReQueueTime takes a LoadTest and its previous state, and compares the
 // previous status of the load test with its updated status and return a
 // calculated requeue time. The reason we take the test itself other than
 // its current status is because the ttl and timeout are saved in its spec.
 // if the load test has just been assigned a start time, getRequeueTime returns
 // the timeout specified within its spec. If the load test has been just
-// assigned stop time, getRequeueTime returns its ttl specified within its spec
-// less its actual running time. In other cases, returns a 0 value time.duration
-func getRequeueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.LoadTestStatus, log logr.Logger) time.Duration {
+// assigned stop time, getReQueueTime returns its ttl specified within its spec
+// less its actual running time. In other cases, returns a zero value
+// time.duration.
+func getReQueueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.LoadTestStatus, log logr.Logger) time.Duration {
 	reQueueTime := time.Duration(0)
 
 	if previousStatus.StartTime == nil && updatedLoadTest.Status.StartTime != nil {

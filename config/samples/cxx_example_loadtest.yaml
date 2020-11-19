@@ -52,7 +52,7 @@ spec:
 
   # timeoutSeconds field is to advise the longest time a test
   # could possibly run, test runs longer than given value will be marked as
-  # Error and would not be allocate more resource. The field takes integer
+  # Errored and would not be allocate more resource. The field takes integer
   # and convert the supplied value to duration, the unit of duration is fixed as
   # second, for example: timeoutSeconds: 900 indicates the timeout of this test
   # is 15min. The minimum seconds one can put is 1.

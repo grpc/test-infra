@@ -763,7 +763,7 @@ var _ = Describe("Pod Creation", func() {
 	})
 })
 
-var _ = Describe("getRequeueTime", func() {
+var _ = Describe("getReQueueTime", func() {
 	var test *grpcv1.LoadTest
 	var reconciler *LoadTestReconciler
 
@@ -783,7 +783,7 @@ var _ = Describe("getRequeueTime", func() {
 			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
 
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -801,13 +801,13 @@ var _ = Describe("getRequeueTime", func() {
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime, StopTime: &stopTime}
 			expectedRequeueTime := time.Duration(test.Spec.TTLSeconds)*time.Second - test.Status.StopTime.Time.Sub(test.Status.StartTime.Time)
 
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
 	})
 	Context("when neither of start and end time is newly filled", func() {
-		It("returns 0 duration", func() {
+		It("returns zero duration when start time was set before this event", func() {
 			var startTime metav1.Time
 
 			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
@@ -816,12 +816,12 @@ var _ = Describe("getRequeueTime", func() {
 			previousStatus := grpcv1.LoadTestStatus{StartTime: &startTime}
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
 
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
 
-		It("returns 0 duration", func() {
+		It("returns zero duration, when stop time was set before this event", func() {
 			var stopTime metav1.Time
 
 			expectedRequeueTime := time.Duration(0)
@@ -830,7 +830,7 @@ var _ = Describe("getRequeueTime", func() {
 			previousStatus := grpcv1.LoadTestStatus{StopTime: &stopTime}
 			test.Status = grpcv1.LoadTestStatus{StopTime: &stopTime}
 
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -839,7 +839,7 @@ var _ = Describe("getRequeueTime", func() {
 			expectedRequeueTime := time.Duration(0)
 			previousStatus := grpcv1.LoadTestStatus{}
 
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
