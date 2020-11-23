@@ -763,7 +763,7 @@ var _ = Describe("Pod Creation", func() {
 	})
 })
 
-var _ = Describe("getReQueueTime", func() {
+var _ = Describe("getRequeueTime", func() {
 	var test *grpcv1.LoadTest
 	var reconciler *LoadTestReconciler
 
@@ -783,7 +783,7 @@ var _ = Describe("getReQueueTime", func() {
 			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
 
-			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -801,7 +801,7 @@ var _ = Describe("getReQueueTime", func() {
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime, StopTime: &stopTime}
 			expectedRequeueTime := time.Duration(test.Spec.TTLSeconds)*time.Second - test.Status.StopTime.Time.Sub(test.Status.StartTime.Time)
 
-			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -816,7 +816,7 @@ var _ = Describe("getReQueueTime", func() {
 			previousStatus := grpcv1.LoadTestStatus{StartTime: &startTime}
 			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
 
-			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -830,7 +830,7 @@ var _ = Describe("getReQueueTime", func() {
 			previousStatus := grpcv1.LoadTestStatus{StopTime: &stopTime}
 			test.Status = grpcv1.LoadTestStatus{StopTime: &stopTime}
 
-			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})
@@ -839,7 +839,7 @@ var _ = Describe("getReQueueTime", func() {
 			expectedRequeueTime := time.Duration(0)
 			previousStatus := grpcv1.LoadTestStatus{}
 
-			requeueTime := getReQueueTime(test, previousStatus, reconciler.Log)
+			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
 
 			Expect(requeueTime).To(Equal(expectedRequeueTime))
 		})

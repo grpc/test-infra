@@ -155,38 +155,38 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-	reQueueTime := getReQueueTime(test, previousStatus, log)
-	if reQueueTime != 0 {
-		return ctrl.Result{RequeueAfter: reQueueTime}, nil
+	requeueTime := getRequeueTime(test, previousStatus, log)
+	if requeueTime != 0 {
+		return ctrl.Result{RequeueAfter: requeueTime}, nil
 	}
 	return ctrl.Result{}, nil
 }
 
-// getReQueueTime takes a LoadTest and its previous state, and compares the
+// getRequeueTime takes a LoadTest and its previous state, and compares the
 // previous status of the load test with its updated status and return a
 // calculated requeue time. The reason we take the test itself other than
 // its current status is because the ttl and timeout are saved in its spec.
 // if the load test has just been assigned a start time, getRequeueTime returns
 // the timeout specified within its spec. If the load test has been just
-// assigned stop time, getReQueueTime returns its ttl specified within its spec
+// assigned stop time, getRequeueTime returns its ttl specified within its spec
 // less its actual running time. In other cases, returns a zero value
 // time.duration.
-func getReQueueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.LoadTestStatus, log logr.Logger) time.Duration {
-	reQueueTime := time.Duration(0)
+func getRequeueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.LoadTestStatus, log logr.Logger) time.Duration {
+	requeueTime := time.Duration(0)
 
 	if previousStatus.StartTime == nil && updatedLoadTest.Status.StartTime != nil {
-		reQueueTime = time.Duration(updatedLoadTest.Spec.TimeoutSeconds) * time.Second
-		log.Info("just started, should be marked as error if still running at :" + time.Now().Add(reQueueTime).String())
-		return reQueueTime
+		requeueTime = time.Duration(updatedLoadTest.Spec.TimeoutSeconds) * time.Second
+		log.Info("just started, should be marked as error if still running at :" + time.Now().Add(requeueTime).String())
+		return requeueTime
 	}
 
 	if previousStatus.StopTime == nil && updatedLoadTest.Status.StopTime != nil {
-		reQueueTime = time.Duration(updatedLoadTest.Spec.TTLSeconds)*time.Second - updatedLoadTest.Status.StopTime.Sub(updatedLoadTest.Status.StartTime.Time)
-		log.Info("just end, should be deleted at :" + time.Now().Add(reQueueTime).String())
-		return reQueueTime
+		requeueTime = time.Duration(updatedLoadTest.Spec.TTLSeconds)*time.Second - updatedLoadTest.Status.StopTime.Sub(updatedLoadTest.Status.StartTime.Time)
+		log.Info("just end, should be deleted at :" + time.Now().Add(requeueTime).String())
+		return requeueTime
 	}
 
-	return reQueueTime
+	return requeueTime
 }
 
 // SetupWithManager configures a controller-runtime manager.
