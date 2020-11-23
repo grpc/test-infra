@@ -69,7 +69,7 @@ spec:
     {
       "scenarios": [
         {
-          "name": "java_example_scenario",
+          "name": "java_generic_async_streaming_ping_pong_secure",
           "warmup_seconds": 15,
           "benchmark_seconds": 30,
           "num_servers": 1,
