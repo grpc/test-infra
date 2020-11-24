@@ -658,9 +658,7 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 				BigQueryTable: &bigQueryTable,
 			},
 
-			Scenarios: []grpcv1.Scenario{
-				{Name: "cpp-example-scenario"},
-			},
+			ScenariosJSON: "{\"scenarios\": []}",
 		},
 	}
 }()

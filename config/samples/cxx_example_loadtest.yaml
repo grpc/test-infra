@@ -50,14 +50,70 @@ spec:
   # results:
   #   bigQueryTable: "example-project.foo.demo_dataset"
 
-  # Scenarios are separate objects under this proposal. While
-  # they specify configuration for clients and servers, they are
-  # highly specialized. I doubt we want to modify controller logic
-  # whenever the Scenario proto is changed. This is open to
-  # discussion, however.
-  #
-  # These can be stored in ConfigMaps or they can be high-level
-  # Kubernetes objects themselves. If we did want to couple, they
-  # could also be inlined.
-  scenarios:
-    - name: cxx-example-scenario
+  # ScenariosJSON is string with the contents of a Scenarios message, formatted
+  # as JSON. See the Scenarios protobuf definition for details:
+  # https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
+  scenariosJSON: |
+    {
+      "scenarios": [
+        {
+          "name": "cpp_generic_async_streaming_ping_pong_secure",
+          "warmup_seconds": 5,
+          "benchmark_seconds": 30,
+          "num_servers": 1,
+          "server_config": {
+            "async_server_threads": 1,
+            "channel_args": [
+              {
+                "str_value": "latency",
+                "name": "grpc.optimization_target"
+              }
+            ],
+            "server_type": "ASYNC_GENERIC_SERVER",
+            "payload_config": {
+              "bytebuf_params": {
+                "resp_size": 0,
+                "req_size": 0
+              }
+            },
+            "security_params": {
+              "use_test_ca": true,
+              "server_host_override": "foo.test.google.fr"
+            },
+            "threads_per_cq": 0
+          },
+          "client_config": {
+            "security_params": {
+              "use_test_ca": true,
+              "server_host_override": "foo.test.google.fr"
+            },
+            "channel_args": [
+              {
+                "str_value": "latency",
+                "name": "grpc.optimization_target"
+              }
+            ],
+            "async_client_threads": 1,
+            "outstanding_rpcs_per_channel": 1,
+            "rpc_type": "STREAMING",
+            "payload_config": {
+              "bytebuf_params": {
+                "resp_size": 0,
+                "req_size": 0
+              }
+            },
+            "client_channels": 1,
+            "threads_per_cq": 0,
+            "load_params": {
+              "closed_loop": {}
+            },
+            "client_type": "ASYNC_CLIENT",
+            "histogram_params": {
+              "max_possible": 60000000000,
+              "resolution": 0.01
+            }
+          },
+          "num_clients": 1
+        }
+      ]
+    }
