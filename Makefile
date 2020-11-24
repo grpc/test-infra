@@ -11,7 +11,7 @@ IMAGE_PREFIX ?= ""
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
 # Image URL to use all building/pushing image targets
-CLEAN_IMG = gcr.io/grpc-testing/wanlin/tempclean
+CLEAN_IMG ?= ${IMAGE_PREFIX}cleanup:${TEST_INFRA_VERSION}
 #${IMAGE_PREFIX}cleanup_agent:${TEST_INFRA_VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
@@ -52,8 +52,8 @@ deploy: manifests
 
 # Deploy cleanup_agent in the configured Kubernetes cluster in ~/.kube/config
 deploy-cleanup-agent: manifests
-	cd config/cleanup_agent && kustomize edit set image cleanup_agent=gcr.io/grpc-testing/wanlin/tempclean:latest
-	cd config/cleanup_agent && kustomize build | kubectl apply -f -
+	cd config/cleanup_agent && kustomize edit set image cleanup_agent=${CLEAN_IMG}
+	kustomize build config/cleanup_agent | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

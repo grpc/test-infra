@@ -18,7 +18,6 @@ package cleanup
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -27,7 +26,6 @@ import (
 	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -52,24 +50,22 @@ type Agent struct {
 // Reconcile attempts to check status of workers of the triggering LoadTest, if
 // a terminated LoadTest has workers still running, reconcile will send quit RPC
 // to stop the workers.
-func (c *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var ctx context.Context
 	var cancel context.CancelFunc
 	var err error
 
-	log := c.Log.WithValues("loadtest", req.NamespacedName)
+	log := a.Log.WithValues("loadtest", req.NamespacedName)
 
 	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	// Fetch the LoadTest that triggers the event.
 	loadtest := new(grpcv1.LoadTest)
-	if err = c.Get(ctx, req.NamespacedName, loadtest); err != nil {
+	if err = a.Get(ctx, req.NamespacedName, loadtest); err != nil {
 		log.Error(err, "failed to get LoadTest", "name", req.NamespacedName)
 		// do not requeue, the load test may have been deleted
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	log.Info(loadtest.Status.Message)
-	log.Info(loadtest.Status.Reason)
 
 	// If the triggering LoadTest is not yet terminated do nothing
 	if !loadtest.Status.State.IsTerminated() {
@@ -78,7 +74,7 @@ func (c *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	// Fetch all the pods live on the cluster.
 	pods := new(corev1.PodList)
-	if err = c.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
+	if err = a.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
 		log.Error(err, "failed to list pods", "namespace", req.Namespace)
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -86,52 +82,59 @@ func (c *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Reuse existing logic to find the pods related to triggering LoadTest.
 	ownedPods := status.PodsForLoadTest(loadtest, pods.Items)
 
-	// Check if any related pods are needed to be terminated and attempt to
-	// terminate them.
-	for _, pod := range ownedPods {
+	c := callQuitClientImpl{}
+	quitWorkers(&c, ownedPods, log)
 
-		if pod.Labels[config.RoleLabel] == config.DriverRole {
+	return ctrl.Result{}, nil
+}
+
+type callQuitClient interface {
+	callQuit(*corev1.Pod, logr.Logger)
+}
+
+type callQuitClientImpl struct {
+}
+
+// quitWorkers takes a list of pods and a log, check on each pod and send quit
+// RPC if the pod is a worker with status of running, pending and unknown.
+func quitWorkers(c callQuitClient, ownedPods []*corev1.Pod, log logr.Logger) {
+	for i := range ownedPods {
+		if ownedPods[i].Labels[config.RoleLabel] == config.DriverRole {
 			continue
 		}
 
-		if pod.Status.Phase != corev1.PodFailed && pod.Status.Phase != corev1.PodSucceeded {
-			callQuit(pod, c.Log, req.NamespacedName)
+		if ownedPods[i].Status.Phase != corev1.PodFailed && ownedPods[i].Status.Phase != corev1.PodSucceeded {
+			c.callQuit(ownedPods[i], log)
 		}
 	}
-	return ctrl.Result{}, nil
-
 }
 
-// callQuit attempts to send quit RPC to the given pod. It takes reference of the
-// to be stopped pod, start a connection and send quit RPC to that pod. The
-// connection and signal sending are wrapped in the same context limiting total
-// time spend on each pod.
-func callQuit(currentPod *corev1.Pod, log logr.Logger, namespacedName types.NamespacedName) {
-	var ctx context.Context
-	var cancel context.CancelFunc
-
-	ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
+// callQuit method takes the pod need to be quit, establish a connection with
+// the pod and send quit RPC to it with a timeout limit.
+func (c *callQuitClientImpl) callQuit(pod *corev1.Pod, log logr.Logger) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(30)*time.Second)
 	defer cancel()
 
-	log.Info(fmt.Sprintf("the current address and port is : %v", currentPod.Status.PodIP+":10000"))
+	conn, err := grpc.DialContext(ctx, pod.Status.PodIP+":10000", grpc.WithInsecure())
+	defer conn.Close()
 
-	conn, err := grpc.DialContext(ctx, currentPod.Status.PodIP+":10000", grpc.WithInsecure())
 	if err != nil {
-		log.Error(err, "failed to build the connection", "name", namespacedName)
+		log.Error(err, "failed to connect to pod", "podName", pod.Labels[config.ComponentNameLabel])
+		return
 	}
+	client := grpc_testing.NewWorkerServiceClient(conn)
 
-	currentClient := grpc_testing.NewWorkerServiceClient(conn)
+	_, err = client.QuitWorker(ctx, &grpc_testing.Void{}, grpc.WaitForReady(false))
 
-	_, err = currentClient.QuitWorker(ctx, &grpc_testing.Void{}, grpc.WaitForReady(false))
 	if err != nil {
-		log.Error(err, "failed to send quit RPC", "name", namespacedName)
+		log.Error(err, "failed to quit the worker", "podName", pod.Labels[config.ComponentNameLabel])
+		return
 	}
-	conn.Close()
 }
 
 // SetupWithManager configures a controller-runtime manager.
-func (c *Agent) SetupWithManager(mgr ctrl.Manager) error {
+func (a *Agent) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grpcv1.LoadTest{}).
-		Complete(c)
+		Complete(a)
 }

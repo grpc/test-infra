@@ -47,7 +47,7 @@ func main() {
 	var namespace string
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":3778", "Address the metrics endpoint binds to.")
-	flag.StringVar(&namespace, "namespace", "wanlin", "Limits resources considered to a specific namespace.")
+	flag.StringVar(&namespace, "namespace", "", "Limits resources considered to a specific namespace.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election (ensures only one controller is active).")
 	flag.Parse()
 
