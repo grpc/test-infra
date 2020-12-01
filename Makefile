@@ -94,7 +94,7 @@ driver-image:
 
 # Push the driver container image to a docker regisry
 push-driver-image:
-	docker push ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION}-grpc${DRIVER_VERSION}
+	docker push ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION}
 
 # Build the C++ runtime image
 cxx-image:
