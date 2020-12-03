@@ -18,6 +18,7 @@ bin/*
 *~
 *.orig
 .idea/
+.vscode/
 
 # Hide internal configs
 config/defaults.yaml
