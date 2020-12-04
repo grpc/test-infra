@@ -174,13 +174,6 @@ type Results struct {
 	BigQueryTable *string `json:"bigQueryTable,omitempty"`
 }
 
-// Scenario references a ConfigMap with the configuration for the driver
-// and the server clients under test.
-type Scenario struct {
-	// Name identifies the name of the ConfigMap with the scenario data.
-	Name string `json:"name"`
-}
-
 // LoadTestSpec defines the desired state of LoadTest
 type LoadTestSpec struct {
 	// Driver is the component that orchestrates the test. It may be
@@ -203,9 +196,11 @@ type LoadTestSpec struct {
 	// +optional
 	Results *Results `json:"results,omitempty"`
 
-	// Scenarios provides a list of configurations for testing.
+	// ScenariosJSON is string with the contents of a Scenarios message,
+	// formatted as JSON. See the Scenarios protobuf definition for details:
+	// https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
 	// +optional
-	Scenarios []Scenario `json:"scenarios,omitempty"`
+	ScenariosJSON string `json:"scenariosJSON,omitempty"`
 
 	// Timeout provides the longest running time allowed for a LoadTest.
 	// +kubebuilder:validation:Minimum:=1
@@ -224,21 +219,27 @@ type LoadTestSpec struct {
 type LoadTestState string
 
 const (
+	// Unknown states indicate that the load test is in an indeterminate state.
+	// Something may have gone wrong, but it may be recoverable. No assumption
+	// should be made about the next state. It may transition to any other state
+	// or remain Unknown until a timeout occurs.
+	Unknown LoadTestState = "Unknown"
+
 	// Initializing states indicate that load test's pods are under construction.
 	// This may mean that code is being cloned, built or assembled.
 	Initializing LoadTestState = "Initializing"
 
 	// Running states indicate that the initialization for a load test's pods has
 	// completed successfully. The run container has started.
-	Running = "Running"
+	Running LoadTestState = "Running"
 
 	// Succeeded states indicate the driver pod's run container has terminated
 	// successfully, signaled by a zero exit code.
-	Succeeded = "Succeeded"
+	Succeeded LoadTestState = "Succeeded"
 
 	// Errored states indicate the load test encountered a problem that prevented
 	// a successful run.
-	Errored = "Errored"
+	Errored LoadTestState = "Errored"
 )
 
 // IsTerminated returns true if the test has finished due to a success, failure
@@ -266,6 +267,10 @@ var PodsMissing = "PodsMissing"
 // TimeoutExceeded is the reason string when the load test has not yet terminated
 // but exceeded the timeout.
 var TimeoutExceeded = "TimeoutExceeded"
+
+// KubernetesError is the reason string when an issue occurs with Kubernetes
+// that is not known to be directly related to a load test.
+var KubernetesError = "KubernetesError"
 
 // LoadTestStatus defines the observed state of LoadTest
 type LoadTestStatus struct {

@@ -781,20 +781,11 @@ spec:
                     BigQuery.
                   type: string
               type: object
-            scenarios:
-              description: Scenarios provides a list of configurations for testing.
-              items:
-                description: Scenario references a ConfigMap with the configuration
-                  for the driver and the server clients under test.
-                properties:
-                  name:
-                    description: Name identifies the name of the ConfigMap with the
-                      scenario data.
-                    type: string
-                required:
-                - name
-                type: object
-              type: array
+            scenariosJSON:
+              description: 'ScenariosJSON is string with the contents of a Scenarios
+                message, formatted as JSON. See the Scenarios protobuf definition
+                for details: https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.'
+              type: string
             servers:
               description: Servers are a list of components that receive traffic from
                 clients.

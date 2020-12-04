@@ -64,15 +64,73 @@ spec:
   # duration is fixed as second, for example: ttlSeconds: 86400 indicates the
   # timeout of this test is 24h. The minimum seconds one can put is 1.
   ttlSeconds: 86400
-
-  # Scenarios are separate objects under this proposal. While
-  # they specify configuration for clients and servers, they are
-  # highly specialized. I doubt we want to modify controller logic
-  # whenever the Scenario proto is changed. This is open to
-  # discussion, however.
-  #
-  # These can be stored in ConfigMaps or they can be high-level
-  # Kubernetes objects themselves. If we did want to couple, they
-  # could also be inlined.
-  scenarios:
-    - name: python-example-scenario
+  
+  # ScenariosJSON is string with the contents of a Scenarios message, formatted
+  # as JSON. See the Scenarios protobuf definition for details:
+  # https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
+  scenariosJSON: |
+    {
+      "scenarios": [
+        {
+          "name": "python_generic_sync_streaming_ping_pong",
+          "benchmark_seconds": 30,
+          "client_config": {
+            "async_client_threads": 1,
+            "channel_args": [
+              {
+                "name": "grpc.optimization_target",
+                "str_value": "latency"
+              }
+            ],
+            "client_channels": 1,
+            "client_processes": 0,
+            "client_type": "SYNC_CLIENT",
+            "histogram_params": {
+              "max_possible": 60000000000,
+              "resolution": 0.01
+            },
+            "load_params": {
+              "closed_loop": {}
+            },
+            "outstanding_rpcs_per_channel": 1,
+            "payload_config": {
+              "bytebuf_params": {
+                "req_size": 0,
+                "resp_size": 0
+              }
+            },
+            "rpc_type": "STREAMING",
+            "security_params": {
+              "server_host_override": "foo.test.google.fr",
+              "use_test_ca": true
+            },
+            "threads_per_cq": 0
+          },
+          "num_clients": 1,
+          "num_servers": 1,
+          "server_config": {
+            "async_server_threads": 0,
+            "channel_args": [
+              {
+                "name": "grpc.optimization_target",
+                "str_value": "latency"
+              }
+            ],
+            "payload_config": {
+              "bytebuf_params": {
+                "req_size": 0,
+                "resp_size": 0
+              }
+            },
+            "security_params": {
+              "server_host_override": "foo.test.google.fr",
+              "use_test_ca": true
+            },
+            "server_processes": 0,
+            "server_type": "ASYNC_GENERIC_SERVER",
+            "threads_per_cq": 0
+          },
+          "warmup_seconds": 5
+        }
+      ]
+    }

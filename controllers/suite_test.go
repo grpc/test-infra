@@ -239,9 +239,7 @@ func newLoadTest() *grpcv1.LoadTest {
 			TimeoutSeconds: int32(30),
 			TTLSeconds:     int32(120),
 
-			Scenarios: []grpcv1.Scenario{
-				{Name: "cpp-example-scenario"},
-			},
+			ScenariosJSON: "{\"scenarios\": []}",
 		},
 	}
 }

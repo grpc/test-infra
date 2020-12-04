@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - command:
-        - /workspace/manager
+        - /workspace/bin/controller
         args:
         - --enable-leader-election
         - --reconciliation-timeout=2m
