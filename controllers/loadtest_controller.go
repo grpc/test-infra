@@ -209,6 +209,7 @@ func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grpcv1.LoadTest{}).
 		Owns(&corev1.Pod{}).
+		Owns(&corev1.ConfigMap{}).
 		Complete(r)
 }
 
