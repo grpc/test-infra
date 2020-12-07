@@ -1,4 +1,4 @@
 resources:
 - ./roles
 - ./bindings
-
+- ./role.yaml
