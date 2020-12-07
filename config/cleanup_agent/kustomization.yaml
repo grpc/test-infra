@@ -1,11 +1,2 @@
 resources:
 - cleanup_agent.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-images:
-- name: cleanup-agent
-  newName: gcr.io/grpc-testing/wanlin/tempclean
-  newTag: latest
-- name: cleanup_agent
-  newName: gcr.io/grpc-testing/wanlin/tempclean
-  newTag: latest

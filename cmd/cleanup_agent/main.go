@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/cleanup"
@@ -45,10 +46,12 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var namespace string
+	var cleanupTimeout time.Duration
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":3778", "Address the metrics endpoint binds to.")
 	flag.StringVar(&namespace, "namespace", "", "Limits resources considered to a specific namespace.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election (ensures only one controller is active).")
+	flag.DurationVar(&cleanupTimeout, "cleanup-timeout", 0, "Timeout for each round of cleanup.")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
@@ -68,9 +71,10 @@ func main() {
 	}
 
 	if err = (&cleanup.Agent{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("CleanupAgent").WithName("LoadTest"),
-		Scheme: mgr.GetScheme(),
+		Client:  mgr.GetClient(),
+		Log:     ctrl.Log.WithName("CleanupAgent").WithName("LoadTest"),
+		Scheme:  mgr.GetScheme(),
+		Timeout: cleanupTimeout,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create CleanupAgent", "cleanupAgent", "LoadTest")
 		os.Exit(1)

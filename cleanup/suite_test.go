@@ -242,6 +242,6 @@ type mockQuitClient struct {
 	called []string
 }
 
-func (m *mockQuitClient) callQuit(pod *corev1.Pod, log logr.Logger) {
+func (m *mockQuitClient) callQuit(ctx context.Context, pod *corev1.Pod, log logr.Logger) {
 	m.called = append(m.called, pod.Name)
 }

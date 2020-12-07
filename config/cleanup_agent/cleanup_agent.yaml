@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - command:
-        image: cleanup-agent:latest
+        image: cleanup_agent:latest
         name: manager
         resources:
           limits:

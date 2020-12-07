@@ -20,13 +20,14 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	"github.com/grpc/test-infra/config"
-	ctrl "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/grpc/test-infra/config"
 )
 
 var _ = Describe("Test Environment", func() {
@@ -52,10 +53,12 @@ var _ = Describe("quitWorkers", func() {
 	var serverUnknown *corev1.Pod
 	var clientSucceeded *corev1.Pod
 	var serverSucceeded *corev1.Pod
+	var ctx context.Context
 
 	BeforeEach(func() {
 		log = ctrl.Log.WithName("CleanupAgent").WithName("LoadTest")
 		mockQuit = &mockQuitClient{}
+		ctx = context.Background()
 
 		podList = []*corev1.Pod{}
 		driver = &corev1.Pod{
@@ -214,21 +217,21 @@ var _ = Describe("quitWorkers", func() {
 	It("doesn't send quit to driver", func() {
 		podList = append(podList, driver)
 
-		quitWorkers(mockQuit, podList, log)
+		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(BeEmpty())
 	})
 
 	It("doesn't send quit to Succeeded workers", func() {
 		podList = append(podList, clientSucceeded, serverSucceeded)
 
-		quitWorkers(mockQuit, podList, log)
+		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(BeEmpty())
 	})
 
 	It("doesn't send quit to failed worker", func() {
 		podList = append(podList, clientFailed, serverFailed)
 
-		quitWorkers(mockQuit, podList, log)
+		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(BeEmpty())
 	})
 
@@ -236,14 +239,14 @@ var _ = Describe("quitWorkers", func() {
 		podList = append(podList, clientUnknown, serverUnknown)
 		expected := []string{"client-unknown", "server-unknown"}
 
-		quitWorkers(mockQuit, podList, log)
+		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(Equal(expected))
 	})
 
 	It("send quit to workers in running state", func() {
 		podList = append(podList, clientRunning, serverRunning)
 		expected := []string{"client-running", "server-running"}
-		quitWorkers(mockQuit, podList, log)
+		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(Equal(expected))
 	})
 
@@ -252,7 +255,7 @@ var _ = Describe("quitWorkers", func() {
 
 		expected := []string{"client-pending", "server-pending"}
 
-		quitWorkers(mockQuit, podList, log)
+		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(Equal(expected))
 	})
 
@@ -261,7 +264,7 @@ var _ = Describe("quitWorkers", func() {
 
 		expected := []string{"client-pending", "server-pending", "client-running", "server-running", "client-unknown", "server-unknown"}
 
-		quitWorkers(mockQuit, podList, log)
+		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(Equal(expected))
 	})
 })

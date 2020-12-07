@@ -45,8 +45,11 @@ install: manifests
 uninstall: manifests
 	kustomize build config/crd | kubectl delete -f -
 
+# Deploy both controller and cleanup_agent to the cluster
+deploy: deploy-controller deploy-cleanup-agent
+
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
+deploy-controller: manifests
 	cd config/manager && kustomize edit set image controller=${CONTROLLER_IMG}
 	kustomize build config/default | kubectl apply -f -
 
