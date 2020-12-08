@@ -67,8 +67,6 @@ func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	log := a.Log.WithValues("loadtest", req.NamespacedName)
 
-	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
 	// Fetch the LoadTest that triggers the event.
 	loadtest := new(grpcv1.LoadTest)
 	if err = a.Get(ctx, req.NamespacedName, loadtest); err != nil {
