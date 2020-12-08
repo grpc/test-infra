@@ -35,11 +35,6 @@ import (
 
 // CleanupAgent
 
-// +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch
-// +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests/status,verbs=get
-// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list
-// +kubebuilder:rbac:groups="",resources=pods/status,verbs=get
-
 // Agent cleanup unwanted processes.
 type Agent struct {
 	client.Client
@@ -47,6 +42,11 @@ type Agent struct {
 	Scheme  *runtime.Scheme
 	Timeout time.Duration
 }
+
+// +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch
+// +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests/status,verbs=get
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list
+// +kubebuilder:rbac:groups="",resources=pods/status,verbs=get
 
 // Reconcile attempts to check status of workers of the triggering LoadTest, if
 // a terminated LoadTest has workers still running, reconcile will send quit RPC
