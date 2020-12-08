@@ -59,7 +59,7 @@ func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// The timeout for the cleanup process could be set by maintainer, but if not
 	// set the whole cleanup process is bonded by 2 mins.
 	if a.Timeout == 0 {
-		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(120)*time.Second)
+		ctx, cancel = context.WithTimeout(context.Background(), 2*time.Minute)
 	} else {
 		ctx, cancel = context.WithTimeout(context.Background(), a.Timeout)
 	}
