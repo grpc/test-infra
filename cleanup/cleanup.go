@@ -14,6 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package cleanup contains logic of cleanup agent. A cleanup agent watches the
+// status change of LoadTests. The cleanup agent do nothing when the
+// triggering LoadTest is not terminated. When triggering LoadTest is
+// terminated, the cleanup agent checks if all its pods are terminated, and send
+// quit RPC to stop the those unterminated.
 package cleanup
 
 import (
@@ -48,7 +53,7 @@ type Agent struct {
 // +kubebuilder:rbac:groups="",resources=pods/status,verbs=get
 
 // Reconcile attempts to check status of workers of the triggering LoadTest, if
-// a terminated LoadTest has workers still running, reconcile will send quit RPC
+// a terminated LoadTest has workers still running, reconcile will send callQuitter RPC
 // to stop the workers.
 func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var ctx context.Context
@@ -95,16 +100,16 @@ func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-type quit interface {
-	callQuitter(context.Context, *corev1.Pod, logr.Logger)
+type callQuitter interface {
+	callQuit(context.Context, *corev1.Pod, logr.Logger)
 }
 
 type quitClient struct {
 }
 
-// quitWorkers takes a list of pods and a log, check on each pod and send quit
+// quitWorkers takes a list of pods and a log, check on each pod and send callQuitter
 // RPC if the pod is a worker with status of running, pending and unknown.
-func quitWorkers(ctx context.Context, q quit, ownedPods []*corev1.Pod, log logr.Logger) {
+func quitWorkers(ctx context.Context, q callQuitter, ownedPods []*corev1.Pod, log logr.Logger) {
 	for i := range ownedPods {
 		if ownedPods[i].Labels[config.RoleLabel] == config.DriverRole {
 			continue
@@ -112,14 +117,14 @@ func quitWorkers(ctx context.Context, q quit, ownedPods []*corev1.Pod, log logr.
 
 		padStatus, _, _ := status.StateForPodStatus(&ownedPods[i].Status)
 		if padStatus == status.Pending {
-			q.callQuitter(ctx, ownedPods[i], log)
+			q.callQuit(ctx, ownedPods[i], log)
 		}
 	}
 }
 
-// callQuitter method takes the pod need to be quit, establish a connection with
-// the pod and send quit RPC to it with a timeout limit.
-func (c *quitClient) callQuitter(ctx context.Context, pod *corev1.Pod, log logr.Logger) {
+// callQuit method takes the pod need to be callQuitter, establish a connection with
+// the pod and send callQuitter RPC to it with a timeout limit.
+func (c *quitClient) callQuit(ctx context.Context, pod *corev1.Pod, log logr.Logger) {
 
 	target := fmt.Sprintf("%s:%d", pod.Status.PodIP, config.DriverPort)
 	conn, err := grpc.DialContext(ctx, target, grpc.WithInsecure())
@@ -134,7 +139,7 @@ func (c *quitClient) callQuitter(ctx context.Context, pod *corev1.Pod, log logr.
 	_, err = client.QuitWorker(ctx, &pb.Void{}, grpc.WaitForReady(false))
 
 	if err != nil {
-		log.Error(err, "failed to quit the worker", "podName", pod.Labels[config.ComponentNameLabel])
+		log.Error(err, "failed to callQuitter the worker", "podName", pod.Labels[config.ComponentNameLabel])
 		return
 	}
 }

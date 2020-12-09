@@ -261,28 +261,28 @@ var _ = Describe("quitWorkers", func() {
 
 	})
 
-	It("doesn't send quit to driver", func() {
+	It("doesn't send callQuitter to driver", func() {
 		podList = append(podList, driver)
 
 		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(BeEmpty())
 	})
 
-	It("doesn't send quit to Succeeded workers", func() {
+	It("doesn't send callQuitter to succeeded workers", func() {
 		podList = append(podList, clientSucceeded, serverSucceeded)
 
 		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(BeEmpty())
 	})
 
-	It("doesn't send quit to errored worker", func() {
+	It("doesn't send callQuitter to errored worker", func() {
 		podList = append(podList, clientErrored, serverErrored)
 
 		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(BeEmpty())
 	})
 
-	It("sends quit to workers in pending state", func() {
+	It("sends callQuitter to workers in pending state", func() {
 		podList = append(podList, clientPending, serverPending)
 
 		expected := []string{"client-pending", "server-pending"}
@@ -291,7 +291,7 @@ var _ = Describe("quitWorkers", func() {
 		Expect(mockQuit.called).To(Equal(expected))
 	})
 
-	It("sends quit to workers need to be quit", func() {
+	It("sends callQuitter only to workers that need to be callQuitter", func() {
 		podList = append(podList, clientPending, serverPending, clientErrored, serverErrored, clientSucceeded, serverSucceeded, driver)
 
 		expected := []string{"client-pending", "server-pending"}
