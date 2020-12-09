@@ -30,13 +30,6 @@ import (
 	"github.com/grpc/test-infra/config"
 )
 
-var _ = Describe("Test Environment", func() {
-	It("supports creation of load tests", func() {
-		err := k8sClient.Create(context.Background(), newLoadTest())
-		Expect(err).ToNot(HaveOccurred())
-	})
-})
-
 var _ = Describe("quitWorkers", func() {
 	var log logr.Logger
 	var podList []*corev1.Pod
@@ -45,12 +38,8 @@ var _ = Describe("quitWorkers", func() {
 
 	var clientPending *corev1.Pod
 	var serverPending *corev1.Pod
-	var clientRunning *corev1.Pod
-	var serverRunning *corev1.Pod
-	var clientFailed *corev1.Pod
-	var serverFailed *corev1.Pod
-	var clientUnknown *corev1.Pod
-	var serverUnknown *corev1.Pod
+	var clientErrored *corev1.Pod
+	var serverErrored *corev1.Pod
 	var clientSucceeded *corev1.Pod
 	var serverSucceeded *corev1.Pod
 	var ctx context.Context
@@ -61,6 +50,7 @@ var _ = Describe("quitWorkers", func() {
 		ctx = context.Background()
 
 		podList = []*corev1.Pod{}
+
 		driver = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "driver",
@@ -72,6 +62,9 @@ var _ = Describe("quitWorkers", func() {
 			},
 		}
 
+		// This is one of the possibility that the pod would be marked as pending,
+		// testing other possibilities is out of scope of this test and done
+		// elsewhere.
 		clientPending = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "client-pending",
@@ -82,7 +75,23 @@ var _ = Describe("quitWorkers", func() {
 				},
 			},
 			Status: corev1.PodStatus{
-				Phase: corev1.PodPending,
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+				},
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{},
+					},
+				},
 			},
 		}
 
@@ -96,10 +105,29 @@ var _ = Describe("quitWorkers", func() {
 				},
 			},
 			Status: corev1.PodStatus{
-				Phase: corev1.PodPending,
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+				},
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{},
+					},
+				},
 			},
 		}
 
+		// This is one of the possibility that the pod would be marked as succeeded,
+		// testing other possibilities is out of scope of this test and done
+		// elsewhere.
 		clientSucceeded = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "client-succeeded",
@@ -110,7 +138,25 @@ var _ = Describe("quitWorkers", func() {
 				},
 			},
 			Status: corev1.PodStatus{
-				Phase: corev1.PodSucceeded,
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+				},
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+				},
 			},
 		}
 
@@ -124,13 +170,34 @@ var _ = Describe("quitWorkers", func() {
 				},
 			},
 			Status: corev1.PodStatus{
-				Phase: corev1.PodSucceeded,
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+				},
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+				},
 			},
 		}
 
-		clientRunning = &corev1.Pod{
+		// This is one of the possibility that the pod would be marked as errored,
+		// testing other possibilities is out of scope of this test and done
+		// elsewhere.
+		clientErrored = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "client-running",
+				Name: "client-errored",
 				Labels: map[string]string{
 					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.ClientRole,
@@ -138,13 +205,31 @@ var _ = Describe("quitWorkers", func() {
 				},
 			},
 			Status: corev1.PodStatus{
-				Phase: corev1.PodRunning,
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+				},
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 127},
+						},
+					},
+				},
 			},
 		}
 
-		serverRunning = &corev1.Pod{
+		serverErrored = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "server-running",
+				Name: "server-errored",
 				Labels: map[string]string{
 					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.ServerRole,
@@ -152,63 +237,25 @@ var _ = Describe("quitWorkers", func() {
 				},
 			},
 			Status: corev1.PodStatus{
-				Phase: corev1.PodRunning,
-			},
-		}
-
-		clientFailed = &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "client-failed",
-				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
-					config.RoleLabel:          config.ClientRole,
-					config.ComponentNameLabel: "name",
+				InitContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 0},
+						},
+					},
 				},
-			},
-			Status: corev1.PodStatus{
-				Phase: corev1.PodFailed,
-			},
-		}
-
-		serverFailed = &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "server-failed",
-				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
-					config.RoleLabel:          config.ServerRole,
-					config.ComponentNameLabel: "name",
+				ContainerStatuses: []corev1.ContainerStatus{
+					{
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{ExitCode: 127},
+						},
+					},
 				},
-			},
-			Status: corev1.PodStatus{
-				Phase: corev1.PodFailed,
-			},
-		}
-
-		clientUnknown = &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "client-unknown",
-				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
-					config.RoleLabel:          config.ClientRole,
-					config.ComponentNameLabel: "name",
-				},
-			},
-			Status: corev1.PodStatus{
-				Phase: corev1.PodUnknown,
-			},
-		}
-
-		serverUnknown = &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "server-unknown",
-				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
-					config.RoleLabel:          config.ServerRole,
-					config.ComponentNameLabel: "name",
-				},
-			},
-			Status: corev1.PodStatus{
-				Phase: corev1.PodUnknown,
 			},
 		}
 
@@ -228,26 +275,11 @@ var _ = Describe("quitWorkers", func() {
 		Expect(mockQuit.called).To(BeEmpty())
 	})
 
-	It("doesn't send quit to failed worker", func() {
-		podList = append(podList, clientFailed, serverFailed)
+	It("doesn't send quit to errored worker", func() {
+		podList = append(podList, clientErrored, serverErrored)
 
 		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(BeEmpty())
-	})
-
-	It("send quit to workers in unknown state", func() {
-		podList = append(podList, clientUnknown, serverUnknown)
-		expected := []string{"client-unknown", "server-unknown"}
-
-		quitWorkers(ctx, mockQuit, podList, log)
-		Expect(mockQuit.called).To(Equal(expected))
-	})
-
-	It("send quit to workers in running state", func() {
-		podList = append(podList, clientRunning, serverRunning)
-		expected := []string{"client-running", "server-running"}
-		quitWorkers(ctx, mockQuit, podList, log)
-		Expect(mockQuit.called).To(Equal(expected))
 	})
 
 	It("sends quit to workers in pending state", func() {
@@ -260,9 +292,9 @@ var _ = Describe("quitWorkers", func() {
 	})
 
 	It("sends quit to workers need to be quit", func() {
-		podList = append(podList, clientPending, serverPending, clientRunning, serverRunning, clientUnknown, serverUnknown, clientFailed, serverFailed, clientSucceeded, serverSucceeded, driver)
+		podList = append(podList, clientPending, serverPending, clientErrored, serverErrored, clientSucceeded, serverSucceeded, driver)
 
-		expected := []string{"client-pending", "server-pending", "client-running", "server-running", "client-unknown", "server-unknown"}
+		expected := []string{"client-pending", "server-pending"}
 
 		quitWorkers(ctx, mockQuit, podList, log)
 		Expect(mockQuit.called).To(Equal(expected))

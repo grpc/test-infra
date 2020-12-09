@@ -174,7 +174,7 @@ all-images: \
 	ruby-image \
 	python-image \
 	controller-image\
-  cleanup-agent-image
+	cleanup-agent-image
 
 # Push all init container and runtime container images to a docker registry
 push-all-images: \

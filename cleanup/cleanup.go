@@ -18,6 +18,7 @@ package cleanup
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -32,8 +33,6 @@ import (
 	pb "github.com/grpc/test-infra/proto/grpc/testing"
 	"github.com/grpc/test-infra/status"
 )
-
-// CleanupAgent
 
 // Agent cleanup unwanted processes.
 type Agent struct {
@@ -56,8 +55,8 @@ func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var cancel context.CancelFunc
 	var err error
 
-	// The timeout for the cleanup process could be set by maintainer, but if not
-	// set the whole cleanup process is bonded by 2 mins.
+	// A timeout could be set on cleanup agent as a time limit for each reconcile
+	// round, if not set the default value for each reconciliation is 2 mins.
 	if a.Timeout == 0 {
 		ctx, cancel = context.WithTimeout(context.Background(), 2*time.Minute)
 	} else {
@@ -97,7 +96,7 @@ func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 }
 
 type quit interface {
-	callQuit(context.Context, *corev1.Pod, logr.Logger)
+	callQuitter(context.Context, *corev1.Pod, logr.Logger)
 }
 
 type quitClient struct {
@@ -111,19 +110,19 @@ func quitWorkers(ctx context.Context, q quit, ownedPods []*corev1.Pod, log logr.
 			continue
 		}
 
-		if ownedPods[i].Status.Phase != corev1.PodFailed && ownedPods[i].Status.Phase != corev1.PodSucceeded {
-			q.callQuit(ctx, ownedPods[i], log)
+		padStatus, _, _ := status.StateForPodStatus(&ownedPods[i].Status)
+		if padStatus == status.Pending {
+			q.callQuitter(ctx, ownedPods[i], log)
 		}
 	}
 }
 
-// callQuit method takes the pod need to be quit, establish a connection with
+// callQuitter method takes the pod need to be quit, establish a connection with
 // the pod and send quit RPC to it with a timeout limit.
-func (c *quitClient) callQuit(ctx context.Context, pod *corev1.Pod, log logr.Logger) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(30)*time.Second)
-	defer cancel()
+func (c *quitClient) callQuitter(ctx context.Context, pod *corev1.Pod, log logr.Logger) {
 
-	conn, err := grpc.DialContext(ctx, pod.Status.PodIP+":10000", grpc.WithInsecure())
+	target := fmt.Sprintf("%s:%d", pod.Status.PodIP, config.DriverPort)
+	conn, err := grpc.DialContext(ctx, target, grpc.WithInsecure())
 	defer conn.Close()
 
 	if err != nil {
