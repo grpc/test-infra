@@ -30,8 +30,7 @@ spec:
         image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
         command: ["bash", "/build_scripts/build_qps_worker.sh"]
       run:
-        # TODO: in the run phase, we can actually use a vanilla dotnet runtime image
-        image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
+        image: mcr.microsoft.com/dotnet/runtime:2.1
         command: ["dotnet"]
         args: ["exec", "qps_worker/Grpc.IntegrationTesting.QpsWorker.dll"]
 
@@ -46,8 +45,7 @@ spec:
         image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
         command: ["bash", "/build_scripts/build_qps_worker.sh"]
       run:
-        # TODO: in the run phase, we can actually use a vanilla dotnet runtime image
-        image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
+        image: mcr.microsoft.com/dotnet/runtime:2.1
         command: ["dotnet"]
         args: ["exec", "qps_worker/Grpc.IntegrationTesting.QpsWorker.dll"]
 
@@ -57,15 +55,66 @@ spec:
   # results:
   #   bigQueryTable: "example-project.foo.demo_dataset"
 
-  # Scenarios are separate objects under this proposal. While
-  # they specify configuration for clients and servers, they are
-  # highly specialized. I doubt we want to modify controller logic
-  # whenever the Scenario proto is changed. This is open to
-  # discussion, however.
-  #
-  # These can be stored in ConfigMaps or they can be high-level
-  # Kubernetes objects themselves. If we did want to couple, they
-  # could also be inlined.
-  scenarios:
-    - name: jtattermusch-csharp-unconstrained-scenario
-    - name: jtattermusch-csharp-unary-ping-pong-scenario
+  # ScenariosJSON is string with the contents of a Scenarios message, formatted
+  # as JSON. See the Scenarios protobuf definition for details:
+  # https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
+  scenariosJSON: |
+    {
+      "scenarios": [
+        {
+          "name": "csharp_protobuf_async_unary_qps_unconstrained",
+          "num_servers": 1,
+          "num_clients": 0,
+          "client_config": {
+            "client_type": "ASYNC_CLIENT",
+            "security_params": {
+              "use_test_ca": true,
+              "server_host_override": "foo.test.google.fr"
+            },
+            "outstanding_rpcs_per_channel": 100,
+            "client_channels": 64,
+            "async_client_threads": 0,
+            "client_processes": 0,
+            "threads_per_cq": 0,
+            "rpc_type": "UNARY",
+            "histogram_params": {
+              "resolution": 0.01,
+              "max_possible": 60000000000.0
+            },
+            "channel_args": [
+              {
+                "name": "grpc.optimization_target",
+                "str_value": "throughput"
+              }
+            ],
+            "payload_config": {
+              "simple_params": {
+                "req_size": 0,
+                "resp_size": 0
+              }
+            },
+            "load_params": {
+              "closed_loop": {}
+            }
+          },
+          "server_config": {
+            "server_type": "ASYNC_SERVER",
+            "security_params": {
+              "use_test_ca": true,
+              "server_host_override": "foo.test.google.fr"
+            },
+            "async_server_threads": 0,
+            "server_processes": 0,
+            "threads_per_cq": 0,
+            "channel_args": [
+              {
+                "name": "grpc.optimization_target",
+                "str_value": "throughput"
+              }
+            ]
+          },
+          "warmup_seconds": 5,
+          "benchmark_seconds": 30
+        }
+      ]
+    }
