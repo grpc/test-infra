@@ -14,12 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package podbuilder
 
 import (
-	"context"
 	"fmt"
-	"path/filepath"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -28,17 +26,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -54,65 +49,9 @@ func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
+		"PodBuilder Suite",
 		[]Reporter{printer.NewlineReporter{}})
 }
-
-var _ = BeforeSuite(func(done Done) {
-	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
-
-	By("bootstrapping test environment")
-	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{filepath.Join("..", "config", "crd", "bases")},
-	}
-
-	var err error
-	cfg, err = testEnv.Start()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).ToNot(BeNil())
-
-	err = grpcv1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:             scheme.Scheme,
-		MetricsBindAddress: ":3777",
-		Port:               9443,
-	})
-	Expect(err).ToNot(HaveOccurred())
-
-	reconciler := &LoadTestReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
-		Log:    ctrl.Log.WithName("controller").WithName("LoadTest"),
-	}
-	err = reconciler.SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
-
-	// +kubebuilder:scaffold:scheme
-
-	k8sClient = k8sManager.GetClient()
-	Expect(k8sClient).ToNot(BeNil())
-
-	stop = make(chan struct{})
-	go func() {
-		err := k8sManager.Start(stop)
-		Expect(err).ToNot(HaveOccurred())
-	}()
-
-	for _, node := range nodes {
-		Expect(k8sClient.Create(context.Background(), node)).To(Succeed())
-	}
-
-	close(done)
-}, 60)
-
-var _ = AfterSuite(func() {
-	By("tearing down the test environment")
-	close(stop)
-	err := testEnv.Stop()
-	Expect(err).ToNot(HaveOccurred())
-})
 
 var pools = map[string]int{
 	"drivers":   3,
@@ -138,6 +77,35 @@ var nodes = func() []*corev1.Node {
 
 	return items
 }()
+
+func newDefaults() *config.Defaults {
+	return &config.Defaults{
+		DriverPool:  "drivers",
+		WorkerPool:  "workers-8core",
+		DriverPort:  10000,
+		ServerPort:  10010,
+		CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
+		ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
+		DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
+		Languages: []config.LanguageDefault{
+			{
+				Language:   "cxx",
+				BuildImage: "l.gcr.io/google/bazel:latest",
+				RunImage:   "gcr.io/grpc-fake-project/test-infra/cxx",
+			},
+			{
+				Language:   "go",
+				BuildImage: "golang:1.14",
+				RunImage:   "gcr.io/grpc-fake-project/test-infra/go",
+			},
+			{
+				Language:   "java",
+				BuildImage: "java:jdk8",
+				RunImage:   "gcr.io/grpc-fake-project/test-infra/java",
+			},
+		},
+	}
+}
 
 func newLoadTest() *grpcv1.LoadTest {
 	cloneImage := "docker.pkg.github.com/grpc/test-infra/clone"
