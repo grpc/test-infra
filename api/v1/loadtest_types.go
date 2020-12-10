@@ -112,8 +112,8 @@ type Run struct {
 	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
-// Driver defines a component that orchestrates the server and clients
-// in the test.
+// Driver defines a component that orchestrates the server and clients in the
+// test.
 type Driver struct {
 	// Name is a string that uniquely names this driver. Since load tests only
 	// support one driver, it is not recommended to set this field. If no name

@@ -168,32 +168,42 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	var pod *corev1.Pod
 	missingPods := status.CheckMissingPods(test, ownedPods)
 	builder := podbuilder.New(r.Defaults, test)
 
-	if len(missingPods.Servers) > 0 {
-		pod = builder.PodForServer(&missingPods.Servers[0])
-	} else if len(missingPods.Clients) > 0 {
-		pod = builder.PodForClient(&missingPods.Clients[0])
-	} else if missingPods.Driver != nil {
-		pod = builder.PodForDriver(missingPods.Driver)
-	}
-
-	if err != nil {
-		log.Error(err, "could not initialize new pod", "pod", pod)
-		return ctrl.Result{}, err
-	}
-
-	if pod != nil {
+	makePod := func(pod *corev1.Pod) (*ctrl.Result, error) {
 		if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
 			log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
-			return ctrl.Result{}, err
+			return &ctrl.Result{}, err
 		}
 
 		if err = r.Create(ctx, pod); err != nil {
 			log.Error(err, "could not create new pod", "pod", pod)
-			return ctrl.Result{Requeue: true}, err
+			return &ctrl.Result{Requeue: true}, err
+		}
+
+		return nil, nil
+	}
+
+	for i := range missingPods.Servers {
+		result, err := makePod(builder.PodForServer(&missingPods.Servers[i]))
+		if result != nil {
+			log.Error(err, "failed to initialize server")
+			return *result, err
+		}
+	}
+	for i := range missingPods.Clients {
+		result, err := makePod(builder.PodForClient(&missingPods.Clients[i]))
+		if result != nil {
+			log.Error(err, "failed to initalize client")
+			return *result, err
+		}
+	}
+	if missingPods.Driver != nil {
+		result, err := makePod(builder.PodForDriver(missingPods.Driver))
+		if result != nil {
+			log.Error(err, "failed to initialize driver")
+			return *result, err
 		}
 	}
 
