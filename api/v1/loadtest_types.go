@@ -131,9 +131,8 @@ type Driver struct {
 	Language string `json:"language"`
 
 	// Pool specifies the name of the set of nodes where this driver should be
-	// scheduled. If unset, the controller will choose a pool based on defaults.
-	// +optional
-	Pool *string `json:"pool,omitempty"`
+	// scheduled.
+	Pool string `json:"pool"`
 
 	// Clone specifies the repository and snapshot where the code for the driver
 	// can be found. This is used to test alternative implementations for the
@@ -184,9 +183,8 @@ type Server struct {
 	Language string `json:"language"`
 
 	// Pool specifies the name of the set of nodes where this server should be
-	// scheduled. If unset, the controller will choose a pool based on defaults.
-	// +optional
-	Pool *string `json:"pool,omitempty"`
+	// scheduled.
+	Pool string `json:"pool"`
 
 	// Clone specifies the repository and snapshot where the code for the server
 	// can be found. This field should not be set if the code has been prebuilt
@@ -238,9 +236,8 @@ type Client struct {
 	Language string `json:"language"`
 
 	// Pool specifies the name of the set of nodes where this client should be
-	// scheduled. If unset, the controller will choose a pool based on defaults.
-	// +optional
-	Pool *string `json:"pool,omitempty"`
+	// scheduled.
+	Pool string `json:"pool"`
 
 	// Clone specifies the repository and snapshot where the code for the client
 	// can be found. This field should not be set if the code has been prebuilt

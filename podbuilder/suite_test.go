@@ -80,8 +80,6 @@ var nodes = func() []*corev1.Node {
 
 func newDefaults() *config.Defaults {
 	return &config.Defaults{
-		DriverPool:  "drivers",
-		WorkerPool:  "workers-8core",
 		DriverPort:  10000,
 		ServerPort:  10010,
 		CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
@@ -142,7 +140,7 @@ func newLoadTest() *grpcv1.LoadTest {
 			Driver: &grpcv1.Driver{
 				Name:     &driverComponentName,
 				Language: "cxx",
-				Pool:     &driverPool,
+				Pool:     driverPool,
 				Run: grpcv1.Run{
 					Image: &driverImage,
 				},
@@ -152,7 +150,7 @@ func newLoadTest() *grpcv1.LoadTest {
 				{
 					Name:     &serverComponentName,
 					Language: "cxx",
-					Pool:     &workerPool,
+					Pool:     workerPool,
 					Clone: &grpcv1.Clone{
 						Image:  &cloneImage,
 						Repo:   &cloneRepo,
@@ -175,7 +173,7 @@ func newLoadTest() *grpcv1.LoadTest {
 				{
 					Name:     &clientComponentName,
 					Language: "cxx",
-					Pool:     &workerPool,
+					Pool:     workerPool,
 					Clone: &grpcv1.Clone{
 						Image:  &cloneImage,
 						Repo:   &cloneRepo,

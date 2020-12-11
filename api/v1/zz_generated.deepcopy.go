@@ -70,11 +70,6 @@ func (in *Client) DeepCopyInto(out *Client) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.Pool != nil {
-		in, out := &in.Pool, &out.Pool
-		*out = new(string)
-		**out = **in
-	}
 	if in.Clone != nil {
 		in, out := &in.Clone, &out.Clone
 		*out = new(Clone)
@@ -133,11 +128,6 @@ func (in *Driver) DeepCopyInto(out *Driver) {
 	*out = *in
 	if in.Name != nil {
 		in, out := &in.Name, &out.Name
-		*out = new(string)
-		**out = **in
-	}
-	if in.Pool != nil {
-		in, out := &in.Pool, &out.Pool
 		*out = new(string)
 		**out = **in
 	}
@@ -354,11 +344,6 @@ func (in *Server) DeepCopyInto(out *Server) {
 	*out = *in
 	if in.Name != nil {
 		in, out := &in.Name, &out.Name
-		*out = new(string)
-		**out = **in
-	}
-	if in.Pool != nil {
-		in, out := &in.Pool, &out.Pool
 		*out = new(string)
 		**out = **in
 	}

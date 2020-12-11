@@ -28,14 +28,6 @@ type Defaults struct {
 	// this is not the namespace for the manager.
 	ComponentNamespace string `json:"componentNamespace"`
 
-	// DriverPool is the name of a pool where driver components should
-	// be scheduled by default.
-	DriverPool string `json:"driverPool"`
-
-	// WorkerPool is the name of a pool where server and client
-	// components should be scheduled by default.
-	WorkerPool string `json:"workerPool"`
-
 	// DriverPort is the port through which the driver and workers
 	// communicate.
 	DriverPort int32 `json:"driverPort"`
@@ -66,14 +58,6 @@ type Defaults struct {
 // valid, nil is returned.
 func (d *Defaults) Validate() error {
 	var tcpPortMax int32 = 65535
-
-	if d.DriverPool == "" {
-		return errors.New("missing driver pool")
-	}
-
-	if d.WorkerPool == "" {
-		return errors.New("missing worker pool")
-	}
 
 	if d.DriverPort < 0 || d.DriverPort > tcpPortMax {
 		return errors.Errorf("driver port is outside of TCP range: [0, %d]", tcpPortMax)
@@ -201,10 +185,6 @@ func (d *Defaults) setDriverDefaults(im *imageMap, driver *grpcv1.Driver) error 
 		driver.Run.Image = &d.DriverImage
 	}
 
-	if driver.Pool == nil {
-		driver.Pool = &d.DriverPool
-	}
-
 	d.setNameOrDefault(driver.Name)
 	d.setCloneOrDefault(driver.Clone)
 
@@ -226,10 +206,6 @@ func (d *Defaults) setClientDefaults(im *imageMap, client *grpcv1.Client) error 
 		return errors.New("cannot set defaults on a nil client")
 	}
 
-	if client.Pool == nil {
-		client.Pool = &d.WorkerPool
-	}
-
 	d.setNameOrDefault(client.Name)
 	d.setCloneOrDefault(client.Clone)
 
@@ -249,10 +225,6 @@ func (d *Defaults) setClientDefaults(im *imageMap, client *grpcv1.Client) error 
 func (d *Defaults) setServerDefaults(im *imageMap, server *grpcv1.Server) error {
 	if server == nil {
 		return errors.New("cannot set defaults on a nil server")
-	}
-
-	if server.Pool == nil {
-		server.Pool = &d.WorkerPool
 	}
 
 	d.setNameOrDefault(server.Name)

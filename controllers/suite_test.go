@@ -80,8 +80,6 @@ var nodes = func() []*corev1.Node {
 }()
 
 var defaults = &config.Defaults{
-	DriverPool:  "drivers",
-	WorkerPool:  "workers-8core",
 	DriverPort:  10000,
 	ServerPort:  10010,
 	CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
@@ -108,8 +106,6 @@ var defaults = &config.Defaults{
 
 func newDefaults() *config.Defaults {
 	return &config.Defaults{
-		DriverPool:  "drivers",
-		WorkerPool:  "workers-8core",
 		DriverPort:  10000,
 		ServerPort:  10010,
 		CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
@@ -145,7 +141,7 @@ func newLoadTest() *grpcv1.LoadTest {
 			Driver: &grpcv1.Driver{
 				Name:     optional.StringPtr("driver"),
 				Language: "cxx",
-				Pool:     optional.StringPtr("test-pool"),
+				Pool:     "test-pool",
 				Run: grpcv1.Run{
 					Image: optional.StringPtr("gcr.io/grpc-test-example/driver:v1"),
 				},
@@ -154,7 +150,7 @@ func newLoadTest() *grpcv1.LoadTest {
 				{
 					Name:     optional.StringPtr("server-1"),
 					Language: "go",
-					Pool:     optional.StringPtr("test-pool"),
+					Pool:     "test-pool",
 					Clone: &grpcv1.Clone{
 						Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
 						Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
@@ -176,7 +172,7 @@ func newLoadTest() *grpcv1.LoadTest {
 				{
 					Name:     optional.StringPtr("client-1"),
 					Language: "go",
-					Pool:     optional.StringPtr("test-pool"),
+					Pool:     "test-pool",
 					Clone: &grpcv1.Clone{
 						Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
 						Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),

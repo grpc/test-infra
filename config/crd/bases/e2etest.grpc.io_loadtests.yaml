@@ -232,8 +232,7 @@ spec:
                     type: string
                   pool:
                     description: Pool specifies the name of the set of nodes where
-                      this client should be scheduled. If unset, the controller will
-                      choose a pool based on defaults.
+                      this client should be scheduled.
                     type: string
                   run:
                     description: Run describes the run container, which is the runtime
@@ -417,6 +416,7 @@ spec:
                     type: object
                 required:
                 - language
+                - pool
                 - run
                 type: object
               type: array
@@ -612,8 +612,7 @@ spec:
                   type: string
                 pool:
                   description: Pool specifies the name of the set of nodes where this
-                    driver should be scheduled. If unset, the controller will choose
-                    a pool based on defaults.
+                    driver should be scheduled.
                   type: string
                 run:
                   description: Run describes the run container, which is the runtime
@@ -795,6 +794,7 @@ spec:
                   type: object
               required:
               - language
+              - pool
               - run
               type: object
             results:
@@ -1009,8 +1009,7 @@ spec:
                     type: string
                   pool:
                     description: Pool specifies the name of the set of nodes where
-                      this server should be scheduled. If unset, the controller will
-                      choose a pool based on defaults.
+                      this server should be scheduled.
                     type: string
                   run:
                     description: Run describes the run container, which is the runtime
@@ -1194,6 +1193,7 @@ spec:
                     type: object
                 required:
                 - language
+                - pool
                 - run
                 type: object
               type: array

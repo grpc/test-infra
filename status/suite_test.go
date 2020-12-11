@@ -67,7 +67,7 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 			Driver: &grpcv1.Driver{
 				Name:     &driverComponentName,
 				Language: "cxx",
-				Pool:     &driverPool,
+				Pool:     driverPool,
 				Run: grpcv1.Run{
 					Image: &driverImage,
 				},
@@ -85,7 +85,7 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 		createdLoadTest.Spec.Servers = append(createdLoadTest.Spec.Servers, grpcv1.Server{
 			Name:     &serverNames[i-1],
 			Language: "cxx",
-			Pool:     &workerPool,
+			Pool:     workerPool,
 			Clone: &grpcv1.Clone{
 				Image:  &cloneImage,
 				Repo:   &cloneRepo,
@@ -109,7 +109,7 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 		createdLoadTest.Spec.Clients = append(createdLoadTest.Spec.Clients, grpcv1.Client{
 			Name:     &clientName[i-1],
 			Language: "cxx",
-			Pool:     &workerPool,
+			Pool:     workerPool,
 			Clone: &grpcv1.Clone{
 				Image:  &cloneImage,
 				Repo:   &cloneRepo,

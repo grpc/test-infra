@@ -115,10 +115,10 @@ var _ = Describe("PodBuilder", func() {
 		})
 
 		It("sets node selector to match pool", func() {
-			client.Pool = optional.StringPtr("testing-pool")
+			client.Pool = "testing-pool"
 			pod := builder.PodForClient(client)
 			Expect(pod.Spec.NodeSelector).ToNot(BeNil())
-			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*client.Pool))
+			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(client.Pool))
 		})
 
 		Context("clone init container", func() {
@@ -339,10 +339,10 @@ var _ = Describe("PodBuilder", func() {
 		})
 
 		It("sets node selector to match pool", func() {
-			server.Pool = optional.StringPtr("testing-pool")
+			server.Pool = "testing-pool"
 			pod := builder.PodForServer(server)
 			Expect(pod.Spec.NodeSelector).ToNot(BeNil())
-			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*server.Pool))
+			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(server.Pool))
 		})
 
 		Context("clone init container", func() {
@@ -563,10 +563,10 @@ var _ = Describe("PodBuilder", func() {
 		})
 
 		It("sets node selector to match pool", func() {
-			driver.Pool = optional.StringPtr("testing-pool")
+			driver.Pool = "testing-pool"
 			pod := builder.PodForDriver(driver)
 			Expect(pod.Spec.NodeSelector).ToNot(BeNil())
-			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*driver.Pool))
+			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(driver.Pool))
 		})
 
 		Context("clone init container", func() {

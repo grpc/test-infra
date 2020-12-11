@@ -126,7 +126,7 @@ func New(defaults *config.Defaults, test *grpcv1.LoadTest) *PodBuilder {
 func (pb *PodBuilder) PodForClient(client *grpcv1.Client) *corev1.Pod {
 	pb.name = safeStrUnwrap(client.Name)
 	pb.role = config.ClientRole
-	pb.pool = safeStrUnwrap(client.Pool)
+	pb.pool = client.Pool
 	pb.clone = client.Clone
 	pb.build = client.Build
 	pb.run = &client.Run
@@ -149,7 +149,7 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) *corev1.Pod {
 func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) *corev1.Pod {
 	pb.name = safeStrUnwrap(driver.Name)
 	pb.role = config.DriverRole
-	pb.pool = safeStrUnwrap(driver.Pool)
+	pb.pool = driver.Pool
 	pb.clone = driver.Clone
 	pb.build = driver.Build
 	pb.run = &driver.Run
@@ -195,7 +195,7 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) *corev1.Pod {
 func (pb *PodBuilder) PodForServer(server *grpcv1.Server) *corev1.Pod {
 	pb.name = safeStrUnwrap(server.Name)
 	pb.role = config.ServerRole
-	pb.pool = safeStrUnwrap(server.Pool)
+	pb.pool = server.Pool
 	pb.clone = server.Clone
 	pb.build = server.Build
 	pb.run = &server.Run
