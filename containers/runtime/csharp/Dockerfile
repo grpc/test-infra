@@ -12,46 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM debian:stretch
+FROM mcr.microsoft.com/dotnet/sdk:2.1
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
 RUN apt-get update && apt-get install -y \
-  autoconf \
   build-essential \
-  clang \
   git \
-  make \
-  libtool \
-  libgflags-dev \
-  pkg-config && \
   apt-get clean
 
 # The prerequisites installed below are heavily inspired by the C# testing image from grpc/grpc
 # https://github.com/grpc/grpc/blob/master/tools/dockerfile/test/csharp_stretch_x64/Dockerfile
 
 # cmake >=3.6 needed to build grpc_csharp_ext
-RUN apt-get update && apt-get install -y curl && apt-get clean
-
-# cmake >=3.6 needed to build grpc_csharp_ext
 RUN apt-get update && apt-get install -y cmake && apt-get clean
-
-# Install dotnet SDK
-ENV DOTNET_SDK_VERSION 2.1.500
-RUN curl -sSL -o dotnet.tar.gz https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$DOTNET_SDK_VERSION/dotnet-sdk-$DOTNET_SDK_VERSION-linux-x64.tar.gz \
-    && mkdir -p /usr/share/dotnet \
-    && tar -zxf dotnet.tar.gz -C /usr/share/dotnet \
-    && rm dotnet.tar.gz \
-    && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
-
-# Trigger the population of the local package cache
-ENV NUGET_XMLDOC_MODE skip
-RUN mkdir warmup \
-    && cd warmup \
-    && dotnet new \
-    && cd .. \
-    && rm -rf warmup
 
 # Python is needed to run the run_tests.py script (we use it to build C#)
 RUN apt-get update && apt-get install -y \
