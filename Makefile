@@ -165,7 +165,7 @@ push-python-image:
 
 # Build the Csharp build image
 csharp-image:
-	docker build -t ${IMAGE_PREFIX}csharp:${TEST_INFRA_VERSION} containers/runtime/csharp
+	docker build -t ${INIT_IMAGE_PREFIX}build/csharp:${TEST_INFRA_VERSION} containers/init/build/csharp
 
 # Push the cshsarp build image to a docker registry
 push-python-image:

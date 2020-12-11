@@ -19,7 +19,7 @@ WORKDIR /src/workspace
 
 RUN apt-get update && apt-get install -y \
   build-essential \
-  git \
+  git && \
   apt-get clean
 
 # The prerequisites installed below are heavily inspired by the C# testing image from grpc/grpc
