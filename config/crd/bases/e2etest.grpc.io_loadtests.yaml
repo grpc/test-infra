@@ -1157,6 +1157,21 @@ spec:
                 - run
                 type: object
               type: array
+            timeoutSeconds:
+              description: Timeout provides the longest running time allowed for a
+                LoadTest.
+              format: int32
+              minimum: 1
+              type: integer
+            ttlSeconds:
+              description: TTL provides the longest time a LoadTest can live on the
+                cluster.
+              format: int32
+              minimum: 1
+              type: integer
+          required:
+          - timeoutSeconds
+          - ttlSeconds
           type: object
         status:
           description: LoadTestStatus defines the observed state of LoadTest

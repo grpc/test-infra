@@ -24,8 +24,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/grpc/test-infra/kubehelpers"
-	"github.com/grpc/test-infra/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,6 +32,8 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
+	"github.com/grpc/test-infra/status"
 )
 
 // LoadTestReconciler reconciles a LoadTest object
@@ -74,7 +74,21 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	testTTL := time.Duration(rawTest.Spec.TTLSeconds) * time.Second
+	testTimeout := time.Duration(rawTest.Spec.TimeoutSeconds) * time.Second
+
+	if testTimeout > testTTL {
+		log.Info("testTTL is less than testTimeout", "testTimeout", testTimeout, "testTTL", testTTL)
+	}
+
 	if rawTest.Status.State.IsTerminated() {
+		if time.Now().Sub(rawTest.Status.StartTime.Time) >= testTTL {
+			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "testTTL", testTTL)
+			if err = r.Delete(ctx, rawTest); err != nil {
+				log.Error(err, "fail to delete test")
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
 		return ctrl.Result{}, nil
 	}
 
@@ -163,7 +177,10 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	ownedPods := status.PodsForLoadTest(test, pods.Items)
+
+	previousStatus := test.Status
 	test.Status = status.ForLoadTest(test, ownedPods)
+
 	if err = r.Status().Update(ctx, test); err != nil {
 		log.Error(err, "failed to update test status")
 		return ctrl.Result{Requeue: true}, err
@@ -197,12 +214,38 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
+	requeueTime := getRequeueTime(test, previousStatus, log)
+	if requeueTime != 0 {
+		return ctrl.Result{RequeueAfter: requeueTime}, nil
+	}
 	return ctrl.Result{}, nil
 }
 
-// LoadTestMissing categorize missing components based on their roles at specific
-// moment. The struct is a wrapper to help us get role information associate
-// with components.
+// getRequeueTime takes a LoadTest and its previous status, compares the
+// previous status of the load test with its updated status, and returns a
+// calculated requeue time. If the test has just been assigned a start time
+// (i.e., it has just started), the requeue time is set to the timeout value
+// specified in the LoadTest. If the test has just been assigned a stop time
+// (i.e., it has just terminated), the requeue time is set to the time-to-live
+// specified in the LoadTest, minus its actual running time. In other cases,
+// the requeue time is set to zero.
+func getRequeueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.LoadTestStatus, log logr.Logger) time.Duration {
+	requeueTime := time.Duration(0)
+
+	if previousStatus.StartTime == nil && updatedLoadTest.Status.StartTime != nil {
+		requeueTime = time.Duration(updatedLoadTest.Spec.TimeoutSeconds) * time.Second
+		log.Info("just started, should be marked as error if still running at :" + time.Now().Add(requeueTime).String())
+		return requeueTime
+	}
+
+	if previousStatus.StopTime == nil && updatedLoadTest.Status.StopTime != nil {
+		requeueTime = time.Duration(updatedLoadTest.Spec.TTLSeconds)*time.Second - updatedLoadTest.Status.StopTime.Sub(updatedLoadTest.Status.StartTime.Time)
+		log.Info("just end, should be deleted at :" + time.Now().Add(requeueTime).String())
+		return requeueTime
+	}
+
+	return requeueTime
+}
 
 // SetupWithManager configures a controller-runtime manager.
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {

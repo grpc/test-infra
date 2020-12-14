@@ -18,6 +18,7 @@ package status
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -112,6 +113,18 @@ func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatu
 		status.StartTime = optional.CurrentTimePtr()
 	} else {
 		status.StartTime = test.Status.StartTime
+	}
+
+	timeout := time.Duration(test.Spec.TimeoutSeconds) * time.Second
+
+	// Here marked the LoadTest running too long as errored. This status update
+	// could trigger cleanup_agent to terminate its workers.
+	if time.Now().Sub(status.StartTime.Time) >= timeout {
+		status.StopTime = optional.CurrentTimePtr()
+		status.State = grpcv1.Errored
+		status.Reason = grpcv1.TimeoutErrored
+		status.Message = fmt.Sprintf("timeout exceeded")
+		return status
 	}
 
 	for _, pod := range pods {

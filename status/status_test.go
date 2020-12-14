@@ -14,6 +14,8 @@ limitations under the License.
 package status
 
 import (
+	"time"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -253,6 +255,8 @@ var _ = Describe("ForLoadTest", func() {
 						},
 					},
 				},
+				TTLSeconds:     int32(120),
+				TimeoutSeconds: int32(30),
 			},
 		}
 
@@ -314,6 +318,15 @@ var _ = Describe("ForLoadTest", func() {
 		status := ForLoadTest(test, pods)
 
 		Expect(status.StartTime).To(Equal(&fakeStartTime))
+	})
+
+	It("sets error state when running longer than timeout", func() {
+		fakeStartTime := metav1.Time{Time: time.Date(2020, time.October, 23, 15, 0, 0, 0, time.UTC)}
+		test.Status.StartTime = &fakeStartTime
+		status := ForLoadTest(test, pods)
+
+		Expect(status.StartTime).ToNot(BeNil())
+		Expect(status.State).To(BeEquivalentTo(grpcv1.Errored))
 	})
 
 	It("sets succeeded state when driver pod succeeded", func() {

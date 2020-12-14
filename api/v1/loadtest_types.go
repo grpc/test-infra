@@ -201,6 +201,14 @@ type LoadTestSpec struct {
 	// https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
 	// +optional
 	ScenariosJSON string `json:"scenariosJSON,omitempty"`
+
+	// Timeout provides the longest running time allowed for a LoadTest.
+	// +kubebuilder:validation:Minimum:=1
+	TimeoutSeconds int32 `json:"timeoutSeconds"`
+
+	// TTL provides the longest time a LoadTest can live on the cluster.
+	// +kubebuilder:validation:Minimum:=1
+	TTLSeconds int32 `json:"ttlSeconds"`
 }
 
 // LoadTestState reflects the derived state of the load test from its
@@ -255,6 +263,10 @@ var FailedSettingDefaultsError = "FailedSettingDefaults"
 // PodsMissing is the reason string when the load test is missing pods and is still
 // in the Initializing state.
 var PodsMissing = "PodsMissing"
+
+// TimeoutErrored is the reason string when the load test has not yet terminated
+// but exceeded the timeout.
+var TimeoutErrored = "TimeoutErrored"
 
 // KubernetesError is the reason string when an issue occurs with Kubernetes
 // that is not known to be directly related to a load test.

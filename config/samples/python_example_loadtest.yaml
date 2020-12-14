@@ -49,6 +49,19 @@ spec:
   # This can be used for uploading results to GCS or BigQuery.
   # results:
   #   bigQueryTable: "example-project.foo.demo_dataset"
+
+  # timeoutSeconds is an integer field that indicates the longest time a test
+  # is allowed to run, in seconds. Tests that run longer than the given value
+  # will be marked as Errored and will no longer be allocated resources to run.
+  # For example: timeoutSeconds: 900 indicates the timeout of this test
+  # is 15min. The minimum valid value for this field is 1.
+  timeoutSeconds: 900
+
+  # ttlSeconds is an integer field that indicates how long a test is allowed to
+  # live on the cluster, in seconds. Tests that live longer than the given value
+  # will be deleted. For example: ttlSeconds: 86400 indicates the time-to-live
+  # of this test is 24h. The minimum valid value for this field is 1.
+  ttlSeconds: 86400
   
   # ScenariosJSON is string with the contents of a Scenarios message, formatted
   # as JSON. See the Scenarios protobuf definition for details:

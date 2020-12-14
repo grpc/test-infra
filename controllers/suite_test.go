@@ -236,6 +236,9 @@ func newLoadTest() *grpcv1.LoadTest {
 				BigQueryTable: &bigQueryTable,
 			},
 
+			TimeoutSeconds: int32(30),
+			TTLSeconds:     int32(120),
+
 			ScenariosJSON: "{\"scenarios\": []}",
 		},
 	}
