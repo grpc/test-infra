@@ -52,8 +52,8 @@ type Agent struct {
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list
 // +kubebuilder:rbac:groups="",resources=pods/status,verbs=get
 
-// Reconcile attempts to check status of workers of the triggering LoadTest, if
-// a terminated LoadTest has workers still running, reconcile will send callQuitter RPC
+// Reconcile attempts to check status of workers of the triggering LoadTest. If
+// a terminated LoadTest has workers running, reconcile will send callQuitter RPC
 // to stop the workers.
 func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	var ctx context.Context
@@ -79,7 +79,7 @@ func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// If the triggering LoadTest is not yet terminated do nothing
+	// If the triggering LoadTest is not yet terminated, do nothing.
 	if !loadtest.Status.State.IsTerminated() {
 		return ctrl.Result{}, nil
 	}
@@ -122,8 +122,8 @@ func quitWorkers(ctx context.Context, q callQuitter, ownedPods []*corev1.Pod, lo
 	}
 }
 
-// callQuit method takes the pod need to be callQuitter, establish a connection with
-// the pod and send callQuitter RPC to it with a timeout limit.
+// callQuit establishes a connection with a pod and sends callQuitter RPC
+// with a time limit. The pod is assumed to implement callQuitter.
 func (c *quitClient) callQuit(ctx context.Context, pod *corev1.Pod, log logr.Logger) {
 
 	target := fmt.Sprintf("%s:%d", pod.Status.PodIP, config.DriverPort)

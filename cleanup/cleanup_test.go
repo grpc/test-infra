@@ -62,9 +62,9 @@ var _ = Describe("quitWorkers", func() {
 			},
 		}
 
-		// This is one of the possibility that the pod would be marked as pending,
-		// testing other possibilities is out of scope of this test and done
-		// elsewhere.
+		// This is one of the possibilities where the pod would be marked as
+		// pending. Testing other possibilities is out of scope of this test, and
+		// done elsewhere.
 		clientPending = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "client-pending",
@@ -125,9 +125,9 @@ var _ = Describe("quitWorkers", func() {
 			},
 		}
 
-		// This is one of the possibility that the pod would be marked as succeeded,
-		// testing other possibilities is out of scope of this test and done
-		// elsewhere.
+		// This is one of the possibilities where the pod would be marked as
+		// succeeded. Testing other possibilities is out of the scope of this
+		// test, and is done elsewhere.
 		clientSucceeded = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "client-succeeded",
@@ -192,9 +192,9 @@ var _ = Describe("quitWorkers", func() {
 			},
 		}
 
-		// This is one of the possibility that the pod would be marked as errored,
-		// testing other possibilities is out of scope of this test and done
-		// elsewhere.
+		// This is one of the possibilities where the pod would be marked as
+		// errored. Testing other possibilities is out of scope of this test, and
+		// done elsewhere.
 		clientErrored = &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "client-errored",
