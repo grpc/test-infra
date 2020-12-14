@@ -1164,7 +1164,7 @@ spec:
               minimum: 1
               type: integer
             ttlSeconds:
-              description: TTL provide the longest time a LoadTest could live on the
+              description: TTL provides the longest time a LoadTest can live on the
                 cluster.
               format: int32
               minimum: 1

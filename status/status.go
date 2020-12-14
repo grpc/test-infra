@@ -122,7 +122,7 @@ func ForLoadTest(test *grpcv1.LoadTest, pods []*corev1.Pod) grpcv1.LoadTestStatu
 	if time.Now().Sub(status.StartTime.Time) >= timeout {
 		status.StopTime = optional.CurrentTimePtr()
 		status.State = grpcv1.Errored
-		status.Reason = grpcv1.TimeoutExceeded
+		status.Reason = grpcv1.TimeoutErrored
 		status.Message = fmt.Sprintf("timeout exceeded")
 		return status
 	}

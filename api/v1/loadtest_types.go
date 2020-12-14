@@ -206,7 +206,7 @@ type LoadTestSpec struct {
 	// +kubebuilder:validation:Minimum:=1
 	TimeoutSeconds int32 `json:"timeoutSeconds"`
 
-	// TTL provide the longest time a LoadTest could live on the cluster.
+	// TTL provides the longest time a LoadTest can live on the cluster.
 	// +kubebuilder:validation:Minimum:=1
 	TTLSeconds int32 `json:"ttlSeconds"`
 }
@@ -264,9 +264,9 @@ var FailedSettingDefaultsError = "FailedSettingDefaults"
 // in the Initializing state.
 var PodsMissing = "PodsMissing"
 
-// TimeoutExceeded is the reason string when the load test has not yet terminated
+// TimeoutErrored is the reason string when the load test has not yet terminated
 // but exceeded the timeout.
-var TimeoutExceeded = "TimeoutExceeded"
+var TimeoutErrored = "TimeoutErrored"
 
 // KubernetesError is the reason string when an issue occurs with Kubernetes
 // that is not known to be directly related to a load test.

@@ -24,15 +24,16 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/config"
-	"github.com/grpc/test-infra/kubehelpers"
-	"github.com/grpc/test-infra/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
+	"github.com/grpc/test-infra/status"
 )
 
 // LoadTestReconciler reconciles a LoadTest object
@@ -219,15 +220,14 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-// getRequeueTime takes a LoadTest and its previous state, and compares the
-// previous status of the load test with its updated status and return a
-// calculated requeue time. The reason we take the test itself other than
-// its current status is because the ttl and timeout are saved in its spec.
-// if the load test has just been assigned a start time, getRequeueTime returns
-// the timeout specified within its spec. If the load test has been just
-// assigned stop time, getRequeueTime returns its ttl specified within its spec
-// less its actual running time. In other cases, returns a zero value
-// time.duration.
+// getRequeueTime takes a LoadTest and its previous status, compares the
+// previous status of the load test with its updated status, and returns a
+// calculated requeue time. If the test has just been assigned a start time
+// (i.e., it has just started), the requeue time is set to the timeout value
+// specified in the LoadTest. If the test has just been assigned a stop time
+// (i.e., it has just terminated), the requeue time is set to the time-to-live
+// specified in the LoadTest, minus its actual running time. In other cases,
+// the requeue time is set to zero.
 func getRequeueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.LoadTestStatus, log logr.Logger) time.Duration {
 	requeueTime := time.Duration(0)
 
