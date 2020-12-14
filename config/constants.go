@@ -58,6 +58,10 @@ const (
 	// on a driver component.
 	DriverRole = "driver"
 
+	// DriverPort is the port through which the driver and workers
+	// communicate.
+	DriverPort = 10000
+
 	// LoadTestLabel is a label which contains the test's unique name.
 	LoadTestLabel = "loadtest"
 

@@ -9,7 +9,10 @@ INIT_IMAGE_PREFIX ?= ""
 # other than DockerHub
 IMAGE_PREFIX ?= ""
 # Image URL to use all building/pushing image targets
-IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
+CONTROLLER_IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
+# Image URL to use all building/pushing image targets
+CLEAN_IMG ?= ${IMAGE_PREFIX}cleanup:${TEST_INFRA_VERSION}
+#${IMAGE_PREFIX}cleanup_agent:${TEST_INFRA_VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -20,7 +23,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: controller
+all: controller cleanup-agent
 
 # Run tests
 test: generate fmt vet manifests
@@ -30,6 +33,10 @@ test: generate fmt vet manifests
 controller: generate fmt vet
 	go build -o bin/controller cmd/controller/main.go
 
+# Build cleanup_agent manager binary
+cleanup-agent: generate fmt vet
+	go build -o bin/cleanup_agent cmd/cleanup_agent/main.go
+
 # Install CRDs into a cluster
 install: manifests
 	kustomize build config/crd | kubectl apply -f -
@@ -38,10 +45,18 @@ install: manifests
 uninstall: manifests
 	kustomize build config/crd | kubectl delete -f -
 
+# Deploy both controller and cleanup_agent to the cluster
+deploy: deploy-controller deploy-cleanup-agent
+
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
-	cd config/manager && kustomize edit set image controller=${IMG}
+deploy-controller: manifests
+	cd config/manager && kustomize edit set image controller=${CONTROLLER_IMG}
 	kustomize build config/default | kubectl apply -f -
+
+# Deploy cleanup_agent in the configured Kubernetes cluster in ~/.kube/config
+deploy-cleanup-agent: manifests
+	cd config/cleanup_agent && kustomize edit set image cleanup_agent=${CLEAN_IMG}
+	kustomize build config/cleanup_agent | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
@@ -62,11 +77,20 @@ generate: controller-gen
 
 # Build the manager image with the controller
 controller-image:
-	docker build -t ${IMG} -f containers/runtime/controller/Dockerfile .
+	docker build -t ${CONTROLLER_IMG} -f containers/runtime/controller/Dockerfile .
+
+# Build the manager image with the cleanup_agent
+cleanup-agent-image:
+	docker build -t ${CLEAN_IMG} -f containers/runtime/cleanup_agent/Dockerfile .
 
 # Push the controller manager image to a docker registry
 push-controller-image:
-	docker push ${IMG}
+	docker push ${CONTROLLER_IMG}
+
+# Push the cleanup-agent manager image to a docker registry
+push-cleanup-agent-image:
+	docker push ${CLEAN_IMG}
+
 
 # Build the clone init container image
 clone-image:
@@ -149,7 +173,8 @@ all-images: \
 	java-image \
 	ruby-image \
 	python-image \
-	controller-image
+	controller-image\
+	cleanup-agent-image
 
 # Push all init container and runtime container images to a docker registry
 push-all-images: \
@@ -161,7 +186,8 @@ push-all-images: \
 	push-java-image \
 	push-ruby-image \
 	push-python-image \
-	push-controller-image
+	push-controller-image \
+	push-cleanup-agent-image
 
 # find or download controller-gen
 # download controller-gen if necessary

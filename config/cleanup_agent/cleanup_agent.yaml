@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: cleanup-agent-manager
+  name: test-infra-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cleanup-agent-manager
+  namespace: test-infra-system
+  labels:
+    control-plane: cleanup-agent-manager
+spec:
+  selector:
+    matchLabels:
+      control-plane: cleanup-agent-manager
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        control-plane: cleanup-agent-manager
+    spec:
+      containers:
+      - command:
+        image: cleanup_agent:latest
+        name: manager
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+      terminationGracePeriodSeconds: 10
