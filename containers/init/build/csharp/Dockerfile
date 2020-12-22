@@ -28,15 +28,8 @@ RUN apt-get update && apt-get install -y \
 # cmake >=3.6 needed to build grpc_csharp_ext
 RUN apt-get update && apt-get install -y cmake && apt-get clean
 
-# Python is needed to run the run_tests.py script (we use it to build C#)
-RUN apt-get update && apt-get install -y \
-  python-dev \
-  python-setuptools \
-  python-yaml && \
-  apt-get clean
-
-RUN curl https://bootstrap.pypa.io/get-pip.py | python2.7
-RUN pip install futures==2.2.0 enum34==1.0.4 protobuf==3.5.2.post1 six==1.15.0 twisted==17.5.0
+ENV MSBUILD_CONFIG=Release
+ENV CONFIG=opt
 
 # Currently C# is little tricky to build with a single command, so we inject a script that can take care of the build.
 RUN mkdir /build_scripts

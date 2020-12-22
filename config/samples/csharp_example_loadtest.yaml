@@ -27,10 +27,8 @@ spec:
         # TODO(jtattermusch): we cannot use grpc/grpc master because currently C# qps_worker doesn't accept the --server_port arg
         gitRef: csharp_qpsworker_server_port
       build:
-        image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
         command: ["bash", "/build_scripts/build_qps_worker.sh"]
       run:
-        image: mcr.microsoft.com/dotnet/runtime:2.1
         command: ["dotnet"]
         args: ["exec", "qps_worker/Grpc.IntegrationTesting.QpsWorker.dll"]
 
@@ -42,10 +40,8 @@ spec:
         repo: https://github.com/jtattermusch/grpc.git
         gitRef: csharp_qpsworker_server_port
       build:
-        image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-experiment20201029-2
         command: ["bash", "/build_scripts/build_qps_worker.sh"]
       run:
-        image: mcr.microsoft.com/dotnet/runtime:2.1
         command: ["dotnet"]
         args: ["exec", "qps_worker/Grpc.IntegrationTesting.QpsWorker.dll"]
 
@@ -55,6 +51,19 @@ spec:
   # results:
   #   bigQueryTable: "example-project.foo.demo_dataset"
 
+  # timeoutSeconds is an integer field that indicates the longest time a test
+  # is allowed to run, in seconds. Tests that run longer than the given value
+  # will be marked as Errored and will no longer be allocated resources to run.
+  # For example: timeoutSeconds: 900 indicates the timeout of this test
+  # is 15min. The minimum valid value for this field is 1.
+  timeoutSeconds: 900
+
+  # ttlSeconds is an integer field that indicates how long a test is allowed to
+  # live on the cluster, in seconds. Tests that live longer than the given value
+  # will be deleted. For example: ttlSeconds: 86400 indicates the time-to-live
+  # of this test is 24h. The minimum valid value for this field is 1.
+  ttlSeconds: 86400
+
   # ScenariosJSON is string with the contents of a Scenarios message, formatted
   # as JSON. See the Scenarios protobuf definition for details:
   # https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
@@ -62,18 +71,18 @@ spec:
     {
       "scenarios": [
         {
-          "name": "csharp_protobuf_async_unary_qps_unconstrained",
+          "name": "csharp_protobuf_async_unary_ping_pong",
           "num_servers": 1,
-          "num_clients": 0,
+          "num_clients": 1,
           "client_config": {
             "client_type": "ASYNC_CLIENT",
             "security_params": {
               "use_test_ca": true,
               "server_host_override": "foo.test.google.fr"
             },
-            "outstanding_rpcs_per_channel": 100,
-            "client_channels": 64,
-            "async_client_threads": 0,
+            "outstanding_rpcs_per_channel": 1,
+            "client_channels": 1,
+            "async_client_threads": 1,
             "client_processes": 0,
             "threads_per_cq": 0,
             "rpc_type": "UNARY",
@@ -84,7 +93,7 @@ spec:
             "channel_args": [
               {
                 "name": "grpc.optimization_target",
-                "str_value": "throughput"
+                "str_value": "latency"
               }
             ],
             "payload_config": {
@@ -109,7 +118,7 @@ spec:
             "channel_args": [
               {
                 "name": "grpc.optimization_target",
-                "str_value": "throughput"
+                "str_value": "latency"
               }
             ]
           },
