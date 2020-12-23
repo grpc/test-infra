@@ -68,7 +68,7 @@ func CheckMissingPods(test *grpcv1.LoadTest, ownedPods []*corev1.Pod) *LoadTestM
 			componentNameLabel := eachPod.Labels[config.ComponentNameLabel]
 
 			if roleLabel == config.DriverRole {
-				if *test.Spec.Driver.Component.Name == componentNameLabel {
+				if *test.Spec.Driver.Name == componentNameLabel {
 					foundDriver = true
 				}
 			} else if roleLabel == config.ClientRole {

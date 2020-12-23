@@ -65,13 +65,11 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 
 		Spec: grpcv1.LoadTestSpec{
 			Driver: &grpcv1.Driver{
-				Component: grpcv1.Component{
-					Name:     &driverComponentName,
-					Language: "cxx",
-					Pool:     &driverPool,
-					Run: grpcv1.Run{
-						Image: &driverImage,
-					},
+				Name:     &driverComponentName,
+				Language: "cxx",
+				Pool:     &driverPool,
+				Run: grpcv1.Run{
+					Image: &driverImage,
 				},
 			},
 			Results: &grpcv1.Results{
@@ -85,25 +83,23 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 	serverNames := []string{"server-1", "server-2", "server-3"}
 	for i := 1; i <= len(serverNames); i++ {
 		createdLoadTest.Spec.Servers = append(createdLoadTest.Spec.Servers, grpcv1.Server{
-			Component: grpcv1.Component{
-				Name:     &serverNames[i-1],
-				Language: "cxx",
-				Pool:     &workerPool,
-				Clone: &grpcv1.Clone{
-					Image:  &cloneImage,
-					Repo:   &cloneRepo,
-					GitRef: &cloneGitRef,
-				},
-				Build: &grpcv1.Build{
-					Image:   &buildImage,
-					Command: buildCommand,
-					Args:    buildArgs,
-				},
-				Run: grpcv1.Run{
-					Image:   &runImage,
-					Command: runCommand,
-					Args:    serverRunArgs,
-				},
+			Name:     &serverNames[i-1],
+			Language: "cxx",
+			Pool:     &workerPool,
+			Clone: &grpcv1.Clone{
+				Image:  &cloneImage,
+				Repo:   &cloneRepo,
+				GitRef: &cloneGitRef,
+			},
+			Build: &grpcv1.Build{
+				Image:   &buildImage,
+				Command: buildCommand,
+				Args:    buildArgs,
+			},
+			Run: grpcv1.Run{
+				Image:   &runImage,
+				Command: runCommand,
+				Args:    serverRunArgs,
 			},
 		})
 	}
@@ -111,25 +107,23 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 	clientName := []string{"client-1", "client-2", "client-3"}
 	for i := 1; i <= len(clientName); i++ {
 		createdLoadTest.Spec.Clients = append(createdLoadTest.Spec.Clients, grpcv1.Client{
-			Component: grpcv1.Component{
-				Name:     &clientName[i-1],
-				Language: "cxx",
-				Pool:     &workerPool,
-				Clone: &grpcv1.Clone{
-					Image:  &cloneImage,
-					Repo:   &cloneRepo,
-					GitRef: &cloneGitRef,
-				},
-				Build: &grpcv1.Build{
-					Image:   &buildImage,
-					Command: buildCommand,
-					Args:    buildArgs,
-				},
-				Run: grpcv1.Run{
-					Image:   &runImage,
-					Command: runCommand,
-					Args:    clientRunArgs,
-				},
+			Name:     &clientName[i-1],
+			Language: "cxx",
+			Pool:     &workerPool,
+			Clone: &grpcv1.Clone{
+				Image:  &cloneImage,
+				Repo:   &cloneRepo,
+				GitRef: &cloneGitRef,
+			},
+			Build: &grpcv1.Build{
+				Image:   &buildImage,
+				Command: buildCommand,
+				Args:    buildArgs,
+			},
+			Run: grpcv1.Run{
+				Image:   &runImage,
+				Command: runCommand,
+				Args:    clientRunArgs,
 			},
 		})
 	}

@@ -119,38 +119,25 @@ func (d *Defaults) Validate() error {
 // system cannot infer a run image for "fortran" if a build image was not
 // declared for this language in the Defaults object.
 func (d *Defaults) SetLoadTestDefaults(test *grpcv1.LoadTest) error {
-	var err error
-
-	spec := &test.Spec
+	testSpec := &test.Spec
+	im := newImageMap(d.Languages)
 
 	if test.Namespace == "" {
 		test.Namespace = d.ComponentNamespace
 	}
 
-	if spec.Driver == nil {
-		spec.Driver = new(grpcv1.Driver)
-	}
-
-	if spec.Driver.Language == "" {
-		// TODO: Make default driver language a configuration option
-		spec.Driver.Language = "cxx"
-	}
-
-	if spec.Driver.Run.Image == nil {
-		spec.Driver.Run.Image = &d.DriverImage
-	}
-	if err = d.setComponentDefaults(&spec.Driver.Component, d.DriverPool); err != nil {
+	if err := d.setDriverDefaults(im, testSpec.Driver); err != nil {
 		return errors.Wrap(err, "could not set defaults for driver")
 	}
 
-	for i := range spec.Servers {
-		if err = d.setComponentDefaults(&spec.Servers[i].Component, d.WorkerPool); err != nil {
+	for i := range testSpec.Servers {
+		if err := d.setServerDefaults(im, &testSpec.Servers[i]); err != nil {
 			return errors.Wrapf(err, "could not set defaults for server at index %d", i)
 		}
 	}
 
-	for i := range spec.Clients {
-		if err = d.setComponentDefaults(&spec.Clients[i].Component, d.WorkerPool); err != nil {
+	for i := range testSpec.Clients {
+		if err := d.setClientDefaults(im, &testSpec.Clients[i]); err != nil {
 			return errors.Wrapf(err, "could not set defaults for client at index %d", i)
 		}
 	}
@@ -158,27 +145,28 @@ func (d *Defaults) SetLoadTestDefaults(test *grpcv1.LoadTest) error {
 	return nil
 }
 
-// setComponentDefaults sets default name, pool and container images for a
-// component. An error is returned if a default could not be inferred for a
-// field.
-func (d *Defaults) setComponentDefaults(component *grpcv1.Component, defaultPool string) error {
-	language := component.Language
-	im := newImageMap(d.Languages)
-
-	if component.Name == nil {
-		name := uuid.New().String()
-		component.Name = &name
+// setNameOrDefault replaces the address of its pointer argument with the
+// address of a UUID string. If the argument is nil upon invocation, it will
+// remain nil.
+func (d *Defaults) setNameOrDefault(namePtr *string) {
+	if namePtr != nil {
+		return
 	}
 
-	if component.Pool == nil {
-		component.Pool = &defaultPool
-	}
+	name := uuid.New().String()
+	namePtr = &name
+}
 
-	if component.Clone != nil && component.Clone.Image == nil {
-		component.Clone.Image = &d.CloneImage
+// setCloneOrDefault sets the default clone image if it is unset.
+func (d *Defaults) setCloneOrDefault(clone *grpcv1.Clone) {
+	if clone != nil && clone.Image == nil {
+		clone.Image = &d.CloneImage
 	}
+}
 
-	build := component.Build
+// setBuildOrDefault sets the default build image if it is unset. It returns an
+// error if there is no default build image for the provided language.
+func (d *Defaults) setBuildOrDefault(im *imageMap, language string, build *grpcv1.Build) error {
 	if build != nil && build.Image == nil {
 		buildImage, err := im.buildImage(language)
 		if err != nil {
@@ -188,14 +176,102 @@ func (d *Defaults) setComponentDefaults(component *grpcv1.Component, defaultPool
 		build.Image = &buildImage
 	}
 
-	run := &component.Run
-	if run.Image == nil {
+	return nil
+}
+
+// setRunOrDefault sets the default runtime image if it is unset. It returns an
+// error if there is no default runtime image for the provided language.
+func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Run) error {
+	if run != nil && run.Image == nil {
 		runImage, err := im.runImage(language)
 		if err != nil {
 			return errors.Wrap(err, "could not infer default run image")
 		}
 
 		run.Image = &runImage
+	}
+
+	return nil
+}
+
+// setDriverDefaults sets default name, pool and container images for a driver.
+// An error is returned if a default could not be inferred for a field.
+func (d *Defaults) setDriverDefaults(im *imageMap, driver *grpcv1.Driver) error {
+	if driver == nil {
+		driver = new(grpcv1.Driver)
+	}
+
+	if driver.Language == "" {
+		driver.Language = "cxx"
+	}
+
+	if driver.Run.Image == nil {
+		driver.Run.Image = &d.DriverImage
+	}
+
+	if driver.Pool == nil {
+		driver.Pool = &d.DriverPool
+	}
+
+	d.setNameOrDefault(driver.Name)
+	d.setCloneOrDefault(driver.Clone)
+
+	if err := d.setBuildOrDefault(im, driver.Language, driver.Build); err != nil {
+		return errors.Wrap(err, "failed to set defaults on instructions to build the driver")
+	}
+
+	if err := d.setRunOrDefault(im, driver.Language, &driver.Run); err != nil {
+		return errors.Wrap(err, "failed to set defaults on instructions to run the driver")
+	}
+
+	return nil
+}
+
+// setClientDefaults sets default name, pool and container images for a client.
+// An error is returned if a default could not be inferred for a field.
+func (d *Defaults) setClientDefaults(im *imageMap, client *grpcv1.Client) error {
+	if client == nil {
+		return errors.New("cannot set defaults on a nil client")
+	}
+
+	if client.Pool == nil {
+		client.Pool = &d.WorkerPool
+	}
+
+	d.setNameOrDefault(client.Name)
+	d.setCloneOrDefault(client.Clone)
+
+	if err := d.setBuildOrDefault(im, client.Language, client.Build); err != nil {
+		return errors.Wrap(err, "failed to set defaults on instructions to build the client")
+	}
+
+	if err := d.setRunOrDefault(im, client.Language, &client.Run); err != nil {
+		return errors.Wrap(err, "failed to set defaults on instructions to run the client")
+	}
+
+	return nil
+}
+
+// setServersDefaults sets default name, pool and container images for a server.
+// An error is returned if a default could not be inferred for a field.
+func (d *Defaults) setServerDefaults(im *imageMap, server *grpcv1.Server) error {
+	if server == nil {
+		return errors.New("cannot set defaults on a nil server")
+	}
+
+	if server.Pool == nil {
+		server.Pool = &d.WorkerPool
+	}
+
+	d.setNameOrDefault(server.Name)
+	d.setCloneOrDefault(server.Clone)
+
+	if err := d.setBuildOrDefault(im, server.Language, server.Build); err != nil {
+		return errors.Wrap(err, "failed to set defaults on instructions to build the server")
+	}
+
+	if err := d.setRunOrDefault(im, server.Language, &server.Run); err != nil {
+		return errors.Wrap(err, "failed to set defaults on instructions to run the server")
 	}
 
 	return nil

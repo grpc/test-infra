@@ -1,850 +1,309 @@
+/*
+Copyright 2020 gRPC authors.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package controllers
 
 import (
 	"context"
-	"fmt"
-	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
-	"github.com/grpc/test-infra/kubehelpers"
-	"github.com/grpc/test-infra/optional"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
+	"github.com/grpc/test-infra/podbuilder"
+	"github.com/grpc/test-infra/status"
 )
 
-var _ = Describe("Test Environment", func() {
-	It("supports creation of load tests", func() {
-		err := k8sClient.Create(context.Background(), newLoadTest())
-		Expect(err).ToNot(HaveOccurred())
-	})
-})
+// createPod creates a pod resource, given a pod pointer and a test pointer.
+func createPod(pod *corev1.Pod, test *grpcv1.LoadTest) error {
+	// TODO: Get the controllerRef to work here.
+	// kind := reflect.TypeOf(grpcv1.LoadTest{}).Name()
+	// gvk := grpcv1.GroupVersion.WithKind(kind)
+	// controllerRef := metav1.NewControllerRef(test, gvk)
+	// pod.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
+	return k8sClient.Create(context.Background(), pod)
+}
 
-var _ = Describe("Pod Creation", func() {
+// updatePodWithContainerState changes the container state in the status of a
+// pod resource that already exists on the cluster. This is useful for testing
+// different failing, running and succeeding states.
+func updatePodWithContainerState(pod *corev1.Pod, containerState corev1.ContainerState) error {
+	status := &pod.Status
+	status.ContainerStatuses = []corev1.ContainerStatus{
+		{
+			State: containerState,
+		},
+	}
+	return k8sClient.Status().Update(context.Background(), pod)
+}
+
+var _ = Describe("LoadTest controller", func() {
 	var test *grpcv1.LoadTest
-	var defs *config.Defaults
+	var namespacedName types.NamespacedName
 
 	BeforeEach(func() {
 		test = newLoadTest()
+		namespacedName = types.NamespacedName{
+			Name:      test.Name,
+			Namespace: test.Namespace,
+		}
+	})
 
-		defs = &config.Defaults{
-			DriverPool:  "drivers",
-			WorkerPool:  "workers-8core",
-			DriverPort:  10000,
-			ServerPort:  10010,
-			CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
-			ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
-			DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
-			Languages: []config.LanguageDefault{
-				{
-					Language:   "cxx",
-					BuildImage: "l.gcr.io/google/bazel:latest",
-					RunImage:   "gcr.io/grpc-fake-project/test-infra/cxx",
-				},
-				{
-					Language:   "go",
-					BuildImage: "golang:1.14",
-					RunImage:   "gcr.io/grpc-fake-project/test-infra/go",
-				},
-				{
-					Language:   "java",
-					BuildImage: "java:jdk8",
-					RunImage:   "gcr.io/grpc-fake-project/test-infra/java",
-				},
+	It("does not change the status after termination", func() {
+		now := metav1.Now()
+		test.Status = grpcv1.LoadTestStatus{
+			State:     grpcv1.Succeeded,
+			StartTime: &now,
+			StopTime:  &now,
+		}
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+		Expect(k8sClient.Status().Update(context.Background(), test)).To(Succeed())
+
+		getTestStatus := func() (grpcv1.LoadTestStatus, error) {
+			fetchedTest := new(grpcv1.LoadTest)
+			err := k8sClient.Get(context.Background(), namespacedName, fetchedTest)
+			if err != nil {
+				return grpcv1.LoadTestStatus{}, err
+			}
+			return fetchedTest.Status, nil
+		}
+
+		By("ensuring we can eventually get the created status")
+		Eventually(getTestStatus).Should(Equal(test.Status))
+
+		By("checking that the expected status remains unchanged")
+		Consistently(getTestStatus).Should(Equal(test.Status))
+	})
+
+	It("creates a scenarios ConfigMap", func() {
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
+		type expectedFields struct {
+			name          string
+			namespace     string
+			scenariosJSON string
+			owner         string
+		}
+		getConfigMapFields := func() (expectedFields, error) {
+			cfgMap := new(corev1.ConfigMap)
+			err := k8sClient.Get(context.Background(), namespacedName, cfgMap)
+
+			var owner string
+			if len(cfgMap.OwnerReferences) > 0 {
+				owner = cfgMap.OwnerReferences[0].Name
+			}
+			return expectedFields{
+				name:          cfgMap.Name,
+				namespace:     cfgMap.Namespace,
+				scenariosJSON: cfgMap.Data["scenarios.json"],
+				owner:         owner,
+			}, err
+		}
+
+		By("checking that the ConfigMap was created correctly")
+		Eventually(getConfigMapFields).Should(Equal(expectedFields{
+			name:          test.Name,
+			namespace:     test.Namespace,
+			scenariosJSON: test.Spec.ScenariosJSON,
+			owner:         test.Name,
+		}))
+	})
+
+	It("creates correct number of pods when all are missing", func() {
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
+		expectedPodCount := 0
+		missingPods := status.CheckMissingPods(test, []*corev1.Pod{})
+		for range missingPods.Servers {
+			expectedPodCount++
+		}
+		for range missingPods.Clients {
+			expectedPodCount++
+		}
+		if missingPods.Driver != nil {
+			expectedPodCount++
+		}
+
+		Eventually(func() (int, error) {
+			foundPodCount := 0
+
+			list := new(corev1.PodList)
+			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
+				return 0, err
+			}
+
+			for i := range list.Items {
+				item := &list.Items[i]
+				if item.Labels[config.LoadTestLabel] == test.Name {
+					foundPodCount++
+				}
+			}
+
+			return foundPodCount, nil
+		}).Should(Equal(expectedPodCount))
+	})
+
+	It("updates the status when pods terminate with errors", func() {
+		By("creating a fake environment with errored pods")
+		errorState := corev1.ContainerState{
+			Terminated: &corev1.ContainerStateTerminated{
+				ExitCode: 1,
 			},
 		}
-	})
-
-	Describe("newClientPod", func() {
-		var component *grpcv1.Component
-
-		BeforeEach(func() {
-			component = &test.Spec.Clients[0].Component
-		})
-
-		It("sets namespace to match loadtest", func() {
-			namespace := "foobar"
-			test.Namespace = namespace
-
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Namespace).To(Equal(namespace))
-		})
-
-		It("sets component-name label", func() {
-			name := "foo-bar-buzz"
-			component.Name = &name
-
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.ComponentNameLabel]).To(Equal(name))
-		})
-
-		It("sets loadtest-role label to client", func() {
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.RoleLabel]).To(Equal(config.ClientRole))
-		})
-
-		It("sets loadtest label", func() {
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.LoadTestLabel]).To(Equal(test.Name))
-		})
-
-		It("sets node selector for appropriate pool", func() {
-			customPool := "custom-pool"
-			component.Pool = &customPool
-
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(customPool))
-		})
-
-		It("sets clone init container", func() {
-			cloneImage := "docker.pkg.github.com/grpc/test-infra/fake-image"
-			component.Clone.Image = &cloneImage
-
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newCloneContainer(component.Clone)
-			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
-		})
-
-		It("sets build init container", func() {
-			buildImage := "docker.pkg.github.com/grpc/test-infra/fake-image"
-
-			build := new(grpcv1.Build)
-			build.Image = &buildImage
-			build.Command = []string{"bazel"}
-			build.Args = []string{"build", "//target"}
-			component.Build = build
-
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newBuildContainer(component.Build)
-			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
-		})
-
-		It("sets run container", func() {
-			image := "golang:1.14"
-			run := grpcv1.Run{
-				Image:   &image,
-				Command: []string{"go"},
-				Args:    []string{"run", "main.go"},
-			}
-			component.Run = run
-
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newRunContainer(run)
-			addDriverPort(&expectedContainer, defs.DriverPort)
-			Expect(pod.Spec.Containers).To(ContainElement(expectedContainer))
-		})
-
-		It("disables retries", func() {
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Spec.RestartPolicy).To(Equal(corev1.RestartPolicyNever))
-		})
-
-		It("exposes a driver port", func() {
-			pod, err := newClientPod(defs, test, component)
-			port := newContainerPort("driver", 10000)
-			Expect(err).To(BeNil())
-
-			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-			Expect(container.Ports).To(ContainElement(port))
-		})
-
-		It("sets driver port flag in run container args", func() {
-			component.Run.Args = nil
-
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-			portFlag := fmt.Sprintf("--driver_port=%d", defs.DriverPort)
-			Expect(container.Args).To(ContainElement(portFlag))
-		})
-
-		It("sets bazel cache volume", func() {
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			volume := newBazelCacheVolume()
-			Expect(pod.Spec.Volumes).To(ContainElement(volume))
-		})
-
-		It("sets workspace volume", func() {
-			pod, err := newClientPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			volume := newWorkspaceVolume()
-			Expect(pod.Spec.Volumes).To(ContainElement(volume))
-		})
-	})
-
-	Describe("newDriverPod", func() {
-		var component *grpcv1.Component
-
-		BeforeEach(func() {
-			component = &test.Spec.Driver.Component
-		})
-
-		It("sets namespace to match loadtest", func() {
-			namespace := "foobar"
-			test.Namespace = namespace
-
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Namespace).To(Equal(namespace))
-		})
-
-		// TODO: Fix these tests!
-		// It("adds a scenarios volume", func() {
-		// 	scenario := "example"
-		// 	test.Spec.ScenariosJSON = "{\"scenarios\": []}"
-
-		// 	pod, err := newDriverPod(defs, test, component)
-		// 	Expect(err).ToNot(HaveOccurred())
-
-		// 	expectedVolume := newScenarioVolume(scenario)
-		// 	Expect(expectedVolume).To(BeElementOf(pod.Spec.Volumes))
-		// })
-
-		// It("adds a scenario volume mount", func() {
-		// 	scenario := "example"
-		// 	test.Spec.Scenarios[0] = grpcv1.Scenario{Name: scenario}
-
-		// 	pod, err := newDriverPod(defs, test, component)
-		// 	Expect(err).ToNot(HaveOccurred())
-
-		// 	runContainer := &pod.Spec.Containers[0]
-		// 	expectedMount := newScenarioVolumeMount(scenario)
-		// 	Expect(expectedMount).To(BeElementOf(runContainer.VolumeMounts))
-		// })
-
-		// It("sets scenario file environment variable", func() {
-		// 	scenario := "example-scenario"
-		// 	test.Spec.Scenarios[0] = grpcv1.Scenario{Name: scenario}
-
-		// 	pod, err := newDriverPod(defs, test, component)
-		// 	Expect(err).ToNot(HaveOccurred())
-
-		// 	runContainer := &pod.Spec.Containers[0]
-		// 	expectedEnv := newScenarioFileEnvVar(scenario)
-		// 	Expect(expectedEnv).To(BeElementOf(runContainer.Env))
-		// })
-
-		It("sets loadtest-role label to driver", func() {
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.RoleLabel]).To(Equal(config.DriverRole))
-		})
-
-		It("sets loadtest label", func() {
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.LoadTestLabel]).To(Equal(test.Name))
-		})
-
-		It("sets component-name label", func() {
-			name := "foo-bar-buzz"
-			component.Name = &name
-
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.ComponentNameLabel]).To(Equal(name))
-		})
-
-		It("sets node selector for appropriate pool", func() {
-			customPool := "custom-pool"
-			component.Pool = &customPool
-
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(customPool))
-		})
-
-		It("sets clone init container", func() {
-			cloneImage := "docker.pkg.github.com/grpc/test-infra/fake-image"
-			component.Clone = new(grpcv1.Clone)
-			component.Clone.Image = &cloneImage
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newCloneContainer(component.Clone)
-			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
-		})
-
-		It("sets build init container", func() {
-			buildImage := "docker.pkg.github.com/grpc/test-infra/fake-image"
-
-			build := new(grpcv1.Build)
-			build.Image = &buildImage
-			build.Command = []string{"bazel"}
-			build.Args = []string{"build", "//target"}
-			component.Build = build
-
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newBuildContainer(component.Build)
-			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
-		})
-
-		It("sets ready init container", func() {
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newReadyContainer(defs, test)
-			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
-		})
-
-		// TODO: Fix these tests!
-		// It("sets run container", func() {
-		// 	scenario := "example"
-		// 	test.Spec.Scenarios[0] = grpcv1.Scenario{Name: scenario}
-
-		// 	image := "golang:1.14"
-		// 	run := grpcv1.Run{
-		// 		Image:   &image,
-		// 		Command: []string{"go"},
-		// 		Args:    []string{"run", "main.go"},
-		// 	}
-		// 	component.Run = run
-
-		// 	pod, err := newDriverPod(defs, test, component)
-		// 	Expect(err).ToNot(HaveOccurred())
-
-		// 	runContainer := newRunContainer(run)
-		// 	addReadyInitContainer(defs, test, &pod.Spec, &runContainer)
-
-		// 	runContainer.VolumeMounts = append(runContainer.VolumeMounts, newScenarioVolumeMount(scenario))
-		// 	runContainer.Env = append(runContainer.Env, newScenarioFileEnvVar(scenario))
-		// 	runContainer.Env = append(runContainer.Env, newBigQueryTableEnvVar(*test.Spec.Results.BigQueryTable))
-
-		// 	Expect(pod.Spec.Containers).To(ContainElement(runContainer))
-		// })
-
-		It("disables retries", func() {
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Spec.RestartPolicy).To(Equal(corev1.RestartPolicyNever))
-		})
-
-		It("sets bazel cache volume", func() {
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			volume := newBazelCacheVolume()
-			Expect(pod.Spec.Volumes).To(ContainElement(volume))
-		})
-
-		It("sets workspace volume", func() {
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			volume := newWorkspaceVolume()
-			Expect(pod.Spec.Volumes).To(ContainElement(volume))
-		})
-
-		It("sets big query table env variable", func() {
-			table := "example-dataset.table1"
-			test.Spec.Results = &grpcv1.Results{
-				BigQueryTable: optional.StringPtr(table),
-			}
-
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedVar := newBigQueryTableEnvVar(table)
-			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-			Expect(container.Env).To(ContainElement(expectedVar))
-		})
-
-		It("does not set big query table env variable when table name not specified", func() {
-			test.Spec.Results = nil
-
-			pod, err := newDriverPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-			for _, env := range container.Env {
-				Expect(env.Name).ToNot(Equal(config.BigQueryTableEnv))
-			}
-		})
-	})
-
-	Describe("newServerPod", func() {
-		var component *grpcv1.Component
-
-		BeforeEach(func() {
-			component = &test.Spec.Servers[0].Component
-		})
-
-		It("sets namespace to match loadtest", func() {
-			namespace := "foobar"
-			test.Namespace = namespace
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Namespace).To(Equal(namespace))
-		})
-
-		It("sets loadtest-role label to server", func() {
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.RoleLabel]).To(Equal(config.ServerRole))
-		})
-
-		It("exposes a driver port", func() {
-			pod, err := newServerPod(defs, test, component)
-			port := newContainerPort("driver", 10000)
-			Expect(err).To(BeNil())
-
-			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-			Expect(container.Ports).To(ContainElement(port))
-		})
-
-		It("sets driver port flag in run container args", func() {
-			component.Run.Args = nil
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-			portFlag := fmt.Sprintf("--driver_port=%d", defs.DriverPort)
-			Expect(container.Args).To(ContainElement(portFlag))
-		})
-
-		It("exposes a server port", func() {
-			pod, err := newServerPod(defs, test, component)
-			port := newContainerPort("server", 10010)
-			Expect(err).To(BeNil())
-
-			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-			Expect(container.Ports).To(ContainElement(port))
-		})
-
-		It("sets server port flag in run container args", func() {
-			component.Run.Args = nil
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			container := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-			portFlag := fmt.Sprintf("--server_port=%d", defs.ServerPort)
-			Expect(container.Args).To(ContainElement(portFlag))
-		})
-
-		It("sets loadtest label", func() {
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.LoadTestLabel]).To(Equal(test.Name))
-		})
-
-		It("sets component-name label", func() {
-			name := "foo-bar-buzz"
-			component.Name = &name
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Labels[config.ComponentNameLabel]).To(Equal(name))
-		})
-
-		It("sets node selector for appropriate pool", func() {
-			customPool := "custom-pool"
-			component.Pool = &customPool
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(customPool))
-		})
-
-		It("sets clone init container", func() {
-			cloneImage := "docker.pkg.github.com/grpc/test-infra/fake-image"
-			component.Clone.Image = &cloneImage
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newCloneContainer(component.Clone)
-			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
-		})
-
-		It("sets build init container", func() {
-			buildImage := "docker.pkg.github.com/grpc/test-infra/fake-image"
-
-			build := new(grpcv1.Build)
-			build.Image = &buildImage
-			build.Command = []string{"bazel"}
-			build.Args = []string{"build", "//target"}
-			component.Build = build
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newBuildContainer(component.Build)
-			Expect(pod.Spec.InitContainers).To(ContainElement(expectedContainer))
-		})
-
-		It("sets run container", func() {
-			image := "golang:1.14"
-			run := grpcv1.Run{
-				Image:   &image,
-				Command: []string{"go"},
-				Args:    []string{"run", "main.go"},
-			}
-			component.Run = run
-
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			expectedContainer := newRunContainer(run)
-			addDriverPort(&expectedContainer, defs.DriverPort)
-			addServerPort(&expectedContainer, defs.ServerPort)
-			Expect(pod.Spec.Containers).To(ContainElement(expectedContainer))
-		})
-
-		It("disables retries", func() {
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(pod.Spec.RestartPolicy).To(Equal(corev1.RestartPolicyNever))
-		})
-
-		It("sets bazel cache volume", func() {
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			volume := newBazelCacheVolume()
-			Expect(pod.Spec.Volumes).To(ContainElement(volume))
-		})
-
-		It("sets workspace volume", func() {
-			pod, err := newServerPod(defs, test, component)
-			Expect(err).ToNot(HaveOccurred())
-
-			volume := newWorkspaceVolume()
-			Expect(pod.Spec.Volumes).To(ContainElement(volume))
-		})
-	})
-
-	Describe("newCloneContainer", func() {
-		var clone *grpcv1.Clone
-
-		BeforeEach(func() {
-			image := "docker.pkg.github.com/grpc/test-infra/clone"
-			repo := "https://github.com/grpc/test-infra.git"
-			gitRef := "master"
-
-			clone = &grpcv1.Clone{
-				Image:  &image,
-				Repo:   &repo,
-				GitRef: &gitRef,
-			}
-		})
-
-		It("sets the name of the container", func() {
-			container := newCloneContainer(clone)
-			Expect(container.Name).To(Equal(config.CloneInitContainerName))
-		})
-
-		It("sets workspace volume mount", func() {
-			container := newCloneContainer(clone)
-			volumeMount := newWorkspaceVolumeMount()
-			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
-		})
-
-		It("returns empty container given nil pointer", func() {
-			clone = nil
-			container := newCloneContainer(clone)
-			Expect(container).To(Equal(corev1.Container{}))
-		})
-
-		It("sets clone image", func() {
-			customImage := "debian:buster"
-			clone.Image = &customImage
-
-			container := newCloneContainer(clone)
-			Expect(container.Image).To(Equal(customImage))
-		})
-
-		It("sets repo environment variable", func() {
-			repo := "https://github.com/grpc/grpc.git"
-			clone.Repo = &repo
-
-			container := newCloneContainer(clone)
-			Expect(container.Env).To(ContainElement(corev1.EnvVar{
-				Name:  config.CloneRepoEnv,
-				Value: repo,
-			}))
-		})
-
-		It("sets git-ref environment variable", func() {
-			gitRef := "master"
-			clone.GitRef = &gitRef
-
-			container := newCloneContainer(clone)
-			Expect(container.Env).To(ContainElement(corev1.EnvVar{
-				Name:  config.CloneGitRefEnv,
-				Value: gitRef,
-			}))
-		})
-	})
-
-	Describe("newBuildContainer", func() {
-		var build *grpcv1.Build
-
-		BeforeEach(func() {
-			image := "docker.pkg.github.com/grpc/test-infra/rust"
-
-			build = &grpcv1.Build{
-				Image:   &image,
-				Command: nil,
-				Args:    nil,
-				Env:     nil,
-			}
-		})
-
-		It("sets the name of the container", func() {
-			container := newBuildContainer(build)
-			Expect(container.Name).To(Equal(config.BuildInitContainerName))
-		})
-
-		It("sets bazel cache volume mount", func() {
-			container := newBuildContainer(build)
-			volumeMount := newBazelCacheVolumeMount()
-			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
-		})
-
-		It("sets workspace volume mount", func() {
-			container := newBuildContainer(build)
-			volumeMount := newWorkspaceVolumeMount()
-			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
-		})
-
-		It("sets workspace as working directory", func() {
-			container := newBuildContainer(build)
-			Expect(container.WorkingDir).To(Equal(config.WorkspaceMountPath))
-		})
-
-		It("returns empty container given nil pointer", func() {
-			build = nil
-			container := newBuildContainer(build)
-			Expect(container).To(Equal(corev1.Container{}))
-		})
-
-		It("sets image", func() {
-			customImage := "golang:latest"
-			build.Image = &customImage
-
-			container := newBuildContainer(build)
-			Expect(container.Image).To(Equal(customImage))
-		})
-
-		It("sets command", func() {
-			command := []string{"bazel"}
-			build.Command = command
-
-			container := newBuildContainer(build)
-			Expect(container.Command).To(Equal(command))
-		})
-
-		It("sets args", func() {
-			args := []string{"build", "//target"}
-			build.Command = []string{"bazel"}
-			build.Args = args
-
-			container := newBuildContainer(build)
-			Expect(container.Args).To(Equal(args))
-		})
-
-		It("sets environment variables", func() {
-			env := []corev1.EnvVar{
-				{Name: "EXPERIMENT", Value: "1"},
-				{Name: "PROD", Value: "0"},
-			}
-
-			build.Env = env
-
-			container := newBuildContainer(build)
-			Expect(env[0]).To(BeElementOf(container.Env))
-			Expect(env[1]).To(BeElementOf(container.Env))
-		})
-	})
-
-	Describe("newRunContainer", func() {
-		var run grpcv1.Run
-
-		BeforeEach(func() {
-			image := "docker.pkg.github.com/grpc/test-infra/fake-image"
-			command := []string{"qps_worker"}
-
-			run = grpcv1.Run{
-				Image:   &image,
-				Command: command,
-			}
-		})
-
-		It("sets the name of the container", func() {
-			container := newRunContainer(run)
-			Expect(container.Name).To(Equal(config.RunContainerName))
-		})
-
-		It("sets bazel cache volume mount", func() {
-			container := newRunContainer(run)
-			volumeMount := newBazelCacheVolumeMount()
-			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
-		})
-
-		It("sets workspace volume mount", func() {
-			container := newRunContainer(run)
-			volumeMount := newWorkspaceVolumeMount()
-			Expect(container.VolumeMounts).To(ContainElement(volumeMount))
-		})
-
-		It("sets workspace as working directory", func() {
-			container := newRunContainer(run)
-			Expect(container.WorkingDir).To(Equal(config.WorkspaceMountPath))
-		})
-
-		It("sets image", func() {
-			image := "golang:1.14"
-			run.Image = &image
-
-			container := newRunContainer(run)
-			Expect(container.Image).To(Equal(image))
-		})
-
-		It("sets command", func() {
-			command := []string{"go"}
-			run.Command = command
-
-			container := newRunContainer(run)
-			Expect(container.Command).To(Equal(command))
-		})
-
-		It("sets args", func() {
-			command := []string{"go"}
-			args := []string{"run", "main.go"}
-			run.Command = command
-			run.Args = args
-
-			container := newRunContainer(run)
-			Expect(container.Args).To(Equal(args))
-		})
-
-		It("sets environment variables", func() {
-			env := []corev1.EnvVar{
-				{Name: "ENABLE_DEBUG", Value: "1"},
-				{Name: "VERBOSE", Value: "1"},
-			}
-
-			run.Env = env
-
-			container := newRunContainer(run)
-			Expect(env[0]).To(BeElementOf(container.Env))
-			Expect(env[1]).To(BeElementOf(container.Env))
-		})
-	})
-
-	Describe("newWorkspaceVolumeMount", func() {
-		It("grants read and write access", func() {
-			volumeMount := newWorkspaceVolumeMount()
-			Expect(volumeMount.ReadOnly).To(BeFalse())
-		})
-	})
-})
-
-var _ = Describe("getRequeueTime", func() {
-	var test *grpcv1.LoadTest
-	var reconciler *LoadTestReconciler
-
-	BeforeEach(func() {
-		test = newLoadTest()
-		reconciler = &LoadTestReconciler{
-			Log: ctrl.Log.WithName("controllers").WithName("LoadTest"),
+		builder := podbuilder.New(newDefaults(), test)
+		testSpec := &test.Spec
+		var pod *corev1.Pod
+		for i := range testSpec.Servers {
+			pod = builder.PodForServer(&testSpec.Servers[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
 		}
+		for i := range testSpec.Clients {
+			pod = builder.PodForClient(&testSpec.Clients[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
+
+		}
+		if testSpec.Driver != nil {
+			pod = builder.PodForDriver(testSpec.Driver)
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
+		}
+
+		By("waiting for one of the pods to eventually be fetchable")
+		Eventually(func() (*corev1.Pod, error) {
+			podNamespacedName := types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}
+			fetchedPod := new(corev1.Pod)
+			if err := k8sClient.Get(context.Background(), podNamespacedName, fetchedPod); err != nil {
+				return nil, err
+			}
+			return fetchedPod, nil
+		}).ShouldNot(BeNil())
+
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
+		By("ensuring the test state becomes errored")
+		Eventually(func() (grpcv1.LoadTestState, error) {
+			fetchedTest := new(grpcv1.LoadTest)
+			if err := k8sClient.Get(context.Background(), namespacedName, fetchedTest); err != nil {
+				return grpcv1.Unknown, err
+			}
+			return fetchedTest.Status.State, nil
+		}).Should(Equal(grpcv1.Errored))
 	})
 
-	Context("when find the start time was newly filled", func() {
-		It("returns the test's timeout", func() {
-			var startTime metav1.Time
-			expectedRequeueTime := time.Duration(test.Spec.TimeoutSeconds) * time.Second
-			previousStatus := grpcv1.LoadTestStatus{}
+	It("updates the status when pods are running", func() {
+		By("creating a fake environment with running pods")
+		runningState := corev1.ContainerState{
+			Running: &corev1.ContainerStateRunning{},
+		}
+		builder := podbuilder.New(newDefaults(), test)
+		testSpec := &test.Spec
+		var pod *corev1.Pod
+		for i := range testSpec.Servers {
+			pod = builder.PodForServer(&testSpec.Servers[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
+		}
+		for i := range testSpec.Clients {
+			pod = builder.PodForClient(&testSpec.Clients[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 
-			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
-			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
+		}
+		if testSpec.Driver != nil {
+			pod = builder.PodForDriver(testSpec.Driver)
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
+		}
 
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
+		By("waiting for one of the pods to eventually be fetchable")
+		Eventually(func() (*corev1.Pod, error) {
+			podNamespacedName := types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}
+			fetchedPod := new(corev1.Pod)
+			if err := k8sClient.Get(context.Background(), podNamespacedName, fetchedPod); err != nil {
+				return nil, err
+			}
+			return fetchedPod, nil
+		}).ShouldNot(BeNil())
 
-			Expect(requeueTime).To(Equal(expectedRequeueTime))
-		})
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
+		By("ensuring the test state becomes running")
+		Eventually(func() (grpcv1.LoadTestState, error) {
+			fetchedTest := new(grpcv1.LoadTest)
+			if err := k8sClient.Get(context.Background(), namespacedName, fetchedTest); err != nil {
+				return grpcv1.Unknown, err
+			}
+			return fetchedTest.Status.State, nil
+		}).Should(Equal(grpcv1.Running))
 	})
 
-	Context("when find the stop time was newly filled", func() {
-		It("returns the ttl less the actual running time", func() {
-			var startTime metav1.Time
-			var stopTime metav1.Time
+	It("updates the status when pods terminate successfully", func() {
+		By("creating a fake environment with finished pods")
+		successState := corev1.ContainerState{
+			Terminated: &corev1.ContainerStateTerminated{
+				ExitCode: 0,
+			},
+		}
+		builder := podbuilder.New(newDefaults(), test)
+		testSpec := &test.Spec
+		var pod *corev1.Pod
+		for i := range testSpec.Servers {
+			pod = builder.PodForServer(&testSpec.Servers[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, successState)).To(Succeed())
+		}
+		for i := range testSpec.Clients {
+			pod = builder.PodForClient(&testSpec.Clients[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, successState)).To(Succeed())
 
-			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
-			stopTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:52 GMT-0700")
+		}
+		if testSpec.Driver != nil {
+			pod = builder.PodForDriver(testSpec.Driver)
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, successState)).To(Succeed())
+		}
 
-			previousStatus := grpcv1.LoadTestStatus{StartTime: &startTime}
-			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime, StopTime: &stopTime}
-			expectedRequeueTime := time.Duration(test.Spec.TTLSeconds)*time.Second - test.Status.StopTime.Time.Sub(test.Status.StartTime.Time)
+		By("waiting for one of the pods to eventually be fetchable")
+		Eventually(func() (*corev1.Pod, error) {
+			podNamespacedName := types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}
+			fetchedPod := new(corev1.Pod)
+			if err := k8sClient.Get(context.Background(), podNamespacedName, fetchedPod); err != nil {
+				return nil, err
+			}
+			return fetchedPod, nil
+		}).ShouldNot(BeNil())
 
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
 
-			Expect(requeueTime).To(Equal(expectedRequeueTime))
-		})
+		By("ensuring the test state becomes succeeded")
+		Eventually(func() (grpcv1.LoadTestState, error) {
+			fetchedTest := new(grpcv1.LoadTest)
+			if err := k8sClient.Get(context.Background(), namespacedName, fetchedTest); err != nil {
+				return grpcv1.Unknown, err
+			}
+			return fetchedTest.Status.State, nil
+		}).Should(Equal(grpcv1.Succeeded))
 	})
-	Context("when neither of start and end time is newly filled", func() {
-		It("returns zero duration when start time was set before this event", func() {
-			var startTime metav1.Time
-
-			startTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:22 GMT-0700")
-
-			expectedRequeueTime := time.Duration(0)
-			previousStatus := grpcv1.LoadTestStatus{StartTime: &startTime}
-			test.Status = grpcv1.LoadTestStatus{StartTime: &startTime}
-
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
-
-			Expect(requeueTime).To(Equal(expectedRequeueTime))
-		})
-
-		It("returns zero duration, when stop time was set before this event", func() {
-			var stopTime metav1.Time
-
-			expectedRequeueTime := time.Duration(0)
-
-			stopTime.Time, _ = time.Parse("Mon Jan 02 2006 15:04:05 GMT-0700", "Fri Oct 23 2020 15:38:52 GMT-0700")
-			previousStatus := grpcv1.LoadTestStatus{StopTime: &stopTime}
-			test.Status = grpcv1.LoadTestStatus{StopTime: &stopTime}
-
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
-
-			Expect(requeueTime).To(Equal(expectedRequeueTime))
-		})
-
-		It("returns 0 duration", func() {
-			expectedRequeueTime := time.Duration(0)
-			previousStatus := grpcv1.LoadTestStatus{}
-
-			requeueTime := getRequeueTime(test, previousStatus, reconciler.Log)
-
-			Expect(requeueTime).To(Equal(expectedRequeueTime))
-		})
-	})
-
 })

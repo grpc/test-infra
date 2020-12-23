@@ -228,30 +228,24 @@ var _ = Describe("ForLoadTest", func() {
 			},
 			Spec: grpcv1.LoadTestSpec{
 				Driver: &grpcv1.Driver{
-					Component: grpcv1.Component{
-						Name: optional.StringPtr("driver"),
-						Run: grpcv1.Run{
-							Image: optional.StringPtr("fake-driver-image"),
-						},
+					Name: optional.StringPtr("driver"),
+					Run: grpcv1.Run{
+						Image: optional.StringPtr("fake-driver-image"),
 					},
 				},
 				Servers: []grpcv1.Server{
 					{
-						Component: grpcv1.Component{
-							Name: optional.StringPtr("server-1"),
-							Run: grpcv1.Run{
-								Image: optional.StringPtr("fake-server-image"),
-							},
+						Name: optional.StringPtr("server-1"),
+						Run: grpcv1.Run{
+							Image: optional.StringPtr("fake-server-image"),
 						},
 					},
 				},
 				Clients: []grpcv1.Client{
 					{
-						Component: grpcv1.Component{
-							Name: optional.StringPtr("client-1"),
-							Run: grpcv1.Run{
-								Image: optional.StringPtr("fake-client-image"),
-							},
+						Name: optional.StringPtr("client-1"),
+						Run: grpcv1.Run{
+							Image: optional.StringPtr("fake-client-image"),
 						},
 					},
 				},
