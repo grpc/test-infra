@@ -53,7 +53,7 @@ func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
+		"Cleanup Agent Suite",
 		[]Reporter{printer.NewlineReporter{}})
 }
 
