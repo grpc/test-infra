@@ -126,7 +126,7 @@ func (d *Defaults) SetLoadTestDefaults(test *grpcv1.LoadTest) error {
 		test.Namespace = d.ComponentNamespace
 	}
 
-	if err := d.setDriverDefaults(im, testSpec.Driver); err != nil {
+	if err := d.setDriverDefaults(im, testSpec); err != nil {
 		return errors.Wrap(err, "could not set defaults for driver")
 	}
 
@@ -143,20 +143,6 @@ func (d *Defaults) SetLoadTestDefaults(test *grpcv1.LoadTest) error {
 	}
 
 	return nil
-}
-
-// setNameOrDefault replaces the address of its pointer argument with the
-// address of a UUID string. If the argument is not nil upon invocation, it will
-// it will retain the previous address. This method can be used to assign a
-// unique name to a client, driver and server by passing a pointer to their Name
-// field.
-func (d *Defaults) setNameOrDefault(namePtr *string) {
-	if namePtr != nil {
-		return
-	}
-
-	name := uuid.New().String()
-	namePtr = &name
 }
 
 // setCloneOrDefault sets the default clone image if it is unset.
@@ -198,10 +184,12 @@ func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Ru
 
 // setDriverDefaults sets default name, pool and container images for a driver.
 // An error is returned if a default could not be inferred for a field.
-func (d *Defaults) setDriverDefaults(im *imageMap, driver *grpcv1.Driver) error {
-	if driver == nil {
-		driver = new(grpcv1.Driver)
+func (d *Defaults) setDriverDefaults(im *imageMap, testSpec *grpcv1.LoadTestSpec) error {
+	if testSpec.Driver == nil {
+		testSpec.Driver = new(grpcv1.Driver)
 	}
+
+	driver := testSpec.Driver
 
 	if driver.Language == "" {
 		driver.Language = "cxx"
@@ -215,7 +203,7 @@ func (d *Defaults) setDriverDefaults(im *imageMap, driver *grpcv1.Driver) error 
 		driver.Pool = &d.DriverPool
 	}
 
-	d.setNameOrDefault(driver.Name)
+	driver.Name = unwrapStrOrUUID(driver.Name)
 	d.setCloneOrDefault(driver.Clone)
 
 	if err := d.setBuildOrDefault(im, driver.Language, driver.Build); err != nil {
@@ -240,7 +228,7 @@ func (d *Defaults) setClientDefaults(im *imageMap, client *grpcv1.Client) error 
 		client.Pool = &d.WorkerPool
 	}
 
-	d.setNameOrDefault(client.Name)
+	client.Name = unwrapStrOrUUID(client.Name)
 	d.setCloneOrDefault(client.Clone)
 
 	if err := d.setBuildOrDefault(im, client.Language, client.Build); err != nil {
@@ -265,7 +253,7 @@ func (d *Defaults) setServerDefaults(im *imageMap, server *grpcv1.Server) error 
 		server.Pool = &d.WorkerPool
 	}
 
-	d.setNameOrDefault(server.Name)
+	server.Name = unwrapStrOrUUID(server.Name)
 	d.setCloneOrDefault(server.Clone)
 
 	if err := d.setBuildOrDefault(im, server.Language, server.Build); err != nil {
@@ -277,6 +265,18 @@ func (d *Defaults) setServerDefaults(im *imageMap, server *grpcv1.Server) error 
 	}
 
 	return nil
+}
+
+// unwrapStrOrUUID returns the string pointer if the pointer is not nil;
+// otherwise, it returns a pointer to a UUID string. This method can be used to
+// assign a unique name to a client, driver or server if one is not already set.
+func unwrapStrOrUUID(namePtr *string) *string {
+	if namePtr != nil {
+		return namePtr
+	}
+
+	name := uuid.New().String()
+	return &name
 }
 
 // LanguageDefault defines a programming language, as well as its
