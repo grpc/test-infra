@@ -146,8 +146,10 @@ func (d *Defaults) SetLoadTestDefaults(test *grpcv1.LoadTest) error {
 }
 
 // setNameOrDefault replaces the address of its pointer argument with the
-// address of a UUID string. If the argument is nil upon invocation, it will
-// remain nil.
+// address of a UUID string. If the argument is not nil upon invocation, it will
+// it will retain the previous address. This method can be used to assign a
+// unique name to a client, driver and server by passing a pointer to their Name
+// field.
 func (d *Defaults) setNameOrDefault(namePtr *string) {
 	if namePtr != nil {
 		return
