@@ -159,8 +159,117 @@ var _ = Describe("LoadTest controller", func() {
 		}).Should(Equal(expectedPodCount))
 	})
 
-	It("updates the test status when pods terminate with errors", func() {
+	It("updates the test status when client pods terminate with errors", func() {
 		By("creating a fake environment with errored pods")
+		runningState := corev1.ContainerState{
+			Running: &corev1.ContainerStateRunning{},
+		}
+		errorState := corev1.ContainerState{
+			Terminated: &corev1.ContainerStateTerminated{
+				ExitCode: 1,
+			},
+		}
+		builder := podbuilder.New(newDefaults(), test)
+		testSpec := &test.Spec
+		var pod *corev1.Pod
+		for i := range testSpec.Servers {
+			pod = builder.PodForServer(&testSpec.Servers[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
+		}
+		for i := range testSpec.Clients {
+			pod = builder.PodForClient(&testSpec.Clients[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
+
+		}
+		if testSpec.Driver != nil {
+			pod = builder.PodForDriver(testSpec.Driver)
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
+		}
+
+		By("waiting for one of the pods to eventually be fetchable")
+		Eventually(func() (*corev1.Pod, error) {
+			podNamespacedName := types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}
+			fetchedPod := new(corev1.Pod)
+			if err := k8sClient.Get(context.Background(), podNamespacedName, fetchedPod); err != nil {
+				return nil, err
+			}
+			return fetchedPod, nil
+		}).ShouldNot(BeNil())
+
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
+		By("ensuring the test state becomes errored")
+		Eventually(func() (grpcv1.LoadTestState, error) {
+			fetchedTest := new(grpcv1.LoadTest)
+			if err := k8sClient.Get(context.Background(), namespacedName, fetchedTest); err != nil {
+				return grpcv1.Unknown, err
+			}
+			return fetchedTest.Status.State, nil
+		}).Should(Equal(grpcv1.Errored))
+	})
+
+	It("updates the test status when driver pod terminated with errors", func() {
+		By("creating a fake environment with errored pods")
+		runningState := corev1.ContainerState{
+			Running: &corev1.ContainerStateRunning{},
+		}
+		errorState := corev1.ContainerState{
+			Terminated: &corev1.ContainerStateTerminated{
+				ExitCode: 1,
+			},
+		}
+		builder := podbuilder.New(newDefaults(), test)
+		testSpec := &test.Spec
+		var pod *corev1.Pod
+		for i := range testSpec.Servers {
+			pod = builder.PodForServer(&testSpec.Servers[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
+		}
+		for i := range testSpec.Clients {
+			pod = builder.PodForClient(&testSpec.Clients[i])
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
+
+		}
+		if testSpec.Driver != nil {
+			pod = builder.PodForDriver(testSpec.Driver)
+			Expect(createPod(pod, test)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
+		}
+
+		By("waiting for one of the pods to eventually be fetchable")
+		Eventually(func() (*corev1.Pod, error) {
+			podNamespacedName := types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}
+			fetchedPod := new(corev1.Pod)
+			if err := k8sClient.Get(context.Background(), podNamespacedName, fetchedPod); err != nil {
+				return nil, err
+			}
+			return fetchedPod, nil
+		}).ShouldNot(BeNil())
+
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
+		By("ensuring the test state becomes errored")
+		Eventually(func() (grpcv1.LoadTestState, error) {
+			fetchedTest := new(grpcv1.LoadTest)
+			if err := k8sClient.Get(context.Background(), namespacedName, fetchedTest); err != nil {
+				return grpcv1.Unknown, err
+			}
+			return fetchedTest.Status.State, nil
+		}).Should(Equal(grpcv1.Errored))
+	})
+
+	It("updates the test status when server pods terminate with errors", func() {
+		By("creating a fake environment with errored pods")
+		runningState := corev1.ContainerState{
+			Running: &corev1.ContainerStateRunning{},
+		}
 		errorState := corev1.ContainerState{
 			Terminated: &corev1.ContainerStateTerminated{
 				ExitCode: 1,
@@ -177,13 +286,13 @@ var _ = Describe("LoadTest controller", func() {
 		for i := range testSpec.Clients {
 			pod = builder.PodForClient(&testSpec.Clients[i])
 			Expect(createPod(pod, test)).To(Succeed())
-			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 
 		}
 		if testSpec.Driver != nil {
 			pod = builder.PodForDriver(testSpec.Driver)
 			Expect(createPod(pod, test)).To(Succeed())
-			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
+			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 		}
 
 		By("waiting for one of the pods to eventually be fetchable")
