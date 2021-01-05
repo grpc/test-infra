@@ -65,7 +65,7 @@ var _ = Describe("LoadTest controller", func() {
 		}
 	})
 
-	It("does not change the status after termination", func() {
+	It("does not change the test status after termination", func() {
 		now := metav1.Now()
 		test.Status = grpcv1.LoadTestStatus{
 			State:     grpcv1.Succeeded,
@@ -159,7 +159,7 @@ var _ = Describe("LoadTest controller", func() {
 		}).Should(Equal(expectedPodCount))
 	})
 
-	It("updates the status when pods terminate with errors", func() {
+	It("updates the test status when pods terminate with errors", func() {
 		By("creating a fake environment with errored pods")
 		errorState := corev1.ContainerState{
 			Terminated: &corev1.ContainerStateTerminated{
@@ -209,7 +209,7 @@ var _ = Describe("LoadTest controller", func() {
 		}).Should(Equal(grpcv1.Errored))
 	})
 
-	It("updates the status when pods are running", func() {
+	It("updates the test status when pods are running", func() {
 		By("creating a fake environment with running pods")
 		runningState := corev1.ContainerState{
 			Running: &corev1.ContainerStateRunning{},
@@ -257,7 +257,7 @@ var _ = Describe("LoadTest controller", func() {
 		}).Should(Equal(grpcv1.Running))
 	})
 
-	It("updates the status when pods terminate successfully", func() {
+	It("updates the test status when pods terminate successfully", func() {
 		By("creating a fake environment with finished pods")
 		successState := corev1.ContainerState{
 			Terminated: &corev1.ContainerStateTerminated{
