@@ -279,7 +279,7 @@ var _ = Describe("PodBuilder", func() {
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
-				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(defaults.DriverPort))
+				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
 			})
 
 			It("appends the driver port command line argument", func() {
@@ -291,7 +291,7 @@ var _ = Describe("PodBuilder", func() {
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-				Expect(runContainer.Args).To(ContainElement(fmt.Sprintf("--driver_port=%d", defaults.DriverPort)))
+				Expect(runContainer.Args).To(ContainElement(fmt.Sprintf("--driver_port=%d", config.DriverPort)))
 			})
 		})
 
@@ -503,7 +503,7 @@ var _ = Describe("PodBuilder", func() {
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
-				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(defaults.DriverPort))
+				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
 			})
 
 			It("appends the driver port command line argument", func() {
@@ -515,7 +515,7 @@ var _ = Describe("PodBuilder", func() {
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-				Expect(runContainer.Args).To(ContainElement(fmt.Sprintf("--driver_port=%d", defaults.DriverPort)))
+				Expect(runContainer.Args).To(ContainElement(fmt.Sprintf("--driver_port=%d", config.DriverPort)))
 			})
 		})
 

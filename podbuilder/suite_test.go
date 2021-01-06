@@ -82,8 +82,6 @@ func newDefaults() *config.Defaults {
 	return &config.Defaults{
 		DriverPool:  "drivers",
 		WorkerPool:  "workers-8core",
-		DriverPort:  10000,
-		ServerPort:  10010,
 		CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
 		ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
 		DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
