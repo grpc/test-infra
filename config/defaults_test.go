@@ -165,13 +165,10 @@ var _ = Describe("Defaults", func() {
 
 		Context("driver", func() {
 			var driver *grpcv1.Driver
-			var component *grpcv1.Component
 
 			BeforeEach(func() {
 				driver = loadtest.Spec.Driver
 				Expect(driver).ToNot(BeNil())
-
-				component = &driver.Component
 			})
 
 			It("sets default driver when nil", func() {
@@ -192,44 +189,44 @@ var _ = Describe("Defaults", func() {
 			})
 
 			It("sets default name when unspecified", func() {
-				component.Name = nil
+				driver.Name = nil
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Name).ToNot(BeNil())
+				Expect(driver.Name).ToNot(BeNil())
 			})
 
 			It("sets default pool when unspecified", func() {
-				component.Pool = nil
+				driver.Pool = nil
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Pool).ToNot(BeNil())
-				Expect(*component.Pool).To(Equal(defaults.DriverPool))
+				Expect(driver.Pool).ToNot(BeNil())
+				Expect(*driver.Pool).To(Equal(defaults.DriverPool))
 			})
 
 			It("does not override pool when specified", func() {
 				pool := "example-pool"
-				component.Pool = &pool
+				driver.Pool = &pool
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Pool).ToNot(BeNil())
-				Expect(*component.Pool).To(Equal(pool))
+				Expect(driver.Pool).ToNot(BeNil())
+				Expect(*driver.Pool).To(Equal(pool))
 			})
 
 			It("sets missing image for clone init container", func() {
 				repo := "https://github.com/grpc/grpc.git"
 				gitRef := "master"
 
-				component.Clone = new(grpcv1.Clone)
-				component.Clone.Repo = &repo
-				component.Clone.GitRef = &gitRef
-				component.Clone.Image = nil
+				driver.Clone = new(grpcv1.Clone)
+				driver.Clone.Repo = &repo
+				driver.Clone.GitRef = &gitRef
+				driver.Clone.Image = nil
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Clone).ToNot(BeNil())
-				Expect(component.Clone.Image).ToNot(BeNil())
-				Expect(*component.Clone.Image).To(Equal(defaults.CloneImage))
+				Expect(driver.Clone).ToNot(BeNil())
+				Expect(driver.Clone.Image).ToNot(BeNil())
+				Expect(*driver.Clone.Image).To(Equal(defaults.CloneImage))
 			})
 
 			It("sets missing image for build init container", func() {
@@ -237,18 +234,18 @@ var _ = Describe("Defaults", func() {
 				build.Image = nil
 				build.Command = []string{"bazel"}
 
-				component.Language = "cxx"
-				component.Build = build
+				driver.Language = "cxx"
+				driver.Build = build
 
-				expectedBuildImage, err := defaultImageMap.buildImage(component.Language)
+				expectedBuildImage, err := defaultImageMap.buildImage(driver.Language)
 				Expect(err).ToNot(HaveOccurred())
 
 				err = defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(component.Build).ToNot(BeNil())
-				Expect(component.Build.Image).ToNot(BeNil())
-				Expect(*component.Build.Image).To(Equal(expectedBuildImage))
+				Expect(driver.Build).ToNot(BeNil())
+				Expect(driver.Build.Image).ToNot(BeNil())
+				Expect(*driver.Build.Image).To(Equal(expectedBuildImage))
 			})
 
 			It("errors if image for build init container cannot be inferred", func() {
@@ -256,8 +253,8 @@ var _ = Describe("Defaults", func() {
 				build.Image = nil // no explicit image
 				build.Command = []string{"make"}
 
-				component.Language = "fortran" // unknown language
-				component.Build = build
+				driver.Language = "fortran" // unknown language
+				driver.Build = build
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).To(HaveOccurred())
@@ -270,8 +267,8 @@ var _ = Describe("Defaults", func() {
 				build.Image = &image
 				build.Command = []string{"make"}
 
-				component.Language = "fortran" // unknown language
-				component.Build = build
+				driver.Language = "fortran" // unknown language
+				driver.Build = build
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -279,22 +276,22 @@ var _ = Describe("Defaults", func() {
 			})
 
 			It("sets missing image for run container", func() {
-				component.Language = "cxx"
-				component.Run.Image = nil
+				driver.Language = "cxx"
+				driver.Run.Image = nil
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(component.Run.Image).ToNot(BeNil())
-				Expect(*component.Run.Image).To(Equal(defaults.DriverImage))
+				Expect(driver.Run.Image).ToNot(BeNil())
+				Expect(*driver.Run.Image).To(Equal(defaults.DriverImage))
 			})
 
 			It("does not error if run container image cannot be inferred but is set", func() {
 				image := "example-image"
 
-				component.Language = "fortran" // unknown language
-				component.Run.Image = &image
-				component.Run.Command = []string{"do-stuff"}
+				driver.Language = "fortran" // unknown language
+				driver.Run.Image = &image
+				driver.Run.Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -303,52 +300,50 @@ var _ = Describe("Defaults", func() {
 
 		Context("server", func() {
 			var server *grpcv1.Server
-			var component *grpcv1.Component
 
 			BeforeEach(func() {
 				server = &loadtest.Spec.Servers[0]
-				component = &server.Component
 			})
 
 			It("sets default name when unspecified", func() {
-				component.Name = nil
+				server.Name = nil
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Name).ToNot(BeNil())
+				Expect(server.Name).ToNot(BeNil())
 			})
 
 			It("sets default pool when unspecified", func() {
-				component.Pool = nil
+				server.Pool = nil
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Pool).ToNot(BeNil())
-				Expect(*component.Pool).To(Equal(defaults.WorkerPool))
+				Expect(server.Pool).ToNot(BeNil())
+				Expect(*server.Pool).To(Equal(defaults.WorkerPool))
 			})
 
 			It("does not override pool when specified", func() {
 				pool := "example-pool"
-				component.Pool = &pool
+				server.Pool = &pool
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Pool).ToNot(BeNil())
-				Expect(*component.Pool).To(Equal(pool))
+				Expect(server.Pool).ToNot(BeNil())
+				Expect(*server.Pool).To(Equal(pool))
 			})
 
 			It("sets missing image for clone init container", func() {
 				repo := "https://github.com/grpc/grpc.git"
 				gitRef := "master"
 
-				component.Clone = new(grpcv1.Clone)
-				component.Clone.Repo = &repo
-				component.Clone.GitRef = &gitRef
-				component.Clone.Image = nil
+				server.Clone = new(grpcv1.Clone)
+				server.Clone.Repo = &repo
+				server.Clone.GitRef = &gitRef
+				server.Clone.Image = nil
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Clone).ToNot(BeNil())
-				Expect(component.Clone.Image).ToNot(BeNil())
-				Expect(*component.Clone.Image).To(Equal(defaults.CloneImage))
+				Expect(server.Clone).ToNot(BeNil())
+				Expect(server.Clone.Image).ToNot(BeNil())
+				Expect(*server.Clone.Image).To(Equal(defaults.CloneImage))
 			})
 
 			It("sets missing image for build init container", func() {
@@ -356,18 +351,18 @@ var _ = Describe("Defaults", func() {
 				build.Image = nil
 				build.Command = []string{"bazel"}
 
-				component.Language = "cxx"
-				component.Build = build
+				server.Language = "cxx"
+				server.Build = build
 
-				expectedBuildImage, err := defaultImageMap.buildImage(component.Language)
+				expectedBuildImage, err := defaultImageMap.buildImage(server.Language)
 				Expect(err).ToNot(HaveOccurred())
 
 				err = defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(component.Build).ToNot(BeNil())
-				Expect(component.Build.Image).ToNot(BeNil())
-				Expect(*component.Build.Image).To(Equal(expectedBuildImage))
+				Expect(server.Build).ToNot(BeNil())
+				Expect(server.Build.Image).ToNot(BeNil())
+				Expect(*server.Build.Image).To(Equal(expectedBuildImage))
 			})
 
 			It("errors if image for build init container cannot be inferred", func() {
@@ -375,8 +370,8 @@ var _ = Describe("Defaults", func() {
 				build.Image = nil // no explicit image
 				build.Command = []string{"make"}
 
-				component.Language = "fortran" // unknown language
-				component.Build = build
+				server.Language = "fortran" // unknown language
+				server.Build = build
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).To(HaveOccurred())
@@ -389,8 +384,8 @@ var _ = Describe("Defaults", func() {
 				build.Image = &image
 				build.Command = []string{"make"}
 
-				component.Language = "fortran" // unknown language
-				component.Build = build
+				server.Language = "fortran" // unknown language
+				server.Build = build
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -398,25 +393,25 @@ var _ = Describe("Defaults", func() {
 			})
 
 			It("sets missing image for run container", func() {
-				component.Language = "cxx"
-				component.Run.Image = nil
+				server.Language = "cxx"
+				server.Run.Image = nil
 
-				expectedRunImage, err := defaultImageMap.runImage(component.Language)
+				expectedRunImage, err := defaultImageMap.runImage(server.Language)
 				Expect(err).ToNot(HaveOccurred())
 
 				err = defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(component.Run.Image).ToNot(BeNil())
-				Expect(*component.Run.Image).To(Equal(expectedRunImage))
+				Expect(server.Run.Image).ToNot(BeNil())
+				Expect(*server.Run.Image).To(Equal(expectedRunImage))
 			})
 
 			It("errors if image for run container cannot be inferred", func() {
-				component.Build = nil // disable build to ensure run is the problem
+				server.Build = nil // disable build to ensure run is the problem
 
-				component.Language = "fortran" // unknown language
-				component.Run.Image = nil      // no explicit image
-				component.Run.Command = []string{"do-stuff"}
+				server.Language = "fortran" // unknown language
+				server.Run.Image = nil      // no explicit image
+				server.Run.Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).To(HaveOccurred())
@@ -425,9 +420,9 @@ var _ = Describe("Defaults", func() {
 			It("does not error if run container image cannot be inferred but is set", func() {
 				image := "example-image"
 
-				component.Language = "fortran" // unknown language
-				component.Run.Image = &image
-				component.Run.Command = []string{"do-stuff"}
+				server.Language = "fortran" // unknown language
+				server.Run.Image = &image
+				server.Run.Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -436,52 +431,50 @@ var _ = Describe("Defaults", func() {
 
 		Context("client", func() {
 			var client *grpcv1.Client
-			var component *grpcv1.Component
 
 			BeforeEach(func() {
 				client = &loadtest.Spec.Clients[0]
-				component = &client.Component
 			})
 
 			It("sets default name when unspecified", func() {
-				component.Name = nil
+				client.Name = nil
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Name).ToNot(BeNil())
+				Expect(client.Name).ToNot(BeNil())
 			})
 
 			It("sets default pool when unspecified", func() {
-				component.Pool = nil
+				client.Pool = nil
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Pool).ToNot(BeNil())
-				Expect(*component.Pool).To(Equal(defaults.WorkerPool))
+				Expect(client.Pool).ToNot(BeNil())
+				Expect(*client.Pool).To(Equal(defaults.WorkerPool))
 			})
 
 			It("does not override pool when specified", func() {
 				pool := "example-pool"
-				component.Pool = &pool
+				client.Pool = &pool
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Pool).ToNot(BeNil())
-				Expect(*component.Pool).To(Equal(pool))
+				Expect(client.Pool).ToNot(BeNil())
+				Expect(*client.Pool).To(Equal(pool))
 			})
 
 			It("sets missing image for clone init container", func() {
 				repo := "https://github.com/grpc/grpc.git"
 				gitRef := "master"
 
-				component.Clone = new(grpcv1.Clone)
-				component.Clone.Repo = &repo
-				component.Clone.GitRef = &gitRef
-				component.Clone.Image = nil
+				client.Clone = new(grpcv1.Clone)
+				client.Clone.Repo = &repo
+				client.Clone.GitRef = &gitRef
+				client.Clone.Image = nil
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(component.Clone).ToNot(BeNil())
-				Expect(component.Clone.Image).ToNot(BeNil())
-				Expect(*component.Clone.Image).To(Equal(defaults.CloneImage))
+				Expect(client.Clone).ToNot(BeNil())
+				Expect(client.Clone.Image).ToNot(BeNil())
+				Expect(*client.Clone.Image).To(Equal(defaults.CloneImage))
 			})
 
 			It("sets missing image for build init container", func() {
@@ -489,18 +482,18 @@ var _ = Describe("Defaults", func() {
 				build.Image = nil
 				build.Command = []string{"bazel"}
 
-				component.Language = "cxx"
-				component.Build = build
+				client.Language = "cxx"
+				client.Build = build
 
-				expectedBuildImage, err := defaultImageMap.buildImage(component.Language)
+				expectedBuildImage, err := defaultImageMap.buildImage(client.Language)
 				Expect(err).ToNot(HaveOccurred())
 
 				err = defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(component.Build).ToNot(BeNil())
-				Expect(component.Build.Image).ToNot(BeNil())
-				Expect(*component.Build.Image).To(Equal(expectedBuildImage))
+				Expect(client.Build).ToNot(BeNil())
+				Expect(client.Build.Image).ToNot(BeNil())
+				Expect(*client.Build.Image).To(Equal(expectedBuildImage))
 			})
 
 			It("errors if image for build init container cannot be inferred", func() {
@@ -508,8 +501,8 @@ var _ = Describe("Defaults", func() {
 				build.Image = nil // no explicit image
 				build.Command = []string{"make"}
 
-				component.Language = "fortran" // unknown language
-				component.Build = build
+				client.Language = "fortran" // unknown language
+				client.Build = build
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).To(HaveOccurred())
@@ -522,8 +515,8 @@ var _ = Describe("Defaults", func() {
 				build.Image = &image
 				build.Command = []string{"make"}
 
-				component.Language = "fortran" // unknown language
-				component.Build = build
+				client.Language = "fortran" // unknown language
+				client.Build = build
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -531,23 +524,23 @@ var _ = Describe("Defaults", func() {
 			})
 
 			It("sets missing image for run container", func() {
-				component.Language = "cxx"
-				component.Run.Image = nil
+				client.Language = "cxx"
+				client.Run.Image = nil
 
-				expectedRunImage, err := defaultImageMap.runImage(component.Language)
+				expectedRunImage, err := defaultImageMap.runImage(client.Language)
 				Expect(err).ToNot(HaveOccurred())
 
 				err = defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(component.Run.Image).ToNot(BeNil())
-				Expect(*component.Run.Image).To(Equal(expectedRunImage))
+				Expect(client.Run.Image).ToNot(BeNil())
+				Expect(*client.Run.Image).To(Equal(expectedRunImage))
 			})
 
 			It("errors if image for run container cannot be inferred", func() {
-				component.Language = "fortran" // unknown language
-				component.Run.Image = nil      // no explicit image
-				component.Run.Command = []string{"do-stuff"}
+				client.Language = "fortran" // unknown language
+				client.Run.Image = nil      // no explicit image
+				client.Run.Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).To(HaveOccurred())
@@ -556,9 +549,9 @@ var _ = Describe("Defaults", func() {
 			It("does not error if run container image cannot be inferred but is set", func() {
 				image := "example-image"
 
-				component.Language = "fortran" // unknown language
-				component.Run.Image = &image
-				component.Run.Command = []string{"do-stuff"}
+				client.Language = "fortran" // unknown language
+				client.Run.Image = &image
+				client.Run.Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -594,62 +587,56 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 	return &grpcv1.LoadTest{
 		Spec: grpcv1.LoadTestSpec{
 			Driver: &grpcv1.Driver{
-				Component: grpcv1.Component{
-					Name:     &driverComponentName,
-					Language: "cxx",
-					Pool:     &driverPool,
-					Run: grpcv1.Run{
-						Image: &driverImage,
-					},
+				Name:     &driverComponentName,
+				Language: "cxx",
+				Pool:     &driverPool,
+				Run: grpcv1.Run{
+					Image: &driverImage,
 				},
 			},
 
 			Servers: []grpcv1.Server{
 				{
-					Component: grpcv1.Component{
-						Name:     &serverComponentName,
-						Language: "cxx",
-						Pool:     &workerPool,
-						Clone: &grpcv1.Clone{
-							Image:  &cloneImage,
-							Repo:   &cloneRepo,
-							GitRef: &cloneGitRef,
-						},
-						Build: &grpcv1.Build{
-							Image:   &buildImage,
-							Command: buildCommand,
-							Args:    buildArgs,
-						},
-						Run: grpcv1.Run{
-							Image:   &runImage,
-							Command: runCommand,
-							Args:    serverRunArgs,
-						},
+					Name:     &serverComponentName,
+					Language: "cxx",
+					Pool:     &workerPool,
+					Clone: &grpcv1.Clone{
+						Image:  &cloneImage,
+						Repo:   &cloneRepo,
+						GitRef: &cloneGitRef,
+					},
+					Build: &grpcv1.Build{
+						Image:   &buildImage,
+						Command: buildCommand,
+						Args:    buildArgs,
+					},
+					Run: grpcv1.Run{
+						Image:   &runImage,
+						Command: runCommand,
+						Args:    serverRunArgs,
 					},
 				},
 			},
 
 			Clients: []grpcv1.Client{
 				{
-					Component: grpcv1.Component{
-						Name:     &clientComponentName,
-						Language: "cxx",
-						Pool:     &workerPool,
-						Clone: &grpcv1.Clone{
-							Image:  &cloneImage,
-							Repo:   &cloneRepo,
-							GitRef: &cloneGitRef,
-						},
-						Build: &grpcv1.Build{
-							Image:   &buildImage,
-							Command: buildCommand,
-							Args:    buildArgs,
-						},
-						Run: grpcv1.Run{
-							Image:   &runImage,
-							Command: runCommand,
-							Args:    clientRunArgs,
-						},
+					Name:     &clientComponentName,
+					Language: "cxx",
+					Pool:     &workerPool,
+					Clone: &grpcv1.Clone{
+						Image:  &cloneImage,
+						Repo:   &cloneRepo,
+						GitRef: &cloneGitRef,
+					},
+					Build: &grpcv1.Build{
+						Image:   &buildImage,
+						Command: buildCommand,
+						Args:    buildArgs,
+					},
+					Run: grpcv1.Run{
+						Image:   &runImage,
+						Command: runCommand,
+						Args:    clientRunArgs,
 					},
 				},
 			},

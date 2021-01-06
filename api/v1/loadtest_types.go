@@ -112,57 +112,162 @@ type Run struct {
 	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
-// Component defines a runnable unit of the test.
-type Component struct {
-	// Name is a string which uniquely identifies the component when
-	// compared to other components in the load test. If omitted, the
-	// system will assign a globally unique name.
+// Driver defines a component that orchestrates the server and clients in the
+// test.
+type Driver struct {
+	// Name is a string that uniquely names this driver. Since load tests only
+	// support one driver, it is not recommended to set this field. If no name
+	// is explicitly provided, the operator will assign one.
 	// +optional
 	Name *string `json:"name,omitempty"`
 
-	// Language is the code that identifies the programming language used by
-	// the component. For example, "cxx" may represent C++.
+	// Language is the code that identifies the programming language used by the
+	// driver. For example, "cxx" may represent C++.
 	//
-	// Specifying a language is required. Aside from metadata, It allows the
-	// image field on the Build and Run objects to be inferred.
+	// Specifying a language is required. If the language is unknown to the
+	// operator, a user must manually set a run image. If the user intends for
+	// the operator to clone and build code, it must also manually set a build
+	// image.
 	Language string `json:"language"`
 
-	// Pool specifies the name of the set of nodes where this component should
-	// be scheduled. If unset, the controller will choose a pool based on the
-	// type of component.
+	// Pool specifies the name of the set of nodes where this driver should be
+	// scheduled. If unset, the controller will choose a pool based on defaults.
+	// +optional
 	Pool *string `json:"pool,omitempty"`
 
-	// Clone specifies the repository and snapshot where the code can be
-	// found. This is used to build and run tests.
+	// Clone specifies the repository and snapshot where the code for the driver
+	// can be found. This is used to test alternative implementations for the
+	// driver. Most often, this will not be set. When unset, the operator will
+	// use a default driver that is prebuilt.
 	// +optional
 	Clone *Clone `json:"clone,omitempty"`
 
 	// Build describes how the cloned code should be built, including any
-	// compiler arguments or flags.
+	// compiler arguments or flags. This field is only necessary if the output
+	// from the clone container must be pre-processed before running the tests
+	// in the run container.
+	//
+	// When build is specified on a test, the operator will use the driver's
+	// language to find a container with a compiler for that language. If the
+	// language is unknown to the operator, a user must include a custom docker
+	// image.
+	//
+	// Note that it does not usually make sense to include build instructions
+	// without clone instructions. If doing so, the build container must include
+	// its input and write its output into the /src/workspace directory for the
+	// run container to access it.
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
-	// Run describes the runtime of the container during the test
-	// itself. This is required, because the system must run some
-	// container.
+	// Run describes the run container, which is the runtime of the driver for
+	// the actual test.
 	Run Run `json:"run"`
-}
-
-// Driver defines a component that orchestrates the server and clients
-// in the test.
-type Driver struct {
-	Component `json:",inline"`
 }
 
 // Server defines a component that receives traffic from a set of client
 // components.
 type Server struct {
-	Component `json:",inline"`
+	// Name is a string that distinguishes this server from others in the test.
+	// Since tests are currently limited to one server, setting this field is not
+	// recommended. set this field. If no name is explicitly provided, the
+	// operator will assign one.
+	// +optional
+	Name *string `json:"name,omitempty"`
+
+	// Language is the code that identifies the programming language used by the
+	// server. For example, "java" may represent Java.
+	//
+	// Specifying a language is required. If the language is unknown to the
+	// operator, a user must manually set a run image. If the user intends for
+	// the operator to clone and build code, it must also manually set a build
+	// image.
+	Language string `json:"language"`
+
+	// Pool specifies the name of the set of nodes where this server should be
+	// scheduled. If unset, the controller will choose a pool based on defaults.
+	// +optional
+	Pool *string `json:"pool,omitempty"`
+
+	// Clone specifies the repository and snapshot where the code for the server
+	// can be found. This field should not be set if the code has been prebuilt
+	// in the run image.
+	// +optional
+	Clone *Clone `json:"clone,omitempty"`
+
+	// Build describes how the cloned code should be built, including any
+	// compiler arguments or flags. This field is only necessary if the output
+	// from the clone container must be pre-processed before running the tests
+	// in the run container.
+	//
+	// When build is specified on a test, the operator will use the server's
+	// language to find a container with a compiler for that language. If the
+	// language is unknown to the operator, a user must include a custom docker
+	// image.
+	//
+	// Note that it does not usually make sense to include build instructions
+	// without clone instructions. If doing so, the build container must include
+	// its input and write its output into the /src/workspace directory for the
+	// run container to access it.
+	// +optional
+	Build *Build `json:"build,omitempty"`
+
+	// Run describes the run container, which is the runtime of the server for
+	// the actual test.
+	Run Run `json:"run"`
 }
 
 // Client defines a component that sends traffic to a server component.
 type Client struct {
-	Component `json:",inline"`
+	// Name is a string that distinguishes this client from others in the test.
+	// Explicitly setting a name is recommended when it is helpful to
+	// differentiate between multiple clients. For example, a test may use
+	// clients with different settings.
+	//
+	// Most often, this field will not be set. When unset, the operator will
+	// assign a name to the client.
+	// +optional
+	Name *string `json:"name,omitempty"`
+
+	// Language is the code that identifies the programming language used by the
+	// client. For example, "go" may represent Go.
+	//
+	// Specifying a language is required. If the language is unknown to the
+	// operator, a user must manually set a run image. If the user intends for
+	// the operator to clone and build code, it must also manually set a build
+	// image.
+	Language string `json:"language"`
+
+	// Pool specifies the name of the set of nodes where this client should be
+	// scheduled. If unset, the controller will choose a pool based on defaults.
+	// +optional
+	Pool *string `json:"pool,omitempty"`
+
+	// Clone specifies the repository and snapshot where the code for the client
+	// can be found. This field should not be set if the code has been prebuilt
+	// in the run image.
+	// +optional
+	Clone *Clone `json:"clone,omitempty"`
+
+	// Build describes how the cloned code should be built, including any
+	// compiler arguments or flags. This field is only necessary if the output
+	// from the clone container must be pre-processed before running the tests
+	// in the run container.
+	//
+	// When build is specified on a test, the operator will use the client's
+	// language to find a container with a compiler for that language. If the
+	// language is unknown to the operator, a user must include a custom docker
+	// image.
+	//
+	// Note that it does not usually make sense to include build instructions
+	// without clone instructions. If doing so, the build container must include
+	// its input and write its output into the /src/workspace directory for the
+	// run container to access it.
+	// +optional
+	Build *Build `json:"build,omitempty"`
+
+	// Run describes the run container, which is the runtime of the client for
+	// the actual test.
+	Run Run `json:"run"`
 }
 
 // Results defines where and how test results and artifacts should be

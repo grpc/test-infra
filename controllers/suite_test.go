@@ -21,7 +21,9 @@ import (
 	"fmt"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -39,6 +41,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/optional"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -50,6 +54,130 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 var stop chan struct{}
 
+var pools = map[string]int{
+	"drivers":   3,
+	"workers-a": 5,
+	"workers-b": 7,
+}
+
+var nodes = func() []*corev1.Node {
+	var items []*corev1.Node
+
+	for pool, count := range pools {
+		for i := 0; i < count; i++ {
+			items = append(items, &corev1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: fmt.Sprintf("node-%s-%d", pool, i),
+					Labels: map[string]string{
+						"pool": pool,
+					},
+				},
+			})
+		}
+	}
+
+	return items
+}()
+
+func newDefaults() *config.Defaults {
+	return &config.Defaults{
+		DriverPool:  "drivers",
+		WorkerPool:  "workers-8core",
+		DriverPort:  10000,
+		ServerPort:  10010,
+		CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
+		ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
+		DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
+		Languages: []config.LanguageDefault{
+			{
+				Language:   "cxx",
+				BuildImage: "l.gcr.io/google/bazel:latest",
+				RunImage:   "gcr.io/grpc-fake-project/test-infra/cxx",
+			},
+			{
+				Language:   "go",
+				BuildImage: "golang:1.14",
+				RunImage:   "gcr.io/grpc-fake-project/test-infra/go",
+			},
+			{
+				Language:   "java",
+				BuildImage: "java:jdk8",
+				RunImage:   "gcr.io/grpc-fake-project/test-infra/java",
+			},
+		},
+	}
+}
+
+func newLoadTest() *grpcv1.LoadTest {
+	return &grpcv1.LoadTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      uuid.New().String(),
+			Namespace: corev1.NamespaceDefault,
+		},
+		Spec: grpcv1.LoadTestSpec{
+			TimeoutSeconds: 300,
+			TTLSeconds:     600,
+			Driver: &grpcv1.Driver{
+				Name:     optional.StringPtr("driver"),
+				Language: "cxx",
+				Pool:     optional.StringPtr("test-pool"),
+				Run: grpcv1.Run{
+					Image: optional.StringPtr("gcr.io/grpc-test-example/driver:v1"),
+				},
+			},
+			Servers: []grpcv1.Server{
+				{
+					Name:     optional.StringPtr("server-1"),
+					Language: "go",
+					Pool:     optional.StringPtr("test-pool"),
+					Clone: &grpcv1.Clone{
+						Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+						Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+						GitRef: optional.StringPtr("master"),
+					},
+					Build: &grpcv1.Build{
+						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+						Command: []string{"go"},
+						Args:    []string{"build", "-o", "server", "./server/main.go"},
+					},
+					Run: grpcv1.Run{
+						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+						Command: []string{"./server"},
+						Args:    []string{"-verbose"},
+					},
+				},
+			},
+			Clients: []grpcv1.Client{
+				{
+					Name:     optional.StringPtr("client-1"),
+					Language: "go",
+					Pool:     optional.StringPtr("test-pool"),
+					Clone: &grpcv1.Clone{
+						Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+						Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+						GitRef: optional.StringPtr("master"),
+					},
+					Build: &grpcv1.Build{
+						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+						Command: []string{"go"},
+						Args:    []string{"build", "-o", "client", "./client/main.go"},
+					},
+					Run: grpcv1.Run{
+						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+						Command: []string{"./client"},
+						Args:    []string{"-verbose"},
+					},
+				},
+			},
+			Results: &grpcv1.Results{
+				BigQueryTable: optional.StringPtr("example-dataset.example-table"),
+			},
+			ScenariosJSON: "{\"scenarios\": []}",
+		},
+		Status: grpcv1.LoadTestStatus{},
+	}
+}
+
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
@@ -60,6 +188,10 @@ func TestAPIs(t *testing.T) {
 
 var _ = BeforeSuite(func(done Done) {
 	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
+
+	By("setting gomega default timeouts")
+	SetDefaultEventuallyTimeout(1500 * time.Millisecond)
+	SetDefaultConsistentlyDuration(200 * time.Millisecond)
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -82,9 +214,10 @@ var _ = BeforeSuite(func(done Done) {
 	Expect(err).ToNot(HaveOccurred())
 
 	reconciler := &LoadTestReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
-		Log:    ctrl.Log.WithName("controller").WithName("LoadTest"),
+		Client:   k8sManager.GetClient(),
+		Scheme:   k8sManager.GetScheme(),
+		Log:      ctrl.Log.WithName("controller").WithName("LoadTest"),
+		Defaults: newDefaults(),
 	}
 	err = reconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
@@ -113,133 +246,3 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })
-
-var pools = map[string]int{
-	"drivers":   3,
-	"workers-a": 5,
-	"workers-b": 7,
-}
-
-var nodes = func() []*corev1.Node {
-	var items []*corev1.Node
-
-	for pool, count := range pools {
-		for i := 0; i < count; i++ {
-			items = append(items, &corev1.Node{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: fmt.Sprintf("node-%s-%d", pool, i),
-					Labels: map[string]string{
-						"pool": pool,
-					},
-				},
-			})
-		}
-	}
-
-	return items
-}()
-
-func newLoadTest() *grpcv1.LoadTest {
-	cloneImage := "docker.pkg.github.com/grpc/test-infra/clone"
-	cloneRepo := "https://github.com/grpc/grpc.git"
-	cloneGitRef := "master"
-
-	buildImage := "l.gcr.io/google/bazel:latest"
-	buildCommand := []string{"bazel"}
-	buildArgs := []string{"build", "//test/cpp/qps:qps_worker"}
-
-	driverImage := "docker.pkg.github.com/grpc/test-infra/driver"
-	runImage := "docker.pkg.github.com/grpc/test-infra/cxx"
-	runCommand := []string{"bazel-bin/test/cpp/qps/qps_worker"}
-
-	clientRunArgs := []string{"--driver_port=10000"}
-	serverRunArgs := append(clientRunArgs, "--server_port=10010")
-
-	bigQueryTable := "grpc-testing.e2e_benchmark.foobarbuzz"
-
-	driverPool := "drivers"
-	workerPool := "workers-8core"
-
-	clientComponentName := "client-1"
-	serverComponentName := "server-1"
-	driverComponentName := "driver-1"
-
-	return &grpcv1.LoadTest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-loadtest",
-			Namespace: "default",
-		},
-
-		Spec: grpcv1.LoadTestSpec{
-			Driver: &grpcv1.Driver{
-				Component: grpcv1.Component{
-					Name:     &driverComponentName,
-					Language: "cxx",
-					Pool:     &driverPool,
-					Run: grpcv1.Run{
-						Image: &driverImage,
-					},
-				},
-			},
-
-			Servers: []grpcv1.Server{
-				{
-					Component: grpcv1.Component{
-						Name:     &serverComponentName,
-						Language: "cxx",
-						Pool:     &workerPool,
-						Clone: &grpcv1.Clone{
-							Image:  &cloneImage,
-							Repo:   &cloneRepo,
-							GitRef: &cloneGitRef,
-						},
-						Build: &grpcv1.Build{
-							Image:   &buildImage,
-							Command: buildCommand,
-							Args:    buildArgs,
-						},
-						Run: grpcv1.Run{
-							Image:   &runImage,
-							Command: runCommand,
-							Args:    serverRunArgs,
-						},
-					},
-				},
-			},
-
-			Clients: []grpcv1.Client{
-				{
-					Component: grpcv1.Component{
-						Name:     &clientComponentName,
-						Language: "cxx",
-						Pool:     &workerPool,
-						Clone: &grpcv1.Clone{
-							Image:  &cloneImage,
-							Repo:   &cloneRepo,
-							GitRef: &cloneGitRef,
-						},
-						Build: &grpcv1.Build{
-							Image:   &buildImage,
-							Command: buildCommand,
-							Args:    buildArgs,
-						},
-						Run: grpcv1.Run{
-							Image:   &runImage,
-							Command: runCommand,
-							Args:    clientRunArgs,
-						},
-					},
-				},
-			},
-
-			Results: &grpcv1.Results{
-				BigQueryTable: &bigQueryTable,
-			},
-
-			TimeoutSeconds: int32(30),
-			TTLSeconds:     int32(120),
-
-			ScenariosJSON: "{\"scenarios\": []}",
-		},
-	}
-}

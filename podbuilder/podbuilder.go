@@ -1,0 +1,351 @@
+/*
+Copyright 2020 gRPC authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package podbuilder
+
+import (
+	"fmt"
+
+	"github.com/grpc/test-infra/kubehelpers"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
+)
+
+// addReadyInitContainer configures a ready init container. This container is
+// meant to wait for workers to become ready, writing the IP address and port of
+// these workers to a file. This file is then shared over a volume with the
+// driver's run container.
+//
+// This method also sets the $QPS_WORKERS_FILE environment variable on the
+// driver's run container. Its value will point to the aforementioned, shared
+// file.
+func addReadyInitContainer(defs *config.Defaults, test *grpcv1.LoadTest, podspec *corev1.PodSpec, container *corev1.Container) {
+	if defs == nil || podspec == nil || container == nil {
+		return
+	}
+
+	readyContainer := newReadyContainer(defs, test)
+	podspec.InitContainers = append(podspec.InitContainers, readyContainer)
+
+	container.Env = append(container.Env, corev1.EnvVar{
+		Name:  "QPS_WORKERS_FILE",
+		Value: config.ReadyOutputFile,
+	})
+
+	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+		Name:      config.ReadyVolumeName,
+		MountPath: config.ReadyMountPath,
+	})
+
+	podspec.Volumes = append(podspec.Volumes, corev1.Volume{
+		Name: config.ReadyVolumeName,
+	})
+}
+
+// newReadyContainer constructs a container using the default ready container
+// image. If defaults parameter is nil, an empty container is returned.
+func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Container {
+	if defs == nil {
+		return corev1.Container{}
+	}
+
+	var args []string
+	for _, server := range test.Spec.Servers {
+		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
+			config.LoadTestLabel, test.Name,
+			config.RoleLabel, config.ServerRole,
+			config.ComponentNameLabel, *server.Name,
+		))
+	}
+	for _, client := range test.Spec.Clients {
+		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
+			config.LoadTestLabel, test.Name,
+			config.RoleLabel, config.ClientRole,
+			config.ComponentNameLabel, *client.Name,
+		))
+	}
+
+	return corev1.Container{
+		Name:    config.ReadyInitContainerName,
+		Image:   defs.ReadyImage,
+		Command: []string{"ready"},
+		Args:    args,
+		Env: []corev1.EnvVar{
+			{
+				Name:  "READY_OUTPUT_FILE",
+				Value: config.ReadyOutputFile,
+			},
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      config.ReadyVolumeName,
+				MountPath: config.ReadyMountPath,
+			},
+		},
+	}
+}
+
+// PodBuilder constructs pods for a test's driver, server and client.
+type PodBuilder struct {
+	test     *grpcv1.LoadTest
+	defaults *config.Defaults
+	name     string
+	role     string
+	pool     string
+	clone    *grpcv1.Clone
+	build    *grpcv1.Build
+	run      *grpcv1.Run
+}
+
+// New creates a PodBuilder instance. It accepts and uses defaults and a test to
+// predictably construct pods.
+func New(defaults *config.Defaults, test *grpcv1.LoadTest) *PodBuilder {
+	return &PodBuilder{
+		test:     test,
+		defaults: defaults,
+	}
+}
+
+// PodForClient accepts a pointer to a client and returns a pod for it.
+func (pb *PodBuilder) PodForClient(client *grpcv1.Client) *corev1.Pod {
+	pb.name = safeStrUnwrap(client.Name)
+	pb.role = config.ClientRole
+	pb.pool = safeStrUnwrap(client.Pool)
+	pb.clone = client.Clone
+	pb.build = client.Build
+	pb.run = &client.Run
+
+	pod := pb.newPod()
+
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+
+	runContainer.Args = append(runContainer.Args, fmt.Sprintf("--driver_port=%d", pb.defaults.DriverPort))
+	runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
+		Name:          "driver",
+		Protocol:      corev1.ProtocolTCP,
+		ContainerPort: pb.defaults.DriverPort,
+	})
+
+	return pod
+}
+
+// PodForDriver accepts a pointer to a driver and returns a pod for it.
+func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) *corev1.Pod {
+	pb.name = safeStrUnwrap(driver.Name)
+	pb.role = config.DriverRole
+	pb.pool = safeStrUnwrap(driver.Pool)
+	pb.clone = driver.Clone
+	pb.build = driver.Build
+	pb.run = &driver.Run
+
+	pod := pb.newPod()
+
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	addReadyInitContainer(pb.defaults, pb.test, &pod.Spec, runContainer)
+
+	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+		Name: "scenarios",
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: pb.test.Name,
+				},
+			},
+		},
+	})
+	runContainer.VolumeMounts = append(runContainer.VolumeMounts, corev1.VolumeMount{
+		Name:      "scenarios",
+		MountPath: config.ScenariosMountPath,
+		ReadOnly:  true,
+	})
+	runContainer.Env = append(runContainer.Env, corev1.EnvVar{
+		Name:  config.ScenariosFileEnv,
+		Value: config.ScenariosMountPath + "/scenarios.json",
+	})
+
+	if results := pb.test.Spec.Results; results != nil {
+		if bigQueryTable := results.BigQueryTable; bigQueryTable != nil {
+			runContainer.Env = append(runContainer.Env, corev1.EnvVar{
+				Name:  config.BigQueryTableEnv,
+				Value: *bigQueryTable,
+			})
+		}
+	}
+
+	return pod
+}
+
+// PodForServer accepts a pointer to a server and returns a pod for it.
+func (pb *PodBuilder) PodForServer(server *grpcv1.Server) *corev1.Pod {
+	pb.name = safeStrUnwrap(server.Name)
+	pb.role = config.ServerRole
+	pb.pool = safeStrUnwrap(server.Pool)
+	pb.clone = server.Clone
+	pb.build = server.Build
+	pb.run = &server.Run
+
+	pod := pb.newPod()
+
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+
+	runContainer.Args = append(runContainer.Args, fmt.Sprintf("--driver_port=%d", pb.defaults.DriverPort))
+	runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
+		Name:          "driver",
+		Protocol:      corev1.ProtocolTCP,
+		ContainerPort: pb.defaults.DriverPort,
+	})
+
+	return pod
+}
+
+// newPod creates a base pod for any client, driver or server. It is designed to
+// be decorated by more specific methods for each of these.
+func (pb *PodBuilder) newPod() *corev1.Pod {
+	var initContainers []corev1.Container
+
+	if pb.clone != nil {
+		var env []corev1.EnvVar
+
+		if pb.clone.Repo != nil {
+			env = append(env, corev1.EnvVar{
+				Name:  config.CloneRepoEnv,
+				Value: safeStrUnwrap(pb.clone.Repo),
+			})
+		}
+
+		if pb.clone.GitRef != nil {
+			env = append(env, corev1.EnvVar{
+				Name:  config.CloneGitRefEnv,
+				Value: safeStrUnwrap(pb.clone.GitRef),
+			})
+		}
+
+		initContainers = append(initContainers, corev1.Container{
+			Name:  config.CloneInitContainerName,
+			Image: safeStrUnwrap(pb.clone.Image),
+			Env:   env,
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      config.WorkspaceVolumeName,
+					MountPath: config.WorkspaceMountPath,
+					ReadOnly:  false,
+				},
+			},
+		})
+	}
+
+	if pb.build != nil {
+		initContainers = append(initContainers, corev1.Container{
+			Name:       config.BuildInitContainerName,
+			Image:      safeStrUnwrap(pb.build.Image),
+			Command:    pb.build.Command,
+			Args:       pb.build.Args,
+			Env:        pb.build.Env,
+			WorkingDir: config.WorkspaceMountPath,
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      config.WorkspaceVolumeName,
+					MountPath: config.WorkspaceMountPath,
+					ReadOnly:  false,
+				},
+				{
+					Name:      config.BazelCacheVolumeName,
+					MountPath: config.BazelCacheMountPath,
+					ReadOnly:  false,
+				},
+			},
+		})
+	}
+
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%s-%s", pb.test.Name, pb.role, pb.name),
+			Namespace: pb.test.Namespace,
+			Labels: map[string]string{
+				config.LoadTestLabel:      pb.test.Name,
+				config.RoleLabel:          pb.role,
+				config.ComponentNameLabel: pb.name,
+			},
+		},
+		Spec: corev1.PodSpec{
+			NodeSelector: map[string]string{
+				"pool": pb.pool,
+			},
+			InitContainers: initContainers,
+			Containers: []corev1.Container{
+				{
+					Name:       config.RunContainerName,
+					Image:      safeStrUnwrap(pb.run.Image),
+					Command:    pb.run.Command,
+					Args:       pb.run.Args,
+					Env:        pb.run.Env,
+					WorkingDir: config.WorkspaceMountPath,
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      config.WorkspaceVolumeName,
+							MountPath: config.WorkspaceMountPath,
+							ReadOnly:  false,
+						},
+						{
+							Name:      config.BazelCacheVolumeName,
+							MountPath: config.BazelCacheMountPath,
+							ReadOnly:  false,
+						},
+					},
+				},
+			},
+			RestartPolicy: corev1.RestartPolicyNever,
+			Affinity: &corev1.Affinity{
+				PodAntiAffinity: &corev1.PodAntiAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+						{
+							LabelSelector: &metav1.LabelSelector{
+								MatchExpressions: []metav1.LabelSelectorRequirement{
+									{
+										Key:      config.LoadTestLabel,
+										Operator: metav1.LabelSelectorOpExists,
+									},
+								},
+							},
+							TopologyKey: "kubernetes.io/hostname",
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name: config.WorkspaceVolumeName,
+				},
+				{
+					Name: config.BazelCacheVolumeName,
+				},
+			},
+		},
+	}
+}
+
+// safeStrUnwrap accepts a string pointer, returning the dereferenced string or
+// an empty string if the pointer is nil.
+func safeStrUnwrap(strPtr *string) string {
+	if strPtr == nil {
+		return ""
+	}
+
+	return *strPtr
+}
