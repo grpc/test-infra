@@ -31,8 +31,6 @@ var _ = Describe("Defaults", func() {
 			ComponentNamespace: "component-default",
 			DriverPool:         "drivers",
 			WorkerPool:         "workers-8core",
-			DriverPort:         10000,
-			ServerPort:         10010,
 			CloneImage:         "gcr.io/grpc-fake-project/test-infra/clone",
 			ReadyImage:         "gcr.io/grpc-fake-project/test-infra/ready",
 			DriverImage:        "gcr.io/grpc-fake-project/test-infra/driver",
@@ -66,26 +64,6 @@ var _ = Describe("Defaults", func() {
 		It("returns an error when missing a worker pool", func() {
 			defaults.WorkerPool = ""
 			err := defaults.Validate()
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("returns an when the driver port is out of range", func() {
-			defaults.DriverPort = -1
-			err := defaults.Validate()
-			Expect(err).To(HaveOccurred())
-
-			defaults.DriverPort = 65536
-			err = defaults.Validate()
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("returns an when the server port is out of range", func() {
-			defaults.ServerPort = -1
-			err := defaults.Validate()
-			Expect(err).To(HaveOccurred())
-
-			defaults.ServerPort = 65536
-			err = defaults.Validate()
 			Expect(err).To(HaveOccurred())
 		})
 

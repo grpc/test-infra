@@ -36,14 +36,6 @@ type Defaults struct {
 	// components should be scheduled by default.
 	WorkerPool string `json:"workerPool"`
 
-	// DriverPort is the port through which the driver and workers
-	// communicate.
-	DriverPort int32 `json:"driverPort"`
-
-	// ServerPort is the port through which a server component accepts
-	// traffic from a client component.
-	ServerPort int32 `json:"serverPort"`
-
 	// CloneImage specifies the default container image to use for
 	// cloning Git repositories at a specific snapshot.
 	CloneImage string `json:"cloneImage"`
@@ -65,22 +57,12 @@ type Defaults struct {
 // value. If an issue is encountered, an error is returned. If the defaults are
 // valid, nil is returned.
 func (d *Defaults) Validate() error {
-	var tcpPortMax int32 = 65535
-
 	if d.DriverPool == "" {
 		return errors.New("missing driver pool")
 	}
 
 	if d.WorkerPool == "" {
 		return errors.New("missing worker pool")
-	}
-
-	if d.DriverPort < 0 || d.DriverPort > tcpPortMax {
-		return errors.Errorf("driver port is outside of TCP range: [0, %d]", tcpPortMax)
-	}
-
-	if d.ServerPort < 0 || d.ServerPort > tcpPortMax {
-		return errors.Errorf("server port is outside of TCP range: [0, %d]", tcpPortMax)
 	}
 
 	if d.CloneImage == "" {

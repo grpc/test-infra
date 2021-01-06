@@ -58,8 +58,9 @@ const (
 	// on a driver component.
 	DriverRole = "driver"
 
-	// DriverPort is the port through which the driver and workers
-	// communicate.
+	// DriverPort is the number of the port that the servers and clients expose
+	// for the driver to connect to. This connection allows the driver to send
+	// instructions and receive results from the servers and clients.
 	DriverPort = 10000
 
 	// LoadTestLabel is a label which contains the test's unique name.

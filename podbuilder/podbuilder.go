@@ -135,11 +135,11 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) *corev1.Pod {
 
 	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 
-	runContainer.Args = append(runContainer.Args, fmt.Sprintf("--driver_port=%d", pb.defaults.DriverPort))
+	runContainer.Args = append(runContainer.Args, fmt.Sprintf("--driver_port=%d", config.DriverPort))
 	runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
 		Name:          "driver",
 		Protocol:      corev1.ProtocolTCP,
-		ContainerPort: pb.defaults.DriverPort,
+		ContainerPort: config.DriverPort,
 	})
 
 	return pod
@@ -204,11 +204,11 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) *corev1.Pod {
 
 	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 
-	runContainer.Args = append(runContainer.Args, fmt.Sprintf("--driver_port=%d", pb.defaults.DriverPort))
+	runContainer.Args = append(runContainer.Args, fmt.Sprintf("--driver_port=%d", config.DriverPort))
 	runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
 		Name:          "driver",
 		Protocol:      corev1.ProtocolTCP,
-		ContainerPort: pb.defaults.DriverPort,
+		ContainerPort: config.DriverPort,
 	})
 
 	return pod

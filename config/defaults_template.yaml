@@ -1,9 +1,5 @@
 # See ./defaults.go for documentation on each field.
 
-driverPort: 10000
-
-serverPort: 10010
-
 driverPool: "{{ .DriverPool }}"
 
 workerPool: "{{ .WorkerPool }}"
