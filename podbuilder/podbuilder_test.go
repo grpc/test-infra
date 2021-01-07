@@ -89,26 +89,33 @@ var _ = Describe("PodBuilder", func() {
 		})
 
 		It("sets the namespace to match the test", func() {
-			pod := builder.PodForClient(client)
+			pod, err := builder.PodForClient(client)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Namespace).To(Equal(test.Namespace))
 		})
 
 		It("sets a label with the name of the load test", func() {
-			pod := builder.PodForClient(client)
+			pod, err := builder.PodForClient(client)
+			Expect(err).ToNot(HaveOccurred())
+
 			testName, ok := pod.ObjectMeta.Labels[config.LoadTestLabel]
 			Expect(ok).To(BeTrue())
 			Expect(testName).To(Equal(test.Name))
 		})
 
 		It("sets a label indicating it is a client", func() {
-			pod := builder.PodForClient(client)
+			pod, err := builder.PodForClient(client)
+			Expect(err).ToNot(HaveOccurred())
+
 			role, ok := pod.ObjectMeta.Labels[config.RoleLabel]
 			Expect(ok).To(BeTrue())
 			Expect(role).To(Equal(config.ClientRole))
 		})
 
 		It("sets a label with the name of the client", func() {
-			pod := builder.PodForClient(client)
+			pod, err := builder.PodForClient(client)
+			Expect(err).ToNot(HaveOccurred())
+
 			componentName, ok := pod.ObjectMeta.Labels[config.ComponentNameLabel]
 			Expect(ok).To(BeTrue())
 			Expect(componentName).To(Equal(*client.Name))
@@ -116,7 +123,10 @@ var _ = Describe("PodBuilder", func() {
 
 		It("sets node selector to match pool", func() {
 			client.Pool = optional.StringPtr("testing-pool")
-			pod := builder.PodForClient(client)
+
+			pod, err := builder.PodForClient(client)
+			Expect(err).ToNot(HaveOccurred())
+
 			Expect(pod.Spec.NodeSelector).ToNot(BeNil())
 			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*client.Pool))
 		})
@@ -127,7 +137,9 @@ var _ = Describe("PodBuilder", func() {
 				client.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				client.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.CloneInitContainerName))
 			})
@@ -135,7 +147,9 @@ var _ = Describe("PodBuilder", func() {
 			It("does not contain an init container named clone when clone instructions are not present", func() {
 				client.Clone = nil
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).ToNot(ContainElement(config.CloneInitContainerName))
 			})
@@ -145,7 +159,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				client.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -168,7 +183,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				client.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -191,7 +207,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				client.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -209,7 +226,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Build.Command = []string{"go"}
 				client.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.BuildInitContainerName))
 			})
@@ -217,7 +235,8 @@ var _ = Describe("PodBuilder", func() {
 			It("does not contain an init container named build when build instructions are not present", func() {
 				client.Build = nil
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).ToNot(ContainElement(config.BuildInitContainerName))
 			})
@@ -227,7 +246,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Build.Command = []string{"go"}
 				client.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.BuildInitContainerName))
 
@@ -240,7 +260,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Build.Command = []string{"go"}
 				client.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				buildContainer := kubehelpers.ContainerForName(config.BuildInitContainerName, pod.Spec.InitContainers)
@@ -258,7 +279,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Run.Command = []string{"go"}
 				client.Run.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
@@ -274,7 +296,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Run.Command = []string{"go"}
 				client.Run.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
@@ -287,7 +310,8 @@ var _ = Describe("PodBuilder", func() {
 				client.Run.Command = []string{"go"}
 				client.Run.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForClient(client)
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
@@ -299,7 +323,8 @@ var _ = Describe("PodBuilder", func() {
 			// Note: this is a simple test to ensure the anti-affinity is set.
 			// It does not confirm its properties are correct. This check is
 			// meant to guard against accidental deletions of anti-affinities.
-			pod := builder.PodForClient(client)
+			pod, err := builder.PodForClient(client)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Spec.Affinity).ToNot(BeNil())
 			Expect(pod.Spec.Affinity.PodAntiAffinity).ToNot((BeNil()))
 		})
@@ -313,26 +338,33 @@ var _ = Describe("PodBuilder", func() {
 		})
 
 		It("sets the namespace to match the test", func() {
-			pod := builder.PodForServer(server)
+			pod, err := builder.PodForServer(server)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Namespace).To(Equal(test.Namespace))
 		})
 
 		It("sets a label with the name of the load test", func() {
-			pod := builder.PodForServer(server)
+			pod, err := builder.PodForServer(server)
+			Expect(err).ToNot(HaveOccurred())
+
 			testName, ok := pod.ObjectMeta.Labels[config.LoadTestLabel]
 			Expect(ok).To(BeTrue())
 			Expect(testName).To(Equal(test.Name))
 		})
 
 		It("sets a label indicating it is a server", func() {
-			pod := builder.PodForServer(server)
+			pod, err := builder.PodForServer(server)
+			Expect(err).ToNot(HaveOccurred())
+
 			role, ok := pod.ObjectMeta.Labels[config.RoleLabel]
 			Expect(ok).To(BeTrue())
 			Expect(role).To(Equal(config.ServerRole))
 		})
 
 		It("sets a label with the name of the server", func() {
-			pod := builder.PodForServer(server)
+			pod, err := builder.PodForServer(server)
+			Expect(err).ToNot(HaveOccurred())
+
 			componentName, ok := pod.ObjectMeta.Labels[config.ComponentNameLabel]
 			Expect(ok).To(BeTrue())
 			Expect(componentName).To(Equal(*server.Name))
@@ -340,7 +372,9 @@ var _ = Describe("PodBuilder", func() {
 
 		It("sets node selector to match pool", func() {
 			server.Pool = optional.StringPtr("testing-pool")
-			pod := builder.PodForServer(server)
+
+			pod, err := builder.PodForServer(server)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Spec.NodeSelector).ToNot(BeNil())
 			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*server.Pool))
 		})
@@ -351,7 +385,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				server.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.CloneInitContainerName))
 			})
@@ -359,7 +394,8 @@ var _ = Describe("PodBuilder", func() {
 			It("does not contain an init container named clone when clone instructions are not present", func() {
 				server.Clone = nil
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).ToNot(ContainElement(config.CloneInitContainerName))
 			})
@@ -369,7 +405,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				server.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -392,7 +429,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				server.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -415,7 +453,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				server.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -433,7 +472,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Build.Command = []string{"go"}
 				server.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.BuildInitContainerName))
 			})
@@ -441,7 +481,8 @@ var _ = Describe("PodBuilder", func() {
 			It("does not contain an init container named build when build instructions are not present", func() {
 				server.Build = nil
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).ToNot(ContainElement(config.BuildInitContainerName))
 			})
@@ -451,7 +492,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Build.Command = []string{"go"}
 				server.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.BuildInitContainerName))
 
@@ -464,7 +506,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Build.Command = []string{"go"}
 				server.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				buildContainer := kubehelpers.ContainerForName(config.BuildInitContainerName, pod.Spec.InitContainers)
@@ -482,7 +525,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Run.Command = []string{"go"}
 				server.Run.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
@@ -498,7 +542,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Run.Command = []string{"go"}
 				server.Run.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
@@ -511,7 +556,8 @@ var _ = Describe("PodBuilder", func() {
 				server.Run.Command = []string{"go"}
 				server.Run.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForServer(server)
+				pod, err := builder.PodForServer(server)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
@@ -523,7 +569,8 @@ var _ = Describe("PodBuilder", func() {
 			// Note: this is a simple test to ensure the anti-affinity is set.
 			// It does not confirm its properties are correct. This check is
 			// meant to guard against accidental deletions of anti-affinities.
-			pod := builder.PodForServer(server)
+			pod, err := builder.PodForServer(server)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Spec.Affinity).ToNot(BeNil())
 			Expect(pod.Spec.Affinity.PodAntiAffinity).ToNot((BeNil()))
 		})
@@ -537,26 +584,32 @@ var _ = Describe("PodBuilder", func() {
 		})
 
 		It("sets the namespace to match the test", func() {
-			pod := builder.PodForDriver(driver)
+			pod, err := builder.PodForDriver(driver)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Namespace).To(Equal(test.Namespace))
 		})
 
 		It("sets a label with the name of the load test", func() {
-			pod := builder.PodForDriver(driver)
+			pod, err := builder.PodForDriver(driver)
+			Expect(err).ToNot(HaveOccurred())
+
 			testName, ok := pod.ObjectMeta.Labels[config.LoadTestLabel]
 			Expect(ok).To(BeTrue())
 			Expect(testName).To(Equal(test.Name))
 		})
 
 		It("sets a label indicating it is a driver", func() {
-			pod := builder.PodForDriver(driver)
+			pod, err := builder.PodForDriver(driver)
+			Expect(err).ToNot(HaveOccurred())
+
 			role, ok := pod.ObjectMeta.Labels[config.RoleLabel]
 			Expect(ok).To(BeTrue())
 			Expect(role).To(Equal(config.DriverRole))
 		})
 
 		It("sets a label with the name of the driver", func() {
-			pod := builder.PodForDriver(driver)
+			pod, err := builder.PodForDriver(driver)
+			Expect(err).ToNot(HaveOccurred())
 			componentName, ok := pod.ObjectMeta.Labels[config.ComponentNameLabel]
 			Expect(ok).To(BeTrue())
 			Expect(componentName).To(Equal(*driver.Name))
@@ -564,7 +617,10 @@ var _ = Describe("PodBuilder", func() {
 
 		It("sets node selector to match pool", func() {
 			driver.Pool = optional.StringPtr("testing-pool")
-			pod := builder.PodForDriver(driver)
+
+			pod, err := builder.PodForDriver(driver)
+			Expect(err).ToNot(HaveOccurred())
+
 			Expect(pod.Spec.NodeSelector).ToNot(BeNil())
 			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*driver.Pool))
 		})
@@ -575,7 +631,8 @@ var _ = Describe("PodBuilder", func() {
 				driver.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				driver.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.CloneInitContainerName))
 			})
@@ -583,7 +640,8 @@ var _ = Describe("PodBuilder", func() {
 			It("does not contain an init container named clone when clone instructions are not present", func() {
 				driver.Clone = nil
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).ToNot(ContainElement(config.CloneInitContainerName))
 			})
@@ -593,7 +651,8 @@ var _ = Describe("PodBuilder", func() {
 				driver.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				driver.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -616,7 +675,8 @@ var _ = Describe("PodBuilder", func() {
 				driver.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				driver.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -639,7 +699,8 @@ var _ = Describe("PodBuilder", func() {
 				driver.Clone.Repo = optional.StringPtr("https://github.com/grpc/test-infra.git")
 				driver.Clone.GitRef = optional.StringPtr("master")
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				cloneContainer := kubehelpers.ContainerForName(config.CloneInitContainerName, pod.Spec.InitContainers)
@@ -657,7 +718,8 @@ var _ = Describe("PodBuilder", func() {
 				driver.Build.Command = []string{"go"}
 				driver.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.BuildInitContainerName))
 			})
@@ -665,7 +727,8 @@ var _ = Describe("PodBuilder", func() {
 			It("does not contain an init container named build when build instructions are not present", func() {
 				driver.Build = nil
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).ToNot(ContainElement(config.BuildInitContainerName))
 			})
@@ -675,7 +738,8 @@ var _ = Describe("PodBuilder", func() {
 				driver.Build.Command = []string{"go"}
 				driver.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 				Expect(getNames(pod.Spec.InitContainers)).To(ContainElement(config.BuildInitContainerName))
 
@@ -688,7 +752,8 @@ var _ = Describe("PodBuilder", func() {
 				driver.Build.Command = []string{"go"}
 				driver.Build.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.InitContainers).ToNot(BeEmpty())
 
 				buildContainer := kubehelpers.ContainerForName(config.BuildInitContainerName, pod.Spec.InitContainers)
@@ -706,7 +771,8 @@ var _ = Describe("PodBuilder", func() {
 				driver.Run.Command = []string{"go"}
 				driver.Run.Args = []string{"run", "main.go"}
 
-				pod := builder.PodForDriver(driver)
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
@@ -722,7 +788,8 @@ var _ = Describe("PodBuilder", func() {
 			// Note: this is a simple test to ensure the anti-affinity is set.
 			// It does not confirm its properties are correct. This check is
 			// meant to guard against accidental deletions of anti-affinities.
-			pod := builder.PodForDriver(driver)
+			pod, err := builder.PodForDriver(driver)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Spec.Affinity).ToNot(BeNil())
 			Expect(pod.Spec.Affinity.PodAntiAffinity).ToNot((BeNil()))
 		})

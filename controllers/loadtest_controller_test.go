@@ -172,19 +172,23 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
+		var err error
 		for i := range testSpec.Servers {
-			pod = builder.PodForServer(&testSpec.Servers[i])
+			pod, err = builder.PodForServer(&testSpec.Servers[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 		}
 		for i := range testSpec.Clients {
-			pod = builder.PodForClient(&testSpec.Clients[i])
+			pod, err = builder.PodForClient(&testSpec.Clients[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
 
 		}
 		if testSpec.Driver != nil {
-			pod = builder.PodForDriver(testSpec.Driver)
+			pod, err = builder.PodForDriver(testSpec.Driver)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 		}
@@ -225,19 +229,23 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
+		var err error
 		for i := range testSpec.Servers {
-			pod = builder.PodForServer(&testSpec.Servers[i])
+			pod, err = builder.PodForServer(&testSpec.Servers[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 		}
 		for i := range testSpec.Clients {
-			pod = builder.PodForClient(&testSpec.Clients[i])
+			pod, err = builder.PodForClient(&testSpec.Clients[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 
 		}
 		if testSpec.Driver != nil {
-			pod = builder.PodForDriver(testSpec.Driver)
+			pod, err = builder.PodForDriver(testSpec.Driver)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
 		}
@@ -278,19 +286,23 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
+		var err error
 		for i := range testSpec.Servers {
-			pod = builder.PodForServer(&testSpec.Servers[i])
+			pod, err = builder.PodForServer(&testSpec.Servers[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, errorState)).To(Succeed())
 		}
 		for i := range testSpec.Clients {
-			pod = builder.PodForClient(&testSpec.Clients[i])
+			pod, err = builder.PodForClient(&testSpec.Clients[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 
 		}
 		if testSpec.Driver != nil {
-			pod = builder.PodForDriver(testSpec.Driver)
+			pod, err = builder.PodForDriver(testSpec.Driver)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 		}
@@ -326,19 +338,23 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
+		var err error
 		for i := range testSpec.Servers {
-			pod = builder.PodForServer(&testSpec.Servers[i])
+			pod, err = builder.PodForServer(&testSpec.Servers[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 		}
 		for i := range testSpec.Clients {
-			pod = builder.PodForClient(&testSpec.Clients[i])
+			pod, err = builder.PodForClient(&testSpec.Clients[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 
 		}
 		if testSpec.Driver != nil {
-			pod = builder.PodForDriver(testSpec.Driver)
+			pod, err = builder.PodForDriver(testSpec.Driver)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, runningState)).To(Succeed())
 		}
@@ -376,19 +392,23 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
+		var err error
 		for i := range testSpec.Servers {
-			pod = builder.PodForServer(&testSpec.Servers[i])
+			pod, err = builder.PodForServer(&testSpec.Servers[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, successState)).To(Succeed())
 		}
 		for i := range testSpec.Clients {
-			pod = builder.PodForClient(&testSpec.Clients[i])
+			pod, err = builder.PodForClient(&testSpec.Clients[i])
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, successState)).To(Succeed())
 
 		}
 		if testSpec.Driver != nil {
-			pod = builder.PodForDriver(testSpec.Driver)
+			pod, err = builder.PodForDriver(testSpec.Driver)
+			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, successState)).To(Succeed())
 		}

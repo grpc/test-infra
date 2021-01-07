@@ -188,7 +188,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	missingPods := status.CheckMissingPods(test, ownedPods)
 	builder := podbuilder.New(r.Defaults, test)
 
-	makePod := func(pod *corev1.Pod) (*ctrl.Result, error) {
+	createPod := func(pod *corev1.Pod) (*ctrl.Result, error) {
 		if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
 			log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
 			return &ctrl.Result{}, err
@@ -203,23 +203,101 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	for i := range missingPods.Servers {
-		result, err := makePod(builder.PodForServer(&missingPods.Servers[i]))
+		logWithServer := log.WithValues("server", missingPods.Servers[i])
+
+		pod, err := builder.PodForServer(&missingPods.Servers[i])
+		if err != nil {
+			logWithServer.Error(err, "failed to construct a pod struct for supplied server struct")
+
+			test.Status.State = grpcv1.Errored
+			test.Status.Reason = grpcv1.ConfigurationError
+			test.Status.Message = fmt.Sprintf("failed to construct a pod for server at index %d: %v", i, err)
+
+			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				logWithServer.Error(updateErr, "failed to update status after failure to construct a pod for server")
+			}
+
+			return ctrl.Result{}, err
+		}
+
+		result, err := createPod(pod)
 		if result != nil {
-			log.Error(err, "failed to initialize server")
+			logWithServer.Error(err, "failed to create pod for server")
+
+			test.Status.State = grpcv1.Errored
+			test.Status.Reason = grpcv1.KubernetesError
+			test.Status.Message = fmt.Sprintf("failed to create pod for server at index %d: %v", i, err)
+
+			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				logWithServer.Error(updateErr, "failed to update status after failure to create pod for server")
+			}
+
 			return *result, err
 		}
 	}
 	for i := range missingPods.Clients {
-		result, err := makePod(builder.PodForClient(&missingPods.Clients[i]))
+		logWithClient := log.WithValues("client", missingPods.Clients[i])
+
+		pod, err := builder.PodForClient(&missingPods.Clients[i])
+		if err != nil {
+			logWithClient.Error(err, "failed to construct a pod struct for supplied client struct")
+
+			test.Status.State = grpcv1.Errored
+			test.Status.Reason = grpcv1.ConfigurationError
+			test.Status.Message = fmt.Sprintf("failed to construct a pod for client at index %d: %v", i, err)
+
+			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				logWithClient.Error(updateErr, "failed to update status after failure to construct a pod for client")
+			}
+
+			return ctrl.Result{}, err
+		}
+
+		result, err := createPod(pod)
 		if result != nil {
-			log.Error(err, "failed to initalize client")
+			logWithClient.Error(err, "failed to create pod for client")
+
+			test.Status.State = grpcv1.Errored
+			test.Status.Reason = grpcv1.KubernetesError
+			test.Status.Message = fmt.Sprintf("failed to create pod for client at index %d: %v", i, err)
+
+			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				logWithClient.Error(updateErr, "failed to update status after failure to create pod for client")
+			}
+
 			return *result, err
 		}
 	}
 	if missingPods.Driver != nil {
-		result, err := makePod(builder.PodForDriver(missingPods.Driver))
+		logWithDriver := log.WithValues("driver", missingPods.Driver)
+
+		pod, err := builder.PodForDriver(missingPods.Driver)
+		if err != nil {
+			logWithDriver.Error(err, "failed to construct a pod struct for supplied driver struct")
+
+			test.Status.State = grpcv1.Errored
+			test.Status.Reason = grpcv1.ConfigurationError
+			test.Status.Message = fmt.Sprintf("failed to construct a pod for driver: %v", err)
+
+			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				logWithDriver.Error(updateErr, "failed to update status after failure to construct a pod for driver")
+			}
+
+			return ctrl.Result{}, err
+		}
+
+		result, err := createPod(pod)
 		if result != nil {
-			log.Error(err, "failed to initialize driver")
+			logWithDriver.Error(err, "failed to create pod for driver")
+
+			test.Status.State = grpcv1.Errored
+			test.Status.Reason = grpcv1.KubernetesError
+			test.Status.Message = fmt.Sprintf("failed to create pod for driver: %v", err)
+
+			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				logWithDriver.Error(updateErr, "failed to update status after failure to create pod for driver")
+			}
+
 			return *result, err
 		}
 	}

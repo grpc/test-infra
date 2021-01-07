@@ -81,8 +81,11 @@ var nodes = func() []*corev1.Node {
 
 func newDefaults() *config.Defaults {
 	return &config.Defaults{
-		DriverPool:  "drivers",
-		WorkerPool:  "workers-8core",
+		DefaultPoolLabels: &config.PoolLabelMap{
+			Driver: "default-driver-pool",
+			Client: "default-client-pool",
+			Server: "default-server-pool",
+		},
 		CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
 		ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
 		DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",

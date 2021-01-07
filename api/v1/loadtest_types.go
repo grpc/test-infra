@@ -365,6 +365,9 @@ var ContainerError = "ContainerError"
 // set on a load test.
 var FailedSettingDefaultsError = "FailedSettingDefaults"
 
+// ConfigurationError is the reason string when a LoadTest spec is invalid.
+var ConfigurationError = "ConfigurationError"
+
 // PodsMissing is the reason string when the load test is missing pods and is still
 // in the Initializing state.
 var PodsMissing = "PodsMissing"
