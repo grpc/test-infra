@@ -28,9 +28,6 @@ RUN apt-get update && apt-get install -y \
 # cmake >=3.6 needed to build grpc_csharp_ext
 RUN apt-get update && apt-get install -y cmake && apt-get clean
 
-ENV MSBUILD_CONFIG=Release
-ENV CONFIG=opt
-
 # Currently C# is little tricky to build with a single command, so we inject a script that can take care of the build.
 RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts

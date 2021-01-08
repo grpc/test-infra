@@ -15,13 +15,12 @@
 
 set -ex
 
-bash /src/workspace/tools/run_tests/helper_scripts/pre_build_csharp.sh
-
-cd /src/workspace/cmake/build
-
+# Build C# native extension with cmake
+mkdir -p cmake/build
+pushd cmake/build
+cmake -DgRPC_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release ../..
 make grpc_csharp_ext
+popd
 
-cd /src/workspace/src/csharp
-# Use "dotnet publish" to get a self-contained QpsWorker with all its
-# dependencies in a single directory.
+cd src/csharp
 dotnet publish Grpc.IntegrationTesting.QpsWorker/ -c Release -f netcoreapp2.1 -o ../../../qps_worker

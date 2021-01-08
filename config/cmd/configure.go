@@ -37,9 +37,9 @@ import (
 // DefaultsData contains the values for fields that are accessible by the
 // defaults template file.
 type DefaultsData struct {
-	Version         string
-	InitImagePrefix string
-	ImagePrefix     string
+	Version          string
+	InitImagePrefix  string
+	ImagePrefix      string
 	BuildImagePrefix string
 }
 
