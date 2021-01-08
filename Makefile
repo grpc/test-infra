@@ -2,9 +2,12 @@
 TEST_INFRA_VERSION ?= "latest"
 # Version of the gRPC driver
 DRIVER_VERSION ?= "master"
-# Prefix for all images used as init containers, enabling use with registries
+# Prefix for all images used as clone and ready containers, enabling use with registries
 # other than DockerHub
 INIT_IMAGE_PREFIX ?= ""
+# Prefix for all images used as build containers, enabling use with registries
+# other than DockerHub
+BUILD_IMAGE_PREFIX ?= ""
 # Prefix for all images used as runtime containers, enabling use with registries
 # other than DockerHub
 IMAGE_PREFIX ?= ""
@@ -165,11 +168,11 @@ push-python-image:
 
 # Build the csharp build image
 csharp-image:
-	docker build -t ${INIT_IMAGE_PREFIX}build/csharp:${TEST_INFRA_VERSION} containers/init/build/csharp
+	docker build -t ${BUILD_IMAGE_PREFIX}csharp:${TEST_INFRA_VERSION} containers/init/build/csharp
 
 # Push the csharp build image to a docker registry
 push-csharp-image:
-	docker push ${INIT_IMAGE_PREFIX}build/csharp:${TEST_INFRA_VERSION}
+	docker push ${BUILD_IMAGE_PREFIX}csharp:${TEST_INFRA_VERSION}
 
 # Build all init container and runtime container images
 all-images: \
