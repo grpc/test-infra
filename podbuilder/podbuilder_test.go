@@ -131,6 +131,28 @@ var _ = Describe("PodBuilder", func() {
 			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*client.Pool))
 		})
 
+		It("sets node selector to default pool when applicable", func() {
+			client.Pool = nil
+
+			defaultPool := "default-test-pool"
+			builder.defaults.DefaultPoolLabels.Client = defaultPool
+
+			pod, err := builder.PodForClient(client)
+			Expect(err).ToNot(HaveOccurred())
+
+			defaultPoolValue, defaultPoolPresent := pod.Spec.NodeSelector[defaultPool]
+			Expect(defaultPoolPresent).To(BeTrue())
+			Expect(defaultPoolValue).To(Equal("true"))
+		})
+
+		It("errors when no pool is specified and no defaults are set", func() {
+			client.Pool = nil
+			builder.defaults.DefaultPoolLabels = nil
+
+			_, err := builder.PodForClient(client)
+			Expect(err).To(HaveOccurred())
+		})
+
 		Context("clone init container", func() {
 			It("contains an init container named clone when clone instructions are present", func() {
 				client.Clone = new(grpcv1.Clone)
@@ -379,6 +401,28 @@ var _ = Describe("PodBuilder", func() {
 			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*server.Pool))
 		})
 
+		It("sets node selector to default pool when applicable", func() {
+			server.Pool = nil
+
+			defaultPool := "default-test-pool"
+			builder.defaults.DefaultPoolLabels.Server = defaultPool
+
+			pod, err := builder.PodForServer(server)
+			Expect(err).ToNot(HaveOccurred())
+
+			defaultPoolValue, defaultPoolPresent := pod.Spec.NodeSelector[defaultPool]
+			Expect(defaultPoolPresent).To(BeTrue())
+			Expect(defaultPoolValue).To(Equal("true"))
+		})
+
+		It("errors when no pool is specified and no defaults are set", func() {
+			server.Pool = nil
+			builder.defaults.DefaultPoolLabels = nil
+
+			_, err := builder.PodForServer(server)
+			Expect(err).To(HaveOccurred())
+		})
+
 		Context("clone init container", func() {
 			It("contains an init container named clone when clone instructions are present", func() {
 				server.Clone = new(grpcv1.Clone)
@@ -623,6 +667,28 @@ var _ = Describe("PodBuilder", func() {
 
 			Expect(pod.Spec.NodeSelector).ToNot(BeNil())
 			Expect(pod.Spec.NodeSelector["pool"]).To(Equal(*driver.Pool))
+		})
+
+		It("sets node selector to default pool when applicable", func() {
+			driver.Pool = nil
+
+			defaultPool := "default-test-pool"
+			builder.defaults.DefaultPoolLabels.Driver = defaultPool
+
+			pod, err := builder.PodForDriver(driver)
+			Expect(err).ToNot(HaveOccurred())
+
+			defaultPoolValue, defaultPoolPresent := pod.Spec.NodeSelector[defaultPool]
+			Expect(defaultPoolPresent).To(BeTrue())
+			Expect(defaultPoolValue).To(Equal("true"))
+		})
+
+		It("errors when no pool is specified and no defaults are set", func() {
+			driver.Pool = nil
+			builder.defaults.DefaultPoolLabels = nil
+
+			_, err := builder.PodForDriver(driver)
+			Expect(err).To(HaveOccurred())
 		})
 
 		Context("clone init container", func() {
