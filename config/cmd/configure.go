@@ -38,8 +38,6 @@ import (
 // defaults template file.
 type DefaultsData struct {
 	Version         string
-	DriverPool      string
-	WorkerPool      string
 	InitImagePrefix string
 	ImagePrefix     string
 }
@@ -73,16 +71,6 @@ func main() {
 
 	flag.StringVar(&data.Version, "version", "latest", "version of all docker images to use")
 
-	flag.StringVar(&data.DriverPool, "driver-pool", "", `pool where drivers are scheduled by default (required)
-
-Drivers will be scheduled by default on nodes with a "pool" label that
-matches this -driver-pool flag.`)
-
-	flag.StringVar(&data.WorkerPool, "worker-pool", "", `pool where workers are scheduled by default (required)
-
-Workers will be scheduled by default on nodes with a "pool" label that
-matches this -worker-pool flag.`)
-
 	flag.StringVar(&data.InitImagePrefix, "init-image-prefix", "", `prefix to append to init container images (optional)
 
 This -init-image-prefix flag allows a specific prefix to apply to all
@@ -99,14 +87,6 @@ container images that are not used as init containers.`)
 
 	if flag.NArg() != 2 {
 		exitWithErrorf(1, true, "missing required arguments")
-	}
-
-	if data.DriverPool == "" {
-		exitWithErrorf(1, true, "missing required -driver-pool flag")
-	}
-
-	if data.WorkerPool == "" {
-		exitWithErrorf(1, true, "missing required -worker-pool flag")
 	}
 
 	templ, err := template.ParseFiles(flag.Arg(0))
