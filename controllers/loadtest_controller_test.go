@@ -28,6 +28,7 @@ import (
 	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/podbuilder"
 	"github.com/grpc/test-infra/status"
+	"github.com/grpc/test-infra/testutil"
 )
 
 // createPod creates a pod resource, given a pod pointer and a test pointer.
@@ -58,7 +59,7 @@ var _ = Describe("LoadTest controller", func() {
 	var namespacedName types.NamespacedName
 
 	BeforeEach(func() {
-		test = newLoadTest()
+		test = testutil.NewLoadTest(1, 1)
 		namespacedName = types.NamespacedName{
 			Name:      test.Name,
 			Namespace: test.Namespace,

@@ -29,6 +29,7 @@ import (
 	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/kubehelpers"
 	"github.com/grpc/test-infra/optional"
+	"github.com/grpc/test-infra/testutil"
 )
 
 // getNames accepts a slice of objects with a Name field. It returns the names
@@ -75,7 +76,7 @@ var _ = Describe("PodBuilder", func() {
 	var builder *PodBuilder
 
 	BeforeEach(func() {
-		test = newLoadTest()
+		test = testutil.NewLoadTest(1, 1)
 		testSpec = &test.Spec
 		defaults = newDefaults()
 		builder = New(defaults, test)

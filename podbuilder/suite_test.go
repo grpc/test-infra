@@ -32,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
-	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
 	// +kubebuilder:scaffold:imports
 )
@@ -101,102 +100,6 @@ func newDefaults() *config.Defaults {
 				BuildImage: "java:jdk8",
 				RunImage:   "gcr.io/grpc-fake-project/test-infra/java",
 			},
-		},
-	}
-}
-
-func newLoadTest() *grpcv1.LoadTest {
-	cloneImage := "docker.pkg.github.com/grpc/test-infra/clone"
-	cloneRepo := "https://github.com/grpc/grpc.git"
-	cloneGitRef := "master"
-
-	buildImage := "l.gcr.io/google/bazel:latest"
-	buildCommand := []string{"bazel"}
-	buildArgs := []string{"build", "//test/cpp/qps:qps_worker"}
-
-	driverImage := "docker.pkg.github.com/grpc/test-infra/driver"
-	runImage := "docker.pkg.github.com/grpc/test-infra/cxx"
-	runCommand := []string{"bazel-bin/test/cpp/qps/qps_worker"}
-
-	clientRunArgs := []string{"--driver_port=10000"}
-	serverRunArgs := append(clientRunArgs, "--server_port=10010")
-
-	bigQueryTable := "grpc-testing.e2e_benchmark.foobarbuzz"
-
-	driverPool := "drivers"
-	workerPool := "workers-8core"
-
-	clientComponentName := "client-1"
-	serverComponentName := "server-1"
-	driverComponentName := "driver-1"
-
-	return &grpcv1.LoadTest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-loadtest",
-			Namespace: "default",
-		},
-
-		Spec: grpcv1.LoadTestSpec{
-			Driver: &grpcv1.Driver{
-				Name:     &driverComponentName,
-				Language: "cxx",
-				Pool:     &driverPool,
-				Run: grpcv1.Run{
-					Image: &driverImage,
-				},
-			},
-
-			Servers: []grpcv1.Server{
-				{
-					Name:     &serverComponentName,
-					Language: "cxx",
-					Pool:     &workerPool,
-					Clone: &grpcv1.Clone{
-						Image:  &cloneImage,
-						Repo:   &cloneRepo,
-						GitRef: &cloneGitRef,
-					},
-					Build: &grpcv1.Build{
-						Image:   &buildImage,
-						Command: buildCommand,
-						Args:    buildArgs,
-					},
-					Run: grpcv1.Run{
-						Image:   &runImage,
-						Command: runCommand,
-						Args:    serverRunArgs,
-					},
-				},
-			},
-
-			Clients: []grpcv1.Client{
-				{
-					Name:     &clientComponentName,
-					Language: "cxx",
-					Pool:     &workerPool,
-					Clone: &grpcv1.Clone{
-						Image:  &cloneImage,
-						Repo:   &cloneRepo,
-						GitRef: &cloneGitRef,
-					},
-					Build: &grpcv1.Build{
-						Image:   &buildImage,
-						Command: buildCommand,
-						Args:    buildArgs,
-					},
-					Run: grpcv1.Run{
-						Image:   &runImage,
-						Command: runCommand,
-						Args:    clientRunArgs,
-					},
-				},
-			},
-
-			Results: &grpcv1.Results{
-				BigQueryTable: &bigQueryTable,
-			},
-
-			ScenariosJSON: "{\"scenarios\": []}",
 		},
 	}
 }

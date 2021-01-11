@@ -23,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -42,7 +41,6 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
-	"github.com/grpc/test-infra/optional"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -103,76 +101,6 @@ func newDefaults() *config.Defaults {
 				RunImage:   "gcr.io/grpc-fake-project/test-infra/java",
 			},
 		},
-	}
-}
-
-func newLoadTest() *grpcv1.LoadTest {
-	return &grpcv1.LoadTest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      uuid.New().String(),
-			Namespace: corev1.NamespaceDefault,
-		},
-		Spec: grpcv1.LoadTestSpec{
-			TimeoutSeconds: 300,
-			TTLSeconds:     600,
-			Driver: &grpcv1.Driver{
-				Name:     optional.StringPtr("driver"),
-				Language: "cxx",
-				Pool:     optional.StringPtr("test-pool"),
-				Run: grpcv1.Run{
-					Image: optional.StringPtr("gcr.io/grpc-test-example/driver:v1"),
-				},
-			},
-			Servers: []grpcv1.Server{
-				{
-					Name:     optional.StringPtr("server-1"),
-					Language: "go",
-					Pool:     optional.StringPtr("test-pool"),
-					Clone: &grpcv1.Clone{
-						Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
-						Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
-						GitRef: optional.StringPtr("master"),
-					},
-					Build: &grpcv1.Build{
-						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-						Command: []string{"go"},
-						Args:    []string{"build", "-o", "server", "./server/main.go"},
-					},
-					Run: grpcv1.Run{
-						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-						Command: []string{"./server"},
-						Args:    []string{"-verbose"},
-					},
-				},
-			},
-			Clients: []grpcv1.Client{
-				{
-					Name:     optional.StringPtr("client-1"),
-					Language: "go",
-					Pool:     optional.StringPtr("test-pool"),
-					Clone: &grpcv1.Clone{
-						Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
-						Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
-						GitRef: optional.StringPtr("master"),
-					},
-					Build: &grpcv1.Build{
-						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-						Command: []string{"go"},
-						Args:    []string{"build", "-o", "client", "./client/main.go"},
-					},
-					Run: grpcv1.Run{
-						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-						Command: []string{"./client"},
-						Args:    []string{"-verbose"},
-					},
-				},
-			},
-			Results: &grpcv1.Results{
-				BigQueryTable: optional.StringPtr("example-dataset.example-table"),
-			},
-			ScenariosJSON: "{\"scenarios\": []}",
-		},
-		Status: grpcv1.LoadTestStatus{},
 	}
 }
 
