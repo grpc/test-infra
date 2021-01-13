@@ -1,8 +1,9 @@
 # See ./defaults.go for documentation on each field.
 
-driverPool: "{{ .DriverPool }}"
-
-workerPool: "{{ .WorkerPool }}"
+defaultPoolLabels:
+  client: default-client-pool
+  driver: default-driver-pool
+  server: default-server-pool
 
 cloneImage: "{{ .InitImagePrefix }}clone:{{ .Version }}"
 

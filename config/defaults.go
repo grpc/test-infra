@@ -28,13 +28,10 @@ type Defaults struct {
 	// this is not the namespace for the manager.
 	ComponentNamespace string `json:"componentNamespace"`
 
-	// DriverPool is the name of a pool where driver components should
-	// be scheduled by default.
-	DriverPool string `json:"driverPool"`
-
-	// WorkerPool is the name of a pool where server and client
-	// components should be scheduled by default.
-	WorkerPool string `json:"workerPool"`
+	// DefaultPoolLabels map a client, driver and server to a label on a node.
+	// Any node with a matching key and a value of "true" may be used as a
+	// default pool.
+	DefaultPoolLabels *PoolLabelMap `json:"defaultPoolLabels,omitempty"`
 
 	// CloneImage specifies the default container image to use for
 	// cloning Git repositories at a specific snapshot.
@@ -57,14 +54,6 @@ type Defaults struct {
 // value. If an issue is encountered, an error is returned. If the defaults are
 // valid, nil is returned.
 func (d *Defaults) Validate() error {
-	if d.DriverPool == "" {
-		return errors.New("missing driver pool")
-	}
-
-	if d.WorkerPool == "" {
-		return errors.New("missing worker pool")
-	}
-
 	if d.CloneImage == "" {
 		return errors.New("missing image for clone init container")
 	}
@@ -181,10 +170,6 @@ func (d *Defaults) setDriverDefaults(im *imageMap, testSpec *grpcv1.LoadTestSpec
 		driver.Run.Image = &d.DriverImage
 	}
 
-	if driver.Pool == nil {
-		driver.Pool = &d.DriverPool
-	}
-
 	driver.Name = unwrapStrOrUUID(driver.Name)
 	d.setCloneOrDefault(driver.Clone)
 
@@ -206,10 +191,6 @@ func (d *Defaults) setClientDefaults(im *imageMap, client *grpcv1.Client) error 
 		return errors.New("cannot set defaults on a nil client")
 	}
 
-	if client.Pool == nil {
-		client.Pool = &d.WorkerPool
-	}
-
 	client.Name = unwrapStrOrUUID(client.Name)
 	d.setCloneOrDefault(client.Clone)
 
@@ -229,10 +210,6 @@ func (d *Defaults) setClientDefaults(im *imageMap, client *grpcv1.Client) error 
 func (d *Defaults) setServerDefaults(im *imageMap, server *grpcv1.Server) error {
 	if server == nil {
 		return errors.New("cannot set defaults on a nil server")
-	}
-
-	if server.Pool == nil {
-		server.Pool = &d.WorkerPool
 	}
 
 	server.Name = unwrapStrOrUUID(server.Name)
@@ -280,4 +257,22 @@ type LanguageDefault struct {
 	// necessary interpreters or dependencies to run or use the output
 	// of the build image.
 	RunImage string `json:"runImage"`
+}
+
+// PoolLabelMap maps a client, driver or server to a string. This string should
+// be the key of a label on a node where the client, driver or server pods may
+// run. The value of the label should be the string "true".
+//
+// For example, the Driver field may be set to "default-driver-pool". This means
+// the driver would run on any node with a "default-driver-pool" label set to
+// a value of "true".
+type PoolLabelMap struct {
+	// Client maps a client to the key of a label where the client may run.
+	Client string `json:"client"`
+
+	// Driver maps a driver to the key of a label where the driver may run.
+	Driver string `json:"driver"`
+
+	// Server maps a server to the key of a label where the server may run.
+	Server string `json:"server"`
 }

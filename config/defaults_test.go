@@ -29,11 +29,14 @@ var _ = Describe("Defaults", func() {
 	BeforeEach(func() {
 		defaults = &Defaults{
 			ComponentNamespace: "component-default",
-			DriverPool:         "drivers",
-			WorkerPool:         "workers-8core",
-			CloneImage:         "gcr.io/grpc-fake-project/test-infra/clone",
-			ReadyImage:         "gcr.io/grpc-fake-project/test-infra/ready",
-			DriverImage:        "gcr.io/grpc-fake-project/test-infra/driver",
+			DefaultPoolLabels: &PoolLabelMap{
+				Client: "default-client-pool",
+				Driver: "default-driver-pool",
+				Server: "default-server-pool",
+			},
+			CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
+			ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
+			DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
 			Languages: []LanguageDefault{
 				{
 					Language:   "cxx",
@@ -55,18 +58,6 @@ var _ = Describe("Defaults", func() {
 	})
 
 	Describe("Validate", func() {
-		It("returns an error when missing a driver pool", func() {
-			defaults.DriverPool = ""
-			err := defaults.Validate()
-			Expect(err).To(HaveOccurred())
-		})
-
-		It("returns an error when missing a worker pool", func() {
-			defaults.WorkerPool = ""
-			err := defaults.Validate()
-			Expect(err).To(HaveOccurred())
-		})
-
 		It("returns an error when missing the clone image", func() {
 			defaults.CloneImage = ""
 			err := defaults.Validate()
@@ -171,14 +162,6 @@ var _ = Describe("Defaults", func() {
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(driver.Name).ToNot(BeNil())
-			})
-
-			It("sets default pool when unspecified", func() {
-				driver.Pool = nil
-				err := defaults.SetLoadTestDefaults(loadtest)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(driver.Pool).ToNot(BeNil())
-				Expect(*driver.Pool).To(Equal(defaults.DriverPool))
 			})
 
 			It("does not override pool when specified", func() {
@@ -288,14 +271,6 @@ var _ = Describe("Defaults", func() {
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(server.Name).ToNot(BeNil())
-			})
-
-			It("sets default pool when unspecified", func() {
-				server.Pool = nil
-				err := defaults.SetLoadTestDefaults(loadtest)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(server.Pool).ToNot(BeNil())
-				Expect(*server.Pool).To(Equal(defaults.WorkerPool))
 			})
 
 			It("does not override pool when specified", func() {
@@ -419,14 +394,6 @@ var _ = Describe("Defaults", func() {
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(client.Name).ToNot(BeNil())
-			})
-
-			It("sets default pool when unspecified", func() {
-				client.Pool = nil
-				err := defaults.SetLoadTestDefaults(loadtest)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(client.Pool).ToNot(BeNil())
-				Expect(*client.Pool).To(Equal(defaults.WorkerPool))
 			})
 
 			It("does not override pool when specified", func() {

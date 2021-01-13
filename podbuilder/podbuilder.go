@@ -19,13 +19,18 @@ package podbuilder
 import (
 	"fmt"
 
-	"github.com/grpc/test-infra/kubehelpers"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
 )
+
+// errNoPool is the base error when a PodBuilder cannot determine the pool for
+// a pod.
+var errNoPool = errors.New("pool is missing")
 
 // addReadyInitContainer configures a ready init container. This container is
 // meant to wait for workers to become ready, writing the IP address and port of
@@ -123,7 +128,7 @@ func New(defaults *config.Defaults, test *grpcv1.LoadTest) *PodBuilder {
 }
 
 // PodForClient accepts a pointer to a client and returns a pod for it.
-func (pb *PodBuilder) PodForClient(client *grpcv1.Client) *corev1.Pod {
+func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	pb.name = safeStrUnwrap(client.Name)
 	pb.role = config.ClientRole
 	pb.pool = safeStrUnwrap(client.Pool)
@@ -132,6 +137,16 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) *corev1.Pod {
 	pb.run = &client.Run
 
 	pod := pb.newPod()
+
+	nodeSelector := make(map[string]string)
+	if client.Pool != nil {
+		nodeSelector["pool"] = *client.Pool
+	} else if pb.defaults.DefaultPoolLabels != nil && pb.defaults.DefaultPoolLabels.Client != "" {
+		nodeSelector[pb.defaults.DefaultPoolLabels.Client] = "true"
+	} else {
+		return nil, errors.Wrapf(errNoPool, "could not determine pool for client %q (no explicit value or default)", pb.name)
+	}
+	pod.Spec.NodeSelector = nodeSelector
 
 	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 
@@ -142,11 +157,11 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) *corev1.Pod {
 		ContainerPort: config.DriverPort,
 	})
 
-	return pod
+	return pod, nil
 }
 
 // PodForDriver accepts a pointer to a driver and returns a pod for it.
-func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) *corev1.Pod {
+func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 	pb.name = safeStrUnwrap(driver.Name)
 	pb.role = config.DriverRole
 	pb.pool = safeStrUnwrap(driver.Pool)
@@ -155,6 +170,16 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) *corev1.Pod {
 	pb.run = &driver.Run
 
 	pod := pb.newPod()
+
+	nodeSelector := make(map[string]string)
+	if driver.Pool != nil {
+		nodeSelector["pool"] = *driver.Pool
+	} else if pb.defaults.DefaultPoolLabels != nil && pb.defaults.DefaultPoolLabels.Driver != "" {
+		nodeSelector[pb.defaults.DefaultPoolLabels.Driver] = "true"
+	} else {
+		return nil, errors.Wrapf(errNoPool, "could not determine pool for driver (no explicit value or default)")
+	}
+	pod.Spec.NodeSelector = nodeSelector
 
 	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 	addReadyInitContainer(pb.defaults, pb.test, &pod.Spec, runContainer)
@@ -188,11 +213,11 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) *corev1.Pod {
 		}
 	}
 
-	return pod
+	return pod, nil
 }
 
 // PodForServer accepts a pointer to a server and returns a pod for it.
-func (pb *PodBuilder) PodForServer(server *grpcv1.Server) *corev1.Pod {
+func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 	pb.name = safeStrUnwrap(server.Name)
 	pb.role = config.ServerRole
 	pb.pool = safeStrUnwrap(server.Pool)
@@ -201,6 +226,16 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) *corev1.Pod {
 	pb.run = &server.Run
 
 	pod := pb.newPod()
+
+	nodeSelector := make(map[string]string)
+	if server.Pool != nil {
+		nodeSelector["pool"] = *server.Pool
+	} else if pb.defaults.DefaultPoolLabels != nil && pb.defaults.DefaultPoolLabels.Server != "" {
+		nodeSelector[pb.defaults.DefaultPoolLabels.Server] = "true"
+	} else {
+		return nil, errors.Wrapf(errNoPool, "could not determine pool for server %q (no explicit value or default)", pb.name)
+	}
+	pod.Spec.NodeSelector = nodeSelector
 
 	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 
@@ -211,7 +246,7 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) *corev1.Pod {
 		ContainerPort: config.DriverPort,
 	})
 
-	return pod
+	return pod, nil
 }
 
 // newPod creates a base pod for any client, driver or server. It is designed to
@@ -284,9 +319,6 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 			},
 		},
 		Spec: corev1.PodSpec{
-			NodeSelector: map[string]string{
-				"pool": pb.pool,
-			},
 			InitContainers: initContainers,
 			Containers: []corev1.Container{
 				{
