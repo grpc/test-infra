@@ -37,9 +37,10 @@ import (
 // DefaultsData contains the values for fields that are accessible by the
 // defaults template file.
 type DefaultsData struct {
-	Version         string
-	InitImagePrefix string
-	ImagePrefix     string
+	Version          string
+	InitImagePrefix  string
+	ImagePrefix      string
+	BuildImagePrefix string
 }
 
 func init() {
@@ -75,6 +76,11 @@ func main() {
 
 This -init-image-prefix flag allows a specific prefix to apply to all
 init container images.`)
+
+	flag.StringVar(&data.BuildImagePrefix, "build-image-prefix", "", `prefix to append to build container images (optional)
+
+This -build-image-prefix flag allows a specific prefix to apply to all
+build container images.`)
 
 	flag.StringVar(&data.ImagePrefix, "image-prefix", "", `prefix to append to container images (optional)
 

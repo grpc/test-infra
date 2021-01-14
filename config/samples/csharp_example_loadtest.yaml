@@ -1,0 +1,128 @@
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  # Every load test instance must be assigned a unique name on the
+  # cluster. There are ways we can circumvent naming clashes, such
+  # as using namespaces or dynamically assigning names.
+  name: csharp-example
+
+  # As a custom resource, it behaves like a native kubernetes object.
+  # This means that users can perform CRUD operations through the
+  # Kubernetes API or kubectl. In addition, it means that the user
+  # can set any metadata on it.
+  labels:
+    language: csharp
+spec:
+  # The user can specify servers to use when running tests. The
+  # initial version only supports 1 server to limit scope. Servers
+  # is an array for future expansion.
+  #
+  # There are many designs and systems to pursue load balancing,
+  # organizing and monitoring a mesh of servers. Therefore, this
+  # will likely be expanded in the future.
+  servers:
+  - language: csharp
+    clone:
+      repo: https://github.com/grpc/grpc.git
+      gitRef: master
+    build:
+      command: ["bash", "/build_scripts/build_qps_worker.sh"]
+    run:
+      command: ["dotnet"]
+      args: ["exec", "qps_worker/Grpc.IntegrationTesting.QpsWorker.dll"]
+
+  # Users can specify multiple clients. They are bound by the
+  # number of nodes.
+  clients:
+  - language: csharp
+    clone:
+      repo: https://github.com/grpc/grpc.git
+      gitRef: master
+    build:
+      command: ["bash", "/build_scripts/build_qps_worker.sh"]
+    run:
+      command: ["dotnet"]
+      args: ["exec", "qps_worker/Grpc.IntegrationTesting.QpsWorker.dll"]
+
+  # We can optionally specify where to place the results. The
+  # controller will attempt to mount a service account in the driver.
+  # This can be used for uploading results to GCS or BigQuery.
+  # results:
+  #   bigQueryTable: "example-project.foo.demo_dataset"
+
+  # timeoutSeconds is an integer field that indicates the longest time a test
+  # is allowed to run, in seconds. Tests that run longer than the given value
+  # will be marked as Errored and will no longer be allocated resources to run.
+  # For example: timeoutSeconds: 900 indicates the timeout of this test
+  # is 15min. The minimum valid value for this field is 1.
+  timeoutSeconds: 900
+
+  # ttlSeconds is an integer field that indicates how long a test is allowed to
+  # live on the cluster, in seconds. Tests that live longer than the given value
+  # will be deleted. For example: ttlSeconds: 86400 indicates the time-to-live
+  # of this test is 24h. The minimum valid value for this field is 1.
+  ttlSeconds: 86400
+
+  # ScenariosJSON is string with the contents of a Scenarios message, formatted
+  # as JSON. See the Scenarios protobuf definition for details:
+  # https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
+  scenariosJSON: |
+    {
+      "scenarios": [
+        {
+          "name": "csharp_protobuf_async_unary_ping_pong",
+          "num_servers": 1,
+          "num_clients": 1,
+          "client_config": {
+            "client_type": "ASYNC_CLIENT",
+            "security_params": {
+              "use_test_ca": true,
+              "server_host_override": "foo.test.google.fr"
+            },
+            "outstanding_rpcs_per_channel": 1,
+            "client_channels": 1,
+            "async_client_threads": 1,
+            "client_processes": 0,
+            "threads_per_cq": 0,
+            "rpc_type": "UNARY",
+            "histogram_params": {
+              "resolution": 0.01,
+              "max_possible": 60000000000.0
+            },
+            "channel_args": [
+              {
+                "name": "grpc.optimization_target",
+                "str_value": "latency"
+              }
+            ],
+            "payload_config": {
+              "simple_params": {
+                "req_size": 0,
+                "resp_size": 0
+              }
+            },
+            "load_params": {
+              "closed_loop": {}
+            }
+          },
+          "server_config": {
+            "server_type": "ASYNC_SERVER",
+            "security_params": {
+              "use_test_ca": true,
+              "server_host_override": "foo.test.google.fr"
+            },
+            "async_server_threads": 0,
+            "server_processes": 0,
+            "threads_per_cq": 0,
+            "channel_args": [
+              {
+                "name": "grpc.optimization_target",
+                "str_value": "latency"
+              }
+            ]
+          },
+          "warmup_seconds": 5,
+          "benchmark_seconds": 30
+        }
+      ]
+    }
