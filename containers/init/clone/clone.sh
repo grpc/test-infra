@@ -16,9 +16,21 @@
 set -ex
 cd /src/workspace
 ls -A | xargs -r rm -fr
+
+# This process initializes an empty git repository, adds and fetches objects
+# from the $CLONE_REPO, checks out the $CLONE_GIT_REF and then updates the
+# submodules. This prevents the unnecessary checkout of the master branch.
+# This process is similar to other CI systems, including GitHub actions. See:
+# https://stackoverflow.com/questions/3489173.
+
 git init
 git remote add origin $CLONE_REPO
-git fetch
+git fetch origin
 git checkout $CLONE_GIT_REF
 git submodule update --init --recursive
+
+# At this point, the files and the directory are read-only when used with a
+# Docker volume. The mode is changed to ensure that consumers of the directory
+# and files over a volume have read, write and execute permissions.
+
 chmod -R 777 .
