@@ -24,6 +24,7 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -221,7 +222,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		result, err := createPod(pod)
-		if result != nil {
+		if result != nil && !kerrors.IsAlreadyExists(err) {
 			logWithServer.Error(err, "failed to create pod for server")
 
 			test.Status.State = grpcv1.Errored
@@ -254,7 +255,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		result, err := createPod(pod)
-		if result != nil {
+		if result != nil && !kerrors.IsAlreadyExists(err) {
 			logWithClient.Error(err, "failed to create pod for client")
 
 			test.Status.State = grpcv1.Errored
@@ -287,7 +288,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		result, err := createPod(pod)
-		if result != nil {
+		if result != nil && !kerrors.IsAlreadyExists(err) {
 			logWithDriver.Error(err, "failed to create pod for driver")
 
 			test.Status.State = grpcv1.Errored
