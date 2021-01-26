@@ -176,11 +176,11 @@ push-python-image:
 	docker push ${IMAGE_PREFIX}python:${TEST_INFRA_VERSION}
 
 # Build the csharp build image
-csharp-build-image:
+csharp-image:
 	docker build -t ${BUILD_IMAGE_PREFIX}csharp:${TEST_INFRA_VERSION} containers/init/build/csharp
 
 # Push the csharp build image to a docker registry
-push-csharp-build-image:
+push-csharp-image:
 	docker push ${BUILD_IMAGE_PREFIX}csharp:${TEST_INFRA_VERSION}
 
 # Build all init container and runtime container images
@@ -191,10 +191,10 @@ all-images: \
 	cxx-image \
 	go-image \
 	java-image \
+	python-image \
 	ruby-build-image \
 	ruby-image \
-	python-image \
-	csharp-build-image \
+	csharp-image \
 	controller-image\
 	cleanup-agent-image
 
@@ -206,10 +206,10 @@ push-all-images: \
 	push-cxx-image \
 	push-go-image \
 	push-java-image \
+	push-python-image \
 	push-ruby-build-image \
 	push-ruby-image \
-	push-python-image \
-	push-csharp-build-image \
+	push-csharp-image \
 	push-controller-image \
 	push-cleanup-agent-image
 
