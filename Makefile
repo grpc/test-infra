@@ -163,11 +163,27 @@ java-image:
 # Push the Java runtime image to a docker registry
 push-java-image:
 	docker push ${IMAGE_PREFIX}java:${TEST_INFRA_VERSION}
-
 # Build the Ruby build image
 ruby-build-image:
 	docker build -t ${BUILD_IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION} \
 		containers/init/build/ruby
+
+# Push the PHP runtime image to a docker registry
+push-php-build-image:
+	docker push ${BUILD_IMAGE_PREFIX}php:${TEST_INFRA_VERSION}
+
+# Build the PHP runtime image
+php-image:
+	docker build -t ${IMAGE_PREFIX}php:${TEST_INFRA_VERSION} \
+		containers/runtime/php
+
+# Push the PHP runtime image to a docker registry
+push-php-image:
+	docker push ${IMAGE_PREFIX}php:${TEST_INFRA_VERSION}
+# Build the PHP build image
+php-build-image:
+	docker build -t ${BUILD_IMAGE_PREFIX}php:${TEST_INFRA_VERSION} \
+		containers/init/build/php
 
 # Push the Ruby runtime image to a docker registry
 push-ruby-build-image:
@@ -210,6 +226,8 @@ all-images: \
 	node-build-image \
 	node-image \
 	python-image \
+	php-build-image \
+	php-image \
 	ruby-build-image \
 	ruby-image \
 	csharp-build-image \
