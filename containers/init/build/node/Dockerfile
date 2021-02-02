@@ -17,11 +17,5 @@ FROM node:10-buster
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
-RUN apt-get update && apt-get install -y \
-  bash \
-  curl \
-  git \
-  time && \
-  apt-get clean
-
-CMD ["bash"]
+RUN mkdir /build_scripts
+ADD build_qps_worker.sh /build_scripts
