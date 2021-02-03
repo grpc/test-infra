@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 FROM ruby:2.5
-
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
-ENV GEM_HOME=/src/workspace/vendor/bundle/
 
-RUN apt-get update && apt-get install -y \
-  git \
-  time && \
-  apt-get clean
+RUN apt-get update && apt-get install -y cmake && apt-get clean
+
+RUN mkdir /build_scripts
+ADD build_qps_worker.sh /build_scripts
 
 CMD ["bash"]

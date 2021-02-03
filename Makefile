@@ -148,6 +148,15 @@ java-image:
 push-java-image:
 	docker push ${IMAGE_PREFIX}java:${TEST_INFRA_VERSION}
 
+# Build the Ruby build image
+ruby-build-image:
+	docker build -t ${BUILD_IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION} \
+		containers/init/build/ruby
+
+# Push the Ruby runtime image to a docker registry
+push-ruby-build-image:
+	docker push ${BUILD_IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION}
+
 # Build the Ruby runtime image
 ruby-image:
 	docker build -t ${IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION} \
@@ -182,8 +191,9 @@ all-images: \
 	cxx-image \
 	go-image \
 	java-image \
-	ruby-image \
 	python-image \
+	ruby-build-image \
+	ruby-image \
 	csharp-image \
 	controller-image\
 	cleanup-agent-image
@@ -196,8 +206,9 @@ push-all-images: \
 	push-cxx-image \
 	push-go-image \
 	push-java-image \
-	push-ruby-image \
 	push-python-image \
+	push-ruby-build-image \
+	push-ruby-image \
 	push-csharp-image \
 	push-controller-image \
 	push-cleanup-agent-image
