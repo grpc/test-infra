@@ -16,16 +16,17 @@ limitations under the License.
 package status
 
 import (
-	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
 )
 
 var _ = Describe("CheckMissingPods", func() {
-
 	var test *grpcv1.LoadTest
 	var allRunningPods []*corev1.Pod
 	var actualReturn *LoadTestMissing
@@ -57,7 +58,6 @@ var _ = Describe("CheckMissingPods", func() {
 	})
 
 	Context("some of pods from the current load test is running", func() {
-
 		BeforeEach(func() {
 			allRunningPods = append(allRunningPods,
 				&corev1.Pod{
@@ -114,7 +114,6 @@ var _ = Describe("CheckMissingPods", func() {
 	})
 
 	Context("all of pods from the current load test is running", func() {
-
 		BeforeEach(func() {
 			allRunningPods = populatePodListWithCurrentLoadTestPod(test)
 		})
