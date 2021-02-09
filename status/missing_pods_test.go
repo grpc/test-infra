@@ -54,10 +54,22 @@ var _ = Describe("CheckMissingPods", func() {
 			Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
 			Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
 		})
+
+		It("sets the number of nodes missing from each pool", func() {
+			actualReturn = CheckMissingPods(test, allRunningPods)
+			Expect(actualReturn.NodeCountByPool).To(Equal(
+				map[string]int{
+					"drivers":         1,
+					"workers":         6,
+					DefaultClientPool: 0,
+					DefaultDriverPool: 0,
+					DefaultServerPool: 0,
+				},
+			))
+		})
 	})
 
 	Context("some of pods from the current load test is running", func() {
-
 		BeforeEach(func() {
 			allRunningPods = append(allRunningPods,
 				&corev1.Pod{
@@ -111,10 +123,20 @@ var _ = Describe("CheckMissingPods", func() {
 			Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
 		})
 
+		It("sets the number of nodes missing from each pool", func() {
+			actualReturn = CheckMissingPods(test, allRunningPods)
+			Expect(actualReturn.NodeCountByPool).To(Equal(
+				map[string]int{
+					"workers":         4,
+					DefaultClientPool: 0,
+					DefaultDriverPool: 0,
+					DefaultServerPool: 0,
+				},
+			))
+		})
 	})
 
 	Context("all of pods from the current load test is running", func() {
-
 		BeforeEach(func() {
 			allRunningPods = populatePodListWithCurrentLoadTestPod(test)
 		})
@@ -124,6 +146,17 @@ var _ = Describe("CheckMissingPods", func() {
 			Expect(actualReturn.Clients).To(ConsistOf(expectedReturn.Clients))
 			Expect(actualReturn.Servers).To(ConsistOf(expectedReturn.Servers))
 			Expect(actualReturn.Driver).To(Equal(expectedReturn.Driver))
+		})
+
+		It("sets the number of nodes missing from each pool", func() {
+			actualReturn = CheckMissingPods(test, allRunningPods)
+			Expect(actualReturn.NodeCountByPool).To(Equal(
+				map[string]int{
+					DefaultClientPool: 0,
+					DefaultDriverPool: 0,
+					DefaultServerPool: 0,
+				},
+			))
 		})
 	})
 })

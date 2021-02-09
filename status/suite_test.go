@@ -53,7 +53,7 @@ func newLoadTestWithMultipleClientsAndServers() *grpcv1.LoadTest {
 	bigQueryTable := "grpc-testing.e2e_benchmark.foobarbuzz"
 
 	driverPool := "drivers"
-	workerPool := "workers-8core"
+	workerPool := "workers"
 
 	driverComponentName := "driver-1"
 

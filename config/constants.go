@@ -66,6 +66,10 @@ const (
 	// LoadTestLabel is a label which contains the test's unique name.
 	LoadTestLabel = "loadtest"
 
+	// PoolLabel is the key for a label which will have the name of a pool as
+	// the value.
+	PoolLabel = "pool"
+
 	// ReadyInitContainerName holds the name of the init container that blocks a
 	// driver from running until all worker pods are ready.
 	ReadyInitContainerName = "ready"
