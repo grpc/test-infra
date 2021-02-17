@@ -26,10 +26,8 @@ spec:
       repo: https://github.com/grpc/grpc.git
       gitRef: master
     build:
-      image: gcr.io/grpc-testing/wanlin/init/build/php
       command: [ "bash", "/build_scripts/build_qps_worker.sh" ]
     run:
-      image: gcr.io/grpc-testing/wanlin/runtime/php
       command: [ "bash", "/run_scripts/run_worker.sh" ]
 
   # Users can specify multiple clients. They are bound by the
@@ -40,10 +38,8 @@ spec:
       repo: https://github.com/grpc/grpc.git
       gitRef: master
     build:
-      image: gcr.io/grpc-testing/wanlin/init/build/php
       command: [ "bash", "/build_scripts/build_qps_worker.sh" ]
     run:
-      image: gcr.io/grpc-testing/wanlin/runtime/php
       command: [ "bash", "/run_scripts/run_worker.sh" ]
 
   # We can optionally specify where to place the results. The

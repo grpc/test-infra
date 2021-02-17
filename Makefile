@@ -180,6 +180,7 @@ php-image:
 # Push the PHP runtime image to a docker registry
 push-php-image:
 	docker push ${IMAGE_PREFIX}php:${TEST_INFRA_VERSION}
+
 # Build the PHP build image
 php-build-image:
 	docker build -t ${BUILD_IMAGE_PREFIX}php:${TEST_INFRA_VERSION} \
