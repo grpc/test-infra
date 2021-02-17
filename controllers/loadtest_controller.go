@@ -79,8 +79,8 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	rawTest := new(grpcv1.LoadTest)
 	if err = r.Get(ctx, req.NamespacedName, rawTest); err != nil {
 		log.Error(err, "failed to get test", "name", req.NamespacedName)
-		// do not requeue, the test may have been deleted or the cache is invalid
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		err = client.IgnoreNotFound(err)
+		return ctrl.Result{Requeue: err != nil}, err
 	}
 
 	testTTL := time.Duration(rawTest.Spec.TTLSeconds) * time.Second
@@ -98,7 +98,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				return ctrl.Result{Requeue: true}, err
 			}
 		}
-		return ctrl.Result{}, nil
+		return ctrl.Result{Requeue: false}, nil
 	}
 
 	// TODO(codeblooded): Consider moving this to a mutating webhook
@@ -111,12 +111,12 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		if err = r.Status().Update(ctx, test); err != nil {
 			log.Error(err, "failed to update test status when setting defaults failed")
 		}
-		return ctrl.Result{}, err
+		return ctrl.Result{Requeue: false}, nil
 	}
 	if !reflect.DeepEqual(rawTest, test) {
 		if err = r.Update(ctx, test); err != nil {
 			log.Error(err, "failed to update test with defaults")
-			return ctrl.Result{}, err
+			return ctrl.Result{Requeue: true}, err
 		}
 	}
 
@@ -134,7 +134,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
 				log.Error(updateErr, "failed to update status after failure to get scenarios ConfigMap: %v", err)
 			}
-			return ctrl.Result{}, err
+			return ctrl.Result{Requeue: true}, err
 		}
 
 		cfgMap = &corev1.ConfigMap{
@@ -269,7 +269,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
 					log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
 				}
-				return ctrl.Result{}, errNonexistentPool
+				return ctrl.Result{Requeue: false}, nil
 			}
 
 			if requiredNodeCount > availableNodeCount {
@@ -282,7 +282,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		createPod := func(pod *corev1.Pod) (*ctrl.Result, error) {
 			if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
 				log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
-				return &ctrl.Result{}, err
+				return &ctrl.Result{Requeue: true}, err
 			}
 
 			if err = r.Create(ctx, pod); err != nil {
@@ -305,7 +305,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
 					logWithServer.Error(updateErr, "failed to update status after failure to construct a pod for server")
 				}
-				return ctrl.Result{}, err
+				return ctrl.Result{Requeue: false}, nil
 			}
 
 			if missingPods.Servers[i].Pool == nil {
@@ -338,7 +338,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
 					logWithClient.Error(updateErr, "failed to update status after failure to construct a pod for client")
 				}
-				return ctrl.Result{}, err
+				return ctrl.Result{Requeue: false}, nil
 			}
 
 			if missingPods.Clients[i].Pool == nil {
@@ -371,7 +371,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
 					logWithDriver.Error(updateErr, "failed to update status after failure to construct a pod for driver")
 				}
-				return ctrl.Result{}, err
+				return ctrl.Result{Requeue: false}, nil
 			}
 
 			if missingPods.Driver.Pool == nil {
@@ -398,7 +398,8 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if requeueTime != 0 {
 		return ctrl.Result{RequeueAfter: requeueTime}, nil
 	}
-	return ctrl.Result{}, nil
+
+	return ctrl.Result{Requeue: false}, nil
 }
 
 // getRequeueTime takes a LoadTest and its previous status, compares the
