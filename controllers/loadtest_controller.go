@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"time"
@@ -36,9 +37,15 @@ import (
 	"github.com/grpc/test-infra/status"
 )
 
+var (
+	errCacheSync       = errors.New("failed to sync cache")
+	errNonexistentPool = errors.New("pool does not exist")
+)
+
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
+	mgr      ctrl.Manager
 	Defaults *config.Defaults
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
@@ -50,6 +57,8 @@ type LoadTestReconciler struct {
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=pods/status,verbs=get
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
+// +kubebuilder:rbac:groups="",resources=nodes/status,verbs=get
 
 // Reconcile attempts to bring the current state of the load test into agreement
 // with its declared spec. This may mean provisioning resources, doing nothing
@@ -70,8 +79,8 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	rawTest := new(grpcv1.LoadTest)
 	if err = r.Get(ctx, req.NamespacedName, rawTest); err != nil {
 		log.Error(err, "failed to get test", "name", req.NamespacedName)
-		// do not requeue, the test may have been deleted or the cache is invalid
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		err = client.IgnoreNotFound(err)
+		return ctrl.Result{Requeue: err != nil}, err
 	}
 
 	testTTL := time.Duration(rawTest.Spec.TTLSeconds) * time.Second
@@ -89,7 +98,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				return ctrl.Result{Requeue: true}, err
 			}
 		}
-		return ctrl.Result{}, nil
+		return ctrl.Result{Requeue: false}, nil
 	}
 
 	// TODO(codeblooded): Consider moving this to a mutating webhook
@@ -99,17 +108,15 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		test.Status.State = grpcv1.Errored
 		test.Status.Reason = grpcv1.FailedSettingDefaultsError
 		test.Status.Message = fmt.Sprintf("failed to reconcile tests with defaults: %v", err)
-
 		if err = r.Status().Update(ctx, test); err != nil {
 			log.Error(err, "failed to update test status when setting defaults failed")
 		}
-
-		return ctrl.Result{}, err
+		return ctrl.Result{Requeue: false}, nil
 	}
 	if !reflect.DeepEqual(rawTest, test) {
 		if err = r.Update(ctx, test); err != nil {
 			log.Error(err, "failed to update test with defaults")
-			return ctrl.Result{}, err
+			return ctrl.Result{Requeue: true}, err
 		}
 	}
 
@@ -121,16 +128,13 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			// The ConfigMap existence was not at issue, so this is likely an
 			// issue with the Kubernetes API. So, we'll update the status, retry
 			// with exponential backoff and allow the timeout to catch it.
-
 			test.Status.State = grpcv1.Unknown
 			test.Status.Reason = grpcv1.KubernetesError
 			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): failed to get scenarios ConfigMap: %v", err)
-
 			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
 				log.Error(updateErr, "failed to update status after failure to get scenarios ConfigMap: %v", err)
 			}
-
-			return ctrl.Result{}, err
+			return ctrl.Result{Requeue: true}, err
 		}
 
 		cfgMap = &corev1.ConfigMap{
@@ -152,15 +156,12 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			// for manual cleanup, it could create hidden errors when a load
 			// test with the same name is created.
 			log.Error(refError, "could not set controller reference on scenarios ConfigMap")
-
 			test.Status.State = grpcv1.Unknown
 			test.Status.Reason = grpcv1.KubernetesError
 			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): could not setup garbage collection for scenarios ConfigMap: %v", refError)
-
 			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
 				log.Error(updateErr, "failed to update status after failure to get and create scenarios ConfigMap")
 			}
-
 			return ctrl.Result{Requeue: true}, refError
 		}
 
@@ -175,131 +176,221 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		log.Error(err, "failed to list pods", "namespace", req.Namespace)
 		return ctrl.Result{Requeue: true}, err
 	}
-
 	ownedPods := status.PodsForLoadTest(test, pods.Items)
 
 	previousStatus := test.Status
 	test.Status = status.ForLoadTest(test, ownedPods)
-
 	if err = r.Status().Update(ctx, test); err != nil {
 		log.Error(err, "failed to update test status")
 		return ctrl.Result{Requeue: true}, err
 	}
 
 	missingPods := status.CheckMissingPods(test, ownedPods)
-	builder := podbuilder.New(r.Defaults, test)
-
-	createPod := func(pod *corev1.Pod) (*ctrl.Result, error) {
-		if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
-			log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
-			return &ctrl.Result{}, err
+	if !missingPods.IsEmpty() {
+		if !r.mgr.GetCache().WaitForCacheSync(ctx.Done()) {
+			log.Error(errCacheSync, "could not invalidate the cache which is required to gang schedule")
+			return ctrl.Result{Requeue: true}, errCacheSync
 		}
 
-		if err = r.Create(ctx, pod); err != nil {
-			log.Error(err, "could not create new pod", "pod", pod)
-			return &ctrl.Result{Requeue: true}, err
+		nodes := new(corev1.NodeList)
+		if err = r.List(ctx, nodes); err != nil {
+			log.Error(err, "failed to list nodes")
+			return ctrl.Result{Requeue: true}, err
 		}
 
-		return nil, nil
-	}
-
-	for i := range missingPods.Servers {
-		logWithServer := log.WithValues("server", missingPods.Servers[i])
-
-		pod, err := builder.PodForServer(&missingPods.Servers[i])
-		if err != nil {
-			logWithServer.Error(err, "failed to construct a pod struct for supplied server struct")
-
-			test.Status.State = grpcv1.Errored
-			test.Status.Reason = grpcv1.ConfigurationError
-			test.Status.Message = fmt.Sprintf("failed to construct a pod for server at index %d: %v", i, err)
-
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				logWithServer.Error(updateErr, "failed to update status after failure to construct a pod for server")
+		var defaultClientPool string
+		var defaultDriverPool string
+		var defaultServerPool string
+		poolCapacities := make(map[string]int)
+		for _, node := range nodes.Items {
+			pool, ok := node.Labels[config.PoolLabel]
+			if !ok {
+				log.Info("encountered a node without a pool label", "nodeName", node.Name)
+				continue
 			}
 
-			return ctrl.Result{}, err
-		}
+			if defaultPoolLabels := r.Defaults.DefaultPoolLabels; defaultPoolLabels != nil {
+				if defaultClientPool == "" {
+					if _, ok := node.Labels[defaultPoolLabels.Client]; ok {
+						defaultClientPool = pool
+					}
+				}
+				if defaultDriverPool == "" {
+					if _, ok := node.Labels[defaultPoolLabels.Driver]; ok {
+						defaultDriverPool = pool
+					}
+				}
+				if defaultServerPool == "" {
+					if _, ok := node.Labels[defaultPoolLabels.Server]; ok {
+						defaultServerPool = pool
+					}
+				}
 
-		result, err := createPod(pod)
-		if result != nil && !kerrors.IsAlreadyExists(err) {
-			logWithServer.Error(err, "failed to create pod for server")
-
-			test.Status.State = grpcv1.Errored
-			test.Status.Reason = grpcv1.KubernetesError
-			test.Status.Message = fmt.Sprintf("failed to create pod for server at index %d: %v", i, err)
-
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				logWithServer.Error(updateErr, "failed to update status after failure to create pod for server")
+				if _, ok = poolCapacities[pool]; !ok {
+					poolCapacities[pool] = 0
+				}
 			}
 
-			return *result, err
-		}
-	}
-	for i := range missingPods.Clients {
-		logWithClient := log.WithValues("client", missingPods.Clients[i])
-
-		pod, err := builder.PodForClient(&missingPods.Clients[i])
-		if err != nil {
-			logWithClient.Error(err, "failed to construct a pod struct for supplied client struct")
-
-			test.Status.State = grpcv1.Errored
-			test.Status.Reason = grpcv1.ConfigurationError
-			test.Status.Message = fmt.Sprintf("failed to construct a pod for client at index %d: %v", i, err)
-
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				logWithClient.Error(updateErr, "failed to update status after failure to construct a pod for client")
-			}
-
-			return ctrl.Result{}, err
+			poolCapacities[pool]++
 		}
 
-		result, err := createPod(pod)
-		if result != nil && !kerrors.IsAlreadyExists(err) {
-			logWithClient.Error(err, "failed to create pod for client")
-
-			test.Status.State = grpcv1.Errored
-			test.Status.Reason = grpcv1.KubernetesError
-			test.Status.Message = fmt.Sprintf("failed to create pod for client at index %d: %v", i, err)
-
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				logWithClient.Error(updateErr, "failed to update status after failure to create pod for client")
-			}
-
-			return *result, err
+		poolAvailabilities := make(map[string]int)
+		for pool, capacity := range poolCapacities {
+			poolAvailabilities[pool] = capacity
 		}
-	}
-	if missingPods.Driver != nil {
-		logWithDriver := log.WithValues("driver", missingPods.Driver)
-
-		pod, err := builder.PodForDriver(missingPods.Driver)
-		if err != nil {
-			logWithDriver.Error(err, "failed to construct a pod struct for supplied driver struct")
-
-			test.Status.State = grpcv1.Errored
-			test.Status.Reason = grpcv1.ConfigurationError
-			test.Status.Message = fmt.Sprintf("failed to construct a pod for driver: %v", err)
-
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				logWithDriver.Error(updateErr, "failed to update status after failure to construct a pod for driver")
+		for _, pod := range pods.Items {
+			pool, ok := pod.Labels[config.PoolLabel]
+			if !ok {
+				log.Info("encountered a pod without a pool label", "pod", pod)
+				continue
 			}
-
-			return ctrl.Result{}, err
+			if pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
+				poolAvailabilities[pool]--
+			}
 		}
 
-		result, err := createPod(pod)
-		if result != nil && !kerrors.IsAlreadyExists(err) {
-			logWithDriver.Error(err, "failed to create pod for driver")
+		adjustAvailabilityForDefaults := func(defaultPoolKey, defaultPoolName string) {
+			if c, ok := missingPods.NodeCountByPool[defaultPoolKey]; ok {
+				missingPods.NodeCountByPool[defaultPoolName] += c
+			}
+			delete(missingPods.NodeCountByPool, defaultPoolKey)
+		}
+		adjustAvailabilityForDefaults(status.DefaultClientPool, defaultClientPool)
+		adjustAvailabilityForDefaults(status.DefaultDriverPool, defaultDriverPool)
+		adjustAvailabilityForDefaults(status.DefaultServerPool, defaultServerPool)
 
-			test.Status.State = grpcv1.Errored
-			test.Status.Reason = grpcv1.KubernetesError
-			test.Status.Message = fmt.Sprintf("failed to create pod for driver: %v", err)
-
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				logWithDriver.Error(updateErr, "failed to update status after failure to create pod for driver")
+		for pool, requiredNodeCount := range missingPods.NodeCountByPool {
+			availableNodeCount, ok := poolAvailabilities[pool]
+			if !ok {
+				log.Error(errNonexistentPool, "requested pool does not exist and cannot be considered when scheduling", "requestedPool", pool)
+				test.Status.State = grpcv1.Errored
+				test.Status.Reason = grpcv1.PoolError
+				test.Status.Message = fmt.Sprintf("requested pool %q does not exist", pool)
+				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+					log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
+				}
+				return ctrl.Result{Requeue: false}, nil
 			}
 
-			return *result, err
+			if requiredNodeCount > availableNodeCount {
+				log.Info("cannot schedule test: inadequate availability for pool", "pool", pool, "requiredNodeCount", requiredNodeCount, "availableNodeCount", availableNodeCount)
+				return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+		}
+
+		builder := podbuilder.New(r.Defaults, test)
+		createPod := func(pod *corev1.Pod) (*ctrl.Result, error) {
+			if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
+				log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
+				return &ctrl.Result{Requeue: true}, err
+			}
+
+			if err = r.Create(ctx, pod); err != nil {
+				log.Error(err, "could not create new pod", "pod", pod)
+				return &ctrl.Result{Requeue: true}, err
+			}
+
+			return nil, nil
+		}
+
+		for i := range missingPods.Servers {
+			logWithServer := log.WithValues("server", missingPods.Servers[i])
+
+			pod, err := builder.PodForServer(&missingPods.Servers[i])
+			if err != nil {
+				logWithServer.Error(err, "failed to construct a pod struct for supplied server struct")
+				test.Status.State = grpcv1.Errored
+				test.Status.Reason = grpcv1.ConfigurationError
+				test.Status.Message = fmt.Sprintf("failed to construct a pod for server at index %d: %v", i, err)
+				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+					logWithServer.Error(updateErr, "failed to update status after failure to construct a pod for server")
+				}
+				return ctrl.Result{Requeue: false}, nil
+			}
+
+			if missingPods.Servers[i].Pool == nil {
+				pod.Labels[config.PoolLabel] = defaultServerPool
+			} else {
+				pod.Labels[config.PoolLabel] = *missingPods.Servers[i].Pool
+			}
+
+			result, err := createPod(pod)
+			if result != nil && !kerrors.IsAlreadyExists(err) {
+				logWithServer.Error(err, "failed to create pod for server")
+				test.Status.State = grpcv1.Errored
+				test.Status.Reason = grpcv1.KubernetesError
+				test.Status.Message = fmt.Sprintf("failed to create pod for server at index %d: %v", i, err)
+				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+					logWithServer.Error(updateErr, "failed to update status after failure to create pod for server")
+				}
+				return *result, err
+			}
+		}
+		for i := range missingPods.Clients {
+			logWithClient := log.WithValues("client", missingPods.Clients[i])
+
+			pod, err := builder.PodForClient(&missingPods.Clients[i])
+			if err != nil {
+				logWithClient.Error(err, "failed to construct a pod struct for supplied client struct")
+				test.Status.State = grpcv1.Errored
+				test.Status.Reason = grpcv1.ConfigurationError
+				test.Status.Message = fmt.Sprintf("failed to construct a pod for client at index %d: %v", i, err)
+				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+					logWithClient.Error(updateErr, "failed to update status after failure to construct a pod for client")
+				}
+				return ctrl.Result{Requeue: false}, nil
+			}
+
+			if missingPods.Clients[i].Pool == nil {
+				pod.Labels[config.PoolLabel] = defaultClientPool
+			} else {
+				pod.Labels[config.PoolLabel] = *missingPods.Clients[i].Pool
+			}
+
+			result, err := createPod(pod)
+			if result != nil && !kerrors.IsAlreadyExists(err) {
+				logWithClient.Error(err, "failed to create pod for client")
+				test.Status.State = grpcv1.Errored
+				test.Status.Reason = grpcv1.KubernetesError
+				test.Status.Message = fmt.Sprintf("failed to create pod for client at index %d: %v", i, err)
+				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+					logWithClient.Error(updateErr, "failed to update status after failure to create pod for client")
+				}
+				return *result, err
+			}
+		}
+		if missingPods.Driver != nil {
+			logWithDriver := log.WithValues("driver", missingPods.Driver)
+
+			pod, err := builder.PodForDriver(missingPods.Driver)
+			if err != nil {
+				logWithDriver.Error(err, "failed to construct a pod struct for supplied driver struct")
+				test.Status.State = grpcv1.Errored
+				test.Status.Reason = grpcv1.ConfigurationError
+				test.Status.Message = fmt.Sprintf("failed to construct a pod for driver: %v", err)
+				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+					logWithDriver.Error(updateErr, "failed to update status after failure to construct a pod for driver")
+				}
+				return ctrl.Result{Requeue: false}, nil
+			}
+
+			if missingPods.Driver.Pool == nil {
+				pod.Labels[config.PoolLabel] = defaultDriverPool
+			} else {
+				pod.Labels[config.PoolLabel] = *missingPods.Driver.Pool
+			}
+
+			result, err := createPod(pod)
+			if result != nil && !kerrors.IsAlreadyExists(err) {
+				logWithDriver.Error(err, "failed to create pod for driver")
+				test.Status.State = grpcv1.Errored
+				test.Status.Reason = grpcv1.KubernetesError
+				test.Status.Message = fmt.Sprintf("failed to create pod for driver: %v", err)
+				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+					logWithDriver.Error(updateErr, "failed to update status after failure to create pod for driver")
+				}
+				return *result, err
+			}
 		}
 	}
 
@@ -307,7 +398,8 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if requeueTime != 0 {
 		return ctrl.Result{RequeueAfter: requeueTime}, nil
 	}
-	return ctrl.Result{}, nil
+
+	return ctrl.Result{Requeue: false}, nil
 }
 
 // getRequeueTime takes a LoadTest and its previous status, compares the
@@ -338,6 +430,7 @@ func getRequeueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.Load
 
 // SetupWithManager configures a controller-runtime manager.
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.mgr = mgr
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grpcv1.LoadTest{}).
 		Owns(&corev1.Pod{}).

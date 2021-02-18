@@ -372,6 +372,10 @@ var ConfigurationError = "ConfigurationError"
 // in the Initializing state.
 var PodsMissing = "PodsMissing"
 
+// PoolError is the reason string when a driver, client or server requires nodes
+// from a nonexistent pool.
+var PoolError = "PoolError"
+
 // TimeoutErrored is the reason string when the load test has not yet terminated
 // but exceeded the timeout.
 var TimeoutErrored = "TimeoutErrored"

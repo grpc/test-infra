@@ -16,6 +16,7 @@ package controllers
 import (
 	"context"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -51,6 +52,29 @@ func updatePodWithContainerState(pod *corev1.Pod, containerState corev1.Containe
 		},
 	}
 	return k8sClient.Status().Update(context.Background(), pod)
+}
+
+// deleteTestPods is a helper that attempts to clean-up all pods for load test.
+// It ignores any errors, since not all pods may exist that it attempts to
+// delete.
+func deleteTestPods(test *grpcv1.LoadTest) {
+	builder := podbuilder.New(defaults, test)
+	for _, server := range test.Spec.Servers {
+		pod, err := builder.PodForServer(&server)
+		if err != nil {
+			k8sClient.Delete(context.Background(), pod)
+		}
+	}
+	for _, client := range test.Spec.Clients {
+		pod, err := builder.PodForClient(&client)
+		if err != nil {
+			k8sClient.Delete(context.Background(), pod)
+		}
+	}
+	pod, err := builder.PodForDriver(test.Spec.Driver)
+	if err != nil {
+		k8sClient.Delete(context.Background(), pod)
+	}
 }
 
 var _ = Describe("LoadTest controller", func() {
@@ -125,7 +149,237 @@ var _ = Describe("LoadTest controller", func() {
 		}))
 	})
 
+	It("does not create nodes if there are inadequate machines", func() {
+		clusterCfg := &testClusterConfig{
+			pools: []*testPool{
+				{
+					name:     "drivers",
+					capacity: 1,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Driver: "true",
+					},
+				},
+				{
+					name:     "workers-a",
+					capacity: 1, // only 1 node!
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Client: "true",
+						defaults.DefaultPoolLabels.Server: "true",
+					},
+				},
+			},
+		}
+		cluster, err := createCluster(context.Background(), k8sClient, clusterCfg)
+		Expect(err).ToNot(HaveOccurred())
+		defer deleteCluster(context.Background(), k8sClient, cluster)
+
+		test.Spec.Driver.Pool = &cluster.pools[0].name
+		test.Spec.Clients[0].Pool = &cluster.pools[1].name
+		test.Spec.Servers[0].Pool = &cluster.pools[1].name
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
+		Consistently(func() (int, error) {
+			foundPodCount := 0
+
+			list := new(corev1.PodList)
+			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
+				return 0, err
+			}
+
+			for i := range list.Items {
+				item := &list.Items[i]
+				if item.Labels[config.LoadTestLabel] == test.Name {
+					foundPodCount++
+				}
+			}
+
+			return foundPodCount, nil
+		}).Should(Equal(0))
+
+		// no pods should be created, but clean-up just in case
+		deleteTestPods(test)
+	})
+
+	It("does not schedule pods for tests that will fight for machines", func() {
+		clusterCfg := &testClusterConfig{
+			pools: []*testPool{
+				{
+					name:     "drivers",
+					capacity: 1,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Driver: "true",
+					},
+				},
+				{
+					name:     "workers-a",
+					capacity: 3,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Client: "true",
+						defaults.DefaultPoolLabels.Server: "true",
+					},
+				},
+			},
+		}
+		cluster, err := createCluster(context.Background(), k8sClient, clusterCfg)
+		Expect(err).ToNot(HaveOccurred())
+		defer deleteCluster(context.Background(), k8sClient, cluster)
+
+		test.Spec.Driver.Pool = &cluster.pools[0].name
+		test.Spec.Clients[0].Pool = &cluster.pools[1].name
+		test.Spec.Servers[0].Pool = &cluster.pools[1].name
+
+		test2 := test.DeepCopy()
+		test2.Name = "test-2"
+
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+		Expect(k8sClient.Create(context.Background(), test2)).To(Succeed())
+
+		Eventually(func() bool {
+			list := new(corev1.PodList)
+			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
+				return false
+			}
+
+			return len(list.Items) > 0
+		}).Should(BeTrue())
+
+		Consistently(func() (int, error) {
+			runningTestNameSet := make(map[string]bool)
+
+			list := new(corev1.PodList)
+			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
+				return 0, err
+			}
+
+			for i := range list.Items {
+				item := &list.Items[i]
+				testName := item.Labels[config.LoadTestLabel]
+				if _, ok := runningTestNameSet[testName]; !ok {
+					runningTestNameSet[testName] = true
+				}
+			}
+
+			// return the number of running tests, which should be 1
+			return len(runningTestNameSet), nil
+		}).Should(Equal(1))
+
+		// clean-up all pods for hermetic purposes
+		deleteTestPods(test)
+		deleteTestPods(test2)
+	})
+
+	It("does not block a node from scheduling due to a completed pod", func() {
+		clusterCfg := &testClusterConfig{
+			pools: []*testPool{
+				{
+					name:     "completed-test-drivers",
+					capacity: 1,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Driver: "true",
+					},
+				},
+				{
+					name:     "completed-test-workers",
+					capacity: 2,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Client: "true",
+						defaults.DefaultPoolLabels.Server: "true",
+					},
+				},
+			},
+		}
+		cluster, err := createCluster(context.Background(), k8sClient, clusterCfg)
+		Expect(err).ToNot(HaveOccurred())
+		defer deleteCluster(context.Background(), k8sClient, cluster)
+
+		test.Spec.Driver.Pool = &cluster.pools[0].name
+		test.Spec.Clients[0].Pool = &cluster.pools[1].name
+		test.Spec.Servers[0].Pool = &cluster.pools[1].name
+
+		test2 := test.DeepCopy()
+		test2.Name = uuid.New().String()
+
+		builder := podbuilder.New(defaults, test)
+		for _, server := range test.Spec.Servers {
+			pod, err := builder.PodForServer(&server)
+			Expect(err).ToNot(HaveOccurred())
+			pod.Labels[config.PoolLabel] = cluster.pools[1].name
+			Expect(k8sClient.Create(context.Background(), pod)).To(Succeed())
+			pod.Status.Phase = corev1.PodSucceeded
+			Expect(k8sClient.Status().Update(context.Background(), pod)).To(Succeed())
+		}
+		for _, client := range test.Spec.Clients {
+			pod, err := builder.PodForClient(&client)
+			Expect(err).ToNot(HaveOccurred())
+			pod.Labels[config.PoolLabel] = cluster.pools[1].name
+			Expect(k8sClient.Create(context.Background(), pod)).To(Succeed())
+			pod.Status.Phase = corev1.PodSucceeded
+			Expect(k8sClient.Status().Update(context.Background(), pod)).To(Succeed())
+		}
+		pod, err := builder.PodForDriver(test.Spec.Driver)
+		Expect(err).ToNot(HaveOccurred())
+		pod.Labels[config.PoolLabel] = cluster.pools[0].name
+		Expect(k8sClient.Create(context.Background(), pod)).To(Succeed())
+		pod.Status.Phase = corev1.PodFailed
+		Expect(k8sClient.Status().Update(context.Background(), pod)).To(Succeed())
+
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
+		test2.Name = "completed-test-2"
+		Expect(k8sClient.Create(context.Background(), test2)).To(Succeed())
+
+		Eventually(func() (int, error) {
+			runningTestNameSet := make(map[string]bool)
+
+			list := new(corev1.PodList)
+			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
+				return 0, err
+			}
+
+			for i := range list.Items {
+				item := &list.Items[i]
+				testName := item.Labels[config.LoadTestLabel]
+				if _, ok := runningTestNameSet[testName]; !ok {
+					runningTestNameSet[testName] = true
+				}
+			}
+
+			// return the number of running tests, which should be 2 (since one is completed)
+			return len(runningTestNameSet), nil
+		}).Should(Equal(2))
+
+		// clean-up all pods for hermetic purposes
+		deleteTestPods(test)
+		deleteTestPods(test2)
+	})
+
 	It("creates correct number of pods when all are missing", func() {
+		clusterCfg := &testClusterConfig{
+			pools: []*testPool{
+				{
+					name:     "drivers-2",
+					capacity: 1,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Driver: "true",
+					},
+				},
+				{
+					name:     "workers-2",
+					capacity: 7,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Client: "true",
+						defaults.DefaultPoolLabels.Server: "true",
+					},
+				},
+			},
+		}
+		cluster, err := createCluster(context.Background(), k8sClient, clusterCfg)
+		Expect(err).ToNot(HaveOccurred())
+		defer deleteCluster(context.Background(), k8sClient, cluster)
+
+		test.Spec.Driver.Pool = &cluster.pools[0].name
+		test.Spec.Clients[0].Pool = &cluster.pools[1].name
+		test.Spec.Servers[0].Pool = &cluster.pools[1].name
 		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
 
 		expectedPodCount := 0
@@ -157,6 +411,9 @@ var _ = Describe("LoadTest controller", func() {
 
 			return foundPodCount, nil
 		}).Should(Equal(expectedPodCount))
+
+		// clean-up all pods for hermetic purposes
+		deleteTestPods(test)
 	})
 
 	It("updates the test status when client pods terminate with errors", func() {
@@ -214,6 +471,9 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedTest.Status.State, nil
 		}).Should(Equal(grpcv1.Errored))
+
+		// clean-up all pods for hermetic purposes
+		deleteTestPods(test)
 	})
 
 	It("updates the test status when driver pod terminated with errors", func() {
@@ -271,6 +531,9 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedTest.Status.State, nil
 		}).Should(Equal(grpcv1.Errored))
+
+		// clean-up all pods for hermetic purposes
+		deleteTestPods(test)
 	})
 
 	It("updates the test status when server pods terminate with errors", func() {
@@ -328,6 +591,9 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedTest.Status.State, nil
 		}).Should(Equal(grpcv1.Errored))
+
+		// clean-up all pods for hermetic purposes
+		deleteTestPods(test)
 	})
 
 	It("updates the test status when pods are running", func() {
@@ -380,6 +646,9 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedTest.Status.State, nil
 		}).Should(Equal(grpcv1.Running))
+
+		// clean-up all pods for hermetic purposes
+		deleteTestPods(test)
 	})
 
 	It("updates the test status when pods terminate successfully", func() {
@@ -434,5 +703,8 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedTest.Status.State, nil
 		}).Should(Equal(grpcv1.Succeeded))
+
+		// clean-up all pods for hermetic purposes
+		deleteTestPods(test)
 	})
 })

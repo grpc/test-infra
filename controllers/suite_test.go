@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -52,32 +53,73 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+var defaults *config.Defaults
 var stop chan struct{}
 
-var pools = map[string]int{
-	"drivers":   3,
-	"workers-a": 5,
-	"workers-b": 7,
+const driversPoolName = "drivers"
+const workersAPoolName = "workers-a"
+const workersBPoolName = "workers-b"
+
+type testPool struct {
+	name     string
+	capacity int
+	labels   map[string]string
 }
 
-var nodes = func() []*corev1.Node {
-	var items []*corev1.Node
+type testClusterConfig struct {
+	pools []*testPool
+}
 
-	for pool, count := range pools {
-		for i := 0; i < count; i++ {
-			items = append(items, &corev1.Node{
+type testCluster struct {
+	pools []*testPool
+	nodes []*corev1.Node
+}
+
+func createCluster(ctx context.Context, k8sClient client.Client, cfg *testClusterConfig) (*testCluster, error) {
+	if cfg == nil {
+		return nil, errors.New("test cluster config is missing and required to create a cluster")
+	}
+
+	cluster := &testCluster{
+		pools: cfg.pools,
+	}
+
+	for i := range cfg.pools {
+		pool := cfg.pools[i]
+		for j := 0; j < pool.capacity; j++ {
+			labels := pool.labels
+			labels["pool"] = pool.name
+
+			node := &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: fmt.Sprintf("node-%s-%d", pool, i),
-					Labels: map[string]string{
-						"pool": pool,
-					},
+					Name:   fmt.Sprintf("node-%s-%d-%s", pool.name, j, uuid.New().String()),
+					Labels: labels,
 				},
-			})
+			}
+
+			cluster.nodes = append(cluster.nodes, node)
+			ExpectWithOffset(1, k8sClient.Create(ctx, node)).To(Succeed())
 		}
 	}
 
-	return items
-}()
+	return cluster, nil
+}
+
+func deleteCluster(ctx context.Context, k8sClient client.Client, cluster *testCluster) (*testCluster, error) {
+	newCluster := &testCluster{
+		pools: cluster.pools,
+	}
+
+	if cluster == nil {
+		return nil, errors.New("cannot delete a nil test cluster")
+	}
+
+	for _, node := range cluster.nodes {
+		ExpectWithOffset(1, k8sClient.Delete(ctx, node)).To(Succeed())
+	}
+
+	return newCluster, nil
+}
 
 func newDefaults() *config.Defaults {
 	return &config.Defaults{
@@ -121,7 +163,7 @@ func newLoadTest() *grpcv1.LoadTest {
 			Driver: &grpcv1.Driver{
 				Name:     optional.StringPtr("driver"),
 				Language: "cxx",
-				Pool:     optional.StringPtr("test-pool"),
+				Pool:     optional.StringPtr("drivers"),
 				Run: grpcv1.Run{
 					Image: optional.StringPtr("gcr.io/grpc-test-example/driver:v1"),
 				},
@@ -130,7 +172,7 @@ func newLoadTest() *grpcv1.LoadTest {
 				{
 					Name:     optional.StringPtr("server-1"),
 					Language: "go",
-					Pool:     optional.StringPtr("test-pool"),
+					Pool:     optional.StringPtr("workers-a"),
 					Clone: &grpcv1.Clone{
 						Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
 						Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
@@ -152,7 +194,7 @@ func newLoadTest() *grpcv1.LoadTest {
 				{
 					Name:     optional.StringPtr("client-1"),
 					Language: "go",
-					Pool:     optional.StringPtr("test-pool"),
+					Pool:     optional.StringPtr("workers-a"),
 					Clone: &grpcv1.Clone{
 						Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
 						Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
@@ -189,6 +231,7 @@ func TestAPIs(t *testing.T) {
 
 var _ = BeforeSuite(func(done Done) {
 	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
+	defaults = newDefaults()
 
 	By("setting gomega default timeouts")
 	SetDefaultEventuallyTimeout(1500 * time.Millisecond)
@@ -210,7 +253,7 @@ var _ = BeforeSuite(func(done Done) {
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:             scheme.Scheme,
 		MetricsBindAddress: ":3777",
-		Port:               9443,
+		Port:               9445,
 	})
 	Expect(err).ToNot(HaveOccurred())
 
@@ -218,7 +261,7 @@ var _ = BeforeSuite(func(done Done) {
 		Client:   k8sManager.GetClient(),
 		Scheme:   k8sManager.GetScheme(),
 		Log:      ctrl.Log.WithName("controller").WithName("LoadTest"),
-		Defaults: newDefaults(),
+		Defaults: defaults,
 	}
 	err = reconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
@@ -233,10 +276,6 @@ var _ = BeforeSuite(func(done Done) {
 		err := k8sManager.Start(stop)
 		Expect(err).ToNot(HaveOccurred())
 	}()
-
-	for _, node := range nodes {
-		Expect(k8sClient.Create(context.Background(), node)).To(Succeed())
-	}
 
 	close(done)
 }, 60)
