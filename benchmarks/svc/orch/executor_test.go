@@ -128,23 +128,23 @@ func TestKubeExecutorProvision(t *testing.T) {
 
 			go func() {
 				for _, event := range tc.events {
-					var component *types.Component
+					var componentName string
 
 					switch event.component {
 					case types.ServerComponent:
-						component = server
+						componentName = server.Name
 					case types.ClientComponent:
-						component = client
+						componentName = client.Name
 					case types.DriverComponent:
-						component = driver
+						componentName = driver.Name
 					default:
-						t.Fatalf("bad component kind")
+						componentName = "_UNKNOWN_"
 					}
 
 					time.Sleep(event.sleep)
 					eventChan <- &PodWatchEvent{
 						SessionName:   session.Name,
-						ComponentName: component.Name,
+						ComponentName: componentName,
 						Pod:           nil,
 						PodIP:         event.podIP,
 						Health:        event.health,
