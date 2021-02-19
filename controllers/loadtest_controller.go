@@ -146,55 +146,9 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
-	cfgMap := new(corev1.ConfigMap)
-	if err = r.get(ctx, req.NamespacedName, cfgMap); err != nil {
-		log.Info("failed to find existing scenarios ConfigMap")
-
-		if client.IgnoreNotFound(err) != nil {
-			// The ConfigMap existence was not at issue, so this is likely an
-			// issue with the Kubernetes API. So, we'll update the status, retry
-			// with exponential backoff and allow the timeout to catch it.
-			test.Status.State = grpcv1.Unknown
-			test.Status.Reason = grpcv1.KubernetesError
-			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): failed to get scenarios ConfigMap: %v", err)
-			if updateErr := r.updateStatus(ctx, test); updateErr != nil {
-				log.Error(updateErr, "failed to update status after failure to get scenarios ConfigMap: %v", err)
-			}
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		cfgMap = &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      req.Name,
-				Namespace: req.Namespace,
-			},
-			Data: map[string]string{
-				"scenarios.json": test.Spec.ScenariosJSON,
-			},
-
-			// TODO: Enable ConfigMap immutability when it becomes available
-			// Immutable: optional.BoolPtr(true),
-		}
-
-		if refError := setControllerReference(test, cfgMap, r.Scheme); refError != nil {
-			// We should retry when we cannot set a controller reference on the
-			// ConfigMap. This breaks garbage collection. If left to continue
-			// for manual cleanup, it could create hidden errors when a load
-			// test with the same name is created.
-			log.Error(refError, "could not set controller reference on scenarios ConfigMap")
-			test.Status.State = grpcv1.Unknown
-			test.Status.Reason = grpcv1.KubernetesError
-			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): could not setup garbage collection for scenarios ConfigMap: %v", refError)
-			if updateErr := r.updateStatus(ctx, test); updateErr != nil {
-				log.Error(updateErr, "failed to update status after failure to get and create scenarios ConfigMap")
-			}
-			return ctrl.Result{Requeue: true}, refError
-		}
-
-		if createErr := r.create(ctx, cfgMap); createErr != nil {
-			log.Error(err, "failed to create scenarios ConfigMap")
-			return ctrl.Result{Requeue: true}, createErr
-		}
+	if err := r.CreateConfigMapIfMissing(ctx, test); err != nil {
+		log.Error(err, "failed to create a scenarios config map", "testScenario", test.Spec.ScenariosJSON)
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	pods := new(corev1.PodList)
@@ -426,6 +380,62 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	return ctrl.Result{Requeue: false}, nil
+}
+
+// CreateConfigMapIfMissing checks for the existence of a scenarios ConfigMap
+// for the test. If one does not exist, it creates one with the same name and
+// namespace as the test. The ConfigMap contains a single key "scenarios.json"
+// with the contents of the ScenariosJSON field in the test spec.
+//
+// The ConfigMap will have the test as its owner's reference, meaning it will
+// be garbage collected when the test is deleted.
+//
+// If the existence check, setting the owner's reference or the creation of the
+// ConfigMap fail, an error is returned. Otherwise, the return value is nil.
+func (r *LoadTestReconciler) CreateConfigMapIfMissing(ctx context.Context, test *grpcv1.LoadTest) error {
+	nn := types.NamespacedName{Namespace: test.Namespace, Name: test.Name}
+	log := r.Log.WithValues("loadtest", nn)
+	cfgMap := new(corev1.ConfigMap)
+	if err := r.get(ctx, nn, cfgMap); err != nil {
+		log.Info("failed to find existing scenarios ConfigMap")
+
+		if client.IgnoreNotFound(err) != nil {
+			// The ConfigMap existence was not at issue, so this is likely an
+			// issue with the Kubernetes API. So, we'll retry with exponential
+			// backoff and allow the timeout to catch it.
+			log.Error(err, "failed to get scenarios ConfigMap (beyond not-found)")
+			return err
+		}
+
+		cfgMap = &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      test.Name,
+				Namespace: test.Namespace,
+			},
+			Data: map[string]string{
+				"scenarios.json": test.Spec.ScenariosJSON,
+			},
+
+			// TODO: Enable ConfigMap immutability when it becomes available
+			// Immutable: optional.BoolPtr(true),
+		}
+
+		if refError := setControllerReference(test, cfgMap, r.Scheme); refError != nil {
+			// We should retry when we cannot set a controller reference on the
+			// ConfigMap. This breaks garbage collection. If left to continue
+			// for manual cleanup, it could create hidden errors when a load
+			// test with the same name is created.
+			log.Error(refError, "could not set controller reference on scenarios ConfigMap")
+			return refError
+		}
+
+		if createErr := r.create(ctx, cfgMap); createErr != nil {
+			log.Error(err, "failed to create scenarios ConfigMap")
+			return createErr
+		}
+	}
+
+	return nil
 }
 
 // getRequeueTime takes a LoadTest and its previous status, compares the
