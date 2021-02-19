@@ -28,6 +28,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -45,11 +46,32 @@ var (
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
-	mgr      ctrl.Manager
+	mgr ctrl.Manager
+
+	// Defaults provide a configuration to the controller and also specify
+	// default values for fields in tests.
 	Defaults *config.Defaults
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Timeout  time.Duration
+
+	// Log is a generic V-level logger.
+	Log logr.Logger
+
+	// Scheme is a struct capable of mapping types, performing serializations
+	// and other Kubernetes API essentials.
+	Scheme *runtime.Scheme
+
+	// Timeout is a near-maximum time for each reconciliation.
+	Timeout time.Duration
+
+	// The following fields are functions which match the signatures of the
+	// client.Client methods. Using these fields allows us to stub out their
+	// implementations for unit testing.
+
+	create       func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error
+	get          func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error
+	list         func(ctx context.Context, list runtime.Object, opts ...client.ListOption) error
+	update       func(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error
+	updateStatus func(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error
+	delete       func(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error
 }
 
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
@@ -77,7 +99,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	defer cancel()
 
 	rawTest := new(grpcv1.LoadTest)
-	if err = r.Get(ctx, req.NamespacedName, rawTest); err != nil {
+	if err = r.get(ctx, req.NamespacedName, rawTest); err != nil {
 		log.Error(err, "failed to get test", "name", req.NamespacedName)
 		err = client.IgnoreNotFound(err)
 		return ctrl.Result{Requeue: err != nil}, err
@@ -93,7 +115,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if rawTest.Status.State.IsTerminated() {
 		if time.Now().Sub(rawTest.Status.StartTime.Time) >= testTTL {
 			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "testTTL", testTTL)
-			if err = r.Delete(ctx, rawTest); err != nil {
+			if err = r.delete(ctx, rawTest); err != nil {
 				log.Error(err, "fail to delete test")
 				return ctrl.Result{Requeue: true}, err
 			}
@@ -108,20 +130,20 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		test.Status.State = grpcv1.Errored
 		test.Status.Reason = grpcv1.FailedSettingDefaultsError
 		test.Status.Message = fmt.Sprintf("failed to reconcile tests with defaults: %v", err)
-		if err = r.Status().Update(ctx, test); err != nil {
+		if err = r.updateStatus(ctx, test); err != nil {
 			log.Error(err, "failed to update test status when setting defaults failed")
 		}
 		return ctrl.Result{Requeue: false}, nil
 	}
 	if !reflect.DeepEqual(rawTest, test) {
-		if err = r.Update(ctx, test); err != nil {
+		if err = r.update(ctx, test); err != nil {
 			log.Error(err, "failed to update test with defaults")
 			return ctrl.Result{Requeue: true}, err
 		}
 	}
 
 	cfgMap := new(corev1.ConfigMap)
-	if err = r.Get(ctx, req.NamespacedName, cfgMap); err != nil {
+	if err = r.get(ctx, req.NamespacedName, cfgMap); err != nil {
 		log.Info("failed to find existing scenarios ConfigMap")
 
 		if client.IgnoreNotFound(err) != nil {
@@ -131,7 +153,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			test.Status.State = grpcv1.Unknown
 			test.Status.Reason = grpcv1.KubernetesError
 			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): failed to get scenarios ConfigMap: %v", err)
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+			if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 				log.Error(updateErr, "failed to update status after failure to get scenarios ConfigMap: %v", err)
 			}
 			return ctrl.Result{Requeue: true}, err
@@ -159,20 +181,20 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			test.Status.State = grpcv1.Unknown
 			test.Status.Reason = grpcv1.KubernetesError
 			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): could not setup garbage collection for scenarios ConfigMap: %v", refError)
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+			if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 				log.Error(updateErr, "failed to update status after failure to get and create scenarios ConfigMap")
 			}
 			return ctrl.Result{Requeue: true}, refError
 		}
 
-		if createErr := r.Create(ctx, cfgMap); createErr != nil {
+		if createErr := r.create(ctx, cfgMap); createErr != nil {
 			log.Error(err, "failed to create scenarios ConfigMap")
 			return ctrl.Result{Requeue: true}, createErr
 		}
 	}
 
 	pods := new(corev1.PodList)
-	if err = r.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
+	if err = r.list(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
 		log.Error(err, "failed to list pods", "namespace", req.Namespace)
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -180,7 +202,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	previousStatus := test.Status
 	test.Status = status.ForLoadTest(test, ownedPods)
-	if err = r.Status().Update(ctx, test); err != nil {
+	if err = r.updateStatus(ctx, test); err != nil {
 		log.Error(err, "failed to update test status")
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -193,7 +215,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		nodes := new(corev1.NodeList)
-		if err = r.List(ctx, nodes); err != nil {
+		if err = r.list(ctx, nodes); err != nil {
 			log.Error(err, "failed to list nodes")
 			return ctrl.Result{Requeue: true}, err
 		}
@@ -266,7 +288,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.PoolError
 				test.Status.Message = fmt.Sprintf("requested pool %q does not exist", pool)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
 				}
 				return ctrl.Result{Requeue: false}, nil
@@ -285,7 +307,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				return &ctrl.Result{Requeue: true}, err
 			}
 
-			if err = r.Create(ctx, pod); err != nil {
+			if err = r.create(ctx, pod); err != nil {
 				log.Error(err, "could not create new pod", "pod", pod)
 				return &ctrl.Result{Requeue: true}, err
 			}
@@ -302,7 +324,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.ConfigurationError
 				test.Status.Message = fmt.Sprintf("failed to construct a pod for server at index %d: %v", i, err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithServer.Error(updateErr, "failed to update status after failure to construct a pod for server")
 				}
 				return ctrl.Result{Requeue: false}, nil
@@ -320,7 +342,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.KubernetesError
 				test.Status.Message = fmt.Sprintf("failed to create pod for server at index %d: %v", i, err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithServer.Error(updateErr, "failed to update status after failure to create pod for server")
 				}
 				return *result, err
@@ -335,7 +357,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.ConfigurationError
 				test.Status.Message = fmt.Sprintf("failed to construct a pod for client at index %d: %v", i, err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithClient.Error(updateErr, "failed to update status after failure to construct a pod for client")
 				}
 				return ctrl.Result{Requeue: false}, nil
@@ -353,7 +375,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.KubernetesError
 				test.Status.Message = fmt.Sprintf("failed to create pod for client at index %d: %v", i, err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithClient.Error(updateErr, "failed to update status after failure to create pod for client")
 				}
 				return *result, err
@@ -368,7 +390,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.ConfigurationError
 				test.Status.Message = fmt.Sprintf("failed to construct a pod for driver: %v", err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithDriver.Error(updateErr, "failed to update status after failure to construct a pod for driver")
 				}
 				return ctrl.Result{Requeue: false}, nil
@@ -386,7 +408,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.KubernetesError
 				test.Status.Message = fmt.Sprintf("failed to create pod for driver: %v", err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithDriver.Error(updateErr, "failed to update status after failure to create pod for driver")
 				}
 				return *result, err
@@ -431,6 +453,13 @@ func getRequeueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.Load
 // SetupWithManager configures a controller-runtime manager.
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.mgr = mgr
+	r.create = r.Create
+	r.get = r.Get
+	r.list = r.List
+	r.update = r.Update
+	r.updateStatus = r.Status().Update
+	r.delete = r.Delete
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grpcv1.LoadTest{}).
 		Owns(&corev1.Pod{}).
