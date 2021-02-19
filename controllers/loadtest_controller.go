@@ -43,6 +43,10 @@ var (
 	errNonexistentPool = errors.New("pool does not exist")
 )
 
+// setControllerReference is a method stub from controller-runtime. It allows us
+// to mock conditions where setting the controller reference fails in tests.
+var setControllerReference = ctrl.SetControllerReference
+
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
@@ -172,7 +176,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			// Immutable: optional.BoolPtr(true),
 		}
 
-		if refError := ctrl.SetControllerReference(test, cfgMap, r.Scheme); refError != nil {
+		if refError := setControllerReference(test, cfgMap, r.Scheme); refError != nil {
 			// We should retry when we cannot set a controller reference on the
 			// ConfigMap. This breaks garbage collection. If left to continue
 			// for manual cleanup, it could create hidden errors when a load
@@ -302,7 +306,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 		builder := podbuilder.New(r.Defaults, test)
 		createPod := func(pod *corev1.Pod) (*ctrl.Result, error) {
-			if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
+			if err = setControllerReference(test, pod, r.Scheme); err != nil {
 				log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
 				return &ctrl.Result{Requeue: true}, err
 			}
