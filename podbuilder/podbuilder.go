@@ -106,6 +106,19 @@ func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Cont
 	}
 }
 
+// DefaultPools contains the name of the pool that should be used as a default
+// for each role.
+type DefaultPools struct {
+	// The default pool for client pods.
+	Client string
+
+	// The default pool for driver pods.
+	Driver string
+
+	// The default pool for server pods.
+	Server string
+}
+
 // PodBuilder constructs pods for a test's driver, server and client.
 type PodBuilder struct {
 	test     *grpcv1.LoadTest
@@ -124,6 +137,22 @@ func New(defaults *config.Defaults, test *grpcv1.LoadTest) *PodBuilder {
 	return &PodBuilder{
 		test:     test,
 		defaults: defaults,
+	}
+}
+
+// PodFor attempts to return a pod for a LoadTest component. It is a helper
+// function that accepts a Client, Driver or Server pointer and returns an
+// error with any other type.
+func (pb *PodBuilder) PodFor(component interface{}) (*corev1.Pod, error) {
+	switch val := component.(type) {
+	case *grpcv1.Client:
+		return pb.PodForClient(val)
+	case *grpcv1.Driver:
+		return pb.PodForDriver(val)
+	case *grpcv1.Server:
+		return pb.PodForServer(val)
+	default:
+		return nil, errors.Errorf("unknown role for component: %v", val)
 	}
 }
 
