@@ -178,69 +178,24 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{Requeue: true}, err
 		}
 
-		var defaultClientPool string
-		var defaultDriverPool string
-		var defaultServerPool string
-		poolCapacities := make(map[string]int)
-		for _, node := range nodes.Items {
-			pool, ok := node.Labels[config.PoolLabel]
-			if !ok {
-				log.Info("encountered a node without a pool label", "nodeName", node.Name)
-				continue
-			}
-
-			if defaultPoolLabels := r.Defaults.DefaultPoolLabels; defaultPoolLabels != nil {
-				if defaultClientPool == "" {
-					if _, ok := node.Labels[defaultPoolLabels.Client]; ok {
-						defaultClientPool = pool
-					}
-				}
-				if defaultDriverPool == "" {
-					if _, ok := node.Labels[defaultPoolLabels.Driver]; ok {
-						defaultDriverPool = pool
-					}
-				}
-				if defaultServerPool == "" {
-					if _, ok := node.Labels[defaultPoolLabels.Server]; ok {
-						defaultServerPool = pool
-					}
-				}
-
-				if _, ok = poolCapacities[pool]; !ok {
-					poolCapacities[pool] = 0
-				}
-			}
-
-			poolCapacities[pool]++
-		}
-
-		poolAvailabilities := make(map[string]int)
-		for pool, capacity := range poolCapacities {
-			poolAvailabilities[pool] = capacity
-		}
-		for _, pod := range pods.Items {
-			pool, ok := pod.Labels[config.PoolLabel]
-			if !ok {
-				log.Info("encountered a pod without a pool label", "pod", pod)
-				continue
-			}
-			if pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
-				poolAvailabilities[pool]--
-			}
-		}
-
-		adjustAvailabilityForDefaults := func(defaultPoolKey, defaultPoolName string) {
-			if c, ok := missingPods.NodeCountByPool[defaultPoolKey]; ok {
-				missingPods.NodeCountByPool[defaultPoolName] += c
-			}
-			delete(missingPods.NodeCountByPool, defaultPoolKey)
-		}
-		adjustAvailabilityForDefaults(status.DefaultClientPool, defaultClientPool)
-		adjustAvailabilityForDefaults(status.DefaultDriverPool, defaultDriverPool)
-		adjustAvailabilityForDefaults(status.DefaultServerPool, defaultServerPool)
+		clusterInfo := CurrentClusterInfo(nodes, pods, r.Defaults.DefaultPoolLabels, log)
+		adjustAvailabilityForDefaults(clusterInfo, missingPods,
+			defaultAdjustment{
+				DefaultPoolKey: status.DefaultClientPool,
+				Role:           config.ClientRole,
+			},
+			defaultAdjustment{
+				DefaultPoolKey: status.DefaultDriverPool,
+				Role:           config.DriverRole,
+			},
+			defaultAdjustment{
+				DefaultPoolKey: status.DefaultServerPool,
+				Role:           config.ServerRole,
+			},
+		)
 
 		for pool, requiredNodeCount := range missingPods.NodeCountByPool {
-			availableNodeCount, ok := poolAvailabilities[pool]
+			availableNodeCount, ok := clusterInfo.AvailabilityForPool(pool)
 			if !ok {
 				log.Error(errNonexistentPool, "requested pool does not exist and cannot be considered when scheduling", "requestedPool", pool)
 				test.Status.State = grpcv1.Errored
@@ -288,8 +243,9 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				return ctrl.Result{Requeue: false}, nil
 			}
 
-			if missingPods.Servers[i].Pool == nil {
-				pod.Labels[config.PoolLabel] = defaultServerPool
+			// TODO: Better error checking in these blocks
+			if pool, ok := clusterInfo.DefaultPoolForRole(config.ServerRole); ok && missingPods.Servers[i].Pool == nil {
+				pod.Labels[config.PoolLabel] = pool
 			} else {
 				pod.Labels[config.PoolLabel] = *missingPods.Servers[i].Pool
 			}
@@ -321,8 +277,8 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				return ctrl.Result{Requeue: false}, nil
 			}
 
-			if missingPods.Clients[i].Pool == nil {
-				pod.Labels[config.PoolLabel] = defaultClientPool
+			if pool, ok := clusterInfo.DefaultPoolForRole(config.ClientRole); ok && missingPods.Clients[i].Pool == nil {
+				pod.Labels[config.PoolLabel] = pool
 			} else {
 				pod.Labels[config.PoolLabel] = *missingPods.Clients[i].Pool
 			}
@@ -354,8 +310,8 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				return ctrl.Result{Requeue: false}, nil
 			}
 
-			if missingPods.Driver.Pool == nil {
-				pod.Labels[config.PoolLabel] = defaultDriverPool
+			if pool, ok := clusterInfo.DefaultPoolForRole(config.DriverRole); ok && missingPods.Driver.Pool == nil {
+				pod.Labels[config.PoolLabel] = pool
 			} else {
 				pod.Labels[config.PoolLabel] = *missingPods.Driver.Pool
 			}
@@ -436,6 +392,145 @@ func (r *LoadTestReconciler) CreateConfigMapIfMissing(ctx context.Context, test 
 	}
 
 	return nil
+}
+
+// ClusterInfo provides information about the nodes in a Kubernetes cluster.
+type ClusterInfo struct {
+	// capacity is a map where the key is the name of the pool and the
+	// value is the total number of nodes with a matching pool label.
+	capacity map[string]int
+
+	// availability is a map where the key is the name of the pool and
+	// the value is the number of nodes with a matching pool label that
+	// are not currently running pods for any LoadTest.
+	availability map[string]int
+
+	// defaultPools is a map where the key is the loadtest-role label
+	// and the value is the name of the default pool for that role.
+	defaultPools map[string]string
+}
+
+// CapacityForPool returns the total number of nodes with a matching
+// pool label. In addition, it returns a boolean indicating whether the
+// pool label has present on any node in the cluster.
+func (ci *ClusterInfo) CapacityForPool(pool string) (cap int, ok bool) {
+	cap, ok = ci.capacity[pool]
+	return
+}
+
+// AvailabilityForPool returns the number of nodes with a matching pool
+// label that are not currently running pods for any LoadTest. In
+// addition, it returns a boolean indicating whether the pool label has
+// been present on any node in the cluster.
+func (ci *ClusterInfo) AvailabilityForPool(pool string) (availability int, ok bool) {
+	availability, ok = ci.availability[pool]
+	return
+}
+
+// DefaultPoolForRole returns the default pool for a given role. In additition,
+// it returns a boolean indicating whether this role has been seen on any node
+// in the cluster.
+func (ci *ClusterInfo) DefaultPoolForRole(role string) (pool string, ok bool) {
+	pool, ok = ci.defaultPools[role]
+	return
+}
+
+// CurrentClusterInfo accepts the list of all nodes in the cluster; the list of
+// all running, pending, errored, and completed pods; and the default pool
+// labels (if applicable). It processes this data to create a ClusterInfo
+// instance. This instance provides information like the current availability
+// and pools in the cluster.
+func CurrentClusterInfo(nodes *corev1.NodeList, pods *corev1.PodList, defaultPoolLabels *config.PoolLabelMap, log logr.Logger) *ClusterInfo {
+	info := &ClusterInfo{
+		capacity:     make(map[string]int),
+		availability: make(map[string]int),
+		defaultPools: make(map[string]string),
+	}
+
+	for _, node := range nodes.Items {
+		pool, ok := node.Labels[config.PoolLabel]
+		if !ok && log != nil {
+			log.Info("encountered a node without a pool label", "nodeName", node.Name)
+			continue
+		}
+
+		if defaultPoolLabels != nil {
+			if _, ok := info.defaultPools[config.ClientRole]; !ok {
+				if _, ok = node.Labels[defaultPoolLabels.Client]; ok {
+					info.defaultPools[config.ClientRole] = pool
+				}
+			}
+			if _, ok := info.defaultPools[config.DriverRole]; !ok {
+				if _, ok = node.Labels[defaultPoolLabels.Driver]; ok {
+					info.defaultPools[config.DriverRole] = pool
+				}
+			}
+			if _, ok := info.defaultPools[config.ServerRole]; !ok {
+				if _, ok = node.Labels[defaultPoolLabels.Server]; ok {
+					info.defaultPools[config.ServerRole] = pool
+				}
+			}
+
+			if _, ok = info.capacity[pool]; !ok {
+				info.capacity[pool] = 0
+			}
+		}
+
+		info.capacity[pool]++
+	}
+
+	poolAvailabilities := make(map[string]int)
+	for pool, capacity := range info.capacity {
+		poolAvailabilities[pool] = capacity
+	}
+	for _, pod := range pods.Items {
+		pool, ok := pod.Labels[config.PoolLabel]
+		if !ok && log != nil {
+			log.Info("encountered a pod without a pool label", "pod", pod)
+			continue
+		}
+		if pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
+			poolAvailabilities[pool]--
+		}
+	}
+
+	return info
+}
+
+// defaultAdjustment contains the information of which default pool placeholders
+// should be removed. See the adjustAvailabilityForDefaults function for more
+// details.
+type defaultAdjustment struct {
+	// DefaultPoolKey is the key that is used as a placeholder for a default
+	// pool when calculating the number of nodes it requires.
+	DefaultPoolKey string
+
+	// Role is the function of these pods in the test. For example, clients will
+	// be config.ClientRole; servers will be config.ServerRole; and drivers will
+	// be config.DriverRole.
+	Role string
+}
+
+// adjustAvailabilityForDefaults uses the current information known about a
+// cluster to apply a set of adjustments to the LoadTestMissing struct. These
+// adjustments add the total number of nodes needed from unspecified pools,
+// "default pools", to specific pools. This way the system can adequately
+// determine if enough nodes are available to schedule the test.
+func adjustAvailabilityForDefaults(clusterInfo *ClusterInfo, missingPods *status.LoadTestMissing, adjustments ...defaultAdjustment) {
+	for _, adjustment := range adjustments {
+		defaultPoolForRole, ok := clusterInfo.DefaultPoolForRole(adjustment.Role)
+		if !ok {
+			return
+		}
+
+		defaultPoolNodeCount, ok := missingPods.NodeCountByPool[adjustment.DefaultPoolKey]
+		if !ok {
+			return
+		}
+
+		missingPods.NodeCountByPool[defaultPoolForRole] += defaultPoolNodeCount
+		delete(missingPods.NodeCountByPool, adjustment.DefaultPoolKey)
+	}
 }
 
 // getRequeueTime takes a LoadTest and its previous status, compares the

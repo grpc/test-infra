@@ -209,6 +209,68 @@ var _ = Describe("LoadTestReconciler", func() {
 			})
 		})
 	})
+
+	Describe("CurrentClusterInfo", func() {
+		When("locating default pools", func() {
+			It("sets ClusterInfo so DefaultPoolForRole returns the correct pool and true for known roles", func() {
+				nodeList := &corev1.NodeList{
+					Items: []corev1.Node{
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "node-1",
+								Labels: map[string]string{
+									config.PoolLabel:                  "pool-1",
+									defaults.DefaultPoolLabels.Driver: "true",
+								},
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "node-2",
+								Labels: map[string]string{
+									config.PoolLabel:                  "pool-2",
+									defaults.DefaultPoolLabels.Client: "true",
+									defaults.DefaultPoolLabels.Server: "true",
+								},
+							},
+						},
+						{
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "node-3",
+								Labels: map[string]string{
+									config.PoolLabel:                  "pool-2",
+									defaults.DefaultPoolLabels.Client: "true",
+									defaults.DefaultPoolLabels.Server: "true",
+								},
+							},
+						},
+					},
+				}
+
+				info := CurrentClusterInfo(nodeList, &corev1.PodList{}, defaults.DefaultPoolLabels, nil)
+
+				clientPool, ok := info.DefaultPoolForRole(config.ClientRole)
+				Expect(ok).To(BeTrue())
+				Expect(clientPool).To(Equal("pool-2"))
+
+				driverPool, ok := info.DefaultPoolForRole(config.DriverRole)
+				Expect(ok).To(BeTrue())
+				Expect(driverPool).To(Equal("pool-1"))
+
+				serverPool, ok := info.DefaultPoolForRole(config.ServerRole)
+				Expect(ok).To(BeTrue())
+				Expect(serverPool).To(Equal("pool-2"))
+			})
+
+			It("sets ClusterInfo so DefaultPoolForRole returns empty string and false for unknown roles", func() {
+				info := CurrentClusterInfo(&corev1.NodeList{}, &corev1.PodList{}, defaults.DefaultPoolLabels, nil)
+
+				unknownPool, ok := info.DefaultPoolForRole("unknown-role")
+				Expect(ok).To(BeFalse())
+				Expect(unknownPool).To(BeEmpty())
+			})
+		})
+	})
 })
 
 // createPod creates a pod resource, given a pod pointer and a test pointer.
