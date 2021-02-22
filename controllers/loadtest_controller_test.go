@@ -15,14 +15,19 @@ package controllers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
@@ -30,6 +35,181 @@ import (
 	"github.com/grpc/test-infra/podbuilder"
 	"github.com/grpc/test-infra/status"
 )
+
+var _ = Describe("LoadTestReconciler", func() {
+	var reconciler *LoadTestReconciler
+	var test *grpcv1.LoadTest
+
+	BeforeEach(func() {
+		reconciler = &LoadTestReconciler{
+			Scheme:   k8sManager.GetScheme(),
+			Defaults: defaults,
+			Log:      ctrl.Log.WithName("controller").WithName("LoadTest"),
+		}
+		test = newLoadTest()
+	})
+
+	AfterEach(func() {
+		setControllerReference = ctrl.SetControllerReference
+	})
+
+	Describe("CreateConfigMapIfMissing", func() {
+		Context("Scenarios ConfigMap does not exist", func() {
+			When("Creating a ConfigMap", func() {
+				It("sets the ConfigMap name to match the test", func() {
+					reconciler.get = func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error {
+						return apierrors.NewNotFound(
+							schema.GroupResource{Group: "", Resource: "ConfigMap"},
+							key.Name,
+						)
+					}
+
+					var createdObj runtime.Object
+					reconciler.create = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+						createdObj = obj
+						return nil
+					}
+
+					err := reconciler.CreateConfigMapIfMissing(context.Background(), test)
+					Expect(err).ToNot(HaveOccurred())
+
+					createdConfigMap, ok := createdObj.(*corev1.ConfigMap)
+					Expect(ok).To(BeTrue())
+					Expect(createdConfigMap.Name).To(Equal(test.Name))
+				})
+
+				It("sets the ConfigMap namespace to match the test", func() {
+					reconciler.get = func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error {
+						return apierrors.NewNotFound(
+							schema.GroupResource{Group: "", Resource: "ConfigMap"},
+							key.Name,
+						)
+					}
+
+					var createdObj runtime.Object
+					reconciler.create = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+						createdObj = obj
+						return nil
+					}
+
+					err := reconciler.CreateConfigMapIfMissing(context.Background(), test)
+					Expect(err).ToNot(HaveOccurred())
+
+					createdConfigMap, ok := createdObj.(*corev1.ConfigMap)
+					Expect(ok).To(BeTrue())
+					Expect(createdConfigMap.Namespace).To(Equal(test.Namespace))
+				})
+
+				It("sets the correct scenario data", func() {
+					reconciler.get = func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error {
+						return apierrors.NewNotFound(
+							schema.GroupResource{Group: "", Resource: "ConfigMap"},
+							key.Name,
+						)
+					}
+
+					var createdObj runtime.Object
+					reconciler.create = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+						createdObj = obj
+						return nil
+					}
+
+					err := reconciler.CreateConfigMapIfMissing(context.Background(), test)
+					Expect(err).ToNot(HaveOccurred())
+
+					createdConfigMap, ok := createdObj.(*corev1.ConfigMap)
+					Expect(ok).To(BeTrue())
+					Expect(createdConfigMap.Data).To(HaveKeyWithValue("scenarios.json", test.Spec.ScenariosJSON))
+				})
+
+				It("sets a controller reference for garbage collection", func() {
+					reconciler.get = func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error {
+						return apierrors.NewNotFound(
+							schema.GroupResource{Group: "", Resource: "ConfigMap"},
+							key.Name,
+						)
+					}
+
+					var createdObj runtime.Object
+					reconciler.create = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+						createdObj = obj
+						return nil
+					}
+
+					err := reconciler.CreateConfigMapIfMissing(context.Background(), test)
+					Expect(err).ToNot(HaveOccurred())
+
+					createdConfigMap, ok := createdObj.(*corev1.ConfigMap)
+					Expect(ok).To(BeTrue())
+
+					owners := createdConfigMap.OwnerReferences
+					Expect(owners).ToNot(BeNil())
+					Expect(owners).To(HaveLen(1))
+
+					owner := owners[0]
+					Expect(owner).ToNot(BeNil())
+					Expect(createdConfigMap.OwnerReferences).ToNot(BeNil())
+					Expect(createdConfigMap.OwnerReferences[0].Kind).To(Equal("LoadTest"))
+					Expect(createdConfigMap.OwnerReferences[0].Name).To(Equal(test.Name))
+				})
+			})
+
+			It("returns an error when the ConfigMap could not be created", func() {
+				reconciler.get = func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error {
+					return apierrors.NewNotFound(
+						schema.GroupResource{Group: "", Resource: "ConfigMap"},
+						key.Name,
+					)
+				}
+
+				reconciler.create = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+					return errors.New("mock error")
+				}
+
+				err := reconciler.CreateConfigMapIfMissing(context.Background(), test)
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("returns an error when the ConfigMap existence check fails", func() {
+				reconciler.get = func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error {
+					return errors.New("mock error")
+				}
+
+				reconciler.updateStatus = func(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error {
+					return nil
+				}
+
+				reconciler.create = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+					return nil
+				}
+
+				err := reconciler.CreateConfigMapIfMissing(context.Background(), test)
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("returns an error when the controller reference could not be set", func() {
+				reconciler.get = func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error {
+					return apierrors.NewNotFound(
+						schema.GroupResource{Group: "", Resource: "ConfigMap"},
+						key.Name,
+					)
+				}
+
+				// Note: we must reset this, so the tests remain hermetic.
+				setControllerReference = func(owner, controlled metav1.Object, scheme *runtime.Scheme) error {
+					return errors.New("mock error")
+				}
+
+				reconciler.create = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+					return nil
+				}
+
+				err := reconciler.CreateConfigMapIfMissing(context.Background(), test)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
+})
 
 // createPod creates a pod resource, given a pod pointer and a test pointer.
 func createPod(pod *corev1.Pod, test *grpcv1.LoadTest) error {
@@ -77,7 +257,7 @@ func deleteTestPods(test *grpcv1.LoadTest) {
 	}
 }
 
-var _ = Describe("LoadTest controller", func() {
+var _ = Describe("LoadTest controller (integration tests)", func() {
 	var test *grpcv1.LoadTest
 	var namespacedName types.NamespacedName
 

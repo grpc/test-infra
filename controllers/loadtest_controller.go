@@ -24,10 +24,12 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/google/martian/log"
 	corev1 "k8s.io/api/core/v1"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -42,14 +44,39 @@ var (
 	errNonexistentPool = errors.New("pool does not exist")
 )
 
+// setControllerReference is a method stub from controller-runtime. It allows us
+// to mock conditions where setting the controller reference fails in tests.
+var setControllerReference = ctrl.SetControllerReference
+
 // LoadTestReconciler reconciles a LoadTest object
 type LoadTestReconciler struct {
 	client.Client
-	mgr      ctrl.Manager
+	mgr ctrl.Manager
+
+	// Defaults provide a configuration to the controller and also specify
+	// default values for fields in tests.
 	Defaults *config.Defaults
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Timeout  time.Duration
+
+	// Log is a generic V-level logger.
+	Log logr.Logger
+
+	// Scheme is a struct capable of mapping types, performing serializations
+	// and other Kubernetes API essentials.
+	Scheme *runtime.Scheme
+
+	// Timeout is a near-maximum time for each reconciliation.
+	Timeout time.Duration
+
+	// The following fields are functions which match the signatures of the
+	// client.Client methods. Using these fields allows us to stub out their
+	// implementations for unit testing.
+
+	create       func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error
+	get          func(ctx context.Context, key types.NamespacedName, obj runtime.Object) error
+	list         func(ctx context.Context, list runtime.Object, opts ...client.ListOption) error
+	update       func(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error
+	updateStatus func(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error
+	delete       func(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error
 }
 
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
@@ -77,7 +104,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	defer cancel()
 
 	rawTest := new(grpcv1.LoadTest)
-	if err = r.Get(ctx, req.NamespacedName, rawTest); err != nil {
+	if err = r.get(ctx, req.NamespacedName, rawTest); err != nil {
 		log.Error(err, "failed to get test", "name", req.NamespacedName)
 		err = client.IgnoreNotFound(err)
 		return ctrl.Result{Requeue: err != nil}, err
@@ -93,7 +120,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	if rawTest.Status.State.IsTerminated() {
 		if time.Now().Sub(rawTest.Status.StartTime.Time) >= testTTL {
 			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "testTTL", testTTL)
-			if err = r.Delete(ctx, rawTest); err != nil {
+			if err = r.delete(ctx, rawTest); err != nil {
 				log.Error(err, "fail to delete test")
 				return ctrl.Result{Requeue: true}, err
 			}
@@ -108,71 +135,25 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		test.Status.State = grpcv1.Errored
 		test.Status.Reason = grpcv1.FailedSettingDefaultsError
 		test.Status.Message = fmt.Sprintf("failed to reconcile tests with defaults: %v", err)
-		if err = r.Status().Update(ctx, test); err != nil {
+		if err = r.updateStatus(ctx, test); err != nil {
 			log.Error(err, "failed to update test status when setting defaults failed")
 		}
 		return ctrl.Result{Requeue: false}, nil
 	}
 	if !reflect.DeepEqual(rawTest, test) {
-		if err = r.Update(ctx, test); err != nil {
+		if err = r.update(ctx, test); err != nil {
 			log.Error(err, "failed to update test with defaults")
 			return ctrl.Result{Requeue: true}, err
 		}
 	}
 
-	cfgMap := new(corev1.ConfigMap)
-	if err = r.Get(ctx, req.NamespacedName, cfgMap); err != nil {
-		log.Info("failed to find existing scenarios ConfigMap")
-
-		if client.IgnoreNotFound(err) != nil {
-			// The ConfigMap existence was not at issue, so this is likely an
-			// issue with the Kubernetes API. So, we'll update the status, retry
-			// with exponential backoff and allow the timeout to catch it.
-			test.Status.State = grpcv1.Unknown
-			test.Status.Reason = grpcv1.KubernetesError
-			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): failed to get scenarios ConfigMap: %v", err)
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				log.Error(updateErr, "failed to update status after failure to get scenarios ConfigMap: %v", err)
-			}
-			return ctrl.Result{Requeue: true}, err
-		}
-
-		cfgMap = &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      req.Name,
-				Namespace: req.Namespace,
-			},
-			Data: map[string]string{
-				"scenarios.json": test.Spec.ScenariosJSON,
-			},
-
-			// TODO: Enable ConfigMap immutability when it becomes available
-			// Immutable: optional.BoolPtr(true),
-		}
-
-		if refError := ctrl.SetControllerReference(test, cfgMap, r.Scheme); refError != nil {
-			// We should retry when we cannot set a controller reference on the
-			// ConfigMap. This breaks garbage collection. If left to continue
-			// for manual cleanup, it could create hidden errors when a load
-			// test with the same name is created.
-			log.Error(refError, "could not set controller reference on scenarios ConfigMap")
-			test.Status.State = grpcv1.Unknown
-			test.Status.Reason = grpcv1.KubernetesError
-			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): could not setup garbage collection for scenarios ConfigMap: %v", refError)
-			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				log.Error(updateErr, "failed to update status after failure to get and create scenarios ConfigMap")
-			}
-			return ctrl.Result{Requeue: true}, refError
-		}
-
-		if createErr := r.Create(ctx, cfgMap); createErr != nil {
-			log.Error(err, "failed to create scenarios ConfigMap")
-			return ctrl.Result{Requeue: true}, createErr
-		}
+	if err := r.CreateConfigMapIfMissing(ctx, test); err != nil {
+		log.Error(err, "failed to create a scenarios config map", "testScenario", test.Spec.ScenariosJSON)
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	pods := new(corev1.PodList)
-	if err = r.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
+	if err = r.list(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
 		log.Error(err, "failed to list pods", "namespace", req.Namespace)
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -180,7 +161,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 	previousStatus := test.Status
 	test.Status = status.ForLoadTest(test, ownedPods)
-	if err = r.Status().Update(ctx, test); err != nil {
+	if err = r.updateStatus(ctx, test); err != nil {
 		log.Error(err, "failed to update test status")
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -193,80 +174,35 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		nodes := new(corev1.NodeList)
-		if err = r.List(ctx, nodes); err != nil {
+		if err = r.list(ctx, nodes); err != nil {
 			log.Error(err, "failed to list nodes")
 			return ctrl.Result{Requeue: true}, err
 		}
 
-		var defaultClientPool string
-		var defaultDriverPool string
-		var defaultServerPool string
-		poolCapacities := make(map[string]int)
-		for _, node := range nodes.Items {
-			pool, ok := node.Labels[config.PoolLabel]
-			if !ok {
-				log.Info("encountered a node without a pool label", "nodeName", node.Name)
-				continue
-			}
-
-			if defaultPoolLabels := r.Defaults.DefaultPoolLabels; defaultPoolLabels != nil {
-				if defaultClientPool == "" {
-					if _, ok := node.Labels[defaultPoolLabels.Client]; ok {
-						defaultClientPool = pool
-					}
-				}
-				if defaultDriverPool == "" {
-					if _, ok := node.Labels[defaultPoolLabels.Driver]; ok {
-						defaultDriverPool = pool
-					}
-				}
-				if defaultServerPool == "" {
-					if _, ok := node.Labels[defaultPoolLabels.Server]; ok {
-						defaultServerPool = pool
-					}
-				}
-
-				if _, ok = poolCapacities[pool]; !ok {
-					poolCapacities[pool] = 0
-				}
-			}
-
-			poolCapacities[pool]++
-		}
-
-		poolAvailabilities := make(map[string]int)
-		for pool, capacity := range poolCapacities {
-			poolAvailabilities[pool] = capacity
-		}
-		for _, pod := range pods.Items {
-			pool, ok := pod.Labels[config.PoolLabel]
-			if !ok {
-				log.Info("encountered a pod without a pool label", "pod", pod)
-				continue
-			}
-			if pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
-				poolAvailabilities[pool]--
-			}
-		}
-
-		adjustAvailabilityForDefaults := func(defaultPoolKey, defaultPoolName string) {
-			if c, ok := missingPods.NodeCountByPool[defaultPoolKey]; ok {
-				missingPods.NodeCountByPool[defaultPoolName] += c
-			}
-			delete(missingPods.NodeCountByPool, defaultPoolKey)
-		}
-		adjustAvailabilityForDefaults(status.DefaultClientPool, defaultClientPool)
-		adjustAvailabilityForDefaults(status.DefaultDriverPool, defaultDriverPool)
-		adjustAvailabilityForDefaults(status.DefaultServerPool, defaultServerPool)
+		clusterInfo := CurrentClusterInfo(nodes, pods, r.Defaults.DefaultPoolLabels)
+		adjustAvailabilityForDefaults(clusterInfo, missingPods,
+			defaultAdjustment{
+				DefaultPoolKey: status.DefaultClientPool,
+				Role:           config.ClientRole,
+			},
+			defaultAdjustment{
+				DefaultPoolKey: status.DefaultDriverPool,
+				Role:           config.DriverRole,
+			},
+			defaultAdjustment{
+				DefaultPoolKey: status.DefaultServerPool,
+				Role:           config.ServerRole,
+			},
+		)
 
 		for pool, requiredNodeCount := range missingPods.NodeCountByPool {
-			availableNodeCount, ok := poolAvailabilities[pool]
+			availableNodeCount, ok := clusterInfo.AvailabilityForPool(pool)
 			if !ok {
 				log.Error(errNonexistentPool, "requested pool does not exist and cannot be considered when scheduling", "requestedPool", pool)
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.PoolError
 				test.Status.Message = fmt.Sprintf("requested pool %q does not exist", pool)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
 				}
 				return ctrl.Result{Requeue: false}, nil
@@ -280,12 +216,12 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 		builder := podbuilder.New(r.Defaults, test)
 		createPod := func(pod *corev1.Pod) (*ctrl.Result, error) {
-			if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
+			if err = setControllerReference(test, pod, r.Scheme); err != nil {
 				log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
 				return &ctrl.Result{Requeue: true}, err
 			}
 
-			if err = r.Create(ctx, pod); err != nil {
+			if err = r.create(ctx, pod); err != nil {
 				log.Error(err, "could not create new pod", "pod", pod)
 				return &ctrl.Result{Requeue: true}, err
 			}
@@ -302,14 +238,15 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.ConfigurationError
 				test.Status.Message = fmt.Sprintf("failed to construct a pod for server at index %d: %v", i, err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithServer.Error(updateErr, "failed to update status after failure to construct a pod for server")
 				}
 				return ctrl.Result{Requeue: false}, nil
 			}
 
-			if missingPods.Servers[i].Pool == nil {
-				pod.Labels[config.PoolLabel] = defaultServerPool
+			// TODO: Better error checking in these blocks
+			if pool, ok := clusterInfo.DefaultPoolForRole(config.ServerRole); ok && missingPods.Servers[i].Pool == nil {
+				pod.Labels[config.PoolLabel] = pool
 			} else {
 				pod.Labels[config.PoolLabel] = *missingPods.Servers[i].Pool
 			}
@@ -320,7 +257,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.KubernetesError
 				test.Status.Message = fmt.Sprintf("failed to create pod for server at index %d: %v", i, err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithServer.Error(updateErr, "failed to update status after failure to create pod for server")
 				}
 				return *result, err
@@ -335,14 +272,14 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.ConfigurationError
 				test.Status.Message = fmt.Sprintf("failed to construct a pod for client at index %d: %v", i, err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithClient.Error(updateErr, "failed to update status after failure to construct a pod for client")
 				}
 				return ctrl.Result{Requeue: false}, nil
 			}
 
-			if missingPods.Clients[i].Pool == nil {
-				pod.Labels[config.PoolLabel] = defaultClientPool
+			if pool, ok := clusterInfo.DefaultPoolForRole(config.ClientRole); ok && missingPods.Clients[i].Pool == nil {
+				pod.Labels[config.PoolLabel] = pool
 			} else {
 				pod.Labels[config.PoolLabel] = *missingPods.Clients[i].Pool
 			}
@@ -353,7 +290,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.KubernetesError
 				test.Status.Message = fmt.Sprintf("failed to create pod for client at index %d: %v", i, err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithClient.Error(updateErr, "failed to update status after failure to create pod for client")
 				}
 				return *result, err
@@ -368,14 +305,14 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.ConfigurationError
 				test.Status.Message = fmt.Sprintf("failed to construct a pod for driver: %v", err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithDriver.Error(updateErr, "failed to update status after failure to construct a pod for driver")
 				}
 				return ctrl.Result{Requeue: false}, nil
 			}
 
-			if missingPods.Driver.Pool == nil {
-				pod.Labels[config.PoolLabel] = defaultDriverPool
+			if pool, ok := clusterInfo.DefaultPoolForRole(config.DriverRole); ok && missingPods.Driver.Pool == nil {
+				pod.Labels[config.PoolLabel] = pool
 			} else {
 				pod.Labels[config.PoolLabel] = *missingPods.Driver.Pool
 			}
@@ -386,7 +323,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.KubernetesError
 				test.Status.Message = fmt.Sprintf("failed to create pod for driver: %v", err)
-				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+				if updateErr := r.updateStatus(ctx, test); updateErr != nil {
 					logWithDriver.Error(updateErr, "failed to update status after failure to create pod for driver")
 				}
 				return *result, err
@@ -400,6 +337,201 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	return ctrl.Result{Requeue: false}, nil
+}
+
+// CreateConfigMapIfMissing checks for the existence of a scenarios ConfigMap
+// for the test. If one does not exist, it creates one with the same name and
+// namespace as the test. The ConfigMap contains a single key "scenarios.json"
+// with the contents of the ScenariosJSON field in the test spec.
+//
+// The ConfigMap will have the test as its owner's reference, meaning it will
+// be garbage collected when the test is deleted.
+//
+// If the existence check, setting the owner's reference or the creation of the
+// ConfigMap fail, an error is returned. Otherwise, the return value is nil.
+func (r *LoadTestReconciler) CreateConfigMapIfMissing(ctx context.Context, test *grpcv1.LoadTest) error {
+	nn := types.NamespacedName{Namespace: test.Namespace, Name: test.Name}
+	log := r.Log.WithValues("loadtest", nn)
+	cfgMap := new(corev1.ConfigMap)
+	if err := r.get(ctx, nn, cfgMap); err != nil {
+		log.Info("failed to find existing scenarios ConfigMap")
+
+		if client.IgnoreNotFound(err) != nil {
+			// The ConfigMap existence was not at issue, so this is likely an
+			// issue with the Kubernetes API. So, we'll retry with exponential
+			// backoff and allow the timeout to catch it.
+			log.Error(err, "failed to get scenarios ConfigMap (beyond not-found)")
+			return err
+		}
+
+		cfgMap = &corev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      test.Name,
+				Namespace: test.Namespace,
+			},
+			Data: map[string]string{
+				"scenarios.json": test.Spec.ScenariosJSON,
+			},
+
+			// TODO: Enable ConfigMap immutability when it becomes available
+			// Immutable: optional.BoolPtr(true),
+		}
+
+		if refError := setControllerReference(test, cfgMap, r.Scheme); refError != nil {
+			// We should retry when we cannot set a controller reference on the
+			// ConfigMap. This breaks garbage collection. If left to continue
+			// for manual cleanup, it could create hidden errors when a load
+			// test with the same name is created.
+			log.Error(refError, "could not set controller reference on scenarios ConfigMap")
+			return refError
+		}
+
+		if createErr := r.create(ctx, cfgMap); createErr != nil {
+			log.Error(err, "failed to create scenarios ConfigMap")
+			return createErr
+		}
+	}
+
+	return nil
+}
+
+// ClusterInfo provides information about the nodes in a Kubernetes cluster.
+type ClusterInfo struct {
+	// capacity is a map where the key is the name of the pool and the
+	// value is the total number of nodes with a matching pool label.
+	capacity map[string]int
+
+	// availability is a map where the key is the name of the pool and
+	// the value is the number of nodes with a matching pool label that
+	// are not currently running pods for any LoadTest.
+	availability map[string]int
+
+	// defaultPools is a map where the key is the loadtest-role label
+	// and the value is the name of the default pool for that role.
+	defaultPools map[string]string
+}
+
+// CapacityForPool returns the total number of nodes with a matching
+// pool label. In addition, it returns a boolean indicating whether the
+// pool label has present on any node in the cluster.
+func (ci *ClusterInfo) CapacityForPool(pool string) (cap int, ok bool) {
+	cap, ok = ci.capacity[pool]
+	return
+}
+
+// AvailabilityForPool returns the number of nodes with a matching pool
+// label that are not currently running pods for any LoadTest. In
+// addition, it returns a boolean indicating whether the pool label has
+// been present on any node in the cluster.
+func (ci *ClusterInfo) AvailabilityForPool(pool string) (availability int, ok bool) {
+	availability, ok = ci.availability[pool]
+	return
+}
+
+// DefaultPoolForRole returns the default pool for a given role. In additition,
+// it returns a boolean indicating whether this role has been seen on any node
+// in the cluster.
+func (ci *ClusterInfo) DefaultPoolForRole(role string) (pool string, ok bool) {
+	pool, ok = ci.defaultPools[role]
+	return
+}
+
+// CurrentClusterInfo accepts the list of all nodes in the cluster; the list of
+// all running, pending, errored, and completed pods; and the default pool
+// labels (if applicable). It processes this data to create a ClusterInfo
+// instance. This instance provides information like the current availability
+// and pools in the cluster.
+func CurrentClusterInfo(nodes *corev1.NodeList, pods *corev1.PodList, defaultPoolLabels *config.PoolLabelMap) *ClusterInfo {
+	info := &ClusterInfo{
+		capacity:     make(map[string]int),
+		availability: make(map[string]int),
+		defaultPools: make(map[string]string),
+	}
+
+	for _, node := range nodes.Items {
+		pool, ok := node.Labels[config.PoolLabel]
+		if !ok {
+			log.Info("encountered a node without a pool label", "nodeName", node.Name)
+			continue
+		}
+
+		if defaultPoolLabels != nil {
+			if _, ok := info.defaultPools[config.ClientRole]; !ok {
+				if _, ok = node.Labels[defaultPoolLabels.Client]; ok {
+					info.defaultPools[config.ClientRole] = pool
+				}
+			}
+			if _, ok := info.defaultPools[config.DriverRole]; !ok {
+				if _, ok = node.Labels[defaultPoolLabels.Driver]; ok {
+					info.defaultPools[config.DriverRole] = pool
+				}
+			}
+			if _, ok := info.defaultPools[config.ServerRole]; !ok {
+				if _, ok = node.Labels[defaultPoolLabels.Server]; ok {
+					info.defaultPools[config.ServerRole] = pool
+				}
+			}
+
+			if _, ok = info.capacity[pool]; !ok {
+				info.capacity[pool] = 0
+			}
+		}
+
+		info.capacity[pool]++
+	}
+
+	poolAvailabilities := make(map[string]int)
+	for pool, capacity := range info.capacity {
+		poolAvailabilities[pool] = capacity
+	}
+	for _, pod := range pods.Items {
+		pool, ok := pod.Labels[config.PoolLabel]
+		if !ok {
+			log.Info("encountered a pod without a pool label", "pod", pod)
+			continue
+		}
+		if pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
+			poolAvailabilities[pool]--
+		}
+	}
+
+	return info
+}
+
+// defaultAdjustment contains the information of which default pool placeholders
+// should be removed. See the adjustAvailabilityForDefaults function for more
+// details.
+type defaultAdjustment struct {
+	// DefaultPoolKey is the key that is used as a placeholder for a default
+	// pool when calculating the number of nodes it requires.
+	DefaultPoolKey string
+
+	// Role is the function of these pods in the test. For example, clients will
+	// be config.ClientRole; servers will be config.ServerRole; and drivers will
+	// be config.DriverRole.
+	Role string
+}
+
+// adjustAvailabilityForDefaults uses the current information known about a
+// cluster to apply a set of adjustments to the LoadTestMissing struct. These
+// adjustments add the total number of nodes needed from unspecified pools,
+// "default pools", to specific pools. This way the system can adequately
+// determine if enough nodes are available to schedule the test.
+func adjustAvailabilityForDefaults(clusterInfo *ClusterInfo, missingPods *status.LoadTestMissing, adjustments ...defaultAdjustment) {
+	for _, adjustment := range adjustments {
+		defaultPoolForRole, ok := clusterInfo.DefaultPoolForRole(adjustment.Role)
+		if !ok {
+			return
+		}
+
+		defaultPoolNodeCount, ok := missingPods.NodeCountByPool[adjustment.DefaultPoolKey]
+		if !ok {
+			return
+		}
+
+		missingPods.NodeCountByPool[defaultPoolForRole] += defaultPoolNodeCount
+		delete(missingPods.NodeCountByPool, adjustment.DefaultPoolKey)
+	}
 }
 
 // getRequeueTime takes a LoadTest and its previous status, compares the
@@ -431,6 +563,13 @@ func getRequeueTime(updatedLoadTest *grpcv1.LoadTest, previousStatus grpcv1.Load
 // SetupWithManager configures a controller-runtime manager.
 func (r *LoadTestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.mgr = mgr
+	r.create = r.Create
+	r.get = r.Get
+	r.list = r.List
+	r.update = r.Update
+	r.updateStatus = r.Status().Update
+	r.delete = r.Delete
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&grpcv1.LoadTest{}).
 		Owns(&corev1.Pod{}).
