@@ -181,6 +181,19 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	previousStatus := test.Status
 	test.Status = status.ForLoadTest(test, ownedPods)
 	if err = r.Status().Update(ctx, test); err != nil {
+		// Racing conditions arises when multiple threads tried to update the status
+		// of the same object. Since Kubernetes' control loop is edge-triggered and
+		// level-driven, if the update frequency is high, during the time the
+		// previous thread is updating the status of the LOadTest, the subsequent
+		// thread can also attempt the same update, however the
+		// base the later thread read before was already updated by the previous
+		// thread. This situation causes a conflict error. Iince the LoadTest status
+		// is already updated, this error is not a real, not requeue this
+		// reconciliation would not hurt the function of our current controller.
+		if kerrors.IsConflict(err) {
+			log.Info("racing condition arises when multiple threads attempt to update the status of the same LoadTest")
+			return ctrl.Result{Requeue: false}, nil
+		}
 		log.Error(err, "failed to update test status")
 		return ctrl.Result{Requeue: true}, err
 	}
