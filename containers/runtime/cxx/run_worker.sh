@@ -12,23 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3
+set -ex
 
-RUN mkdir -p /src/workspace
-WORKDIR /src/workspace
+pip3 install six
 
-RUN apt-get update && apt-get install -y \
-  autoconf \
-  build-essential \
-  clang \
-  git \
-  make \
-  libtool \
-  libgflags-dev \
-  pkg-config && \
-  apt-get clean
+python3 /src/workspace/tools/run_tests/start_port_server.py
 
-RUN mkdir /run_scripts
-ADD run_worker.sh /run_scripts
-
-CMD ["bash"]
+bazel-bin/test/cpp/qps/qps_worker

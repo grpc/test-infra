@@ -29,7 +29,9 @@ spec:
         command: ["bazel"]
         args: ["build", "//test/cpp/qps:qps_worker"]
       run:
-        command: ["bazel-bin/test/cpp/qps/qps_worker"]
+        image: gcr.io/grpc-testing/wanlin/runtime/cxx
+        #command: ["bazel-bin/test/cpp/qps/qps_worker"]
+        command : ["bash", "/run_scripts/run_worker.sh"]
 
   # Users can specify multiple clients. They are bound by the
   # number of nodes.
@@ -42,7 +44,9 @@ spec:
         command: ["bazel"]
         args: ["build", "//test/cpp/qps:qps_worker"]
       run:
-        command: ["bazel-bin/test/cpp/qps/qps_worker"]
+        image: gcr.io/grpc-testing/wanlin/runtime/cxx
+        #command: ["bazel-bin/test/cpp/qps/qps_worker"]
+        command : ["bash", "/run_scripts/run_worker.sh"]
 
   # We can optionally specify where to place the results. The
   # controller will attempt to mount a service account in the driver.
