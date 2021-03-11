@@ -32,4 +32,7 @@ RUN apt-get update && apt-get install -y cmake && apt-get clean
 RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 
+WORKDIR /builddir
+RUN git clone https://github.com/grpc/grpc.git && cd grpc && git submodule update --init && /build_scripts/build_qps_worker.sh && mv qps_worker .. && cd .. && rm -rf grpc 
+
 CMD ["bash"]

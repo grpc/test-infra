@@ -19,7 +19,7 @@ set -ex
 mkdir -p cmake/build
 pushd cmake/build
 cmake -DgRPC_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release ../..
-make grpc_csharp_ext
+make grpc_csharp_ext -j8
 popd
 
 cd src/csharp

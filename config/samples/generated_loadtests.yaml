@@ -1,0 +1,378 @@
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-cc31fe5d-160e-4b78-983c-7cc10bec1982
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_generic_async_streaming_ping_pong",
+    "num_servers": 1, "num_clients": 1, "client_config": {"client_type": "ASYNC_CLIENT",
+    "security_params": {"use_test_ca": true, "server_host_override": "foo.test.google.fr"},
+    "outstanding_rpcs_per_channel": 1, "client_channels": 1, "async_client_threads":
+    1, "client_processes": 0, "threads_per_cq": 0, "rpc_type": "STREAMING", "histogram_params":
+    {"resolution": 0.01, "max_possible": 60000000000.0}, "channel_args": [{"name":
+    "grpc.optimization_target", "str_value": "latency"}], "payload_config": {"bytebuf_params":
+    {"req_size": 0, "resp_size": 0}}, "load_params": {"closed_loop": {}}}, "server_config":
+    {"server_type": "ASYNC_GENERIC_SERVER", "security_params": {"use_test_ca": true,
+    "server_host_override": "foo.test.google.fr"}, "async_server_threads": 0, "server_processes":
+    0, "threads_per_cq": 0, "channel_args": [{"name": "grpc.optimization_target",
+    "str_value": "latency"}], "payload_config": {"bytebuf_params": {"req_size": 0,
+    "resp_size": 0}}}, "warmup_seconds": 5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
+---
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-2b25d21d-2afe-46e1-8a51-80c421d0ea64
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_generic_async_streaming_ping_pong_insecure_1MB",
+    "num_servers": 1, "num_clients": 1, "client_config": {"client_type": "ASYNC_CLIENT",
+    "security_params": null, "outstanding_rpcs_per_channel": 1, "client_channels":
+    1, "async_client_threads": 1, "client_processes": 0, "threads_per_cq": 0, "rpc_type":
+    "STREAMING", "histogram_params": {"resolution": 0.01, "max_possible": 60000000000.0},
+    "channel_args": [{"name": "grpc.optimization_target", "str_value": "latency"}],
+    "payload_config": {"bytebuf_params": {"req_size": 1048576, "resp_size": 1048576}},
+    "load_params": {"closed_loop": {}}}, "server_config": {"server_type": "ASYNC_GENERIC_SERVER",
+    "security_params": null, "async_server_threads": 0, "server_processes": 0, "threads_per_cq":
+    0, "channel_args": [{"name": "grpc.optimization_target", "str_value": "latency"}],
+    "payload_config": {"bytebuf_params": {"req_size": 1048576, "resp_size": 1048576}}},
+    "warmup_seconds": 5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
+---
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-74c23bdf-275d-4dc3-a82e-88ddb0b23b7c
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_generic_async_streaming_qps_unconstrained_insecure",
+    "num_servers": 1, "num_clients": 0, "client_config": {"client_type": "ASYNC_CLIENT",
+    "security_params": null, "outstanding_rpcs_per_channel": 100, "client_channels":
+    64, "async_client_threads": 0, "client_processes": 0, "threads_per_cq": 0, "rpc_type":
+    "STREAMING", "histogram_params": {"resolution": 0.01, "max_possible": 60000000000.0},
+    "channel_args": [{"name": "grpc.optimization_target", "str_value": "throughput"}],
+    "payload_config": {"bytebuf_params": {"req_size": 0, "resp_size": 0}}, "load_params":
+    {"closed_loop": {}}}, "server_config": {"server_type": "ASYNC_GENERIC_SERVER",
+    "security_params": null, "async_server_threads": 0, "server_processes": 0, "threads_per_cq":
+    0, "channel_args": [{"name": "grpc.optimization_target", "str_value": "throughput"}],
+    "payload_config": {"bytebuf_params": {"req_size": 0, "resp_size": 0}}}, "warmup_seconds":
+    5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
+---
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-829ef04a-0751-4ae5-b117-c8304b8ebf6e
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_protobuf_async_streaming_ping_pong",
+    "num_servers": 1, "num_clients": 1, "client_config": {"client_type": "ASYNC_CLIENT",
+    "security_params": {"use_test_ca": true, "server_host_override": "foo.test.google.fr"},
+    "outstanding_rpcs_per_channel": 1, "client_channels": 1, "async_client_threads":
+    1, "client_processes": 0, "threads_per_cq": 0, "rpc_type": "STREAMING", "histogram_params":
+    {"resolution": 0.01, "max_possible": 60000000000.0}, "channel_args": [{"name":
+    "grpc.optimization_target", "str_value": "latency"}], "payload_config": {"simple_params":
+    {"req_size": 0, "resp_size": 0}}, "load_params": {"closed_loop": {}}}, "server_config":
+    {"server_type": "ASYNC_SERVER", "security_params": {"use_test_ca": true, "server_host_override":
+    "foo.test.google.fr"}, "async_server_threads": 0, "server_processes": 0, "threads_per_cq":
+    0, "channel_args": [{"name": "grpc.optimization_target", "str_value": "latency"}]},
+    "warmup_seconds": 5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
+---
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-b9642bee-24b0-4cf8-9b21-0d43b127aff4
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_protobuf_async_unary_ping_pong",
+    "num_servers": 1, "num_clients": 1, "client_config": {"client_type": "ASYNC_CLIENT",
+    "security_params": {"use_test_ca": true, "server_host_override": "foo.test.google.fr"},
+    "outstanding_rpcs_per_channel": 1, "client_channels": 1, "async_client_threads":
+    1, "client_processes": 0, "threads_per_cq": 0, "rpc_type": "UNARY", "histogram_params":
+    {"resolution": 0.01, "max_possible": 60000000000.0}, "channel_args": [{"name":
+    "grpc.optimization_target", "str_value": "latency"}], "payload_config": {"simple_params":
+    {"req_size": 0, "resp_size": 0}}, "load_params": {"closed_loop": {}}}, "server_config":
+    {"server_type": "ASYNC_SERVER", "security_params": {"use_test_ca": true, "server_host_override":
+    "foo.test.google.fr"}, "async_server_threads": 0, "server_processes": 0, "threads_per_cq":
+    0, "channel_args": [{"name": "grpc.optimization_target", "str_value": "latency"}]},
+    "warmup_seconds": 5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
+---
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-9c1935e0-5d90-4b97-bf6f-f30529bb30ab
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_protobuf_sync_to_async_unary_ping_pong",
+    "num_servers": 1, "num_clients": 1, "client_config": {"client_type": "SYNC_CLIENT",
+    "security_params": {"use_test_ca": true, "server_host_override": "foo.test.google.fr"},
+    "outstanding_rpcs_per_channel": 1, "client_channels": 1, "async_client_threads":
+    1, "client_processes": 0, "threads_per_cq": 0, "rpc_type": "UNARY", "histogram_params":
+    {"resolution": 0.01, "max_possible": 60000000000.0}, "channel_args": [{"name":
+    "grpc.optimization_target", "str_value": "latency"}], "payload_config": {"simple_params":
+    {"req_size": 0, "resp_size": 0}}, "load_params": {"closed_loop": {}}}, "server_config":
+    {"server_type": "ASYNC_SERVER", "security_params": {"use_test_ca": true, "server_host_override":
+    "foo.test.google.fr"}, "async_server_threads": 0, "server_processes": 0, "threads_per_cq":
+    0, "channel_args": [{"name": "grpc.optimization_target", "str_value": "latency"}]},
+    "warmup_seconds": 5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
+---
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-b2d80b98-ba9f-424b-b356-389932301334
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_protobuf_async_unary_qps_unconstrained",
+    "num_servers": 1, "num_clients": 0, "client_config": {"client_type": "ASYNC_CLIENT",
+    "security_params": {"use_test_ca": true, "server_host_override": "foo.test.google.fr"},
+    "outstanding_rpcs_per_channel": 100, "client_channels": 64, "async_client_threads":
+    0, "client_processes": 0, "threads_per_cq": 0, "rpc_type": "UNARY", "histogram_params":
+    {"resolution": 0.01, "max_possible": 60000000000.0}, "channel_args": [{"name":
+    "grpc.optimization_target", "str_value": "throughput"}], "payload_config": {"simple_params":
+    {"req_size": 0, "resp_size": 0}}, "load_params": {"closed_loop": {}}}, "server_config":
+    {"server_type": "ASYNC_SERVER", "security_params": {"use_test_ca": true, "server_host_override":
+    "foo.test.google.fr"}, "async_server_threads": 0, "server_processes": 0, "threads_per_cq":
+    0, "channel_args": [{"name": "grpc.optimization_target", "str_value": "throughput"}]},
+    "warmup_seconds": 5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
+---
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-bd568724-a4ed-4ae8-9a39-f22320af8d0d
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_protobuf_async_streaming_qps_unconstrained",
+    "num_servers": 1, "num_clients": 0, "client_config": {"client_type": "ASYNC_CLIENT",
+    "security_params": {"use_test_ca": true, "server_host_override": "foo.test.google.fr"},
+    "outstanding_rpcs_per_channel": 100, "client_channels": 64, "async_client_threads":
+    0, "client_processes": 0, "threads_per_cq": 0, "rpc_type": "STREAMING", "histogram_params":
+    {"resolution": 0.01, "max_possible": 60000000000.0}, "channel_args": [{"name":
+    "grpc.optimization_target", "str_value": "throughput"}], "payload_config": {"simple_params":
+    {"req_size": 0, "resp_size": 0}}, "load_params": {"closed_loop": {}}}, "server_config":
+    {"server_type": "ASYNC_SERVER", "security_params": {"use_test_ca": true, "server_host_override":
+    "foo.test.google.fr"}, "async_server_threads": 0, "server_processes": 0, "threads_per_cq":
+    0, "channel_args": [{"name": "grpc.optimization_target", "str_value": "throughput"}]},
+    "warmup_seconds": 5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
+---
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    language: csharp
+  name: csharp-example-be60b07b-52b8-4958-9f94-c7dd1b350a65
+spec:
+  clients:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  results:
+    bigQueryTable: e2e_benchmarks.experimental_results
+  scenariosJSON: '{"scenarios": [{"name": "csharp_protobuf_async_unary_ping_pong_1MB",
+    "num_servers": 1, "num_clients": 1, "client_config": {"client_type": "ASYNC_CLIENT",
+    "security_params": {"use_test_ca": true, "server_host_override": "foo.test.google.fr"},
+    "outstanding_rpcs_per_channel": 1, "client_channels": 1, "async_client_threads":
+    1, "client_processes": 0, "threads_per_cq": 0, "rpc_type": "UNARY", "histogram_params":
+    {"resolution": 0.01, "max_possible": 60000000000.0}, "channel_args": [{"name":
+    "grpc.optimization_target", "str_value": "latency"}], "payload_config": {"simple_params":
+    {"req_size": 1048576, "resp_size": 1048576}}, "load_params": {"closed_loop": {}}},
+    "server_config": {"server_type": "ASYNC_SERVER", "security_params": {"use_test_ca":
+    true, "server_host_override": "foo.test.google.fr"}, "async_server_threads": 0,
+    "server_processes": 0, "threads_per_cq": 0, "channel_args": [{"name": "grpc.optimization_target",
+    "str_value": "latency"}]}, "warmup_seconds": 5, "benchmark_seconds": 30}]}'
+  servers:
+  - language: csharp
+    run:
+      args:
+      - exec
+      - /builddir/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      command:
+      - dotnet
+      image: gcr.io/grpc-testing/e2etest/runtime/csharp:jtattermusch-prebuilt20210309-1
+  timeoutSeconds: 900
+  ttlSeconds: 86400
