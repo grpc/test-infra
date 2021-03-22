@@ -25,6 +25,10 @@ RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 RUN git checkout $GITREF
 
+# Save commit sha for debug use
+RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
+RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
+
 # Build workers and spile the executables to another directory
 RUN mkdir /executables
 RUN bazel --output_user_root=/executables build //test/cpp/qps:qps_worker -c opt
@@ -36,5 +40,6 @@ RUN mkdir -p /source/code
 WORKDIR /source/code
 
 COPY --from=0 /source/code/bazel-bin/test/cpp/ /source/code/bazel-bin/test/cpp/
+COPY --from=0 /source/code/GRPC_GIT_COMMIT.txt /source/code/GRPC_GIT_COMMIT.txt
 
 CMD ["bash"]
