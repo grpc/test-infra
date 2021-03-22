@@ -30,7 +30,7 @@ RUN mkdir /executables
 RUN bazel --output_user_root=/executables build //test/cpp/qps:qps_worker -c opt
 
 # Copy executables to a new image
-FROM python:3
+FROM debian:buster
 
 RUN mkdir -p /source/code
 WORKDIR /source/code
