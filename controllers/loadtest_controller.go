@@ -211,6 +211,20 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			return ctrl.Result{Requeue: true}, err
 		}
 
+		// since we are attempting to schedule and have invalidated the cache,
+		// we need to reload the pods for any missed changes
+		pods = new(corev1.PodList)
+		if err = r.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
+			log.Error(err, "failed to list pods", "namespace", req.Namespace)
+			return ctrl.Result{Requeue: true}, err
+		}
+
+		// perform one final check to make sure the pods are still missing
+		missingPods = status.CheckMissingPods(test, status.PodsForLoadTest(test, pods.Items))
+		if missingPods.IsEmpty() {
+			goto setRequeueTime
+		}
+
 		var defaultClientPool string
 		var defaultDriverPool string
 		var defaultServerPool string
@@ -407,6 +421,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 	}
 
+setRequeueTime:
 	requeueTime := getRequeueTime(test, previousStatus, log)
 	if requeueTime != 0 {
 		return ctrl.Result{RequeueAfter: requeueTime}, nil
