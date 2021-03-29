@@ -139,6 +139,22 @@ go-image:
 push-go-image:
 	docker push ${IMAGE_PREFIX}go:${TEST_INFRA_VERSION}
 
+# Build the Node.js build image
+node-build-image:
+	docker build -t ${BUILD_IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/init/build/node
+
+# Push the Node.js build image to a docker registry
+push-node-build-image:
+	docker push ${BUILD_IMAGE_PREFIX}node:${TEST_INFRA_VERSION}
+
+# Build the Node.js runtime image
+node-image:
+	docker build -t ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/runtime/node
+
+# Push the Go runtime image to a docker registry
+push-node-image:
+	docker push ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION}
+
 # Build the Java runtime image
 java-image:
 	docker build -t ${IMAGE_PREFIX}java:${TEST_INFRA_VERSION} \
@@ -191,6 +207,8 @@ all-images: \
 	cxx-image \
 	go-image \
 	java-image \
+	node-build-image \
+	node-image \
 	python-image \
 	ruby-build-image \
 	ruby-image \
@@ -205,6 +223,8 @@ push-all-images: \
 	push-driver-image \
 	push-cxx-image \
 	push-go-image \
+	push-node-build-image \
+	push-node-image \
 	push-java-image \
 	push-python-image \
 	push-ruby-build-image \

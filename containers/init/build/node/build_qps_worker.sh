@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 gRPC authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:10-buster
+set -ex
 
-RUN mkdir -p /src/workspace
-WORKDIR /src/workspace
+npm install
 
-RUN apt-get update && apt-get install -y \
-  bash \
-  curl \
-  git \
-  time && \
-  apt-get clean
-
-CMD ["bash"]
+./node_modules/.bin/gulp setup
