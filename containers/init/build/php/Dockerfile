@@ -42,7 +42,6 @@ RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
 RUN curl -sS https://getcomposer.org/installer | php
 RUN mv composer.phar /usr/local/bin/composer
 
-
 RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 
