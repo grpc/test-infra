@@ -36,6 +36,10 @@ languages:
     buildImage: "{{ .BuildImagePrefix }}csharp:{{ .Version }}"
     runImage: mcr.microsoft.com/dotnet/runtime:2.1
 
+  - language: php
+    buildImage: "{{ .BuildImagePrefix }}php:{{ .Version }}"
+    runImage: "{{ .ImagePrefix }}php:{{ .Version }}"
+
   - language: ruby
     buildImage: "{{ .BuildImagePrefix }}ruby:{{ .Version }}"
     runImage: "{{ .ImagePrefix }}ruby:{{ .Version }}"
