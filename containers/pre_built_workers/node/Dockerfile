@@ -29,7 +29,7 @@ RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
-# Copy node excuatable to a new image
+# Copy node modules to a new image
 FROM node:10-buster
 
 RUN mkdir -p /execute
