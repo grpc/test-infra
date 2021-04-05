@@ -4,7 +4,7 @@ metadata:
   # Every load test instance must be assigned a unique name on the
   # cluster. There are ways we can circumvent naming clashes, such
   # as using namespaces or dynamically assigning names.
-  name: node-example
+  name: prebuilt-node-example
 
   # As a custom resource, it behaves like a native kubernetes object.
   # This means that users can perform CRUD operations through the
@@ -23,7 +23,7 @@ spec:
   servers:
   - language: node
     run:
-      image: gcr.io/grpc-testing/e2etest/prebuild/node
+      image: gcr.io/grpc-testing/donghao/prebuilt/node
       command: [ "node" ]
       args: [ "-r", "/execute/test/fixtures/native_native.js", "/execute/test/performance/worker.js", "--benchmark_impl=grpc"]
 
@@ -32,7 +32,7 @@ spec:
   clients:
   - language: node
     run:
-      image: gcr.io/grpc-testing/e2etest/prebuild/node
+      image: gcr.io/grpc-testing/donghao/prebuilt/node
       command: [ "node" ]
       args: [ "-r", "/execute/test/fixtures/native_native.js", "/execute/test/performance/worker.js", "--benchmark_impl=grpc"]
 
