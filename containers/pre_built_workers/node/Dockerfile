@@ -29,13 +29,19 @@ RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
+RUN export NODE_OPTIONS='--require /pre/test/fixtures/native_native.js'
+RUN npm install -g pkg
+ADD pkg_config.json /pre
+RUN pkg -c pkg_config.json ./test/performance/worker.js
+
 # Copy node modules to a new image
-FROM node:10-buster
+FROM debian:buster
 
-RUN mkdir -p /execute
+RUN mkdir -p /pre
 WORKDIR /execute
-COPY --from=0 /pre /execute
-
+COPY --from=0 /pre/worker-linux /execute
+COPY --from=0 /pre/test/fixtures/native_native.js /execute/test/fixtures/native_native.js
+ENV NODE_OPTIONS='--require /execute/test/fixtures/native_native.js'
 RUN apt-get update && apt-get install -y \
   bash \
   curl \

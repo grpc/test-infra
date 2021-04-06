@@ -24,17 +24,15 @@ spec:
   - language: node
     run:
       image: gcr.io/grpc-testing/donghao/prebuilt/node
-      command: [ "node" ]
-      args: [ "-r", "/execute/test/fixtures/native_native.js", "/execute/test/performance/worker.js", "--benchmark_impl=grpc"]
-
+      command: ["/execute/worker-linux", "--benchmark_impl=grpc"]
+      
   # Users can specify multiple clients. They are bound by the
   # number of nodes.
   clients:
   - language: node
     run:
       image: gcr.io/grpc-testing/donghao/prebuilt/node
-      command: [ "node" ]
-      args: [ "-r", "/execute/test/fixtures/native_native.js", "/execute/test/performance/worker.js", "--benchmark_impl=grpc"]
+      command: ["/execute/worker-linux", "--benchmark_impl=grpc"]
 
   # We can optionally specify where to place the results. The
   # controller will attempt to mount a service account in the driver.
