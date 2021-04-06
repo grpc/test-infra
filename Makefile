@@ -107,7 +107,7 @@ push-clone-image:
 # Build the ready init container image
 ready-image:
 	docker build -t ${INIT_IMAGE_PREFIX}ready:${TEST_INFRA_VERSION} \
-		-f containers/init/ready/Dockerfile .
+		-f containers/init/ready/Dockerfile --build-arg READY_TIMEOUT_ARG=20m .
 
 # Push the ready init container image to a docker registry
 push-ready-image:
