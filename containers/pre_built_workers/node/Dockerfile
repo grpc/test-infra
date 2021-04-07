@@ -29,7 +29,6 @@ RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
-RUN export NODE_OPTIONS='--require /pre/test/fixtures/native_native.js'
 RUN npm install -g pkg
 ADD pkg_config.json /pre
 RUN pkg -c pkg_config.json ./test/performance/worker.js
