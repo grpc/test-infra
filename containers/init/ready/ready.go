@@ -40,7 +40,7 @@ const TimeoutEnv = "READY_TIMEOUT"
 
 // DefaultTimeout specifies the amount of time to wait for ready pods if the
 // environment variable specified by the TimeoutEnv constant is not set.
-const DefaultTimeout = 15 * time.Minute
+const DefaultTimeout = 25 * time.Minute
 
 // OutputFileEnv is the optional name of the file where the executable should
 // write a comma-separated list of IP addresses. If this environment variable is
