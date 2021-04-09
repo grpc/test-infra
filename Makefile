@@ -18,6 +18,8 @@ CLEAN_IMG ?= ${IMAGE_PREFIX}cleanup:${TEST_INFRA_VERSION}
 #${IMAGE_PREFIX}cleanup_agent:${TEST_INFRA_VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+# Set timeout for ready container
+READY_TIMEOUT_ARG ?= "20m"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -107,7 +109,7 @@ push-clone-image:
 # Build the ready init container image
 ready-image:
 	docker build -t ${INIT_IMAGE_PREFIX}ready:${TEST_INFRA_VERSION} \
-		-f containers/init/ready/Dockerfile --build-arg READY_TIMEOUT_ARG=20m .
+		-f containers/init/ready/Dockerfile --build-arg READY_TIMEOUT_ARG=${READY_TIMEOUT_ARG} .
 
 # Push the ready init container image to a docker registry
 push-ready-image:
