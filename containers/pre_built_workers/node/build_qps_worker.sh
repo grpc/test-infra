@@ -15,7 +15,7 @@
 
 set -ex
 
-npm install -production
+npm install --production
 npm install --save-dev gulp gulp-cli
 
 ./node_modules/.bin/gulp setup
