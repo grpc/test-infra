@@ -24,6 +24,10 @@ RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 RUN git checkout $GITREF
 
+# Save commit sha for debug use
+RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
+RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
+
 
 RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
@@ -40,6 +44,7 @@ RUN mkdir -p /pre
 WORKDIR /execute
 COPY --from=0 /pre/worker-linux /execute
 COPY --from=0 /pre/test/fixtures/native_native.js /execute/test/fixtures/native_native.js
+COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
 ENV NODE_OPTIONS='--require /execute/test/fixtures/native_native.js'
 RUN apt-get update && apt-get install -y \
   bash \
