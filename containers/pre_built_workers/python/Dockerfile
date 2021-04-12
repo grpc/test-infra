@@ -23,18 +23,20 @@ ARG GITREF=master
 RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 RUN git checkout $GITREF
-RUN mkdir /executables
-RUN bazel --output_user_root=/executables --bazelrc=/dev/null build --nokeep_state_after_build //src/python/grpcio_tests/tests/qps:qps_worker
 
-RUN find /executables/ -type f ! \( -name '*.so' -o -name '*.sh'  -o -name '*.py' -o -name '*worker' \) -delete
+# Save commit sha for debug use
+RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
+RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
+
+RUN mkdir /executables
+RUN bazel --output_user_root=/executables build --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests/qps:qps_worker
 
 FROM python:3.7-buster
 
-RUN mkdir -p /pre
-WORKDIR /pre
-COPY --from=0 /pre/src /pre/src
-COPY --from=0 /pre/bazel-bin /pre/bazel-bin
-COPY --from=0 /executables /executables
+RUN mkdir -p /execute
+WORKDIR /execute
+COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker
+COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
 
 RUN apt-get update && apt-get install -y \
   git \
