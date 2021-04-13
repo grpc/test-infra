@@ -24,6 +24,9 @@ RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 RUN git checkout $GITREF
 
+# Save commit sha for debug use
+RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
+RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
 ENV GEM_HOME=/pre/vendor/bundle/
 RUN apt-get update && apt-get install -y cmake && apt-get clean
@@ -40,11 +43,8 @@ WORKDIR /execute
 COPY --from=0 /pre/src /execute/src
 COPY --from=0 /pre/vendor/bundle /execute/vendor/bundle
 COPY --from=0 /pre/etc /execute/etc
-ENV GEM_HOME=/execute/vendor/bundle/
+COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
 
-RUN apt-get update && apt-get install -y \
-  git \
-  time && \
-  apt-get clean
+ENV GEM_HOME=/execute/vendor/bundle/
 
 CMD ["bash"]
