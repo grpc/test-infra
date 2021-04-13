@@ -23,6 +23,11 @@ ARG GITREF=master
 RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 RUN git checkout $GITREF
+
+# Save commit sha for debug use
+RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
+RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
+
 RUN gradle -PskipAndroid=true -PskipCodegen=true :grpc-benchmarks:installDist
 
 FROM openjdk:8
@@ -30,11 +35,6 @@ FROM openjdk:8
 RUN mkdir -p /execute
 WORKDIR /execute
 COPY --from=0 /pre/benchmarks/build/install/grpc-benchmarks /execute
-RUN apt-get update && apt-get install -y \
-  bash \
-  curl \
-  git \
-  time && \
-  apt-get clean
+COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
 
 CMD ["bash"]
