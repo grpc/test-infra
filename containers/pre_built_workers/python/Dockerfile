@@ -38,9 +38,4 @@ WORKDIR /execute
 COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker
 COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
 
-RUN apt-get update && apt-get install -y \
-  git \
-  time && \
-  apt-get clean
-
 CMD ["bash"]
