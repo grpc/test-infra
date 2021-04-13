@@ -42,15 +42,11 @@ FROM debian:buster
 
 RUN mkdir -p /pre
 WORKDIR /execute
+
 COPY --from=0 /pre/worker-linux /execute
 COPY --from=0 /pre/test/fixtures/native_native.js /execute/test/fixtures/native_native.js
 COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
+
 ENV NODE_OPTIONS='--require /execute/test/fixtures/native_native.js'
-RUN apt-get update && apt-get install -y \
-  bash \
-  curl \
-  git \
-  time && \
-  apt-get clean
 
 CMD ["bash"]
