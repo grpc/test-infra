@@ -67,7 +67,7 @@ func main() {
 		if len(curFields) == 0 || i == 0 {
 			continue
 		}
-		//TODO: find out what is the timestamp stands for (creation or pushed)
+		//It is the createdtime
 		var curImage Images
 		curImage.imageName = imageName
 		curImage.digest = curFields[0]
@@ -80,6 +80,35 @@ func main() {
 		images[curImage.time] = curImage
 	}
 	fmt.Println(images)
+
+	// Examine if the images have stayed longer than desired time
+	now := time.Now().UTC()
+	fmt.Println(now)
+
+	for _, i := range images {
+		//TODO:Depend on how we generate tag we could abstract the time from it
+		tagTime := time.Now().UTC()
+		toBeDeleted := i.imageName + ":" + i.tag
+		if now.Sub(tagTime) >= 24*time.Hour {
+			deleteImages := exec.Command(
+				"gcloud",
+				"-q",
+				"container",
+				"images",
+				"delete",
+				toBeDeleted,
+			)
+
+			log.Printf("command run is : %s", deleteImages)
+			outPut, _ := deleteImages.Output()
+			log.Printf(string(outPut))
+			continue
+		}
+		if now.Sub(i.time) >= 24*time.Hour || now.Sub(tagTime) >= 24*time.Hour {
+			fmt.Println(now.Sub(i.time))
+		}
+	}
+
 }
 
 // has to run from the directory the script was in
