@@ -52,7 +52,6 @@ func addReadyInitContainer(defs *config.Defaults, test *grpcv1.LoadTest, podspec
 		Name:  "QPS_WORKERS_FILE",
 		Value: config.ReadyOutputFile,
 	})
-
 	container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
 		Name:      config.ReadyVolumeName,
 		MountPath: config.ReadyMountPath,
@@ -95,6 +94,10 @@ func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Cont
 			{
 				Name:  "READY_OUTPUT_FILE",
 				Value: config.ReadyOutputFile,
+			},
+			{
+				Name:  "READY_TIMEOUT",
+				Value: fmt.Sprintf("%d%s", test.Spec.TimeoutSeconds, "s"),
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
