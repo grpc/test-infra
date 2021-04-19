@@ -23,7 +23,7 @@ spec:
   servers:
     - language: python
       run:
-        image: gcr.io/grpc-testing/donghao/prebuilt/python
+        image: ${prebuilt_image_prefix}/python
         command: ["/execute/qps_worker"]
 
   # Users can specify multiple clients. They are bound by the
@@ -31,7 +31,7 @@ spec:
   clients:
     - language: python
       run:
-        image: gcr.io/grpc-testing/donghao/prebuilt/python
+        image: ${prebuilt_image_prefix}/python
         command: ["/execute/qps_worker"]
 
   # We can optionally specify where to place the results. The
