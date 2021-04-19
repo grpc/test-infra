@@ -40,8 +40,8 @@ import (
 type Tests struct {
 	version             string
 	preBuiltImagePrefix string
-	langData            string
-	languages           map[string]string
+	testTag             string
+	languagesToGitref   map[string]string
 	cxxGitRef           string
 	goGitRef            string
 	pythonGitRef        string
@@ -52,101 +52,74 @@ type Tests struct {
 	nodeGitRef          string
 }
 
-// generateTag takes KOKORO_BUILD_INITIATOR, which is the user who start the
-// current Kokoro job, and current time to generate unique tag string for
-// images.
-func generateTag() string {
-	user := os.Getenv("KOKORO_BUILD_INITIATOR")
-	testTime := time.Now().Format("2006-01-02-150405")
-	if user == "" {
-		user = "anonymous_user"
-		log.Println("could not find user")
+type langFlags []string
+
+func (l *langFlags) String() string {
+	var result string
+	for _, lang := range *l {
+		result = result + " " + lang
 	}
-	tag := user + "-" + testTime
-	return tag
+	return result
 }
 
+func (l *langFlags) Set(value string) error {
+	*l = append(*l, value)
+	return nil
+}
+
+var languagesSelected langFlags
+
 func main() {
-	testTag := generateTag()
-	outputFilePath := os.Getenv("PREBUILD_WORKER_OUTPUT_PATH")
+	var test Tests
 
-	if outputFilePath == "" {
-		outputFilePath = "$HOME/grpc-test-infra/container_registry/container_registry_path.yaml"
-		log.Println(fmt.Sprintf("failed to get path for output file, create file at: %s", outputFilePath))
-	}
+	// specify the PREBUILD_IMAGE_PREFIX
+	flag.StringVar(&test.preBuiltImagePrefix, "p", "", "image registry to push the image")
 
-	file, err := os.Create(outputFilePath)
-	if err != nil {
-		log.Fatalf("failed to create file to records container registry: %s", err)
-	}
-
-	// write current tag into the file
-	writer := bufio.NewWriter(file)
-	if _, err := writer.WriteString(fmt.Sprintf("current tag: %s\n", testTag)); err != nil {
-		log.Fatal(fmt.Sprintf("failed to record tag for the current test: %s", testTag))
-	}
-
-	if flushError := writer.Flush(); flushError != nil {
-		log.Fatal(fmt.Sprintf("failed to write message (current tag: %s\n) from buffer)", testTag))
-	}
-
-	var data Tests
-	data.languages = map[string]string{}
+	// specify the tag of pre built image
+	flag.StringVar(&test.testTag, "t", "", "tags for pre-built images, this tag is unique for each test")
 
 	// specify the languages wish to run tests with
-	flag.StringVar(&data.langData, "l", "", "languages wish to test")
-
-	// specify pre-built worker image's prefix
-	flag.StringVar(&data.preBuiltImagePrefix, "p", "gcr.io/grpc-testing/e2etesting/pre_built_workers/", "pre-built worker image's prefix")
-
-	// specify the gitRef for languages wish to run tests in
-	flag.StringVar(&data.goGitRef, "go-gitRef", "master", "specify the go gitRef wish to test")
-	flag.StringVar(&data.cxxGitRef, "cxx-gitRef", "master", "specify the cxx gitRef wish to test")
-	flag.StringVar(&data.goGitRef, "ruby-gitRef", "master", "specify the ruby gitRef wish to test")
-	flag.StringVar(&data.cxxGitRef, "php-gitRef", "master", "specify the php gitRef wish to test")
-	flag.StringVar(&data.goGitRef, "node-gitRef", "master", "specify the node gitRef wish to test")
-	flag.StringVar(&data.cxxGitRef, "python-gitRef", "master", "specify python cxx gitRef wish to test")
-	flag.StringVar(&data.goGitRef, "java-gitRef", "master", "specify the java gitRef wish to test")
+	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests in")
 
 	flag.Parse()
 
-	for _, lang := range flag.Args() {
-		lowerCaseLang := strings.ToLower(lang)
-		data.languages[lowerCaseLang] = ""
+	if test.preBuiltImagePrefix == "" {
+		log.Println("no PREBUILD_IMAGE_PREFIX provided, using default image registry: gcr.io/grpc-testing/e2etesting/pre_built_workers")
+		test.preBuiltImagePrefix = "gcr.io/grpc-testing/e2etesting/pre_built_workers"
 	}
 
-	if len(data.languages) == 0 {
+	if len(languagesSelected) == 0 {
 		log.Fatalf("please select languages of test you wish to run with pre-built images")
 	}
 
-	if _, ok := data.languages["cxx"]; ok {
-		data.languages["cxx"] = data.cxxGitRef
-	}
-	if _, ok := data.languages["go"]; ok {
-		data.languages["go"] = data.goGitRef
-	}
-	if _, ok := data.languages["java"]; ok {
-		data.languages["java"] = data.javaGitRef
-	}
-	if _, ok := data.languages["python"]; ok {
-		data.languages["python"] = data.pythonGitRef
-	}
-	if _, ok := data.languages["php"]; ok {
-		data.languages["php"] = data.phpGitRef
-	}
-	if _, ok := data.languages["node"]; ok {
-		data.languages["node"] = data.nodeGitRef
-	}
-	if _, ok := data.languages["ruby"]; ok {
-		data.languages["ruby"] = data.rubyGitRef
+	if test.testTag == "" {
+		user := os.Getenv("KOKORO_BUILD_INITIATOR")
+		testTime := time.Now().Format("2006-01-02-150405")
+		if user == "" {
+			user = "anonymous_user"
+			log.Println("could not find user, use anonymous_user instead")
+		}
+		test.testTag = user + "-" + testTime
+		log.Println(fmt.Sprintf("no pre-built image provided, using default PREBUILD_IMAGE_TAG: %s", test.testTag))
 	}
 
-	log.Print("Selected language : gitref")
-	formattedMap, _ := json.MarshalIndent(data.languages, "", "  ")
+	test.languagesToGitref = map[string]string{}
+	for _, pair := range languagesSelected {
+		split := strings.Split(pair, ":")
+		if len(split) != 2 {
+			log.Fatalf("input error, please follow the format as language:gitref, for example: cxx:master")
+		}
+		test.languagesToGitref[split[0]] = split[1]
+	}
+
+	log.Print("Selected language : GITREF")
+	fmt.Println(test.languagesToGitref)
+	formattedMap, _ := json.MarshalIndent(test.languagesToGitref, "", "  ")
 	log.Print(string(formattedMap))
 
-	for lang, gitRef := range data.languages {
-		var containerRegistry = fmt.Sprintf("%s%s:%s", data.preBuiltImagePrefix, lang, testTag)
+	for lang, gitRef := range test.languagesToGitref {
+		var containerRegistry = fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
+		log.Print(fmt.Sprintf("Image registry: %s", containerRegistry))
 
 		// Build images
 		var dockerfileLocation = fmt.Sprintf("../../containers/pre_built_workers/%s/", lang)
@@ -155,10 +128,10 @@ func main() {
 
 		buildDockerImage = exec.Command(
 			"docker",
-			"build", dockerfileLocation, "-t", containerRegistry, "-build-arg", fmt.Sprintf("GITREF=%s", gitRef),
+			"build", dockerfileLocation, "-t", containerRegistry, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef),
 		)
-
-		log.Println(fmt.Sprintf("building %s imags", lang))
+		log.Print(buildDockerImage)
+		log.Println(fmt.Sprintf("building %s images", lang))
 
 		buildStdout, err := buildDockerImage.StdoutPipe()
 		if err != nil {
@@ -180,17 +153,6 @@ func main() {
 		}
 
 		log.Println(fmt.Sprintf("successfully build %s worker: %s", lang, containerRegistry))
-
-		// Record current image's registry to the file
-		message := fmt.Sprintf("%s: %s\n", lang, containerRegistry)
-
-		if _, err := writer.WriteString(message); err != nil {
-			log.Fatal(fmt.Sprintf("failed to record %s image with its container registry: %s", lang, containerRegistry))
-		}
-
-		if err := writer.Flush(); err != nil {
-			log.Fatal(fmt.Sprintf("failed to write message (%s) from buffer)", message))
-		}
 
 		// Push image
 		pushDockerImage := exec.Command(
@@ -223,10 +185,7 @@ func main() {
 		log.Println(fmt.Sprintf("successfully pushed %s worker to %s", lang, containerRegistry))
 	}
 
-	if err := file.Close(); err != nil {
-		log.Fatalf("failed to close file")
-	}
 }
 
-// go run prepare_for_prebuilt_workers.go -l 1 go
+// go run prepare_for_prebuilt_workers.go -l go
 // has to run from the directory the script was in

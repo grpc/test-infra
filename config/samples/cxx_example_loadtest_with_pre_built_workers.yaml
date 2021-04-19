@@ -23,7 +23,7 @@ spec:
   servers:
     - language: cxx
       run:
-        image: gcr.io/grpc-testing/wanlin/pre_built_workers/cxx
+        image: ${prebuilt_image_prefix}/cxx
         command: ["/source/code/bazel-bin/test/cpp/qps/qps_worker"]
         args: ["--server_port=10010"]
 
@@ -32,7 +32,7 @@ spec:
   clients:
     - language: cxx
       run:
-        image: gcr.io/grpc-testing/wanlin/pre_built_workers/cxx
+        image: ${prebuilt_image_prefix}/cxx
         command: ["/source/code/bazel-bin/test/cpp/qps/qps_worker"]
 
   # We can optionally specify where to place the results. The
