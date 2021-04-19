@@ -23,7 +23,7 @@ spec:
   servers:
   - language: ruby
     run:
-      image: gcr.io/grpc-testing/donghao/prebuilt/ruby
+      image: ${prebuilt_image_prefix}/ruby
       command: [ "ruby" ]
       args: [ "/execute/src/ruby/qps/worker.rb" ]
 
@@ -32,7 +32,7 @@ spec:
   clients:
   - language: ruby
     run:
-      image: gcr.io/grpc-testing/donghao/prebuilt/ruby
+      image: ${prebuilt_image_prefix}/ruby
       command: [ "ruby" ]
       args: [ "/execute/src/ruby/qps/worker.rb" ]
 
