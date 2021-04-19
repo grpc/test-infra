@@ -17,11 +17,6 @@ FROM golang:1.14
 RUN mkdir -p /src/ready
 WORKDIR /src/ready
 
-# This is to set up READY_TIMEOUT for ready.go to use. Default value is set
-# to avoid error.
-ARG READY_TIMEOUT_ARG=15m
-ENV READY_TIMEOUT=$READY_TIMEOUT_ARG
-
 COPY . .
 RUN go install ./containers/init/ready
 
