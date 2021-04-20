@@ -23,7 +23,7 @@ spec:
   servers:
     - language: java
       run:
-        image: ${prebuilt_image_prefix}/java
+        image: ${prebuilt_image_prefix}/java:${prebuilt_image_tag}
         command:
           ["/execute/bin/benchmark_worker"]
 
@@ -32,7 +32,7 @@ spec:
   clients:
     - language: java
       run:
-        image: ${prebuilt_image_prefix}/java
+        image: ${prebuilt_image_prefix}/java:${prebuilt_image_tag}
         command:
           ["/execute/bin/benchmark_worker"]
 
