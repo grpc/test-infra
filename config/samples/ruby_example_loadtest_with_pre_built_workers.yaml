@@ -23,7 +23,7 @@ spec:
   servers:
   - language: ruby
     run:
-      image: ${prebuilt_image_prefix}/ruby
+      image: ${prebuilt_image_prefix}/ruby:${prebuilt_image_tag}
       command: [ "ruby" ]
       args: [ "/execute/src/ruby/qps/worker.rb" ]
 
@@ -32,7 +32,7 @@ spec:
   clients:
   - language: ruby
     run:
-      image: ${prebuilt_image_prefix}/ruby
+      image: ${prebuilt_image_prefix}/ruby:${prebuilt_image_tag}
       command: [ "ruby" ]
       args: [ "/execute/src/ruby/qps/worker.rb" ]
 
