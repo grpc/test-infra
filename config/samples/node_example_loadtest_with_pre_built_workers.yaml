@@ -23,7 +23,7 @@ spec:
   servers:
   - language: node
     run:
-      image: ${prebuilt_image_prefix}/node
+      image: ${prebuilt_image_prefix}/node:${prebuilt_image_tag} 
       command: ["/execute/worker-linux", "--benchmark_impl=grpc"]
       
   # Users can specify multiple clients. They are bound by the
@@ -31,7 +31,7 @@ spec:
   clients:
   - language: node
     run:
-      image: ${prebuilt_image_prefix}/node
+      image: ${prebuilt_image_prefix}/node:${prebuilt_image_tag} 
       command: ["/execute/worker-linux", "--benchmark_impl=grpc"]
 
   # We can optionally specify where to place the results. The
