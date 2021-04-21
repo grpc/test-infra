@@ -42,14 +42,7 @@ type Tests struct {
 	preBuiltImagePrefix string
 	testTag             string
 	languagesToGitref   map[string]string
-	cxxGitRef           string
-	goGitRef            string
-	pythonGitRef        string
-	javaGitRef          string
-	csharpGitRef        string
-	rubyGitRef          string
-	phpGitRef           string
-	nodeGitRef          string
+	useCurrentTime      bool
 }
 
 type langFlags []string
@@ -76,31 +69,33 @@ func main() {
 	flag.StringVar(&test.preBuiltImagePrefix, "p", "", "image registry to push the image")
 
 	// specify the tag of pre built image
-	flag.StringVar(&test.testTag, "t", "", "tags for pre-built images, this tag is unique for each test")
+	flag.StringVar(&test.testTag, "t", "", "tags for pre-built images, this unique tag to identify the images build and pushed in current test, if a tag is not provided, will user default tag as: build-initiator-date-time")
 
 	// specify the languages wish to run tests with
-	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests in")
+	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests, example: cxx:master")
 
 	flag.Parse()
 
 	if test.preBuiltImagePrefix == "" {
-		log.Println("no PREBUILD_IMAGE_PREFIX provided, using default image registry: gcr.io/grpc-testing/e2etesting/pre_built_workers")
+		log.Println("no registry provided, using default image registry: gcr.io/grpc-testing/e2etesting/pre_built_workers")
 		test.preBuiltImagePrefix = "gcr.io/grpc-testing/e2etesting/pre_built_workers"
-	}
-
-	if len(languagesSelected) == 0 {
-		log.Fatalf("please select languages of test you wish to run with pre-built images")
 	}
 
 	if test.testTag == "" {
 		user := os.Getenv("KOKORO_BUILD_INITIATOR")
-		testTime := time.Now().Format("2006-01-02-150405")
+		testTime := time.Now().Format("2006-01-02-15-04-05")
 		if user == "" {
-			user = "anonymous_user"
-			log.Println("could not find user, use anonymous_user instead")
+			user = "anonymous-user"
+			log.Println("could not find kokoro build initiator, use anonymous_user instead")
 		}
 		test.testTag = user + "-" + testTime
-		log.Println(fmt.Sprintf("no pre-built image provided, using default PREBUILD_IMAGE_TAG: %s", test.testTag))
+		log.Println(fmt.Sprintf("no pre-built image gat provided, using default PREBUILD_IMAGE_TAG: %s", test.testTag))
+	} else if len(test.testTag) > 128 {
+		log.Fatalf("invalid tag name: A tag name may not start with a period or a dash and may contain a maximum of 128 characters.")
+	}
+
+	if len(languagesSelected) == 0 {
+		log.Fatalf("please select languages and the GITREF for tests you wish to run with pre-built images, for example: cxx:master")
 	}
 
 	test.languagesToGitref = map[string]string{}
@@ -112,17 +107,17 @@ func main() {
 		test.languagesToGitref[split[0]] = split[1]
 	}
 
-	log.Print("Selected language : GITREF")
+	log.Print("selected language : GITREF")
 	fmt.Println(test.languagesToGitref)
 	formattedMap, _ := json.MarshalIndent(test.languagesToGitref, "", "  ")
 	log.Print(string(formattedMap))
 
 	for lang, gitRef := range test.languagesToGitref {
 		var containerRegistry = fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
-		log.Print(fmt.Sprintf("Image registry: %s", containerRegistry))
+		log.Print(fmt.Sprintf("image registry: %s", containerRegistry))
 
 		// Build images
-		var dockerfileLocation = fmt.Sprintf("../../containers/pre_built_workers/%s/", lang)
+		var dockerfileLocation = fmt.Sprintf("containers/pre_built_workers/%s/", lang)
 
 		var buildDockerImage *exec.Cmd
 
@@ -135,7 +130,7 @@ func main() {
 
 		buildStdout, err := buildDockerImage.StdoutPipe()
 		if err != nil {
-			log.Fatal(fmt.Sprintf("fail to present logs when building %s image", lang))
+			log.Fatalf("fail to present logs when building %s image", lang)
 		}
 
 		if err := buildDockerImage.Start(); err != nil {
@@ -181,11 +176,7 @@ func main() {
 		if err := pushDockerImage.Wait(); err != nil {
 			log.Fatal(fmt.Sprintf("exit during pushing %s image, error: %s", lang, err))
 		}
-
 		log.Println(fmt.Sprintf("successfully pushed %s worker to %s", lang, containerRegistry))
 	}
 
 }
-
-// go run prepare_for_prebuilt_workers.go -l go
-// has to run from the directory the script was in
