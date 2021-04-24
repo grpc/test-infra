@@ -54,7 +54,7 @@ func main() {
 		log.Fatalf("error message: %s\n", allRepositories)
 	}
 
-	log.Println(fmt.Sprintf("below are all images within specified registry: %s",imagePrefix))
+	log.Println(fmt.Sprintf("below are all images within specified registry: %s", imagePrefix))
 	log.Println(string(allRepositories))
 
 	for i, repo := range strings.Split(string(allRepositories), "\n") {

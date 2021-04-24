@@ -24,7 +24,6 @@ limitations under the License.
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -128,24 +127,11 @@ func main() {
 		log.Print(buildDockerImage)
 		log.Println(fmt.Sprintf("building %s images", lang))
 
-		buildStdout, err := buildDockerImage.StdoutPipe()
+		buildOutput, err := buildDockerImage.CombinedOutput()
 		if err != nil {
-			log.Fatalf("fail to present logs when building %s image", lang)
+			log.Fatalf("failed to build %s image: %s", lang, buildOutput)
 		}
-
-		if err := buildDockerImage.Start(); err != nil {
-			log.Fatal(fmt.Sprintf("failed to build %s worker: %s", lang, err))
-		}
-
-		buildScanner := bufio.NewScanner(buildStdout)
-		buildScanner.Split(bufio.ScanLines)
-		for buildScanner.Scan() {
-			i := buildScanner.Text()
-			fmt.Println(i)
-		}
-		if err := buildDockerImage.Wait(); err != nil {
-			log.Fatal(fmt.Sprintf("exit during buildinig %s image, error: %s", lang, err))
-		}
+		log.Println(string(buildOutput))
 
 		log.Println(fmt.Sprintf("successfully build %s worker: %s", lang, containerRegistry))
 
@@ -155,27 +141,13 @@ func main() {
 			"push",
 			containerRegistry,
 		)
-
 		log.Println(fmt.Sprintf("pushing %s image", lang))
+		pushOutput, err := pushDockerImage.CombinedOutput()
 
-		pushStdout, err := pushDockerImage.StdoutPipe()
 		if err != nil {
-			log.Fatal(fmt.Sprintf("failed to present logs when pushing %s images", lang))
+			log.Fatalf("failed to push %s image", pushOutput)
 		}
-
-		if err := pushDockerImage.Start(); err != nil {
-			log.Fatal(fmt.Sprintf("failed to push %s image to: %s", lang, containerRegistry))
-		}
-
-		pushScanner := bufio.NewScanner(pushStdout)
-		pushScanner.Split(bufio.ScanLines)
-		for pushScanner.Scan() {
-			j := pushScanner.Text()
-			fmt.Println(j)
-		}
-		if err := pushDockerImage.Wait(); err != nil {
-			log.Fatal(fmt.Sprintf("exit during pushing %s image, error: %s", lang, err))
-		}
+		log.Println(string(pushOutput))
 		log.Println(fmt.Sprintf("successfully pushed %s worker to %s", lang, containerRegistry))
 	}
 
