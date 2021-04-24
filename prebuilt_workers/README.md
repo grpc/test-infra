@@ -7,10 +7,11 @@ The scripts in this folder:
 
 ## Build and push images
 
-The script [prepare_prebuilt_workers.go](pre_built_workers/prepare_prebuilt_workers.go) build images and push them to a user specified registry.
+The script [prepare_prebuilt_workers.go](pre_built_workers/prepare_prebuilt_workers.go) 
+build images and push them to a user specified registry. 
 The following example build and push prebuilt cxx and go worker images.
 ```
-go run prepare_prebuilt_workers/prepare_prebuilt_workers.go \
+go run ./prebuilt_workers/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
  -l cxx:master -l go:master \
  -p gcr.io/grpc-testing/e2etesting/pre_built_workers \
  -t user-specified-tag
@@ -44,7 +45,7 @@ The following example delete all images within
 `gcr.io/grpc-testing/e2etesting/pre_built_workers` that have 
 tag:`user-specified-tag`.
 ```
-go run delete_prebuilt_workers/delete_prebuilt_workers.go \
+go run ./prebuilt_workers/delete_prebuilt_workers/delete_prebuilt_workers.go \
  -p gcr.io/grpc-testing/e2etesting/pre_built_workers \
  -t user-specified-tag
 ```
