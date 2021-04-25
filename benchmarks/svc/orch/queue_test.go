@@ -59,7 +59,7 @@ func TestQueueDequeue(t *testing.T) {
 	var q *queue
 	var sessions []*types.Session
 
-	// test FIFO-order preserved when it can accomodate all sessions
+	// test FIFO-order preserved when it can accommodate all sessions
 	q = newQueue(limitlessTracker{})
 
 	sessions = makeSessions(t, n)
