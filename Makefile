@@ -34,11 +34,11 @@ test: generate fmt vet manifests
 
 # Build controller manager binary
 controller: generate fmt vet
-	go build -o bin/controller cmd/controller/main.go
+	go build -trimpath -o bin/controller cmd/controller/main.go
 
 # Build cleanup_agent manager binary
 cleanup-agent: generate fmt vet
-	go build -o bin/cleanup_agent cmd/cleanup_agent/main.go
+	go build -trimpath -o bin/cleanup_agent cmd/cleanup_agent/main.go
 
 # Install CRDs into a cluster
 install: manifests
