@@ -174,7 +174,7 @@ type PoolAvailabilityError struct{}
 
 // Error returns a string representation of the available error message.
 func (pae PoolAvailabilityError) Error() string {
-	return fmt.Sprintf("not enough machines are available to accomodate the reservation")
+	return fmt.Sprintf("not enough machines are available to accommodate the reservation")
 }
 
 // PoolCapacityError indicates that a session requires a number of machines which is greater than
@@ -186,7 +186,7 @@ type PoolCapacityError struct {
 	// Requested is the number of machines that the session requires.
 	Requested int
 
-	// Capacity is the maximum number of machines that the pool can accomodate.
+	// Capacity is the maximum number of machines that the pool can accommodate.
 	Capacity int
 }
 
