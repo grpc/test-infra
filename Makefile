@@ -151,7 +151,7 @@ push-node-build-image:
 node-image:
 	docker build -t ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/runtime/node
 
-# Push the Go runtime image to a docker registry
+# Push the Node.js runtime image to a docker registry
 push-node-image:
 	docker push ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION}
 
