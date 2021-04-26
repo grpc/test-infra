@@ -122,6 +122,7 @@ func main() {
 			log.Printf("successfully delete %s:%s\n", repo, tagOfImagesToDelete)
 		}
 	}
+	log.Printf("All images with tag: %s within container registry: %s are processed.\n", tagOfImagesToDelete, imagePrefix)
 }
 
 // go run delete_prebuilt_workers.go -p gcr.io/grpc-testing/wanlin/pre_built_workers -t wanlindu-2021-04-15-134444

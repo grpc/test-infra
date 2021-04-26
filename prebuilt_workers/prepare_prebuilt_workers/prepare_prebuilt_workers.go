@@ -150,5 +150,5 @@ func main() {
 		log.Println(string(pushOutput))
 		log.Println(fmt.Sprintf("successfully pushed %s worker to %s", lang, containerRegistry))
 	}
-
+	log.Printf("All images are built and pushed to container registry: %s with tag: %s", test.preBuiltImagePrefix, test.testTag)
 }
