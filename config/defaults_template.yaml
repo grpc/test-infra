@@ -1,4 +1,4 @@
-# See ./defaults.go for documentation on each field.
+# See https://github.com/grpc/test-infra/config/defaults.go for documentation on each field.
 
 defaultPoolLabels:
   client: default-client-pool
@@ -12,33 +12,33 @@ readyImage: "{{ .InitImagePrefix }}ready:{{ .Version }}"
 driverImage: "{{ .ImagePrefix }}driver:{{ .Version }}"
 
 languages:
+  - language: csharp
+    buildImage: "{{ .BuildImagePrefix }}csharp:{{ .Version }}"
+    runImage: mcr.microsoft.com/dotnet/runtime:2.1
+
   - language: cxx
     buildImage: l.gcr.io/google/bazel:latest
     runImage: "{{ .ImagePrefix }}cxx:{{ .Version }}"
-
-  - language: java
-    buildImage: gradle:jdk8
-    runImage: "{{ .ImagePrefix }}java:{{ .Version }}"
 
   - language: go
     buildImage: golang:1.14
     runImage: "{{ .ImagePrefix }}go:{{ .Version }}"
 
+  - language: java
+    buildImage: gradle:jdk8
+    runImage: "{{ .ImagePrefix }}java:{{ .Version }}"
+
   - language: node
     buildImage: "{{ .BuildImagePrefix }}node:{{ .Version }}"
     runImage: "{{ .ImagePrefix }}node:{{ .Version }}"
 
-  - language: python
-    buildImage: l.gcr.io/google/bazel:latest
-    runImage: "{{ .ImagePrefix }}python:{{ .Version }}"
-
-  - language: csharp
-    buildImage: "{{ .BuildImagePrefix }}csharp:{{ .Version }}"
-    runImage: mcr.microsoft.com/dotnet/runtime:2.1
-
   - language: php
     buildImage: "{{ .BuildImagePrefix }}php:{{ .Version }}"
     runImage: "{{ .ImagePrefix }}php:{{ .Version }}"
+
+  - language: python
+    buildImage: l.gcr.io/google/bazel:latest
+    runImage: "{{ .ImagePrefix }}python:{{ .Version }}"
 
   - language: ruby
     buildImage: "{{ .BuildImagePrefix }}ruby:{{ .Version }}"
