@@ -162,7 +162,7 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, sels []string) ([]strin
 
 	for {
 		if timeoutsEnabled && time.Now().After(deadline) {
-			return nil, errors.New("timeout exceeded")
+			return nil, errors.Errorf("deadline exceeded (%v)", deadline)
 		}
 
 		podList, err := pl.List(metav1.ListOptions{})
@@ -239,6 +239,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	log.Printf("Waiting for ready pods")
 	podIPs, err := WaitForReadyPods(ctx, clientset.CoreV1().Pods(metav1.NamespaceAll), os.Args[1:])
 	if err != nil {
 		log.Fatalf("failed to wait for ready pods: %v", err)
