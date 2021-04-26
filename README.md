@@ -20,7 +20,7 @@ Welcome! Please read and follow the steps in the
 This project includes third party dependencies as git submodules. Be sure to
 initialize and update them when setting up a development environment:
 
-```sh
+```shell
 # Init/update during the clone
 git clone --recursive https://github.com/grpc/test-infra.git  # HTTPS
 git clone --recursive git@github.com:grpc/test-infra.git      # SSH
