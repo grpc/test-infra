@@ -28,20 +28,16 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
 // Tests contains the values for fields that are accessible by
 // flags.
 type Tests struct {
-	version             string
 	preBuiltImagePrefix string
 	testTag             string
 	languagesToGitref   map[string]string
-	useCurrentTime      bool
 }
 
 type langFlags []string
@@ -76,19 +72,11 @@ func main() {
 	flag.Parse()
 
 	if test.preBuiltImagePrefix == "" {
-		log.Println("no registry provided, using default image registry: gcr.io/grpc-testing/e2etesting/pre_built_workers")
-		test.preBuiltImagePrefix = "gcr.io/grpc-testing/e2etesting/pre_built_workers"
+		log.Fatalf("no registry provided, please provide a containr registry to store the images")
 	}
 
 	if test.testTag == "" {
-		user := os.Getenv("KOKORO_BUILD_INITIATOR")
-		testTime := time.Now().Format("2006-01-02-15-04-05")
-		if user == "" {
-			user = "anonymous-user"
-			log.Println("could not find kokoro build initiator, use anonymous_user instead")
-		}
-		test.testTag = user + "-" + testTime
-		log.Println(fmt.Sprintf("no pre-built image gat provided, using default PREBUILD_IMAGE_TAG: %s", test.testTag))
+		log.Fatalf("no image tag provided, please provide a image tag")
 	} else if len(test.testTag) > 128 {
 		log.Fatalf("invalid tag name: A tag name may not start with a period or a dash and may contain a maximum of 128 characters.")
 	}
