@@ -24,7 +24,7 @@ spec:
     - language: go
       run:
         image: ${prebuilt_image_prefix}/go:${prebuilt_image_tag}
-        command: ["/executable/worker"]
+        command: ["/executable/bin/worker"]
 
 
   # Users can specify multiple clients. They are bound by the
@@ -32,10 +32,8 @@ spec:
   clients:
     - language: go
       run:
-        image: ${prebuilt_image_prefix}/go:${prebuilt_image_tag}gcloud container clusters get-credentials benchmarks-dev1 \
-          --zone us-central1-b \
-          --project grpc-testing
-        command: ["/executable/worker"]
+        image: ${prebuilt_image_prefix}/go:${prebuilt_image_tag}
+        command: ["/executable/bin/worker"]
 
   # We can optionally specify where to place the results. The
   # controller will attempt to mount a service account in the driver.

@@ -36,7 +36,8 @@ FROM debian:buster
 
 RUN mkdir -p /executable
 WORKDIR /executable
-COPY --from=0 /executable/bin/worker /executable
+COPY --from=0 /executable/GRPC_GIT_COMMIT.txt /executable/GRPC_GIT_COMMIT.txt
+COPY --from=0 /executable/bin/worker /executable/bin/worker
 COPY --from=0 /executable/testdata /executable/testdata
 
 CMD ["bash"]
