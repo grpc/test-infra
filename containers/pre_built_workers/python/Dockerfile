@@ -29,7 +29,7 @@ RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
 RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
 RUN mkdir /executables
-RUN bazel --output_user_root=/executables build --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests/qps:qps_worker
+RUN bazel --output_user_root=/executables build -c opt --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests/qps:qps_worker
 
 FROM python:3.7-buster
 
