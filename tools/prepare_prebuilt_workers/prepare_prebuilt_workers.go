@@ -37,6 +37,7 @@ import (
 type Tests struct {
 	preBuiltImagePrefix string
 	testTag             string
+	dockerfileRoot      string
 	languagesToGitref   map[string]string
 }
 
@@ -60,11 +61,14 @@ var languagesSelected langFlags
 func main() {
 	var test Tests
 
-	// specify the PREBUILD_IMAGE_PREFIX
+	// specify the the image registry to push images
 	flag.StringVar(&test.preBuiltImagePrefix, "p", "", "image registry to push the image")
 
-	// specify the tag of pre built image
-	flag.StringVar(&test.testTag, "t", "", "tags for pre-built images, this unique tag to identify the images build and pushed in current test, if a tag is not provided, will user default tag as: build-initiator-date-time")
+	// specify the tag of prebuilt image
+	flag.StringVar(&test.testTag, "t", "", "tags for pre-built images, this unique tag to identify the images build and pushed in current test")
+
+	// specify the root path of Dockerfiles for prebuilt images
+	flag.StringVar(&test.dockerfileRoot, "r", "", "root path of dockerfiles to build prebuilt images")
 
 	// specify the languages wish to run tests with
 	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests, example: cxx:master")
@@ -72,17 +76,21 @@ func main() {
 	flag.Parse()
 
 	if test.preBuiltImagePrefix == "" {
-		log.Fatalf("no registry provided, please provide a containr registry to store the images")
+		log.Fatalf("failed to prepare prebuilt images: no registry provided, please provide a containr registry to store the images")
 	}
 
 	if test.testTag == "" {
-		log.Fatalf("no image tag provided, please provide a image tag")
+		log.Fatalf("failed to prepare prebuilt images: no image tag provided")
 	} else if len(test.testTag) > 128 {
-		log.Fatalf("invalid tag name: A tag name may not start with a period or a dash and may contain a maximum of 128 characters.")
+		log.Fatalf("failed to prepare prebuilt images: invalid tag name, a tag name may not start with a period or a dash and may contain a maximum of 128 characters.")
+	}
+
+	if test.dockerfileRoot == "" {
+		log.Fatalf("fail to prepare prebuilt images: no root directory for Dockerfiles provided")
 	}
 
 	if len(languagesSelected) == 0 {
-		log.Fatalf("please select languages and the GITREF for tests you wish to run with pre-built images, for example: cxx:master")
+		log.Fatalf("failed to prepare prebuilt images: no language and its gitref pair specified, please provide languages and the GITREF as cxx:master")
 	}
 
 	test.languagesToGitref = map[string]string{}
@@ -100,43 +108,29 @@ func main() {
 	log.Print(string(formattedMap))
 
 	for lang, gitRef := range test.languagesToGitref {
-		var containerRegistry = fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
-		log.Print(fmt.Sprintf("image registry: %s", containerRegistry))
+		var imageRepository = fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
+		log.Print(fmt.Sprintf("image repository: %s", imageRepository))
+		var dockerfileLocation = fmt.Sprintf("%s/%s", test.dockerfileRoot, lang)
 
-		// Build images
-		var dockerfileLocation = fmt.Sprintf("containers/pre_built_workers/%s/", lang)
-
-		var buildDockerImage *exec.Cmd
-
-		buildDockerImage = exec.Command(
-			"docker",
-			"build", dockerfileLocation, "-t", containerRegistry, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef),
-		)
-		log.Print(buildDockerImage)
+		// build image
 		log.Println(fmt.Sprintf("building %s images", lang))
-
+		buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", imageRepository, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef))
 		buildOutput, err := buildDockerImage.CombinedOutput()
 		if err != nil {
 			log.Fatalf("failed to build %s image: %s", lang, buildOutput)
 		}
 		log.Println(string(buildOutput))
+		log.Println(fmt.Sprintf("successfully build %s worker: %s", lang, imageRepository))
 
-		log.Println(fmt.Sprintf("successfully build %s worker: %s", lang, containerRegistry))
-
-		// Push image
-		pushDockerImage := exec.Command(
-			"docker",
-			"push",
-			containerRegistry,
-		)
+		// push image
 		log.Println(fmt.Sprintf("pushing %s image", lang))
+		pushDockerImage := exec.Command("docker", "push", imageRepository)
 		pushOutput, err := pushDockerImage.CombinedOutput()
-
 		if err != nil {
-			log.Fatalf("failed to push %s image", pushOutput)
+			log.Fatalf("failed to push %s image: %s", lang, pushOutput)
 		}
 		log.Println(string(pushOutput))
-		log.Println(fmt.Sprintf("successfully pushed %s worker to %s", lang, containerRegistry))
+		log.Println(fmt.Sprintf("successfully pushed %s worker to %s", lang, imageRepository))
 	}
-	log.Printf("All images are built and pushed to container registry: %s with tag: %s", test.preBuiltImagePrefix, test.testTag)
+	log.Printf("all images are built and pushed to container registry: %s with tag: %s", test.preBuiltImagePrefix, test.testTag)
 }
