@@ -93,12 +93,26 @@ func main() {
 	}
 
 	test.languagesToGitref = map[string]string{}
+	converterToImageLanguage := map[string]string{
+		"c++":             "cxx",
+		"node_purejs":     "node",
+		"php7":            "php",
+		"php7_protobuf_c": "php",
+		"python_asyncio":  "python",
+	}
+
 	for _, pair := range languagesSelected {
 		split := strings.Split(pair, ":")
+		lang := split[0]
+		gitref := split[1]
 		if len(split) != 2 {
 			log.Fatalf("input error, please follow the format as language:gitref, for example: cxx:master")
 		}
-		test.languagesToGitref[split[0]] = split[1]
+		if convertedLang, ok := converterToImageLanguage[lang]; ok {
+			test.languagesToGitref[convertedLang] = gitref
+		} else {
+			test.languagesToGitref[lang] = gitref
+		}
 	}
 
 	log.Println("selected language : GITREF")
