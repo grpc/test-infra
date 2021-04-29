@@ -40,89 +40,54 @@ func main() {
 
 	flag.Parse()
 
-	getRepository := exec.Command(
-		"gcloud",
-		"container",
-		"images",
-		"list",
-		fmt.Sprintf("--repository=%s", imagePrefix),
-	)
-
-	allRepositories, err := getRepository.CombinedOutput()
+	getRepository := exec.Command("gcloud", "container", "images", "list", fmt.Sprintf("--repository=%s", imagePrefix))
+	getRepositoryOutput, err := getRepository.CombinedOutput()
 	if err != nil {
-		log.Println(fmt.Sprintf("failed to get repositories within %s", imagePrefix))
-		log.Fatalf("error message: %s\n", allRepositories)
+		log.Printf("failed to get repositories within %s: %s\n", imagePrefix, string(getRepositoryOutput))
 	}
 
-	log.Println(fmt.Sprintf("below are all images within specified registry: %s", imagePrefix))
-	log.Println(string(allRepositories))
+	log.Printf("below are all images within specified registry: %s\n", imagePrefix)
+	log.Println(string(getRepositoryOutput))
 
-	for i, repo := range strings.Split(string(allRepositories), "\n") {
-		if i == 0 || repo == "" {
+	allRepositories := strings.Split(string(getRepositoryOutput), "\n")
+	for i, curRepository := range allRepositories {
+		if i == 0 || curRepository == "" {
 			continue
 		}
+		log.Printf("current processing image repository: %s\n", curRepository)
 
-		log.Println(fmt.Sprintf("current processing image: %s", repo))
+		curImageToProcess := fmt.Sprintf("%s:%s", curRepository, tagOfImagesToDelete)
 
-		getImage := exec.Command(
-			"gcloud",
-			"container",
-			"images",
-			"list-tags",
-			repo,
-			fmt.Sprintf("--filter=%s", tagOfImagesToDelete),
-		)
-
-		imageByte, err := getImage.CombinedOutput()
+		getImageHaveTheTag := exec.Command("gcloud", "container", "images", "list-tags", curRepository, fmt.Sprintf("--filter=%s", tagOfImagesToDelete))
+		getImageHaveTheTagOutput, err := getImageHaveTheTag.CombinedOutput()
 		if err != nil {
-			log.Println(fmt.Sprintf("failed to get the image %s: %s", repo, err))
-			log.Fatalf("error message: %s\n", imageByte)
+			log.Printf("failed to get the image %s with tag %s: %s\n", curRepository, tagOfImagesToDelete, string(getImageHaveTheTagOutput))
 		}
 
-		imageLine := strings.Split(string(imageByte), "\n")
-		if len(imageLine) <= 2 {
+		imageFullLine := strings.Split(string(getImageHaveTheTagOutput), "\n")
+		if len(imageFullLine) <= 2 {
 			log.Printf("tag: %s is not presented.\n", tagOfImagesToDelete)
 			continue
 		}
 
-		image := imageLine[1]
-		fields := strings.Fields(image)
-		tags := strings.Split(fields[1], ",")
+		numbersOfTagsOfCurrentImage := len(strings.Split(strings.Fields(imageFullLine[1])[1], ","))
 
-		if len(tags) > 1 {
-			log.Println(fmt.Sprintf("image have multiple tags, including %s, untag the image with tag %s instead of deleting image", tagOfImagesToDelete, tagOfImagesToDelete))
-			untagImages := exec.Command(
-				"gcloud",
-				"-q",
-				"container",
-				"images",
-				"untag",
-				fmt.Sprintf("%s:%s", repo, tagOfImagesToDelete),
-			)
-			unTagImageStdout, err := untagImages.CombinedOutput()
+		if numbersOfTagsOfCurrentImage > 1 {
+			log.Printf("image have multiple tags, including %s, untag the image with tag %s instead of deleting image\n", tagOfImagesToDelete, tagOfImagesToDelete)
+			untagImages := exec.Command("gcloud", "-q", "container", "images", "untag", curImageToProcess)
+			unTagImageOutput, err := untagImages.CombinedOutput()
 			if err != nil {
-				log.Println(fmt.Sprintf("failed to untag %s:%s", repo, tagOfImagesToDelete))
-				log.Fatalf(fmt.Sprintf("error message: %s\n", unTagImageStdout))
+				log.Printf("failed to untag %s: %s\n", curImageToProcess, string(unTagImageOutput))
 			}
-			log.Printf("successfully untag %s:%s", repo, tagOfImagesToDelete)
+			log.Printf("successfully untag %s:%s\n", curRepository, tagOfImagesToDelete)
 		} else {
-			deleteImages := exec.Command(
-				"gcloud",
-				"-q",
-				"container",
-				"images",
-				"delete",
-				fmt.Sprintf("%s:%s", repo, tagOfImagesToDelete),
-			)
-			deleteImagesStdout, err := deleteImages.CombinedOutput()
+			deleteImage := exec.Command("gcloud", "-q", "container", "images", "delete", curImageToProcess)
+			deleteImageOutput, err := deleteImage.CombinedOutput()
 			if err != nil {
-				log.Println(fmt.Sprintf("failed to delete %s:%s", repo, tags[0]))
-				log.Fatalf("err message: %s\n", deleteImagesStdout)
+				log.Printf("failed to delete image %s : %s\n", curImageToProcess, string(deleteImageOutput))
 			}
-			log.Printf("successfully delete %s:%s\n", repo, tagOfImagesToDelete)
+			log.Printf("successfully delete %s\n", curImageToProcess)
 		}
 	}
-	log.Printf("All images with tag: %s within container registry: %s are processed.\n", tagOfImagesToDelete, imagePrefix)
+	log.Printf("all images with tag: %s within container registry: %s are processed.\n", tagOfImagesToDelete, imagePrefix)
 }
-
-// go run delete_prebuilt_workers.go -p gcr.io/grpc-testing/wanlin/pre_built_workers -t wanlindu-2021-04-15-134444
