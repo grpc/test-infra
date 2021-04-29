@@ -12,9 +12,11 @@ build images and push them to a user specified registry.
 The following example build and push prebuilt cxx and go worker images.
 ```
 go run ./prebuilt_workers/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
- -l cxx:master -l go:master \
+ -l cxx:master \
+ -l go:master \
  -p gcr.io/grpc-testing/e2etesting/pre_built_workers \
- -t user-specified-tag
+ -t user-specified-tag \
+ -r test-infra/container/pre_built_workers/
 ```
 
 The built `cxx` and `go` images contains the workers built from commit/branch wish 
@@ -30,6 +32,7 @@ initiator is not found, the `test-initiator` in the tag is replaced by
 `anonymous-user`. Tag complies with 
 [docker tag's restrictions](https://docs.docker.com/engine/reference/commandline/tag/#extended-description). 
 * `-p` <br> Image registry tp store images. In the example, the location of the
+* `-r` <br> Root directory of Dockerfiles.
 images are:
   ```
   gcr.io/grpc-testing/e2etesting/pre_built_workers/cxx:user-specified-tag

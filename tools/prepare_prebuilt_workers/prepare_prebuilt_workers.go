@@ -108,7 +108,7 @@ func main() {
 
 	for lang, gitRef := range test.languagesToGitref {
 		var image = fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
-		var dockerfileLocation = fmt.Sprintf("%s/%s", test.dockerfileRoot, lang)
+		var dockerfileLocation = fmt.Sprintf("%s/%s/", test.dockerfileRoot, lang)
 
 		// build image
 		log.Println(fmt.Sprintf("building %s images", lang))
