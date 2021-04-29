@@ -35,7 +35,7 @@ func main() {
 	var imagePrefix string
 	var tagOfImagesToDelete string
 
-	flag.StringVar(&imagePrefix, "p", "", "set the repository for search, in the form of HOSTNAME/PROJECT-ID, do not include image name")
+	flag.StringVar(&imagePrefix, "p", "", "set the root repository for search")
 	flag.StringVar(&tagOfImagesToDelete, "t", "", "images with this tag will be deleted")
 
 	flag.Parse()
@@ -43,10 +43,10 @@ func main() {
 	getRepository := exec.Command("gcloud", "container", "images", "list", fmt.Sprintf("--repository=%s", imagePrefix))
 	getRepositoryOutput, err := getRepository.CombinedOutput()
 	if err != nil {
-		log.Printf("failed to get repositories within %s: %s\n", imagePrefix, string(getRepositoryOutput))
+		log.Printf("failed getting repositories within %s: %s\n", imagePrefix, string(getRepositoryOutput))
 	}
 
-	log.Printf("below are all images within specified registry: %s\n", imagePrefix)
+	log.Printf("all image repositories within specified registry: %s\n", imagePrefix)
 	log.Println(string(getRepositoryOutput))
 
 	allRepositories := strings.Split(string(getRepositoryOutput), "\n")
@@ -54,14 +54,14 @@ func main() {
 		if i == 0 || curRepository == "" {
 			continue
 		}
-		log.Printf("current processing image repository: %s\n", curRepository)
+		log.Printf("processing image repository: %s\n", curRepository)
 
 		curImageToProcess := fmt.Sprintf("%s:%s", curRepository, tagOfImagesToDelete)
 
 		getImageHaveTheTag := exec.Command("gcloud", "container", "images", "list-tags", curRepository, fmt.Sprintf("--filter=%s", tagOfImagesToDelete))
 		getImageHaveTheTagOutput, err := getImageHaveTheTag.CombinedOutput()
 		if err != nil {
-			log.Printf("failed to get the image %s with tag %s: %s\n", curRepository, tagOfImagesToDelete, string(getImageHaveTheTagOutput))
+			log.Printf("failed getting image: %s with tag %s: %s\n", curRepository, tagOfImagesToDelete, string(getImageHaveTheTagOutput))
 		}
 
 		imageFullLine := strings.Split(string(getImageHaveTheTagOutput), "\n")
@@ -77,16 +77,16 @@ func main() {
 			untagImages := exec.Command("gcloud", "-q", "container", "images", "untag", curImageToProcess)
 			unTagImageOutput, err := untagImages.CombinedOutput()
 			if err != nil {
-				log.Printf("failed to untag %s: %s\n", curImageToProcess, string(unTagImageOutput))
+				log.Printf("failed untagging %s: %s\n", curImageToProcess, string(unTagImageOutput))
 			}
-			log.Printf("successfully untag %s:%s\n", curRepository, tagOfImagesToDelete)
+			log.Printf("succeeded untagging %s:%s\n", curRepository, tagOfImagesToDelete)
 		} else {
 			deleteImage := exec.Command("gcloud", "-q", "container", "images", "delete", curImageToProcess)
 			deleteImageOutput, err := deleteImage.CombinedOutput()
 			if err != nil {
-				log.Printf("failed to delete image %s : %s\n", curImageToProcess, string(deleteImageOutput))
+				log.Printf("failed deleting image %s : %s\n", curImageToProcess, string(deleteImageOutput))
 			}
-			log.Printf("successfully delete %s\n", curImageToProcess)
+			log.Printf("succeeded deleting delete %s\n", curImageToProcess)
 		}
 	}
 	log.Printf("all images with tag: %s within container registry: %s are processed.\n", tagOfImagesToDelete, imagePrefix)
