@@ -40,6 +40,10 @@ languages:
     buildImage: l.gcr.io/google/bazel:latest
     runImage: "{{ .ImagePrefix }}python:{{ .Version }}"
 
+  - language: python_asyncio
+    buildImage: l.gcr.io/google/bazel:latest
+    runImage: "{{ .ImagePrefix }}python:{{ .Version }}"
+
   - language: ruby
     buildImage: "{{ .BuildImagePrefix }}ruby:{{ .Version }}"
     runImage: "{{ .ImagePrefix }}ruby:{{ .Version }}"
