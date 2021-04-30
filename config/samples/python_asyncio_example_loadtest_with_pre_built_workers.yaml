@@ -4,7 +4,7 @@ metadata:
   # Every load test instance must be assigned a unique name on the
   # cluster. There are ways we can circumvent naming clashes, such
   # as using namespaces or dynamically assigning names.
-  name: python-asyncio-example
+  name: prebuilt-python-asyncio-example
 
   # As a custom resource, it behaves like a native kubernetes object.
   # This means that users can perform CRUD operations through the
