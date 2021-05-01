@@ -12,8 +12,7 @@ of prebuilt images if working with GCR. If another image registry is chosen, the
 ## Build and push images
 
 The script [prepare_prebuilt_workers.go](pre_built_workers/prepare_prebuilt_workers.go) 
-build images and push them to a user specified registry. 
-The following example build and push prebuilt cxx and go worker images.
+builds images and pushes them to a user specified registry. For example, the following shows this process (building and pushing prebuilt images) for cxx and go workers:
 ```
 go run ./prebuilt_workers/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
  -l cxx:master \
