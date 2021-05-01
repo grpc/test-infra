@@ -1,7 +1,7 @@
 # Using prebuilt images with gRPC OSS benchmarks
 
 The scripts in this folder:
-* Build the images have pre-built workers embedded.
+* Build the images with the worker executables compiled and embedded.
 * Push the images to specified registry.
 * Delete the images from specified registry.
 
