@@ -1,7 +1,7 @@
 # Using prebuilt images with gRPC OSS benchmarks
 
 The scripts in this folder:
-* Build the images have pre-built workers embedded.
+* Build the images with the worker executables compiled and embedded.
 * Push the images to specified registry.
 * Delete the images from specified registry.
 
@@ -12,19 +12,19 @@ of prebuilt images if working with GCR. If another image registry is chosen, the
 ## Build and push images
 
 The script [prepare_prebuilt_workers.go](pre_built_workers/prepare_prebuilt_workers.go) 
-build images and push them to a user specified registry. 
-The following example build and push prebuilt cxx and go worker images.
+builds images and pushes them to a user specified registry. For example, the following shows this process (building and pushing prebuilt images) for cxx and go workers:
 ```
 go run ./prebuilt_workers/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
  -l cxx:master \
  -l go:master \
- -p gcr.io/grpc-testing/e2etesting/pre_built_workers \
+ -p gcr.io/<grpc-project>/pre_built_workers \
  -t user-specified-tag \
  -r test-infra/container/pre_built_workers/
 ```
 
-The built `cxx` and `go` images contains the workers built from commit/branch we wish 
+These built `cxx` and `go` images contain the workers built from commit/branch we wish 
 to test. 
+
 The script `prepare_for_prebuilt_workers.go` takes the following options:
 * `-l `<br> Language and GITREF to benchmark. The language and its specific 
 GITREF wish to build workers from can be specified as `language:gitref`.
@@ -45,6 +45,7 @@ The script [delete_prebuilt_workers.go](prebuilt_workers/delete_prebuilt_workers
 deletes images within user specified registry. The script lists all images
 within the specified registry, then check if the image has the user specified 
 tag.
+
 The following example delete all images within 
 `gcr.io/grpc-testing/e2etesting/pre_built_workers` that have 
 tag:`user-specified-tag`.
