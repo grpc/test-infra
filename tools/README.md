@@ -22,8 +22,9 @@ go run ./prebuilt_workers/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
  -r test-infra/container/pre_built_workers/
 ```
 
-The built `cxx` and `go` images contains the workers built from commit/branch we wish 
+These built `cxx` and `go` images contain the workers built from commit/branch we wish 
 to test. 
+
 The script `prepare_for_prebuilt_workers.go` takes the following options:
 * `-l `<br> Language and GITREF to benchmark. The language and its specific 
 GITREF wish to build workers from can be specified as `language:gitref`.
