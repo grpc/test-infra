@@ -100,11 +100,14 @@ func main() {
 
 	for _, pair := range languagesSelected {
 		split := strings.Split(pair, ":")
-		lang := split[0]
-		gitref := split[1]
-		if len(split) != 2 {
+
+		if len(split) < 2 {
 			log.Fatalf("input error in language and gitref selection, please follow the format as language:gitref, for example: cxx:master")
 		}
+
+		lang := split[0]
+		gitref := split[1]
+
 		if convertedLang, ok := converterToImageLanguage[lang]; ok {
 			test.languagesToGitref[convertedLang] = gitref
 		} else {
