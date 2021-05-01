@@ -17,7 +17,7 @@ builds images and pushes them to a user specified registry. For example, the fol
 go run ./prebuilt_workers/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
  -l cxx:master \
  -l go:master \
- -p gcr.io/grpc-testing/e2etesting/pre_built_workers \
+ -p gcr.io/<grpc-project>/pre_built_workers \
  -t user-specified-tag \
  -r test-infra/container/pre_built_workers/
 ```
