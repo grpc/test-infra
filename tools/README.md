@@ -50,8 +50,6 @@ The following example delete all images within
 `gcr.io/grpc-testing/e2etesting/pre_built_workers` that have 
 tag:`user-specified-tag`.
 
-If the image having the specified tag has multiple tag, the image would only be untaged with the specified tag.
-
 ```
 go run ./prebuilt_workers/delete_prebuilt_workers/delete_prebuilt_workers.go \
  -p gcr.io/grpc-testing/e2etesting/pre_built_workers \
