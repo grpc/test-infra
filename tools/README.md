@@ -44,6 +44,7 @@ The script [delete_prebuilt_workers.go](prebuilt_workers/delete_prebuilt_workers
 deletes images within user specified registry. The script lists all images
 within the specified registry, then check if the image has the user specified 
 tag.
+
 The following example delete all images within 
 `gcr.io/grpc-testing/e2etesting/pre_built_workers` that have 
 tag:`user-specified-tag`.
