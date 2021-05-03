@@ -25,7 +25,7 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: controller cleanup-agent
+all: controller cleanup-agent runner
 
 # Run tests
 test: generate fmt vet manifests
@@ -38,6 +38,10 @@ controller: generate fmt vet
 # Build cleanup_agent manager binary
 cleanup-agent: generate fmt vet
 	go build -trimpath -o bin/cleanup_agent cmd/cleanup_agent/main.go
+
+# Build test runner tool
+runner: fmt vet
+	go build -trimpath -o bin/runner cmd/runner/main.go
 
 # Install CRDs into a cluster
 install: manifests
@@ -92,7 +96,6 @@ push-controller-image:
 # Push the cleanup-agent manager image to a docker registry
 push-cleanup-agent-image:
 	docker push ${CLEAN_IMG}
-
 
 # Build the clone init container image
 clone-image:
