@@ -14,12 +14,12 @@ of prebuilt images if working with GCR. If another image registry is chosen, the
 The script [prepare_prebuilt_workers.go](pre_built_workers/prepare_prebuilt_workers.go) 
 builds images and pushes them to a user specified registry. For example, the following shows this process (building and pushing prebuilt images) for cxx and go workers:
 ```
-go run ./prebuilt_workers/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
+go run test-infra/tools/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
  -l cxx:master \
  -l go:master \
- -p gcr.io/<grpc-project>/pre_built_workers \
+ -p gcr.io/grpc-testing/project-name/pre_built_workers \
  -t user-specified-tag \
- -r test-infra/container/pre_built_workers/
+ -r test-infra/containers/pre_built_workers
 ```
 
 These built `cxx` and `go` images contain the workers built from commit/branch we wish 
@@ -35,8 +35,8 @@ May be repeated.
 * `-p` <br> Image registry to store images. In the example, the location of the
 images are:
   ```
-  gcr.io/grpc-testing/e2etesting/pre_built_workers/cxx:user-specified-tag
-  gcr.io/grpc-testing/e2etesting/pre_built_workers/go:user-specified-tag
+  gcr.io/grpc-testing/project-name/pre_built_workers/cxx:user-specified-tag
+  gcr.io/grpc-testing/project-name/pre_built_workers/go:user-specified-tag
   ```
 
 ## Delete the images
@@ -47,12 +47,12 @@ within the specified registry, then check if the image has the user specified
 tag.
 
 The following example delete all images within 
-`gcr.io/grpc-testing/e2etesting/pre_built_workers` that have 
+`gcr.io/grpc-testing/project-name/pre_built_workers` that have 
 tag:`user-specified-tag`.
 
 ```
-go run ./prebuilt_workers/delete_prebuilt_workers/delete_prebuilt_workers.go \
- -p gcr.io/grpc-testing/e2etesting/pre_built_workers \
+go run test-infra/tools/delete_prebuilt_workers/delete_prebuilt_workers.go \
+ -p gcr.io/grpc-testing/project-name/pre_built_workers \
  -t user-specified-tag
 ```
 
