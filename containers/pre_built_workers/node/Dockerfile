@@ -21,8 +21,8 @@ ARG REPOSITORY=grpc/grpc-node
 ARG GITREF=master
 
 RUN git clone https://github.com/$REPOSITORY.git .
-RUN git submodule update --init
 RUN git checkout $GITREF
+RUN git submodule update --init
 
 # Save commit sha for debug use
 RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
