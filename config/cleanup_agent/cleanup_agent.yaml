@@ -22,6 +22,8 @@ spec:
       labels:
         control-plane: cleanup-agent-manager
     spec:
+      nodeSelector:
+        default-system-pool: "true"
       containers:
       - command:
         image: cleanup_agent:latest
