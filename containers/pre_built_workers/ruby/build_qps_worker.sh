@@ -22,8 +22,8 @@ rake compile
 # build grpc_ruby_plugin
 mkdir -p cmake/build
 pushd cmake/build
-cmake -DgRPC_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$Release ../..
-make protoc grpc_ruby_plugin -j2
+cmake -DgRPC_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release ../..
+make protoc grpc_ruby_plugin -j8
 popd
 
 # unbreak subsequent make builds by restoring zconf.h (previously renamed by cmake build)
