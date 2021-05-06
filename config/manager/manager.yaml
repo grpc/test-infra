@@ -22,6 +22,8 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      nodeSelector:
+        default-system-pool: "true"
       containers:
       - command:
         - /workspace/bin/controller

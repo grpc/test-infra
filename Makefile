@@ -1,30 +1,20 @@
 # Version tag for all images
 TEST_INFRA_VERSION ?= "latest"
-
 # Version of the gRPC driver
 DRIVER_VERSION ?= "master"
-
 # Prefix for all images used as clone and ready containers, enabling use with registries
 # other than DockerHub
 INIT_IMAGE_PREFIX ?= ""
-
 # Prefix for all images used as build containers, enabling use with registries
 # other than DockerHub
 BUILD_IMAGE_PREFIX ?= ""
-
 # Prefix for all images used as runtime containers, enabling use with registries
 # other than DockerHub
 IMAGE_PREFIX ?= ""
-
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
-
 # Image URL to use all building/pushing image targets
 CLEAN_IMG ?= ${IMAGE_PREFIX}cleanup:${TEST_INFRA_VERSION}
-
-# Node pool for system components (controller and cleanup agent)
-SYSTEM_POOL ?= "system"
-
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -62,16 +52,12 @@ deploy: deploy-controller deploy-cleanup-agent
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy-controller: manifests
-	cd config/manager && \
-		kustomize edit set image controller=${CONTROLLER_IMG} && \
-		kustomize edit set label pool:${SYSTEM_POOL}
+	cd config/manager && kustomize edit set image controller=${CONTROLLER_IMG}
 	kustomize build config/default | kubectl apply -f -
 
 # Deploy cleanup_agent in the configured Kubernetes cluster in ~/.kube/config
 deploy-cleanup-agent: manifests
-	cd config/cleanup_agent && \
-		kustomize edit set image cleanup_agent=${CLEAN_IMG} && \
-		kustomize edit set label pool:${SYSTEM_POOL}
+	cd config/cleanup_agent && kustomize edit set image cleanup_agent=${CLEAN_IMG}
 	kustomize build config/cleanup_agent | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
