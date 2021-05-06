@@ -14,9 +14,9 @@
 
 FROM php:7.2.22-buster
 
-RUN mkdir -p /pre
-WORKDIR /pre
-
+# TODO: when running on kokoro, the "Install" build steps will not be cached
+# since we'll always be on a fresh VM. Re-running this command each
+# time leads to increased latency and flakiness.
 RUN apt-get update && apt-get install -y \
   git \
   zlib1g-dev \
@@ -25,17 +25,6 @@ RUN apt-get update && apt-get install -y \
   make \
   gnupg2 && \
   apt-get clean
-
-ARG REPOSITORY=grpc/grpc
-ARG GITREF=master
-
-RUN git clone https://github.com/$REPOSITORY.git .
-RUN git checkout $GITREF
-RUN git submodule update --init
-
-# Save commit sha for debug use
-RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
-RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
 # Install rvm
 RUN gpg2 --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
@@ -54,19 +43,36 @@ RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
 RUN curl -sS https://getcomposer.org/installer | php
 RUN mv composer.phar /usr/local/bin/composer
 
+RUN mkdir -p /pre
+WORKDIR /pre
+
+ARG REPOSITORY=grpc/grpc
+ARG GITREF=master
+# when BREAK_CACHE arg is set to a random value (e.g. by "--build-arg BREAK_CACHE=$(uuidgen)"),
+# it makes sure the docker cache breaks at this command, and all the following
+# commands in this Dockerfile will be forced to re-run on each build.
+# This is important to ensure we always clone the repository even if "GITREF" stays unchanged
+# (important e.g. when GITREF=master, when the clone command could get cached and
+# we'd end up with a stale repository).
+ARG BREAK_CACHE
+
+RUN git clone https://github.com/$REPOSITORY.git .
+RUN git checkout $GITREF
+RUN git submodule update --init
+
+# Save commit sha for debug use
+RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
+RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
+
 RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
 FROM php:7.2.22-buster
 
-RUN mkdir -p /execute
-WORKDIR /execute
-COPY --from=0 /pre/src /execute/src
-COPY --from=0 /pre/etc /execute/etc
-COPY --from=0 /pre/saved/bundle/ /execute/saved/bundle/
-COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
-
+# TODO: when running on kokoro, the "Install" build steps will not be cached
+# since we'll always be on a fresh VM. Re-running this command each
+# time leads to increased latency and flakiness.
 RUN apt-get update && apt-get install -y \
   zlib1g-dev \
   build-essential \
@@ -87,6 +93,13 @@ RUN /bin/bash -l -c "echo 'gem: --no-document' > ~/.gemrc"
 RUN /bin/bash -l -c "echo 'export PATH=/usr/local/rvm/bin:$PATH' >> ~/.bashrc"
 RUN /bin/bash -l -c "echo 'rvm --default use ruby-2.5' >> ~/.bashrc"
 RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
+
+RUN mkdir -p /execute
+WORKDIR /execute
+COPY --from=0 /pre/src /execute/src
+COPY --from=0 /pre/etc /execute/etc
+COPY --from=0 /pre/saved/bundle/ /execute/saved/bundle/
+COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
 
 RUN mkdir /run_scripts
 ADD run_worker.sh /run_scripts
