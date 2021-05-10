@@ -39,14 +39,16 @@ type Runner struct {
 	Done           chan string
 	loadTestGetter clientset.LoadTestGetter
 	afterInterval  func()
+	retries        int
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func()) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries int) *Runner {
 	return &Runner{
 		Done:           make(chan string),
 		loadTestGetter: loadTestGetter,
 		afterInterval:  afterInterval,
+		retries:        retries,
 	}
 }
 
@@ -73,21 +75,43 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 // runTest creates a single LoadTest and monitors it to completion.
 func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan int) {
 	id := fmt.Sprintf("%-14s %3d", qName, i)
-	loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
-	if err != nil {
-		log.Printf("[%s] Failed to create test %s", id, config.Name)
-		done <- i
-		return
+	var retries int
+
+	for {
+		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
+		if err != nil {
+			log.Printf("[%s] Failed to create test %s", id, config.Name)
+			if retries < r.retries {
+				retries++
+				log.Printf("[%s] Scheduling retry %d/%d to create test", id, retries, r.retries)
+				r.afterInterval()
+				continue
+			}
+			log.Printf("[%s] Aborting after %d retries to create test %s", id, r.retries, config.Name)
+			done <- i
+			return
+		}
+		retries = 0
+		config.Status = loadTest.Status
+		log.Printf("[%s] Created test %s", id, config.Name)
+		break
 	}
-	log.Printf("[%s] Created test %s", id, config.Name)
-	config.Status = loadTest.Status
+
 	for {
 		loadTest, err := r.loadTestGetter.Get(config.Name, metav1.GetOptions{})
 		if err != nil {
 			log.Printf("[%s] Failed to poll test %s", id, config.Name)
+			if retries < r.retries {
+				retries++
+				log.Printf("[%s] Scheduling retry %d/%d to poll test", id, retries, r.retries)
+				r.afterInterval()
+				continue
+			}
+			log.Printf("[%s] Aborting test after %d retries to poll test %s", id, r.retries, config.Name)
 			done <- i
 			return
 		}
+		retries = 0
 		config.Status = loadTest.Status
 		if loadTest.Status.State.IsTerminated() {
 			log.Printf("[%s] %s", id, loadTest.Status.State)
