@@ -40,6 +40,16 @@ func main() {
 
 	flag.Parse()
 
+	if len(imagePrefix) == 0 {
+		log.Fatalln("no root repository is provided")
+	}
+
+	if len(tagOfImagesToDelete) == 0 {
+		log.Fatalln("no image tag is provided")
+	}
+
+	log.Printf("start to process all images within %s having tag: %s", imagePrefix, tagOfImagesToDelete)
+
 	getRepository := exec.Command("gcloud", "container", "images", "list", fmt.Sprintf("--repository=%s", imagePrefix))
 	getRepositoryOutput, err := getRepository.CombinedOutput()
 	if err != nil {
@@ -86,7 +96,7 @@ func main() {
 			if err != nil {
 				log.Printf("failed deleting image %s : %s\n", curImageToProcess, string(deleteImageOutput))
 			}
-			log.Printf("succeeded deleting delete %s\n", curImageToProcess)
+			log.Printf("succeeded deleting  %s\n", curImageToProcess)
 		}
 	}
 	log.Printf("all images with tag: %s within container registry: %s are processed.\n", tagOfImagesToDelete, imagePrefix)
