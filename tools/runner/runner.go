@@ -39,11 +39,11 @@ type Runner struct {
 	Done           chan string
 	loadTestGetter clientset.LoadTestGetter
 	afterInterval  func()
-	retries        int
+	retries        uint
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries int) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint) *Runner {
 	return &Runner{
 		Done:           make(chan string),
 		loadTestGetter: loadTestGetter,
@@ -75,7 +75,7 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 // runTest creates a single LoadTest and monitors it to completion.
 func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan int) {
 	id := fmt.Sprintf("%-14s %3d", qName, i)
-	var retries int
+	var retries uint
 
 	for {
 		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
