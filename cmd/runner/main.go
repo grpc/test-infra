@@ -26,13 +26,13 @@ func main() {
 	c := runner.ConcurrencyLevels(make(map[string]int))
 	var a string
 	var p time.Duration
-	var retries int
+	var retries uint
 
 	flag.Var(&i, "i", "input files containing load test configurations")
 	flag.Var(&c, "c", "concurrency level, in the form [<queue name>:]<concurrency level>")
 	flag.StringVar(&a, "a", "pool", "annotation key to parse for queue assignment")
 	flag.DurationVar(&p, "p", 20*time.Second, "polling interval for load test status")
-	flag.IntVar(&retries, "retries", 2, "Maximum retries in case of communication failure")
+	flag.UintVar(&retries, "retries", 2, "Maximum retries in case of communication failure")
 	flag.Parse()
 
 	inputConfigs, err := runner.DecodeFromFiles(i)
