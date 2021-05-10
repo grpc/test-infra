@@ -7,7 +7,7 @@ versioned, released or deployed separately from the [grpc/grpc] codebase.
 
 [grpc/grpc]: https://github.com/grpc/grpc
 
-## [Benchmarks](benchmarks/)
+## [Benchmarks]
 
 gRPC Benchmarks is a collection of libraries and executables to schedule, run
 and monitor gRPC benchmarks on a Kubernetes cluster.
