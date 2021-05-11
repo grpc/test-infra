@@ -76,40 +76,41 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 // runTest creates a single LoadTest and monitors it to completion.
 func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan int) {
 	id := fmt.Sprintf("%-14s %3d", qName, i)
+	name := nameString(config)
 	var status string
 	var retries uint
 
 	for {
 		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
 		if err != nil {
-			log.Printf("[%s] Failed to create test %s", id, config.Name)
+			log.Printf("[%s] Failed to create test %s", id, name)
 			if retries < r.retries {
 				retries++
 				log.Printf("[%s] Scheduling retry %d/%d to create test", id, retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			log.Printf("[%s] Aborting after %d retries to create test %s", id, r.retries, config.Name)
+			log.Printf("[%s] Aborting after %d retries to create test %s", id, r.retries, name)
 			done <- i
 			return
 		}
 		retries = 0
 		config.Status = loadTest.Status
-		log.Printf("[%s] Created test %s", id, config.Name)
+		log.Printf("[%s] Created test %s", id, name)
 		break
 	}
 
 	for {
 		loadTest, err := r.loadTestGetter.Get(config.Name, metav1.GetOptions{})
 		if err != nil {
-			log.Printf("[%s] Failed to poll test %s", id, config.Name)
+			log.Printf("[%s] Failed to poll test %s", id, name)
 			if retries < r.retries {
 				retries++
 				log.Printf("[%s] Scheduling retry %d/%d to poll test", id, retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			log.Printf("[%s] Aborting test after %d retries to poll test %s", id, r.retries, config.Name)
+			log.Printf("[%s] Aborting test after %d retries to poll test %s", id, r.retries, name)
 			done <- i
 			return
 		}
@@ -136,6 +137,39 @@ func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan
 	}
 }
 
+// nameString returns a string to represent the test name in logs.
+// This string consists of two names: (1) the test name in the LoadTest
+// metadata, (2) a test name derived from the prefix, scenario and uniquifier
+// (if these elements are present in labels and annotations). This is a
+// workaround for the fact that we cannot use the second name in the metadata.
+// The LoadTest name is currently used as a label in pods, to refer back to the
+// correspondingLoadTest (instead of the LoadTest UID). Labels are limited to
+// 63 characters, while names themselves can go up to 253.
+func nameString(config *grpcv1.LoadTest) string {
+	var prefix, scenario string
+	var ok bool
+	if prefix, ok = config.Labels["prefix"]; !ok {
+		return config.Name
+	}
+	if scenario, ok = config.Annotations["scenario"]; !ok {
+		return config.Name
+	}
+	elems := []string{prefix}
+	if scenario != "" {
+		elems = append(elems, strings.Split(scenario, "_")...)
+	}
+	if uniquifier := config.Annotations["uniquifier"]; uniquifier != "" {
+		elems = append(elems, uniquifier)
+	}
+	name := strings.Join(elems, "-")
+	if name == config.Name {
+		return config.Name
+	}
+	return fmt.Sprintf("%s [%s]", name, config.Name)
+}
+
+// statusString returns a string to represent the test status in logs.
+// The string consists of state, reason and message (each omitted if empty).
 func statusString(config *grpcv1.LoadTest) string {
 	s := []string{string(config.Status.State)}
 	if reason := strings.TrimSpace(config.Status.Reason); reason != "" {
