@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/nu7hatch/gouuid"
 	"log"
 	"os/exec"
 	"strings"
@@ -133,9 +134,15 @@ func main() {
 			image := fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
 			dockerfileLocation := fmt.Sprintf("%s/%s/", test.dockerfileRoot, lang)
 
+			uniqueCacheBreaker, err := uuid.NewV4()
+			if err != nil {
+				log.Fatalf("Failed to generate unique cache breaker, risking building workers from cached old commits")
+			}
+			fmt.Println(uniqueCacheBreaker.String())
+
 			// build image
 			log.Println(fmt.Sprintf("building %s image", lang))
-			buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", test.testTag))
+			buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker.String()))
 			buildOutput, err := buildDockerImage.CombinedOutput()
 			if err != nil {
 				log.Println(err)
