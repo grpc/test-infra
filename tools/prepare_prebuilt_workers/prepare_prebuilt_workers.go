@@ -27,11 +27,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/nu7hatch/gouuid"
 	"log"
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Tests contains the values for fields that are accessible by
@@ -72,7 +72,7 @@ func main() {
 
 	flag.StringVar(&test.dockerfileRoot, "r", "", "root directory of Dockerfiles to build prebuilt images")
 
-	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests, example: cxx:master")
+	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests, example: cxx:<commit-sha>")
 
 	flag.Parse()
 
@@ -107,7 +107,7 @@ func main() {
 		split := strings.Split(pair, ":")
 
 		if len(split) != 2 || split[len(split)-1] == "" {
-			log.Fatalf("Input error in language and gitref selection, please follow the format as language:gitref, for example: cxx:master")
+			log.Fatalf("Input error in language and gitref selection, please follow the format as language:gitref, for example: cxx:<commit-sha>")
 		}
 
 		lang := split[0]
@@ -127,6 +127,8 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(len(test.languagesToGitref))
 
+	uniqueCacheBreaker := time.Now().String()
+
 	for lang, gitRef := range test.languagesToGitref {
 		go func(lang string, gitRef string) {
 			defer wg.Done()
@@ -134,15 +136,9 @@ func main() {
 			image := fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
 			dockerfileLocation := fmt.Sprintf("%s/%s/", test.dockerfileRoot, lang)
 
-			uniqueCacheBreaker, err := uuid.NewV4()
-			if err != nil {
-				log.Fatalf("Failed to generate unique cache breaker, risking building workers from cached old commits")
-			}
-			fmt.Println(uniqueCacheBreaker.String())
-
 			// build image
 			log.Println(fmt.Sprintf("building %s image", lang))
-			buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker.String()))
+			buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker))
 			buildOutput, err := buildDockerImage.CombinedOutput()
 			if err != nil {
 				log.Println(err)
