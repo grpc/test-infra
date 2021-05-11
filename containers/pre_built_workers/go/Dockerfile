@@ -19,10 +19,17 @@ WORKDIR /executable
 
 ARG REPOSITORY=grpc/grpc-go
 ARG GITREF=master
+# when BREAK_CACHE arg is set to a random value (e.g. by "--build-arg BREAK_CACHE=$(uuidgen)"),
+# it makes sure the docker cache breaks at this command, and all the following
+# commands in this Dockerfile will be forced to re-run on each build.
+# This is important to ensure we always clone the repository even if "GITREF" stays unchanged
+# (important e.g. when GITREF=master, when the clone command could get cached and
+# we'd end up with a stale repository).
+ARG BREAK_CACHE
 
 RUN git clone https://github.com/$REPOSITORY.git .
-RUN git submodule update --init
 RUN git checkout $GITREF
+RUN git submodule update --init
 
 # Save commit sha for debug use
 RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt

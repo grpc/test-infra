@@ -72,6 +72,7 @@ func main() {
 	flag.Parse()
 
 	if test.preBuiltImagePrefix == "" {
+		// TODO: make pushing built images optional since being able to build images locally without pushing is useful for experiments/debugging.
 		log.Fatalf("failed preparing prebuilt images: no registry provided, please provide a container registry to store the images")
 	}
 
@@ -125,6 +126,7 @@ func main() {
 
 		// build image
 		log.Println(fmt.Sprintf("building %s image", lang))
+		// TODO: pass BREAK_CACHE argument to the docker build to ensure local builds get a fresh clone of the github repo.
 		buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef))
 		buildOutput, err := buildDockerImage.CombinedOutput()
 		if err != nil {
