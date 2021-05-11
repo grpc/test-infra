@@ -18,6 +18,7 @@ package runner
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -75,6 +76,7 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 // runTest creates a single LoadTest and monitors it to completion.
 func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan int) {
 	id := fmt.Sprintf("%-14s %3d", qName, i)
+	var status string
 	var retries uint
 
 	for {
@@ -113,18 +115,34 @@ func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan
 		}
 		retries = 0
 		config.Status = loadTest.Status
-		if loadTest.Status.State.IsTerminated() {
-			log.Printf("[%s] %s", id, loadTest.Status.State)
+		s := status
+		status := statusString(config)
+		switch {
+		case loadTest.Status.State.IsTerminated():
+			log.Printf("[%s] %s", id, status)
 			done <- i
 			return
-		}
-		if loadTest.Status.State == grpcv1.Running {
-			log.Printf("[%s] %s", id, loadTest.Status.State)
+		case loadTest.Status.State == grpcv1.Running:
+			log.Printf("[%s] %s", id, status)
 			r.afterInterval()
-			continue
+		default:
+			if s != status {
+				log.Printf("[%s] %s", id, status)
+			}
+			// Use a longer polling interval for tests that have not started.
+			r.afterInterval()
+			r.afterInterval()
 		}
-		// Use a longer polling interval for tests that have not started.
-		r.afterInterval()
-		r.afterInterval()
 	}
+}
+
+func statusString(config *grpcv1.LoadTest) string {
+	s := []string{string(config.Status.State)}
+	if reason := strings.TrimSpace(config.Status.Reason); reason != "" {
+		s = append(s, reason)
+	}
+	if message := strings.TrimSpace(config.Status.Message); message != "" {
+		s = append(s, message)
+	}
+	return strings.Join(s, "; ")
 }
