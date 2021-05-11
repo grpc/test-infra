@@ -141,7 +141,7 @@ func main() {
 				log.Println(err)
 				log.Fatalf("Failed building %s image: %s", lang, string(buildOutput))
 			}
-			//log.Println(string(buildOutput))
+			log.Println(string(buildOutput))
 			log.Printf("Succeeded building %s worker: %s\n", lang, image)
 
 			if !test.buildOnly {
@@ -153,7 +153,7 @@ func main() {
 					log.Println(err)
 					log.Fatalf("Failed pushing %s image: %s", lang, string(pushOutput))
 				}
-				//log.Println(string(pushOutput))
+				log.Println(string(pushOutput))
 				log.Printf("Succeeded pushing %s worker to %s\n", lang, image)
 			}
 		}(lang, gitRef)
