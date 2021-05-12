@@ -77,7 +77,7 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan int) {
 	id := fmt.Sprintf("%-14s %3d", qName, i)
 	name := nameString(config)
-	var status string
+	var s, status string
 	var retries uint
 
 	for {
@@ -116,8 +116,8 @@ func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan
 		}
 		retries = 0
 		config.Status = loadTest.Status
-		s := status
-		status := statusString(config)
+		s = status
+		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
 			log.Printf("[%s] %s", id, status)
