@@ -59,7 +59,9 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 	n := 0
 	for i, config := range configs {
 		if n < concurrencyLevel {
-			go r.runTest(qName, config, i, done)
+			id := fmt.Sprintf("%-14s %3d", qName, i)
+			log.Printf("[%s] Starting test %d in queue %s", id, i, qName)
+			go r.runTest(id, config, i, done)
 			n++
 			continue
 		}
@@ -74,8 +76,7 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 }
 
 // runTest creates a single LoadTest and monitors it to completion.
-func (r *Runner) runTest(qName string, config *grpcv1.LoadTest, i int, done chan int) {
-	id := fmt.Sprintf("%-14s %3d", qName, i)
+func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan int) {
 	name := nameString(config)
 	var s, status string
 	var retries uint

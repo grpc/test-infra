@@ -59,3 +59,12 @@ func ValidateConcurrencyLevels(configMap map[string][]*grpcv1.LoadTest, concurre
 	}
 	return nil
 }
+
+// CountConfigs counts the number of configs in each queue.
+func CountConfigs(configMap map[string][]*grpcv1.LoadTest) map[string]int {
+	m := make(map[string]int)
+	for qName, configs := range configMap {
+		m[qName] = len(configs)
+	}
+	return m
+}

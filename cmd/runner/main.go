@@ -30,9 +30,9 @@ func main() {
 
 	flag.Var(&i, "i", "input files containing load test configurations")
 	flag.Var(&c, "c", "concurrency level, in the form [<queue name>:]<concurrency level>")
-	flag.StringVar(&a, "a", "pool", "annotation key to parse for queue assignment")
-	flag.DurationVar(&p, "p", 20*time.Second, "polling interval for load test status")
-	flag.UintVar(&retries, "retries", 2, "Maximum retries in case of communication failure")
+	flag.StringVar(&a, "annotation-key", "pool", "annotation key to parse for queue assignment")
+	flag.DurationVar(&p, "polling-interval", 20*time.Second, "polling interval for load test status")
+	flag.UintVar(&retries, "polling-retries", 2, "Maximum retries in case of communication failure")
 	flag.Parse()
 
 	inputConfigs, err := runner.DecodeFromFiles(i)
@@ -45,6 +45,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to validate concurrency levels: %v", err)
 	}
+
+	log.Printf("annotation key for queue assignment: %s", a)
+	log.Printf("polling interval: %v", p)
+	log.Printf("polling retries: %d", retries)
+	log.Printf("test counts per queue: %v", runner.CountConfigs(configQueueMap))
+	log.Printf("queue concurrency levels: %v", c)
 
 	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries)
 
