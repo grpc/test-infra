@@ -30,6 +30,8 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"sync"
+	"time"
 )
 
 // Tests contains the values for fields that are accessible by
@@ -38,6 +40,7 @@ type Tests struct {
 	preBuiltImagePrefix string
 	testTag             string
 	dockerfileRoot      string
+	buildOnly           bool
 	languagesToGitref   map[string]string
 }
 
@@ -63,31 +66,32 @@ func main() {
 
 	flag.StringVar(&test.preBuiltImagePrefix, "p", "", "image registry to push images")
 
+	flag.BoolVar(&test.buildOnly, "build-only", false, "use build-only=true if the images are not intended to be pushed to a container registry")
+
 	flag.StringVar(&test.testTag, "t", "", "tag for pre-built images, this unique tag to identify the images build and pushed in current test")
 
 	flag.StringVar(&test.dockerfileRoot, "r", "", "root directory of Dockerfiles to build prebuilt images")
 
-	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests, example: cxx:master")
+	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests, example: cxx:<commit-sha>")
 
 	flag.Parse()
 
 	if test.preBuiltImagePrefix == "" {
-		// TODO: make pushing built images optional since being able to build images locally without pushing is useful for experiments/debugging.
-		log.Fatalf("failed preparing prebuilt images: no registry provided, please provide a container registry to store the images")
+		log.Fatalf("No registry provided, please provide a container registry.If the images are not intended to be pushed to a registry, please provide a prefix for naming the built images")
 	}
 
 	if test.testTag == "" {
-		log.Fatalf("failed preparing prebuilt images: no image tag provided")
+		log.Fatalf("Failed preparing prebuilt images: no image tag provided")
 	} else if len(test.testTag) > 128 {
-		log.Fatalf("failed preparing prebuilt images: invalid tag name, a tag name may not start with a period or a dash and may contain a maximum of 128 characters.")
+		log.Fatalf("Failed preparing prebuilt images: invalid tag name, a tag name may not start with a period or a dash and may contain a maximum of 128 characters.")
 	}
 
 	if test.dockerfileRoot == "" {
-		log.Fatalf("fail preparing prebuilt images: no root directory for Dockerfiles provided")
+		log.Fatalf("Fail preparing prebuilt images: no root directory for Dockerfiles provided")
 	}
 
 	if len(languagesSelected) == 0 {
-		log.Fatalf("failed preparing prebuilt images: no language and its gitref pair specified, please provide languages and the GITREF as cxx:master")
+		log.Fatalf("Failed preparing prebuilt images: no language and its gitref pair specified, please provide languages and the GITREF as cxx:master")
 	}
 
 	test.languagesToGitref = map[string]string{}
@@ -103,7 +107,7 @@ func main() {
 		split := strings.Split(pair, ":")
 
 		if len(split) != 2 || split[len(split)-1] == "" {
-			log.Fatalf("input error in language and gitref selection, please follow the format as language:gitref, for example: cxx:master")
+			log.Fatalf("Input error in language and gitref selection, please follow the format as language:gitref, for example: cxx:<commit-sha>")
 		}
 
 		lang := split[0]
@@ -116,34 +120,49 @@ func main() {
 		}
 	}
 
-	log.Println("selected language : GITREF")
+	log.Println("Selected language : GITREF")
 	formattedMap, _ := json.MarshalIndent(test.languagesToGitref, "", "  ")
 	log.Print(string(formattedMap))
 
+	var wg sync.WaitGroup
+	wg.Add(len(test.languagesToGitref))
+
+	uniqueCacheBreaker := time.Now().String()
+
 	for lang, gitRef := range test.languagesToGitref {
-		image := fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
-		dockerfileLocation := fmt.Sprintf("%s/%s/", test.dockerfileRoot, lang)
+		go func(lang string, gitRef string) {
+			defer wg.Done()
 
-		// build image
-		log.Println(fmt.Sprintf("building %s image", lang))
-		// TODO: pass BREAK_CACHE argument to the docker build to ensure local builds get a fresh clone of the github repo.
-		buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef))
-		buildOutput, err := buildDockerImage.CombinedOutput()
-		if err != nil {
-			log.Fatalf("failed building %s image: %s", lang, string(buildOutput))
-		}
-		log.Println(string(buildOutput))
-		log.Printf("succeeded building %s worker: %s\n", lang, image)
+			image := fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
+			dockerfileLocation := fmt.Sprintf("%s/%s/", test.dockerfileRoot, lang)
 
-		// push image
-		log.Println(fmt.Sprintf("pushing %s image", lang))
-		pushDockerImage := exec.Command("docker", "push", image)
-		pushOutput, err := pushDockerImage.CombinedOutput()
-		if err != nil {
-			log.Fatalf("failed pushing %s image: %s", lang, string(pushOutput))
-		}
-		log.Println(string(pushOutput))
-		log.Printf("succeeded pushing %s worker to %s\n", lang, image)
+			// build image
+			log.Println(fmt.Sprintf("building %s image", lang))
+			buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker))
+			buildOutput, err := buildDockerImage.CombinedOutput()
+			if err != nil {
+				log.Println(err)
+				log.Fatalf("Failed building %s image: %s", lang, string(buildOutput))
+			}
+			log.Println(string(buildOutput))
+			log.Printf("Succeeded building %s worker: %s\n", lang, image)
+
+			if !test.buildOnly {
+				// push image
+				log.Println(fmt.Sprintf("pushing %s image", lang))
+				pushDockerImage := exec.Command("docker", "push", image)
+				pushOutput, err := pushDockerImage.CombinedOutput()
+				if err != nil {
+					log.Println(err)
+					log.Fatalf("Failed pushing %s image: %s", lang, string(pushOutput))
+				}
+				log.Println(string(pushOutput))
+				log.Printf("Succeeded pushing %s worker to %s\n", lang, image)
+			}
+		}(lang, gitRef)
 	}
-	log.Printf("all images are built and pushed to container registry: %s with tag: %s", test.preBuiltImagePrefix, test.testTag)
+
+	wg.Wait()
+
+	log.Printf("All images are processed")
 }

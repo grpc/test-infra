@@ -29,9 +29,12 @@ The script `prepare_for_prebuilt_workers.go` takes the following options:
 * `-l `<br> Language and GITREF to benchmark. The language and its specific 
 GITREF wish to build workers from can be specified as `language:gitref`.
 May be repeated.
-* `-t` <br> Tag for prebuilt images. Tag is a required fiels. Tag complies with 
+* `-t` <br> Tag for prebuilt images. Tag is a required fields. Tag complies with 
 [docker tag's restrictions](https://docs.docker.com/engine/reference/commandline/tag/#extended-description). 
 * `-r` <br> Root directory of Dockerfiles.
+* `-build-only` <br> Option to build only, when specified 
+  `-build-only=true` images will only be built locally without being pushed to an 
+  image registry.
 * `-p` <br> Image registry to store images. In the example, the location of the
 images are:
   ```
