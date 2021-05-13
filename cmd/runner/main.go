@@ -46,11 +46,11 @@ func main() {
 		log.Fatalf("Failed to validate concurrency levels: %v", err)
 	}
 
-	log.Printf("annotation key for queue assignment: %s", a)
-	log.Printf("polling interval: %v", p)
-	log.Printf("polling retries: %d", retries)
-	log.Printf("test counts per queue: %v", runner.CountConfigs(configQueueMap))
-	log.Printf("queue concurrency levels: %v", c)
+	log.Printf("Annotation key for queue assignment: %s", a)
+	log.Printf("Polling interval: %v", p)
+	log.Printf("Polling retries: %d", retries)
+	log.Printf("Test counts per queue: %v", runner.CountConfigs(configQueueMap))
+	log.Printf("Queue concurrency levels: %v", c)
 
 	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries)
 
