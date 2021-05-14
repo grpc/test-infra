@@ -55,22 +55,25 @@ func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), re
 
 // Run runs a set of LoadTests at a given concurrency level.
 func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel int) {
+	var count, n int
 	done := make(chan int)
-	n := 0
 	for i, config := range configs {
-		if n < concurrencyLevel {
-			id := fmt.Sprintf("%-14s %3d", qName, i)
-			log.Printf("[%s] Starting test %d in queue %s", id, i, qName)
-			go r.runTest(id, config, i, done)
-			n++
-			continue
+		for n >= concurrencyLevel {
+			<-done
+			n--
+			count++
+			log.Printf("Finished %d tests in queue %s", count, qName)
 		}
-		<-done
-		n--
+		log.Printf("Starting test %d in queue %s", i, qName)
+		id := fmt.Sprintf("%-14s %3d", qName, i)
+		n++
+		go r.runTest(id, config, i, done)
 	}
 	for n > 0 {
 		<-done
 		n--
+		count++
+		log.Printf("Finished %d tests in queue %s", count, qName)
 	}
 	r.Done <- qName
 }
