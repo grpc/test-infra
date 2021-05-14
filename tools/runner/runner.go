@@ -37,16 +37,28 @@ func AfterIntervalFunction(d time.Duration) func() {
 
 // Runner contains the information needed to run multiple sets of LoadTests.
 type Runner struct {
-	Done           chan string
+	// Done receives each queue name when the runner is done with that queue.
+	Done chan string
+	// loadTestGetter interacts with the cluster to create, get and delete
+	// LoadTests.
 	loadTestGetter clientset.LoadTestGetter
-	afterInterval  func()
-	retries        uint
+	// logPrefixFmt is the string used to format queue name and index into a
+	// prefix when printing logs for each test.
+	logPrefixFmt string
+	// afterInterval is a function that waits for a set time interval before
+	// returning. This function is used to set the polling interval to use
+	// while running each test.
+	afterInterval func()
+	// retries is the number of times to retry create and poll operations before
+	// failing each test.
+	retries uint
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, logPrefixFmt string, afterInterval func(), retries uint) *Runner {
 	return &Runner{
 		Done:           make(chan string),
+		logPrefixFmt:   logPrefixFmt,
 		loadTestGetter: loadTestGetter,
 		afterInterval:  afterInterval,
 		retries:        retries,
@@ -65,9 +77,9 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 			log.Printf("Finished %d tests in queue %s", count, qName)
 		}
 		log.Printf("Starting test %d in queue %s", i, qName)
-		id := fmt.Sprintf("%-14s %3d", qName, i)
+		logPrintf := r.logPrintf(qName, i)
 		n++
-		go r.runTest(id, config, i, done)
+		go r.runTest(logPrintf, config, i, done)
 	}
 	for n > 0 {
 		<-done
@@ -78,8 +90,16 @@ func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel 
 	r.Done <- qName
 }
 
+// logPrintf returns a function to print logs for each test.
+func (r *Runner) logPrintf(qName string, index int) func(string, ...interface{}) {
+	logPrefixFmt := fmt.Sprintf(r.logPrefixFmt, qName, index)
+	return func(format string, v ...interface{}) {
+		log.Printf(logPrefixFmt+format, v...)
+	}
+}
+
 // runTest creates a single LoadTest and monitors it to completion.
-func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan int) {
+func (r *Runner) runTest(logPrintf func(string, ...interface{}), config *grpcv1.LoadTest, i int, done chan int) {
 	name := nameString(config)
 	var s, status string
 	var retries uint
@@ -87,34 +107,34 @@ func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan in
 	for {
 		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
 		if err != nil {
-			log.Printf("[%s] Failed to create test %s", id, name)
+			logPrintf("Failed to create test %s", name)
 			if retries < r.retries {
 				retries++
-				log.Printf("[%s] Scheduling retry %d/%d to create test", id, retries, r.retries)
+				logPrintf("Scheduling retry %d/%d to create test", retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			log.Printf("[%s] Aborting after %d retries to create test %s", id, r.retries, name)
+			logPrintf("Aborting after %d retries to create test %s", r.retries, name)
 			done <- i
 			return
 		}
 		retries = 0
 		config.Status = loadTest.Status
-		log.Printf("[%s] Created test %s", id, name)
+		logPrintf("Created test %s", name)
 		break
 	}
 
 	for {
 		loadTest, err := r.loadTestGetter.Get(config.Name, metav1.GetOptions{})
 		if err != nil {
-			log.Printf("[%s] Failed to poll test %s", id, name)
+			logPrintf("Failed to poll test %s", name)
 			if retries < r.retries {
 				retries++
-				log.Printf("[%s] Scheduling retry %d/%d to poll test", id, retries, r.retries)
+				logPrintf("Scheduling retry %d/%d to poll test", retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			log.Printf("[%s] Aborting test after %d retries to poll test %s", id, r.retries, name)
+			logPrintf("Aborting test after %d retries to poll test %s", r.retries, name)
 			done <- i
 			return
 		}
@@ -124,15 +144,15 @@ func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan in
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			log.Printf("[%s] %s", id, status)
+			logPrintf("%s", status)
 			done <- i
 			return
 		case loadTest.Status.State == grpcv1.Running:
-			log.Printf("[%s] %s", id, status)
+			logPrintf("%s", status)
 			r.afterInterval()
 		default:
 			if s != status {
-				log.Printf("[%s] %s", id, status)
+				logPrintf("%s", status)
 			}
 			// Use a longer polling interval for tests that have not started.
 			r.afterInterval()

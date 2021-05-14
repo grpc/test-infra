@@ -52,7 +52,7 @@ func main() {
 	log.Printf("Test counts per queue: %v", runner.CountConfigs(configQueueMap))
 	log.Printf("Queue concurrency levels: %v", c)
 
-	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries)
+	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.LogPrefixFmt(configQueueMap), runner.AfterIntervalFunction(p), retries)
 
 	for qName, configs := range configQueueMap {
 		go r.Run(qName, configs, c[qName])

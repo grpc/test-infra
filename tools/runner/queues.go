@@ -68,3 +68,19 @@ func CountConfigs(configMap map[string][]*grpcv1.LoadTest) map[string]int {
 	}
 	return m
 }
+
+// LogPrefixFmt returns a string to format log line prefixes for each test.
+// This string is used to format queue name and test index into a prefix.
+func LogPrefixFmt(configMap map[string][]*grpcv1.LoadTest) string {
+	var queueWidth, indexWidth int
+	for qName, configs := range configMap {
+		if qw := len(qName); qw > queueWidth {
+			queueWidth = qw
+		}
+		if iw := len(fmt.Sprint(len(configs) - 1)); iw > indexWidth {
+			indexWidth = iw
+		}
+	}
+	logPrefixFmt := fmt.Sprintf("[%%-%ds %%%dd] ", queueWidth, indexWidth)
+	return logPrefixFmt
+}
