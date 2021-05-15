@@ -65,6 +65,9 @@ func (c *ConcurrencyLevels) Set(value string) error {
 	if cLevel <= 0 {
 		return fmt.Errorf("concurrency level must be positive, got %d", cLevel)
 	}
+	if (*c) == nil {
+		(*c) = make(map[string]int)
+	}
 	(*c)[key] = cLevel
 	if (*c)[""] > 0 && len(*c) > 1 {
 		return errors.New("global capacity and queue names are mutually exclusive")
