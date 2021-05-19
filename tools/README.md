@@ -5,14 +5,10 @@ The scripts in this folder:
 * Push the images to specified registry.
 * Delete the images from specified registry.
 
-The helper scripts here should be specifically used with GCR. The predominate drive of developing these
-scripts are to assist continuous build. The scripts could also help with manual usage
-of prebuilt images if working with GCR. If another image registry is chosen, the prebuilt workers Dockerfiles are available. The root directory of the Dockerfiles could be find [test-infra/containers/pre_built_images](test-infra/containers/pre_built_images).
-
 ## Build and push images
 
 The script [prepare_prebuilt_workers.go](pre_built_workers/prepare_prebuilt_workers.go) 
-builds images and pushes them to a user specified registry. For example, the following shows this process (building and pushing prebuilt images) for cxx and go workers:
+builds images and pushes them to a user specified Google clooud registry. For example, the following shows this process (building and pushing prebuilt images) for cxx and go workers:
 ```
 go run test-infra/tools/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
  -l cxx:master \
@@ -27,16 +23,15 @@ to test.
 
 The script `prepare_for_prebuilt_workers.go` takes the following options:
 * `-l `<br> Language and GITREF to benchmark. The language and its specific 
-GITREF wish to build workers from can be specified as `language:gitref`.
+GITREF wish to build workers from can be specified as `language:COMMIT_SHA`.
 May be repeated.
 * `-t` <br> Tag for prebuilt images. Tag is a required fields. Tag complies with 
 [docker tag's restrictions](https://docs.docker.com/engine/reference/commandline/tag/#extended-description). 
 * `-r` <br> Root directory of Dockerfiles.
 * `-build-only` <br> Option to build only, when specified 
-  `-build-only=true` images will only be built locally without being pushed to an 
-  image registry.
-* `-p` <br> Image registry to store images. In the example, the location of the
-images are:
+  `-build-only=true`, images will only be built locally.
+* `-p` <br> Image registry to store images. The helper script only support pushing images to GCR. If another image registry is chosen, the images could still be built through script with `-build-only=true`, the user could then push the images manually. The Dockerfiles that the script building from is avalible in [test-infra/containers/pre_built_images](test-infra/containers/pre_built_images). If using Google cloud registry, the image prefix should be in form of `gcr.io/project-name/your-directory-name`. In the example, the built images would be stored as: 
+ :
   ```
   gcr.io/grpc-testing/project-name/pre_built_workers/cxx:user-specified-tag
   gcr.io/grpc-testing/project-name/pre_built_workers/go:user-specified-tag
@@ -47,7 +42,7 @@ images are:
 The script [delete_prebuilt_workers.go](prebuilt_workers/delete_prebuilt_workers.go) 
 deletes images within user specified registry. The script lists all images
 within the specified registry, then check if the image has the user specified 
-tag.
+tag. The script only support Google cloud registry so far.
 
 The following example delete all images within 
 `gcr.io/grpc-testing/project-name/pre_built_workers` that have 
