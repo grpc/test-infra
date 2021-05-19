@@ -19,15 +19,3 @@ export GEM_HOME=/src/workspace/vendor/bundle/
 
 bundle install
 
-rake compile
-
-# build grpc_ruby_plugin
-mkdir -p cmake/build
-pushd cmake/build
-cmake -DgRPC_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$Release ../..
-make protoc grpc_ruby_plugin -j2
-popd
-
-# unbreak subsequent make builds by restoring zconf.h (previously renamed by cmake build)
-# see https://github.com/madler/zlib/issues/133
-(cd third_party/zlib; git checkout zconf.h)
