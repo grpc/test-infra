@@ -87,14 +87,14 @@ func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan in
 	for {
 		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
 		if err != nil {
-			log.Printf("[%s] Failed to create test %s", id, name)
+			log.Printf("[%s] Failed to create test %s: %v", id, name, err)
 			if retries < r.retries {
 				retries++
 				log.Printf("[%s] Scheduling retry %d/%d to create test", id, retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			log.Printf("[%s] Aborting after %d retries to create test %s", id, r.retries, name)
+			log.Printf("[%s] Aborting after %d retries to create test %s: %v", id, r.retries, name, err)
 			done <- i
 			return
 		}
@@ -107,14 +107,14 @@ func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan in
 	for {
 		loadTest, err := r.loadTestGetter.Get(config.Name, metav1.GetOptions{})
 		if err != nil {
-			log.Printf("[%s] Failed to poll test %s", id, name)
+			log.Printf("[%s] Failed to poll test %s: %v", id, name, err)
 			if retries < r.retries {
 				retries++
 				log.Printf("[%s] Scheduling retry %d/%d to poll test", id, retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			log.Printf("[%s] Aborting test after %d retries to poll test %s", id, r.retries, name)
+			log.Printf("[%s] Aborting test after %d retries to poll test %s: %v", id, r.retries, name, err)
 			done <- i
 			return
 		}
