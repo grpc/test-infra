@@ -18,7 +18,7 @@ export GRPC_LIB_SUBDIR="libs/opt"
 export CFLAGS="-Wno-parentheses-equality"
 export root="/src/workspace"
 
-make static_c shared_c EMBED_OPENSSL=true EMBED_ZLIB=true
+make -j8 static_c shared_c EMBED_OPENSSL=true EMBED_ZLIB=true
 
 cd src/php/ext/grpc
 
