@@ -15,25 +15,40 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"time"
 
 	"github.com/grpc/test-infra/tools/runner"
 )
 
+// defaultOutputSuiteName provides a default name for the testsuites tag
+// in an XML report. It is based on the number of nanoseconds since the
+// UNIX epoch.
+var defaultOutputSuiteName = fmt.Sprintf("benchmarks-%d", time.Now().UnixNano())
+
 func main() {
 	var i runner.FileNames
+	var o runner.FileNames
 	var c runner.ConcurrencyLevels
 	var a string
 	var p time.Duration
 	var retries uint
+	var outputSuiteName string
 
 	flag.Var(&i, "i", "input files containing load test configurations")
 	flag.Var(&c, "c", "concurrency level, in the form [<queue name>:]<concurrency level>")
+	flag.Var(&o, "o", "name of the output file for junit xml report")
 	flag.StringVar(&a, "annotation-key", "pool", "annotation key to parse for queue assignment")
+	flag.StringVar(&outputSuiteName, "output-suite-name", defaultOutputSuiteName, "name field for testsuites in junit xml report")
 	flag.DurationVar(&p, "polling-interval", 20*time.Second, "polling interval for load test status")
 	flag.UintVar(&retries, "polling-retries", 2, "Maximum retries in case of communication failure")
 	flag.Parse()
+
+	if len(o) > 1 {
+		log.Fatalf("Only one output file can be written per run")
+	}
 
 	inputConfigs, err := runner.DecodeFromFiles(i)
 	if err != nil {
@@ -58,13 +73,33 @@ func main() {
 
 	done := make(chan string)
 
+	suitesReporter := runner.NewTestSuitesReporter(outputSuiteName)
+
+	suitesReporter.SetStartTime(time.Now())
+
 	for qName, configs := range configQueueMap {
-		reporter := runner.NewTestSuiteReporter(qName, logPrefixFmt)
-		go r.Run(configs, reporter, c[qName], done)
+		suiteReporter := suitesReporter.NewTestSuiteReporter(qName, logPrefixFmt)
+		go r.Run(configs, suiteReporter, c[qName], done)
 	}
 
 	for range configQueueMap {
 		qName := <-done
 		log.Printf("Done running tests for queue %q", qName)
+	}
+
+	suitesReporter.SetEndTime(time.Now())
+
+	if len(o) > 0 {
+		xmlReport, err := suitesReporter.XMLReport()
+		if err != nil {
+			log.Fatalf("Failed to marshal xml report: %v", err)
+		}
+
+		err = ioutil.WriteFile(o[0], xmlReport, 0666)
+		if err != nil {
+			log.Printf("Failed to write output file: %v", err)
+		}
+
+		log.Printf("Wrote XML report (%d bytes) to file: %v", len(xmlReport), o[0])
 	}
 }

@@ -61,6 +61,8 @@ func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), re
 func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, done chan string) {
 	var count, n int
 	qName := suiteReporter.Queue()
+	suiteReporter.SetStartTime(time.Now())
+
 	testDone := make(chan *TestCaseReporter)
 	for _, config := range configs {
 		for n >= concurrencyLevel {
@@ -85,6 +87,8 @@ func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporte
 		count++
 		log.Printf("Finished %d tests in queue %s", count, qName)
 	}
+
+	suiteReporter.SetEndTime(time.Now())
 	done <- qName
 }
 
@@ -97,14 +101,13 @@ func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, do
 	for {
 		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
 		if err != nil {
-			reporter.Warning("Failed to create test %s: %v", name, err)
 			if retries < r.retries {
 				retries++
-				reporter.Info("Scheduling retry %d/%d to create test", retries, r.retries)
+				reporter.Info("Failed to create test %s (scheduling retry %d/%d): %v", name, retries, r.retries, err)
 				r.afterInterval()
 				continue
 			}
-			reporter.Error("Aborting after %d retries to create test %s: %v", r.retries, name, err)
+			reporter.Error("Error creating the test", "Aborting test %q after %d retries to create test %q failed: %v", name, r.retries, name, err)
 			done <- reporter
 			return
 		}
@@ -117,14 +120,13 @@ func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, do
 	for {
 		loadTest, err := r.loadTestGetter.Get(config.Name, metav1.GetOptions{})
 		if err != nil {
-			reporter.Warning("Failed to poll test %s: %v", name, err)
 			if retries < r.retries {
 				retries++
-				reporter.Info("Scheduling retry %d/%d to poll test", retries, r.retries)
+				reporter.Info("Failed to poll test %s (scheduling retry %d/%d): %v", name, retries, r.retries, err)
 				r.afterInterval()
 				continue
 			}
-			reporter.Error("Aborting test after %d retries to poll test %s: %v", r.retries, name, err)
+			reporter.Error("Error polling the test", "Aborting test after %d retries to poll test %q failed: %v", r.retries, name, err)
 			done <- reporter
 			return
 		}
@@ -134,7 +136,11 @@ func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, do
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			reporter.Info("%s", status)
+			if status != "Succeeded" {
+				reporter.Error("Test failed", "Test %q failed with reason %q: %v", name, loadTest.Status.Reason, loadTest.Status.Message)
+			} else {
+				reporter.Info("Test %q terminated with a status of %q", name, status)
+			}
 			done <- reporter
 			return
 		case loadTest.Status.State == grpcv1.Running:
