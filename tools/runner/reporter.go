@@ -98,7 +98,7 @@ func (r *TestCaseReporter) SetStartTime(startTime time.Time) {
 	r.startTime = startTime
 }
 
-// SetEmdTime records the end time of the test.
+// SetEndTime records the end time of the test.
 func (r *TestCaseReporter) SetEndTime(endTime time.Time) {
 	// TODO: Record duration in a report.
 	r.duration = endTime.Sub(r.startTime)
