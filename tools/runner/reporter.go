@@ -31,6 +31,7 @@ type TestSuiteReporter struct {
 }
 
 // NewTestSuiteReporter creates a new suite reporter instance.
+// TODO: Add a report to be filled in by the reporter.
 func NewTestSuiteReporter(qName string, logPrefixFmt string) *TestSuiteReporter {
 	return &TestSuiteReporter{
 		qName:        qName,
@@ -44,20 +45,25 @@ func (r *TestSuiteReporter) Queue() string {
 }
 
 // NewTestCaseReporter creates a new reporter instance.
+// TODO: Add a report to be filled in by the reporter.
 func (r *TestSuiteReporter) NewTestCaseReporter(config *grpcv1.LoadTest) *TestCaseReporter {
 	logPrefix := fmt.Sprintf(r.logPrefixFmt, r.qName, r.testCaseCount)
+	index := r.testCaseCount
 	r.testCaseCount++
 	return &TestCaseReporter{
 		logPrintf: func(format string, v ...interface{}) {
 			log.Printf(logPrefix+format, v...)
 		},
+		index: index,
 	}
 }
 
 // TestCaseReporter collects events for logging and reporting during a test.
 type TestCaseReporter struct {
-	StartTime time.Time
-	Duration  time.Duration
+	// startTime and duration are placeholders.
+	// TODO: Record startTime and duration in a report.
+	startTime time.Time
+	duration  time.Duration
 	logPrintf func(format string, v ...interface{})
 	index     int
 }
@@ -86,17 +92,19 @@ func (r *TestCaseReporter) Error(format string, v ...interface{}) {
 	r.logPrintf(format, v...)
 }
 
-// StartTest records the start of the test and its start time.
-func (r *TestCaseReporter) StartTest(startTime time.Time) {
-	r.StartTime = startTime
+// SetStartTime records the start time of the test.
+func (r *TestCaseReporter) SetStartTime(startTime time.Time) {
+	// TODO: Record startTime in a report.
+	r.startTime = startTime
 }
 
-// EndTest records the end of the test and its end time.
-func (r *TestCaseReporter) EndTest(endTime time.Time) {
-	r.Duration = endTime.Sub(r.StartTime)
+// SetEmdTime records the end time of the test.
+func (r *TestCaseReporter) SetEndTime(endTime time.Time) {
+	// TODO: Record duration in a report.
+	r.duration = endTime.Sub(r.startTime)
 }
 
 // TestDuration returns the duration of the test.
 func (r *TestCaseReporter) TestDuration() time.Duration {
-	return r.Duration
+	return r.duration
 }

@@ -65,7 +65,7 @@ func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporte
 	for _, config := range configs {
 		for n >= concurrencyLevel {
 			reporter := <-testDone
-			reporter.EndTest(time.Now())
+			reporter.SetEndTime(time.Now())
 			log.Printf("Finished test in queue %s after %v", qName, reporter.TestDuration())
 			n--
 			count++
@@ -74,12 +74,12 @@ func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporte
 		n++
 		reporter := suiteReporter.NewTestCaseReporter(config)
 		log.Printf("Starting test %d in queue %s", reporter.Index(), qName)
-		reporter.StartTest(time.Now())
+		reporter.SetStartTime(time.Now())
 		go r.runTest(config, reporter, testDone)
 	}
 	for n > 0 {
 		reporter := <-testDone
-		reporter.EndTest(time.Now())
+		reporter.SetEndTime(time.Now())
 		log.Printf("Finished test in queue %s after %v", qName, reporter.TestDuration())
 		n--
 		count++
