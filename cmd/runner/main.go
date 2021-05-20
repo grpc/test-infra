@@ -22,8 +22,8 @@ import (
 )
 
 func main() {
-	i := runner.FileNames(make([]string, 0))
-	c := runner.ConcurrencyLevels(make(map[string]int))
+	var i runner.FileNames
+	var c runner.ConcurrencyLevels
 	var a string
 	var p time.Duration
 	var retries uint
@@ -54,12 +54,17 @@ func main() {
 
 	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries)
 
+	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
+
+	done := make(chan string)
+
 	for qName, configs := range configQueueMap {
-		go r.Run(qName, configs, c[qName])
+		reporter := runner.NewTestSuiteReporter(qName, logPrefixFmt)
+		go r.Run(configs, reporter, c[qName], done)
 	}
 
 	for range configQueueMap {
-		qName := <-r.Done
+		qName := <-done
 		log.Printf("Done running tests for queue %q", qName)
 	}
 }

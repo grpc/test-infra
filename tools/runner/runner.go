@@ -37,16 +37,20 @@ func AfterIntervalFunction(d time.Duration) func() {
 
 // Runner contains the information needed to run multiple sets of LoadTests.
 type Runner struct {
-	Done           chan string
+	// loadTestGetter interacts with the cluster to create, get and delete
+	// LoadTests.
 	loadTestGetter clientset.LoadTestGetter
-	afterInterval  func()
-	retries        uint
+	// afterInterval stops for a set time interval before returning.
+	// It is used to set a polling interval.
+	afterInterval func()
+	// retries is the number of times to retry create and poll operations before
+	// failing each test.
+	retries uint
 }
 
 // NewRunner creates a new Runner object.
 func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint) *Runner {
 	return &Runner{
-		Done:           make(chan string),
 		loadTestGetter: loadTestGetter,
 		afterInterval:  afterInterval,
 		retries:        retries,
@@ -54,32 +58,38 @@ func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), re
 }
 
 // Run runs a set of LoadTests at a given concurrency level.
-func (r *Runner) Run(qName string, configs []*grpcv1.LoadTest, concurrencyLevel int) {
+func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, done chan string) {
 	var count, n int
-	done := make(chan int)
-	for i, config := range configs {
+	qName := suiteReporter.Queue()
+	testDone := make(chan *TestCaseReporter)
+	for _, config := range configs {
 		for n >= concurrencyLevel {
-			<-done
+			reporter := <-testDone
+			reporter.SetEndTime(time.Now())
+			log.Printf("Finished test in queue %s after %v", qName, reporter.TestDuration())
 			n--
 			count++
 			log.Printf("Finished %d tests in queue %s", count, qName)
 		}
-		log.Printf("Starting test %d in queue %s", i, qName)
-		id := fmt.Sprintf("%-14s %3d", qName, i)
 		n++
-		go r.runTest(id, config, i, done)
+		reporter := suiteReporter.NewTestCaseReporter(config)
+		log.Printf("Starting test %d in queue %s", reporter.Index(), qName)
+		reporter.SetStartTime(time.Now())
+		go r.runTest(config, reporter, testDone)
 	}
 	for n > 0 {
-		<-done
+		reporter := <-testDone
+		reporter.SetEndTime(time.Now())
+		log.Printf("Finished test in queue %s after %v", qName, reporter.TestDuration())
 		n--
 		count++
 		log.Printf("Finished %d tests in queue %s", count, qName)
 	}
-	r.Done <- qName
+	done <- qName
 }
 
 // runTest creates a single LoadTest and monitors it to completion.
-func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan int) {
+func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, done chan *TestCaseReporter) {
 	name := nameString(config)
 	var s, status string
 	var retries uint
@@ -87,35 +97,35 @@ func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan in
 	for {
 		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
 		if err != nil {
-			log.Printf("[%s] Failed to create test %s: %v", id, name, err)
+			reporter.Warning("Failed to create test %s: %v", name, err)
 			if retries < r.retries {
 				retries++
-				log.Printf("[%s] Scheduling retry %d/%d to create test", id, retries, r.retries)
+				reporter.Info("Scheduling retry %d/%d to create test", retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			log.Printf("[%s] Aborting after %d retries to create test %s: %v", id, r.retries, name, err)
-			done <- i
+			reporter.Error("Aborting after %d retries to create test %s: %v", r.retries, name, err)
+			done <- reporter
 			return
 		}
 		retries = 0
 		config.Status = loadTest.Status
-		log.Printf("[%s] Created test %s", id, name)
+		reporter.Info("Created test %s", name)
 		break
 	}
 
 	for {
 		loadTest, err := r.loadTestGetter.Get(config.Name, metav1.GetOptions{})
 		if err != nil {
-			log.Printf("[%s] Failed to poll test %s: %v", id, name, err)
+			reporter.Warning("Failed to poll test %s: %v", name, err)
 			if retries < r.retries {
 				retries++
-				log.Printf("[%s] Scheduling retry %d/%d to poll test", id, retries, r.retries)
+				reporter.Info("Scheduling retry %d/%d to poll test", retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			log.Printf("[%s] Aborting test after %d retries to poll test %s: %v", id, r.retries, name, err)
-			done <- i
+			reporter.Error("Aborting test after %d retries to poll test %s: %v", r.retries, name, err)
+			done <- reporter
 			return
 		}
 		retries = 0
@@ -124,15 +134,15 @@ func (r *Runner) runTest(id string, config *grpcv1.LoadTest, i int, done chan in
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			log.Printf("[%s] %s", id, status)
-			done <- i
+			reporter.Info("%s", status)
+			done <- reporter
 			return
 		case loadTest.Status.State == grpcv1.Running:
-			log.Printf("[%s] %s", id, status)
+			reporter.Info("%s", status)
 			r.afterInterval()
 		default:
 			if s != status {
-				log.Printf("[%s] %s", id, status)
+				reporter.Info("%s", status)
 			}
 			// Use a longer polling interval for tests that have not started.
 			r.afterInterval()
