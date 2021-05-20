@@ -20,7 +20,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/config"
 )
 
 // PodsForLoadTest returns a slice of pointers to pods which belong to a
@@ -31,14 +30,17 @@ func PodsForLoadTest(loadtest *grpcv1.LoadTest, allPods []corev1.Pod) []*corev1.
 		return nil
 	}
 
+	uid := loadtest.GetUID()
+
 	var pods []*corev1.Pod
 
 	for i := range allPods {
 		pod := &allPods[i]
-
-		parent, ok := pod.Labels[config.LoadTestLabel]
-		if ok && parent == loadtest.Name {
-			pods = append(pods, pod)
+		for _, owner := range pod.GetOwnerReferences() {
+			if owner.UID == uid {
+				pods = append(pods, pod)
+				break
+			}
 		}
 	}
 

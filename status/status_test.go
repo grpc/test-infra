@@ -259,7 +259,6 @@ var _ = Describe("ForLoadTest", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "driver",
 					Labels: map[string]string{
-						config.LoadTestLabel:      test.Name,
 						config.RoleLabel:          config.DriverRole,
 						config.ComponentNameLabel: "driver",
 					},
@@ -269,7 +268,6 @@ var _ = Describe("ForLoadTest", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "server-1",
 					Labels: map[string]string{
-						config.LoadTestLabel:      test.Name,
 						config.RoleLabel:          config.ServerRole,
 						config.ComponentNameLabel: "server-1",
 					},
@@ -279,7 +277,6 @@ var _ = Describe("ForLoadTest", func() {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "client-1",
 					Labels: map[string]string{
-						config.LoadTestLabel:      test.Name,
 						config.RoleLabel:          config.ClientRole,
 						config.ComponentNameLabel: "client-1",
 					},

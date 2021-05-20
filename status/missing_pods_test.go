@@ -76,7 +76,6 @@ var _ = Describe("CheckMissingPods", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "random-name",
 						Labels: map[string]string{
-							config.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
 							config.RoleLabel:          "server",
 							config.ComponentNameLabel: "server-1",
 						},
@@ -86,7 +85,6 @@ var _ = Describe("CheckMissingPods", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "random-name",
 						Labels: map[string]string{
-							config.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
 							config.RoleLabel:          "client",
 							config.ComponentNameLabel: "client-2",
 						},
@@ -96,7 +94,6 @@ var _ = Describe("CheckMissingPods", func() {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "random-name",
 						Labels: map[string]string{
-							config.LoadTestLabel:      "test-loadtest-multiple-clients-and-servers",
 							config.RoleLabel:          "driver",
 							config.ComponentNameLabel: "driver-1",
 						},
