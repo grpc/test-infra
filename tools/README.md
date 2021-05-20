@@ -23,7 +23,7 @@ to test.
 
 The script `prepare_for_prebuilt_workers.go` takes the following options:
 * `-l `<br> Language and GITREF to benchmark. The language and its specific 
-GITREF wish to build workers from can be specified as `language:COMMIT_SHA`.
+GITREF to build the workers from can be specified as `language:COMMIT_SHA`.
 May be repeated.
 * `-t` <br> Tag for prebuilt images. Tag is a required fields. Tag complies with 
 [docker tag's restrictions](https://docs.docker.com/engine/reference/commandline/tag/#extended-description). 
