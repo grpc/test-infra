@@ -4,14 +4,14 @@ metadata:
   # Every load test instance must be assigned a unique name on the
   # cluster. There are ways we can circumvent naming clashes, such
   # as using namespaces or dynamically assigning names.
-  name: prebuilt-php-example
+  name: php7-example
 
   # As a custom resource, it behaves like a native kubernetes object.
   # This means that users can perform CRUD operations through the
   # Kubernetes API or kubectl. In addition, it means that the user
   # can set any metadata on it.
   labels:
-    language: php
+    language: php7
 spec:
   # The user can specify servers to use when running tests. The
   # initial version only supports 1 server to limit scope. Servers
@@ -21,17 +21,25 @@ spec:
   # organizing and monitoring a mesh of servers. Therefore, this
   # will likely be expanded in the future.
   servers:
-  - language: php
+  - language: php7
+    clone:
+      repo: https://github.com/grpc/grpc.git
+      gitRef: master
+    build:
+      command: [ "bash", "/build_scripts/build_qps_worker.sh" ]
     run:
-      image: ${prebuilt_image_prefix}/php:${prebuilt_image_tag}
       command: [ "bash", "/run_scripts/run_worker.sh" ]
 
   # Users can specify multiple clients. They are bound by the
   # number of nodes.
   clients:
-  - language: php
+  - language: php7
+    clone:
+      repo: https://github.com/grpc/grpc.git
+      gitRef: master
+    build:
+      command: [ "bash", "/build_scripts/build_qps_worker.sh" ]
     run:
-      image: ${prebuilt_image_prefix}/php:${prebuilt_image_tag}
       command: [ "bash", "/run_scripts/run_worker.sh" ]
 
   # We can optionally specify where to place the results. The

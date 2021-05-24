@@ -32,7 +32,7 @@ languages:
     buildImage: "{{ .BuildImagePrefix }}node:{{ .Version }}"
     runImage: "{{ .ImagePrefix }}node:{{ .Version }}"
 
-  - language: php
+  - language: php7
     buildImage: "{{ .BuildImagePrefix }}php:{{ .Version }}"
     runImage: "{{ .ImagePrefix }}php:{{ .Version }}"
 

@@ -107,7 +107,7 @@ func main() {
 		split := strings.Split(pair, ":")
 
 		if len(split) != 2 || split[len(split)-1] == "" {
-			log.Fatalf("Input error in language and gitref selection, please follow the format as language:gitref, for example: cxx:<commit-sha>")
+			log.Fatalf("Input error in language and gitref selection, please follow the format as language:gitref, for example: c++:<commit-sha>")
 		}
 
 		lang := split[0]
