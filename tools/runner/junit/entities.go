@@ -16,7 +16,10 @@ limitations under the License.
 
 package junit
 
-import "encoding/xml"
+import (
+	"encoding/xml"
+	"fmt"
+)
 
 // TestSuites is the top-level entity in a JUnit XML report. It encapsulates
 // the metadata regarding all of the test suites.
@@ -28,6 +31,33 @@ type TestSuites struct {
 	FailureCount  int          `xml:"failures,attr"`
 	TimeInSeconds float64      `xml:"time,attr"`
 	Suites        []*TestSuite `xml:"testsuite"`
+}
+
+// XMLReport generates an XML report.
+func (tss *TestSuites) XMLReport() ([]byte, error) {
+	var suitesFailureCount, suitesTestCount int
+
+	for _, ts := range tss.Suites {
+		var failureCount int
+		for _, tc := range ts.Cases {
+			failureCount += len(tc.Failures)
+		}
+		testCount := len(ts.Cases)
+		ts.FailureCount = failureCount
+		ts.TestCount = testCount
+		suitesFailureCount += failureCount
+		suitesTestCount += testCount
+	}
+
+	tss.FailureCount = suitesFailureCount
+	tss.TestCount = suitesTestCount
+
+	bytes, err := xml.MarshalIndent(tss, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate an XML report: %v", err)
+	}
+
+	return bytes, nil
 }
 
 // TestSuite encapsulates metadata for a collection of test cases.
