@@ -110,6 +110,6 @@ func main() {
 			log.Printf("Failed to write output file: %v", err)
 		}
 
-		log.Printf("Wrote XML report (%d bytes) to file: %v", len(xmlReport), o[0])
+		log.Printf("Wrote XML report (%d bytes) to file: %v", len(xmlReport), o)
 	}
 }
