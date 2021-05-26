@@ -33,6 +33,7 @@ type TestSuitesReporter struct {
 	tss          *junit.TestSuites
 }
 
+// NewTestSuitesReporter creates a reporter for a set of test suites.
 func NewTestSuitesReporter(logPrefixFmt string, suites *junit.TestSuites) *TestSuitesReporter {
 	return &TestSuitesReporter{
 		logPrefixFmt: logPrefixFmt,
@@ -113,7 +114,7 @@ func (sr *TestSuiteReporter) NewTestCaseReporter(config *grpcv1.LoadTest) *TestC
 
 	var tc *junit.TestCase
 	if sr.ts != nil {
-		tc := &junit.TestCase{
+		tc = &junit.TestCase{
 			ID:   config.Name,
 			Name: config.Annotations["scenario"],
 		}
@@ -195,6 +196,7 @@ func (cr *TestCaseReporter) SetEndTime(endTime time.Time) {
 	}
 }
 
+// TestDuration returns the duration of the test.
 func (cr *TestCaseReporter) TestDuration() time.Duration {
 	return cr.duration
 }
