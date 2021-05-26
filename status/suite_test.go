@@ -142,7 +142,6 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) []*
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "random-name",
 					Labels: map[string]string{
-						config.LoadTestLabel:      currentLoadTest.Name,
 						config.RoleLabel:          "client",
 						config.ComponentNameLabel: *eachClient.Name,
 					},
@@ -156,7 +155,6 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) []*
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "random-name",
 					Labels: map[string]string{
-						config.LoadTestLabel:      currentLoadTest.Name,
 						config.RoleLabel:          "server",
 						config.ComponentNameLabel: *eachServer.Name,
 					},
@@ -169,7 +167,6 @@ func populatePodListWithCurrentLoadTestPod(currentLoadTest *grpcv1.LoadTest) []*
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "random-name",
 				Labels: map[string]string{
-					config.LoadTestLabel:      currentLoadTest.Name,
 					config.RoleLabel:          "driver",
 					config.ComponentNameLabel: *currentLoadTest.Spec.Driver.Name,
 				},

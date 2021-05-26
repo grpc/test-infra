@@ -188,8 +188,11 @@ var _ = Describe("LoadTest controller", func() {
 
 			for i := range list.Items {
 				item := &list.Items[i]
-				if item.Labels[config.LoadTestLabel] == test.Name {
-					foundPodCount++
+				for _, owner := range item.GetOwnerReferences() {
+					if owner.UID == test.GetUID() {
+						foundPodCount++
+						break
+					}
 				}
 			}
 
@@ -244,7 +247,7 @@ var _ = Describe("LoadTest controller", func() {
 		}).Should(BeTrue())
 
 		Consistently(func() (int, error) {
-			runningTestNameSet := make(map[string]bool)
+			runningTestUIDSet := make(map[types.UID]bool)
 
 			list := new(corev1.PodList)
 			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
@@ -253,14 +256,15 @@ var _ = Describe("LoadTest controller", func() {
 
 			for i := range list.Items {
 				item := &list.Items[i]
-				testName := item.Labels[config.LoadTestLabel]
-				if _, ok := runningTestNameSet[testName]; !ok {
-					runningTestNameSet[testName] = true
+				for _, owner := range item.GetOwnerReferences() {
+					if _, ok := runningTestUIDSet[owner.UID]; !ok {
+						runningTestUIDSet[owner.UID] = true
+					}
 				}
 			}
 
 			// return the number of running tests, which should be 1
-			return len(runningTestNameSet), nil
+			return len(runningTestUIDSet), nil
 		}).Should(Equal(1))
 
 		// clean-up all pods for hermetic purposes
@@ -329,7 +333,7 @@ var _ = Describe("LoadTest controller", func() {
 		Expect(k8sClient.Create(context.Background(), test2)).To(Succeed())
 
 		Eventually(func() (int, error) {
-			runningTestNameSet := make(map[string]bool)
+			runningTestUIDSet := make(map[types.UID]bool)
 
 			list := new(corev1.PodList)
 			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
@@ -338,14 +342,15 @@ var _ = Describe("LoadTest controller", func() {
 
 			for i := range list.Items {
 				item := &list.Items[i]
-				testName := item.Labels[config.LoadTestLabel]
-				if _, ok := runningTestNameSet[testName]; !ok {
-					runningTestNameSet[testName] = true
+				for _, owner := range item.GetOwnerReferences() {
+					if _, ok := runningTestUIDSet[owner.UID]; !ok {
+						runningTestUIDSet[owner.UID] = true
+					}
 				}
 			}
 
 			// return the number of running tests, which should be 2 (since one is completed)
-			return len(runningTestNameSet), nil
+			return len(runningTestUIDSet), nil
 		}).Should(Equal(2))
 
 		// clean-up all pods for hermetic purposes
@@ -404,8 +409,10 @@ var _ = Describe("LoadTest controller", func() {
 
 			for i := range list.Items {
 				item := &list.Items[i]
-				if item.Labels[config.LoadTestLabel] == test.Name {
-					foundPodCount++
+				for _, owner := range item.GetOwnerReferences() {
+					if owner.UID == test.GetUID() {
+						foundPodCount++
+					}
 				}
 			}
 

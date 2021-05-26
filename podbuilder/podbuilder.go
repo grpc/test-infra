@@ -72,15 +72,13 @@ func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Cont
 
 	var args []string
 	for _, server := range test.Spec.Servers {
-		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
-			config.LoadTestLabel, test.Name,
+		args = append(args, fmt.Sprintf("%s=%s,%s=%s",
 			config.RoleLabel, config.ServerRole,
 			config.ComponentNameLabel, *server.Name,
 		))
 	}
 	for _, client := range test.Spec.Clients {
-		args = append(args, fmt.Sprintf("%s=%s,%s=%s,%s=%s",
-			config.LoadTestLabel, test.Name,
+		args = append(args, fmt.Sprintf("%s=%s,%s=%s",
 			config.RoleLabel, config.ClientRole,
 			config.ComponentNameLabel, *client.Name,
 		))
@@ -317,7 +315,6 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 			Name:      fmt.Sprintf("%s-%s-%s", pb.test.Name, pb.role, pb.name),
 			Namespace: pb.test.Namespace,
 			Labels: map[string]string{
-				config.LoadTestLabel:      pb.test.Name,
 				config.RoleLabel:          pb.role,
 				config.ComponentNameLabel: pb.name,
 			},
@@ -354,7 +351,7 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 							LabelSelector: &metav1.LabelSelector{
 								MatchExpressions: []metav1.LabelSelectorRequirement{
 									{
-										Key:      config.LoadTestLabel,
+										Key:      config.RoleLabel,
 										Operator: metav1.LabelSelectorOpExists,
 									},
 								},
