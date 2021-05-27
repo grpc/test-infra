@@ -36,7 +36,7 @@ import (
 func createPod(pod *corev1.Pod, test *grpcv1.LoadTest) error {
 	kind := reflect.TypeOf(grpcv1.LoadTest{}).Name()
 	gvk := grpcv1.GroupVersion.WithKind(kind)
-	controllerRef := metav1.NewControllerRef(test.GetObjectMeta(), gvk)
+	controllerRef := metav1.NewControllerRef(test.DeepCopy().GetObjectMeta(), gvk)
 	pod.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
 	return k8sClient.Create(context.Background(), pod)
 }
