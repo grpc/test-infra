@@ -34,10 +34,9 @@ import (
 
 // createPod creates a pod resource, given a pod pointer and a test pointer.
 func createPod(pod *corev1.Pod, test *grpcv1.LoadTest) error {
-	// TODO: Get the controllerRef to work here.
 	kind := reflect.TypeOf(grpcv1.LoadTest{}).Name()
 	gvk := grpcv1.GroupVersion.WithKind(kind)
-	controllerRef := metav1.NewControllerRef(test.DeepCopy().GetObjectMeta(), gvk)
+	controllerRef := metav1.NewControllerRef(test.GetObjectMeta(), gvk)
 	pod.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
 	return k8sClient.Create(context.Background(), pod)
 }
@@ -437,6 +436,7 @@ var _ = Describe("LoadTest controller", func() {
 
 		By("creating the load test")
 		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
