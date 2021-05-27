@@ -37,9 +37,7 @@ func createPod(pod *corev1.Pod, test *grpcv1.LoadTest) error {
 	// TODO: Get the controllerRef to work here.
 	kind := reflect.TypeOf(grpcv1.LoadTest{}).Name()
 	gvk := grpcv1.GroupVersion.WithKind(kind)
-	controllerRef := metav1.NewControllerRef(test, gvk)
-	controllerRef.UID = test.GetUID()
-	controllerRef.Name = test.GetName()
+	controllerRef := metav1.NewControllerRef(test.DeepCopy().GetObjectMeta(), gvk)
 	pod.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
 	return k8sClient.Create(context.Background(), pod)
 }
@@ -690,7 +688,6 @@ var _ = Describe("LoadTest controller", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, successState)).To(Succeed())
-
 		}
 		if testSpec.Driver != nil {
 			pod, err = builder.PodForDriver(testSpec.Driver)
