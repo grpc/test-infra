@@ -25,7 +25,20 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-all: controller cleanup-agent runner
+GOVERSION:=$(shell go version | cut -f3 -d' ' | cut -c3-)
+
+# Make tools build compatible with go 1.12
+ifeq (1.13,$(shell echo -e "1.13\n$(GOVERSION)" | sort -V | head -n1))
+GOARGS:=-trimpath
+TOOLSPREREQ:=fmt vet
+else
+GOARGS:=
+TOOLSPREREQ:=fmt
+endif
+
+all: controller cleanup-agent all-tools
+
+all-tools: runner prepare_prebuilt_workers delete_prebuilt_workers
 
 # Run tests
 test: generate fmt vet manifests
@@ -33,15 +46,23 @@ test: generate fmt vet manifests
 
 # Build controller manager binary
 controller: generate fmt vet
-	go build -trimpath -o bin/controller cmd/controller/main.go
+	go build $(GOARGS) -o bin/controller cmd/controller/main.go
 
 # Build cleanup_agent manager binary
 cleanup-agent: generate fmt vet
-	go build -trimpath -o bin/cleanup_agent cmd/cleanup_agent/main.go
+	go build $(GOARGS) -o bin/cleanup_agent cmd/cleanup_agent/main.go
 
 # Build test runner tool
-runner: fmt vet
-	go build -trimpath -o bin/runner cmd/runner/main.go
+runner: $(TOOLSPREREQ)
+	go build $(GOARGS) -o bin/runner cmd/runner/main.go
+
+# Build prepare_prebuilt_workers tool
+prepare_prebuilt_workers: $(TOOLSPREREQ)
+	go build $(GOARGS) -o bin/prepare_prebuilt_workers tools/prepare_prebuilt_workers/prepare_prebuilt_workers.go
+
+# Build delete_prebuilt_workers tool
+delete_prebuilt_workers: $(TOOLSPREREQ)
+	go build $(GOARGS) -o bin/delete_prebuilt_workers tools/delete_prebuilt_workers/delete_prebuilt_workers.go
 
 # Install CRDs into a cluster
 install: manifests
