@@ -1,124 +1,105 @@
+# Load test configurations generated from a template by loadtest_config.py.
+# See documentation below:
+# https://github.com/grpc/grpc/blob/master/tools/run_tests/performance/README.md#grpc-oss-benchmarks
 apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
-  # Every load test instance must be assigned a unique name on the
-  # cluster. There are ways we can circumvent naming clashes, such
-  # as using namespaces or dynamically assigning names.
-  name: prebuilt-java-example
-
-  # As a custom resource, it behaves like a native kubernetes object.
-  # This means that users can perform CRUD operations through the
-  # Kubernetes API or kubectl. In addition, it means that the user
-  # can set any metadata on it.
+  annotations:
+    pool: ${workers_pool}
+    scenario: java_generic_async_streaming_ping_pong_secure
+    uniquifier: prebuilt
   labels:
     language: java
+    prefix: examples
+  name: examples-54ec47a7-daa9-51b0-a38c-cbec4a276c2e
 spec:
-  # The user can specify servers to use when running tests. The
-  # initial version only supports 1 server to limit scope. Servers
-  # is an array for future expansion.
-  #
-  # There are many designs and systems to pursue load balancing,
-  # organizing and monitoring a mesh of servers. Therefore, this
-  # will likely be expanded in the future.
-  servers:
-    - language: java
-      run:
-        image: ${prebuilt_image_prefix}/java:${prebuilt_image_tag}
-        command:
-          ["/execute/bin/benchmark_worker"]
-
-  # Users can specify multiple clients. They are bound by the
-  # number of nodes.
   clients:
-    - language: java
-      run:
-        image: ${prebuilt_image_prefix}/java:${prebuilt_image_tag}
-        command:
-          ["/execute/bin/benchmark_worker"]
-
-  # We can optionally specify where to place the results. The
-  # controller will attempt to mount a service account in the driver.
-  # This can be used for uploading results to GCS or BigQuery.
-  # results:
-  #   bigQueryTable: "example-project.foo.demo_dataset"
-
-  # timeoutSeconds is an integer field that indicates the longest time a test
-  # is allowed to run, in seconds. Tests that run longer than the given value
-  # will be marked as Errored and will no longer be allocated resources to run.
-  # For example: timeoutSeconds: 900 indicates the timeout of this test
-  # is 15min. The minimum valid value for this field is 1.
-  timeoutSeconds: 900
-
-  # ttlSeconds is an integer field that indicates how long a test is allowed to
-  # live on the cluster, in seconds. Tests that live longer than the given value
-  # will be deleted. For example: ttlSeconds: 86400 indicates the time-to-live
-  # of this test is 24h. The minimum valid value for this field is 1.
-  ttlSeconds: 86400
-
-  # ScenariosJSON is string with the contents of a Scenarios message, formatted
-  # as JSON. See the Scenarios protobuf definition for details:
-  # https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
+  - language: java
+    name: '0'
+    pool: ${workers_pool}
+    run:
+      command:
+      - /execute/bin/benchmark_worker
+      image: ${prebuilt_image_prefix}/java:${prebuilt_image_tag}
+  driver:
+    language: cxx
+    name: '0'
+    pool: ${driver_pool}
+    run:
+      image: ${driver_image}
+  results:
+    bigQueryTable: ${big_query_table}
   scenariosJSON: |
     {
-      "scenarios": [
-        {
-          "name": "java_generic_async_streaming_ping_pong_secure",
-          "warmup_seconds": 15,
-          "benchmark_seconds": 30,
-          "num_servers": 1,
-          "server_config": {
-            "async_server_threads": 1,
-            "channel_args": [
-              {
-                "str_value": "latency",
-                "name": "grpc.optimization_target"
-              }
-            ],
-            "server_type": "ASYNC_GENERIC_SERVER",
-            "payload_config": {
-              "bytebuf_params": {
-                "resp_size": 0,
-                "req_size": 0
-              }
-            },
-            "security_params": {
-              "use_test_ca": true,
-              "server_host_override": "foo.test.google.fr"
-            },
-            "threads_per_cq": 0
+      "scenarios": {
+        "name": "java_generic_async_streaming_ping_pong_secure",
+        "num_servers": 1,
+        "num_clients": 1,
+        "client_config": {
+          "client_type": "ASYNC_CLIENT",
+          "security_params": {
+            "use_test_ca": true,
+            "server_host_override": "foo.test.google.fr"
           },
-          "client_config": {
-            "security_params": {
-              "use_test_ca": true,
-              "server_host_override": "foo.test.google.fr"
-            },
-            "channel_args": [
-              {
-                "str_value": "latency",
-                "name": "grpc.optimization_target"
-              }
-            ],
-            "async_client_threads": 1,
-            "outstanding_rpcs_per_channel": 1,
-            "rpc_type": "STREAMING",
-            "payload_config": {
-              "bytebuf_params": {
-                "resp_size": 0,
-                "req_size": 0
-              }
-            },
-            "client_channels": 1,
-            "threads_per_cq": 0,
-            "load_params": {
-              "closed_loop": {}
-            },
-            "client_type": "ASYNC_CLIENT",
-            "histogram_params": {
-              "max_possible": 60000000000,
-              "resolution": 0.01
+          "outstanding_rpcs_per_channel": 1,
+          "client_channels": 1,
+          "async_client_threads": 1,
+          "client_processes": 0,
+          "threads_per_cq": 0,
+          "rpc_type": "STREAMING",
+          "histogram_params": {
+            "resolution": 0.01,
+            "max_possible": 60000000000.0
+          },
+          "channel_args": [
+            {
+              "name": "grpc.optimization_target",
+              "str_value": "latency"
+            }
+          ],
+          "payload_config": {
+            "bytebuf_params": {
+              "req_size": 0,
+              "resp_size": 0
             }
           },
-          "num_clients": 1
-        }
-      ]
+          "load_params": {
+            "closed_loop": {}
+          }
+        },
+        "server_config": {
+          "server_type": "ASYNC_GENERIC_SERVER",
+          "security_params": {
+            "use_test_ca": true,
+            "server_host_override": "foo.test.google.fr"
+          },
+          "async_server_threads": 1,
+          "server_processes": 0,
+          "threads_per_cq": 0,
+          "channel_args": [
+            {
+              "name": "grpc.optimization_target",
+              "str_value": "latency"
+            }
+          ],
+          "payload_config": {
+            "bytebuf_params": {
+              "req_size": 0,
+              "resp_size": 0
+            }
+          }
+        },
+        "warmup_seconds": 15,
+        "benchmark_seconds": 30
+      }
     }
+  servers:
+  - language: java
+    name: '0'
+    pool: ${workers_pool}
+    run:
+      command:
+      - /execute/bin/benchmark_worker
+      image: ${prebuilt_image_prefix}/java:${prebuilt_image_tag}
+  timeoutSeconds: 900
+  ttlSeconds: 86400
