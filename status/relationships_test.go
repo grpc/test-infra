@@ -19,9 +19,9 @@ package status
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -52,37 +52,42 @@ var _ = Describe("PodsForLoadTest", func() {
 
 	It("includes only pods with matching labels", func() {
 		test := new(grpcv1.LoadTest)
-		test.Name = "pods-matching-labels-loadtest"
+		test.SetUID(types.UID("matching-test-uid"))
 
 		allPods := []corev1.Pod{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "good-pod-1",
-					Labels: map[string]string{
-						config.LoadTestLabel: test.Name,
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: types.UID("matching-test-uid"),
+						},
 					},
 				},
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "bad-pod-1",
-					Labels: map[string]string{
-						config.LoadTestLabel: "other-load-test",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: types.UID("other-test-uid"),
+						},
 					},
 				},
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "good-pod-2",
-					Labels: map[string]string{
-						config.LoadTestLabel: test.Name,
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							UID: types.UID("matching-test-uid"),
+						},
 					},
 				},
 			},
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:   "bad-pod-2",
-					Labels: nil,
+					Name: "bad-pod-2",
 				},
 			},
 		}

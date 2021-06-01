@@ -15,6 +15,7 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -33,11 +34,10 @@ import (
 
 // createPod creates a pod resource, given a pod pointer and a test pointer.
 func createPod(pod *corev1.Pod, test *grpcv1.LoadTest) error {
-	// TODO: Get the controllerRef to work here.
-	// kind := reflect.TypeOf(grpcv1.LoadTest{}).Name()
-	// gvk := grpcv1.GroupVersion.WithKind(kind)
-	// controllerRef := metav1.NewControllerRef(test, gvk)
-	// pod.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
+	kind := reflect.TypeOf(grpcv1.LoadTest{}).Name()
+	gvk := grpcv1.GroupVersion.WithKind(kind)
+	controllerRef := metav1.NewControllerRef(test.DeepCopy().GetObjectMeta(), gvk)
+	pod.SetOwnerReferences([]metav1.OwnerReference{*controllerRef})
 	return k8sClient.Create(context.Background(), pod)
 }
 
@@ -188,8 +188,11 @@ var _ = Describe("LoadTest controller", func() {
 
 			for i := range list.Items {
 				item := &list.Items[i]
-				if item.Labels[config.LoadTestLabel] == test.Name {
-					foundPodCount++
+				for _, owner := range item.GetOwnerReferences() {
+					if owner.UID == test.GetUID() {
+						foundPodCount++
+						break
+					}
 				}
 			}
 
@@ -244,7 +247,7 @@ var _ = Describe("LoadTest controller", func() {
 		}).Should(BeTrue())
 
 		Consistently(func() (int, error) {
-			runningTestNameSet := make(map[string]bool)
+			runningTestUIDSet := make(map[types.UID]bool)
 
 			list := new(corev1.PodList)
 			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
@@ -253,14 +256,15 @@ var _ = Describe("LoadTest controller", func() {
 
 			for i := range list.Items {
 				item := &list.Items[i]
-				testName := item.Labels[config.LoadTestLabel]
-				if _, ok := runningTestNameSet[testName]; !ok {
-					runningTestNameSet[testName] = true
+				for _, owner := range item.GetOwnerReferences() {
+					if _, ok := runningTestUIDSet[owner.UID]; !ok {
+						runningTestUIDSet[owner.UID] = true
+					}
 				}
 			}
 
 			// return the number of running tests, which should be 1
-			return len(runningTestNameSet), nil
+			return len(runningTestUIDSet), nil
 		}).Should(Equal(1))
 
 		// clean-up all pods for hermetic purposes
@@ -329,7 +333,7 @@ var _ = Describe("LoadTest controller", func() {
 		Expect(k8sClient.Create(context.Background(), test2)).To(Succeed())
 
 		Eventually(func() (int, error) {
-			runningTestNameSet := make(map[string]bool)
+			runningTestUIDSet := make(map[types.UID]bool)
 
 			list := new(corev1.PodList)
 			if err := k8sClient.List(context.Background(), list, client.InNamespace(test.Namespace)); err != nil {
@@ -338,14 +342,15 @@ var _ = Describe("LoadTest controller", func() {
 
 			for i := range list.Items {
 				item := &list.Items[i]
-				testName := item.Labels[config.LoadTestLabel]
-				if _, ok := runningTestNameSet[testName]; !ok {
-					runningTestNameSet[testName] = true
+				for _, owner := range item.GetOwnerReferences() {
+					if _, ok := runningTestUIDSet[owner.UID]; !ok {
+						runningTestUIDSet[owner.UID] = true
+					}
 				}
 			}
 
 			// return the number of running tests, which should be 2 (since one is completed)
-			return len(runningTestNameSet), nil
+			return len(runningTestUIDSet), nil
 		}).Should(Equal(2))
 
 		// clean-up all pods for hermetic purposes
@@ -404,8 +409,10 @@ var _ = Describe("LoadTest controller", func() {
 
 			for i := range list.Items {
 				item := &list.Items[i]
-				if item.Labels[config.LoadTestLabel] == test.Name {
-					foundPodCount++
+				for _, owner := range item.GetOwnerReferences() {
+					if owner.UID == test.GetUID() {
+						foundPodCount++
+					}
 				}
 			}
 
@@ -426,6 +433,10 @@ var _ = Describe("LoadTest controller", func() {
 				ExitCode: 1,
 			},
 		}
+
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
@@ -459,9 +470,6 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedPod, nil
 		}).ShouldNot(BeNil())
-
-		By("creating the load test")
-		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
 
 		By("ensuring the test state becomes errored")
 		Eventually(func() (grpcv1.LoadTestState, error) {
@@ -486,6 +494,10 @@ var _ = Describe("LoadTest controller", func() {
 				ExitCode: 1,
 			},
 		}
+
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
@@ -519,9 +531,6 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedPod, nil
 		}).ShouldNot(BeNil())
-
-		By("creating the load test")
-		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
 
 		By("ensuring the test state becomes errored")
 		Eventually(func() (grpcv1.LoadTestState, error) {
@@ -546,6 +555,10 @@ var _ = Describe("LoadTest controller", func() {
 				ExitCode: 1,
 			},
 		}
+
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
@@ -580,9 +593,6 @@ var _ = Describe("LoadTest controller", func() {
 			return fetchedPod, nil
 		}).ShouldNot(BeNil())
 
-		By("creating the load test")
-		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
-
 		By("ensuring the test state becomes errored")
 		Eventually(func() (grpcv1.LoadTestState, error) {
 			fetchedTest := new(grpcv1.LoadTest)
@@ -601,6 +611,10 @@ var _ = Describe("LoadTest controller", func() {
 		runningState := corev1.ContainerState{
 			Running: &corev1.ContainerStateRunning{},
 		}
+
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
@@ -634,9 +648,6 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedPod, nil
 		}).ShouldNot(BeNil())
-
-		By("creating the load test")
-		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
 
 		By("ensuring the test state becomes running")
 		Eventually(func() (grpcv1.LoadTestState, error) {
@@ -658,6 +669,10 @@ var _ = Describe("LoadTest controller", func() {
 				ExitCode: 0,
 			},
 		}
+
+		By("creating the load test")
+		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
+
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
@@ -673,7 +688,6 @@ var _ = Describe("LoadTest controller", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(createPod(pod, test)).To(Succeed())
 			Expect(updatePodWithContainerState(pod, successState)).To(Succeed())
-
 		}
 		if testSpec.Driver != nil {
 			pod, err = builder.PodForDriver(testSpec.Driver)
@@ -691,9 +705,6 @@ var _ = Describe("LoadTest controller", func() {
 			}
 			return fetchedPod, nil
 		}).ShouldNot(BeNil())
-
-		By("creating the load test")
-		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
 
 		By("ensuring the test state becomes succeeded")
 		Eventually(func() (grpcv1.LoadTestState, error) {

@@ -94,15 +94,6 @@ var _ = Describe("PodBuilder", func() {
 			Expect(pod.Namespace).To(Equal(test.Namespace))
 		})
 
-		It("sets a label with the name of the load test", func() {
-			pod, err := builder.PodForClient(client)
-			Expect(err).ToNot(HaveOccurred())
-
-			testName, ok := pod.ObjectMeta.Labels[config.LoadTestLabel]
-			Expect(ok).To(BeTrue())
-			Expect(testName).To(Equal(test.Name))
-		})
-
 		It("sets a label indicating it is a client", func() {
 			pod, err := builder.PodForClient(client)
 			Expect(err).ToNot(HaveOccurred())
@@ -365,15 +356,6 @@ var _ = Describe("PodBuilder", func() {
 			Expect(pod.Namespace).To(Equal(test.Namespace))
 		})
 
-		It("sets a label with the name of the load test", func() {
-			pod, err := builder.PodForServer(server)
-			Expect(err).ToNot(HaveOccurred())
-
-			testName, ok := pod.ObjectMeta.Labels[config.LoadTestLabel]
-			Expect(ok).To(BeTrue())
-			Expect(testName).To(Equal(test.Name))
-		})
-
 		It("sets a label indicating it is a server", func() {
 			pod, err := builder.PodForServer(server)
 			Expect(err).ToNot(HaveOccurred())
@@ -631,15 +613,6 @@ var _ = Describe("PodBuilder", func() {
 			pod, err := builder.PodForDriver(driver)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Namespace).To(Equal(test.Namespace))
-		})
-
-		It("sets a label with the name of the load test", func() {
-			pod, err := builder.PodForDriver(driver)
-			Expect(err).ToNot(HaveOccurred())
-
-			testName, ok := pod.ObjectMeta.Labels[config.LoadTestLabel]
-			Expect(ok).To(BeTrue())
-			Expect(testName).To(Equal(test.Name))
 		})
 
 		It("sets a label indicating it is a driver", func() {

@@ -55,7 +55,6 @@ var _ = Describe("quitWorkers", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "driver",
 				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.DriverRole,
 					config.ComponentNameLabel: "name",
 				},
@@ -69,7 +68,6 @@ var _ = Describe("quitWorkers", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "client-pending",
 				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.ClientRole,
 					config.ComponentNameLabel: "name",
 				},
@@ -99,7 +97,6 @@ var _ = Describe("quitWorkers", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "server-pending",
 				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.ServerRole,
 					config.ComponentNameLabel: "name",
 				},
@@ -132,7 +129,6 @@ var _ = Describe("quitWorkers", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "client-succeeded",
 				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.ClientRole,
 					config.ComponentNameLabel: "name",
 				},
@@ -164,7 +160,6 @@ var _ = Describe("quitWorkers", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "server-succeeded",
 				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.ServerRole,
 					config.ComponentNameLabel: "name",
 				},
@@ -199,7 +194,6 @@ var _ = Describe("quitWorkers", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "client-errored",
 				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.ClientRole,
 					config.ComponentNameLabel: "name",
 				},
@@ -231,7 +225,6 @@ var _ = Describe("quitWorkers", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "server-errored",
 				Labels: map[string]string{
-					config.LoadTestLabel:      "LoadTest",
 					config.RoleLabel:          config.ServerRole,
 					config.ComponentNameLabel: "name",
 				},

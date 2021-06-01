@@ -63,9 +63,6 @@ const (
 	// instructions and receive results from the servers and clients.
 	DriverPort = 10000
 
-	// LoadTestLabel is a label which contains the test's unique name.
-	LoadTestLabel = "loadtest"
-
 	// PoolLabel is the key for a label which will have the name of a pool as
 	// the value.
 	PoolLabel = "pool"
