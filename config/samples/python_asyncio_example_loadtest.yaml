@@ -27,9 +27,6 @@ spec:
     run:
       command:
       - bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker
-  driver:
-    language: cxx
-    name: '0'
   scenariosJSON: |
     {
       "scenarios": {

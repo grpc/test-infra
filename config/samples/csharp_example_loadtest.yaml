@@ -28,9 +28,6 @@ spec:
       - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
       command:
       - dotnet
-  driver:
-    language: cxx
-    name: '0'
   scenariosJSON: |
     {
       "scenarios": {

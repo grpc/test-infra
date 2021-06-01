@@ -27,9 +27,6 @@ spec:
       - src/ruby/qps/worker.rb
       command:
       - ruby
-  driver:
-    language: cxx
-    name: '0'
   scenariosJSON: |
     {
       "scenarios": {

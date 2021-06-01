@@ -29,9 +29,6 @@ spec:
     run:
       command:
       - /src/workspace/bin/worker
-  driver:
-    language: cxx
-    name: '0'
   scenariosJSON: |
     {
       "scenarios": {
