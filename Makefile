@@ -25,15 +25,15 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-GOVERSION:=$(shell go version | cut -f3 -d' ' | cut -c3-)
+GOVERSION=$(shell go version | cut -f3 -d' ' | cut -c3-)
 
 # Make tools build compatible with go 1.12
 ifeq (1.13,$(shell echo -e "1.13\n$(GOVERSION)" | sort -V | head -n1))
-GOARGS:=-trimpath
-TOOLSPREREQ:=fmt vet
+GOARGS=-trimpath
+TOOLSPREREQ=fmt vet
 else
-GOARGS:=
-TOOLSPREREQ:=fmt
+GOARGS=
+TOOLSPREREQ=
 endif
 
 all: controller cleanup-agent all-tools

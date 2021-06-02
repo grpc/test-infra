@@ -5,37 +5,39 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: csharp_protobuf_async_unary_ping_pong
-    uniquifier: basic
+    pool: ${workers_pool}
+    scenario: php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong
+    uniquifier: prebuilt
   labels:
-    language: csharp
+    language: php7
     prefix: examples
-  name: examples-a38b6f78-b1aa-5802-aed9-57ab0828105f
+  name: examples-beb8e220-8c8d-5377-a63d-ef65d10ce127
 spec:
   clients:
-  - build:
+  - language: php7
+    name: '0'
+    pool: ${workers_pool}
+    run:
       command:
       - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: csharp
+      - /run_scripts/run_worker.sh
+      image: ${prebuilt_image_prefix}/php:${prebuilt_image_tag}
+  driver:
+    language: cxx
     name: '0'
+    pool: ${driver_pool}
     run:
-      args:
-      - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
-      command:
-      - dotnet
+      image: ${driver_image}
+  results:
+    bigQueryTable: ${big_query_table}
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "csharp_protobuf_async_unary_ping_pong",
+        "name": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
-          "client_type": "ASYNC_CLIENT",
+          "client_type": "SYNC_CLIENT",
           "security_params": {
             "use_test_ca": true,
             "server_host_override": "foo.test.google.fr"
@@ -67,12 +69,12 @@ spec:
           }
         },
         "server_config": {
-          "server_type": "ASYNC_SERVER",
+          "server_type": "SYNC_SERVER",
           "security_params": {
             "use_test_ca": true,
             "server_host_override": "foo.test.google.fr"
           },
-          "async_server_threads": 0,
+          "async_server_threads": 1,
           "server_processes": 0,
           "threads_per_cq": 0,
           "channel_args": [
@@ -87,20 +89,14 @@ spec:
       }
     }
   servers:
-  - build:
-      command:
-      - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: csharp
+  - language: cxx
     name: '0'
+    pool: ${workers_pool}
     run:
       args:
-      - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - --server_port=10010
       command:
-      - dotnet
+      - /source/code/bazel-bin/test/cpp/qps/qps_worker
+      image: ${prebuilt_image_prefix}/cxx:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400

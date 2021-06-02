@@ -5,33 +5,35 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: csharp_protobuf_async_unary_ping_pong
-    uniquifier: basic
+    pool: ${workers_pool}
+    scenario: node_to_node_generic_async_streaming_ping_pong_secure
+    uniquifier: prebuilt
   labels:
-    language: csharp
+    language: node
     prefix: examples
-  name: examples-a38b6f78-b1aa-5802-aed9-57ab0828105f
+  name: examples-13253efc-b943-569a-8273-a6ed77062aaf
 spec:
   clients:
-  - build:
-      command:
-      - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: csharp
+  - language: node
     name: '0'
+    pool: ${workers_pool}
     run:
-      args:
-      - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
       command:
-      - dotnet
+      - /execute/worker-linux
+      - --benchmark_impl=grpc
+      image: ${prebuilt_image_prefix}/node:${prebuilt_image_tag}
+  driver:
+    language: cxx
+    name: '0'
+    pool: ${driver_pool}
+    run:
+      image: ${driver_image}
+  results:
+    bigQueryTable: ${big_query_table}
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "csharp_protobuf_async_unary_ping_pong",
+        "name": "node_to_node_generic_async_streaming_ping_pong_secure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -45,7 +47,7 @@ spec:
           "async_client_threads": 1,
           "client_processes": 0,
           "threads_per_cq": 0,
-          "rpc_type": "UNARY",
+          "rpc_type": "STREAMING",
           "histogram_params": {
             "resolution": 0.01,
             "max_possible": 60000000000.0
@@ -57,7 +59,7 @@ spec:
             }
           ],
           "payload_config": {
-            "simple_params": {
+            "bytebuf_params": {
               "req_size": 0,
               "resp_size": 0
             }
@@ -67,12 +69,12 @@ spec:
           }
         },
         "server_config": {
-          "server_type": "ASYNC_SERVER",
+          "server_type": "ASYNC_GENERIC_SERVER",
           "security_params": {
             "use_test_ca": true,
             "server_host_override": "foo.test.google.fr"
           },
-          "async_server_threads": 0,
+          "async_server_threads": 1,
           "server_processes": 0,
           "threads_per_cq": 0,
           "channel_args": [
@@ -80,27 +82,26 @@ spec:
               "name": "grpc.optimization_target",
               "str_value": "latency"
             }
-          ]
+          ],
+          "payload_config": {
+            "bytebuf_params": {
+              "req_size": 0,
+              "resp_size": 0
+            }
+          }
         },
         "warmup_seconds": 5,
         "benchmark_seconds": 30
       }
     }
   servers:
-  - build:
-      command:
-      - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: csharp
+  - language: node
     name: '0'
+    pool: ${workers_pool}
     run:
-      args:
-      - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
       command:
-      - dotnet
+      - /execute/worker-linux
+      - --benchmark_impl=grpc
+      image: ${prebuilt_image_prefix}/node:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400

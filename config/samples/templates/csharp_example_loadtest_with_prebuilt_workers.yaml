@@ -5,29 +5,33 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
+    pool: ${workers_pool}
     scenario: csharp_protobuf_async_unary_ping_pong
-    uniquifier: basic
+    uniquifier: prebuilt
   labels:
     language: csharp
     prefix: examples
-  name: examples-a38b6f78-b1aa-5802-aed9-57ab0828105f
+  name: examples-018878b8-c2e0-5fd6-b1e4-15691aeb456b
 spec:
   clients:
-  - build:
-      command:
-      - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: csharp
+  - language: csharp
     name: '0'
+    pool: ${workers_pool}
     run:
       args:
       - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - /execute/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
       command:
       - dotnet
+      image: ${prebuilt_image_prefix}/csharp:${prebuilt_image_tag}
+  driver:
+    language: cxx
+    name: '0'
+    pool: ${driver_pool}
+    run:
+      image: ${driver_image}
+  results:
+    bigQueryTable: ${big_query_table}
   scenariosJSON: |
     {
       "scenarios": {
@@ -87,20 +91,15 @@ spec:
       }
     }
   servers:
-  - build:
-      command:
-      - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: csharp
+  - language: csharp
     name: '0'
+    pool: ${workers_pool}
     run:
       args:
       - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - /execute/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
       command:
       - dotnet
+      image: ${prebuilt_image_prefix}/csharp:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400

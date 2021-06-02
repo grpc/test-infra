@@ -1,134 +1,110 @@
+# Load test configurations generated from a template by loadtest_config.py.
+# See documentation below:
+# https://github.com/grpc/grpc/blob/master/tools/run_tests/performance/README.md#grpc-oss-benchmarks
 apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
-  # Every load test instance must be assigned a unique name on the
-  # cluster. There are ways we can circumvent naming clashes, such
-  # as using namespaces or dynamically assigning names.
-  name: python-asyncio-example
-
-  # As a custom resource, it behaves like a native kubernetes object.
-  # This means that users can perform CRUD operations through the
-  # Kubernetes API or kubectl. In addition, it means that the user
-  # can set any metadata on it.
+  annotations:
+    scenario: python_asyncio_generic_async_streaming_ping_pong
+    uniquifier: basic
   labels:
     language: python_asyncio
+    prefix: examples
+  name: examples-574ce847-7b08-5f1d-9b9f-a07025efcf81
 spec:
-  # The user can specify servers to use when running tests. The
-  # initial version only supports 1 server to limit scope. Servers
-  # is an array for future expansion.
-  #
-  # There are many designs and systems to pursue load balancing,
-  # organizing and monitoring a mesh of servers. Therefore, this
-  # will likely be expanded in the future.
-  servers:
-    - language: python_asyncio
-      clone:
-        repo: https://github.com/grpc/grpc.git
-        gitRef: master
-      build:
-        command: ["bazel"]
-        args: ["build", "//src/python/grpcio_tests/tests_aio/benchmark:worker"]
-      run:
-        command: ["bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker"]
-
-  # Users can specify multiple clients. They are bound by the
-  # number of nodes.
   clients:
-    - language: python_asyncio
-      clone:
-        repo: https://github.com/grpc/grpc.git
-        gitRef: master
-      build:
-        command: ["bazel"]
-        args: ["build", "//src/python/grpcio_tests/tests_aio/benchmark:worker"]
-      run:
-        command: ["bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker"]
-
-  # We can optionally specify where to place the results. The
-  # controller will attempt to mount a service account in the driver.
-  # This can be used for uploading results to GCS or BigQuery.
-  # results:
-  #   bigQueryTable: "example-project.foo.demo_dataset"
-
-  # timeoutSeconds is an integer field that indicates the longest time a test
-  # is allowed to run, in seconds. Tests that run longer than the given value
-  # will be marked as Errored and will no longer be allocated resources to run.
-  # For example: timeoutSeconds: 900 indicates the timeout of this test
-  # is 15min. The minimum valid value for this field is 1.
-  timeoutSeconds: 900
-
-  # ttlSeconds is an integer field that indicates how long a test is allowed to
-  # live on the cluster, in seconds. Tests that live longer than the given value
-  # will be deleted. For example: ttlSeconds: 86400 indicates the time-to-live
-  # of this test is 24h. The minimum valid value for this field is 1.
-  ttlSeconds: 86400
-  
-  # ScenariosJSON is string with the contents of a Scenarios message, formatted
-  # as JSON. See the Scenarios protobuf definition for details:
-  # https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.
+  - build:
+      args:
+      - build
+      - //src/python/grpcio_tests/tests_aio/benchmark:worker
+      command:
+      - bazel
+    clone:
+      gitRef: master
+      repo: https://github.com/grpc/grpc.git
+    language: python_asyncio
+    name: '0'
+    run:
+      command:
+      - bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker
   scenariosJSON: |
     {
-      "scenarios": [
-        {
-          "name": "python_asyncio_generic_async_streaming_ping_pong",
-          "benchmark_seconds": 30,
-          "client_config": {
-            "async_client_threads": 1,
-            "channel_args": [
-              {
-                "name": "grpc.optimization_target",
-                "str_value": "latency"
-              }
-            ],
-            "client_channels": 1,
-            "client_processes": 1,
-            "client_type": "ASYNC_CLIENT",
-            "histogram_params": {
-              "max_possible": 60000000000,
-              "resolution": 0.01
-            },
-            "load_params": {
-              "closed_loop": {}
-            },
-            "outstanding_rpcs_per_channel": 1,
-            "payload_config": {
-              "bytebuf_params": {
-                "req_size": 0,
-                "resp_size": 0
-              }
-            },
-            "rpc_type": "STREAMING",
-            "security_params": {
-              "server_host_override": "foo.test.google.fr",
-              "use_test_ca": true
-            },
-            "threads_per_cq": 0
+      "scenarios": {
+        "name": "python_asyncio_generic_async_streaming_ping_pong",
+        "num_servers": 1,
+        "num_clients": 1,
+        "client_config": {
+          "client_type": "ASYNC_CLIENT",
+          "security_params": {
+            "use_test_ca": true,
+            "server_host_override": "foo.test.google.fr"
           },
-          "num_clients": 1,
-          "num_servers": 1,
-          "server_config": {
-            "async_server_threads": 0,
-            "channel_args": [
-              {
-                "name": "grpc.optimization_target",
-                "str_value": "latency"
-              }
-            ],
-            "payload_config": {
-              "bytebuf_params": {
-                "req_size": 0,
-                "resp_size": 0
-              }
-            },
-            "security_params": {
-              "server_host_override": "foo.test.google.fr",
-              "use_test_ca": true
-            },
-            "server_processes": 1,
-            "server_type": "ASYNC_GENERIC_SERVER",
-            "threads_per_cq": 0
+          "outstanding_rpcs_per_channel": 1,
+          "client_channels": 1,
+          "async_client_threads": 1,
+          "client_processes": 1,
+          "threads_per_cq": 0,
+          "rpc_type": "STREAMING",
+          "histogram_params": {
+            "resolution": 0.01,
+            "max_possible": 60000000000.0
           },
-          "warmup_seconds": 5
-        }
-      ]
+          "channel_args": [
+            {
+              "name": "grpc.optimization_target",
+              "str_value": "latency"
+            }
+          ],
+          "payload_config": {
+            "bytebuf_params": {
+              "req_size": 0,
+              "resp_size": 0
+            }
+          },
+          "load_params": {
+            "closed_loop": {}
+          }
+        },
+        "server_config": {
+          "server_type": "ASYNC_GENERIC_SERVER",
+          "security_params": {
+            "use_test_ca": true,
+            "server_host_override": "foo.test.google.fr"
+          },
+          "async_server_threads": 0,
+          "server_processes": 1,
+          "threads_per_cq": 0,
+          "channel_args": [
+            {
+              "name": "grpc.optimization_target",
+              "str_value": "latency"
+            }
+          ],
+          "payload_config": {
+            "bytebuf_params": {
+              "req_size": 0,
+              "resp_size": 0
+            }
+          }
+        },
+        "warmup_seconds": 5,
+        "benchmark_seconds": 30
+      }
     }
+  servers:
+  - build:
+      args:
+      - build
+      - //src/python/grpcio_tests/tests_aio/benchmark:worker
+      command:
+      - bazel
+    clone:
+      gitRef: master
+      repo: https://github.com/grpc/grpc.git
+    language: python_asyncio
+    name: '0'
+    run:
+      command:
+      - bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker
+  timeoutSeconds: 900
+  ttlSeconds: 86400

@@ -5,37 +5,40 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: csharp_protobuf_async_unary_ping_pong
-    uniquifier: basic
+    pool: ${workers_pool}
+    scenario: ruby_protobuf_sync_streaming_ping_pong
+    uniquifier: prebuilt
   labels:
-    language: csharp
+    language: ruby
     prefix: examples
-  name: examples-a38b6f78-b1aa-5802-aed9-57ab0828105f
+  name: examples-6e762005-a612-5c74-be61-957d4b42a47d
 spec:
   clients:
-  - build:
-      command:
-      - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: csharp
+  - language: ruby
     name: '0'
+    pool: ${workers_pool}
     run:
       args:
-      - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - /execute/src/ruby/qps/worker.rb
       command:
-      - dotnet
+      - ruby
+      image: ${prebuilt_image_prefix}/ruby:${prebuilt_image_tag}
+  driver:
+    language: cxx
+    name: '0'
+    pool: ${driver_pool}
+    run:
+      image: ${driver_image}
+  results:
+    bigQueryTable: ${big_query_table}
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "csharp_protobuf_async_unary_ping_pong",
+        "name": "ruby_protobuf_sync_streaming_ping_pong",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
-          "client_type": "ASYNC_CLIENT",
+          "client_type": "SYNC_CLIENT",
           "security_params": {
             "use_test_ca": true,
             "server_host_override": "foo.test.google.fr"
@@ -45,7 +48,7 @@ spec:
           "async_client_threads": 1,
           "client_processes": 0,
           "threads_per_cq": 0,
-          "rpc_type": "UNARY",
+          "rpc_type": "STREAMING",
           "histogram_params": {
             "resolution": 0.01,
             "max_possible": 60000000000.0
@@ -67,7 +70,7 @@ spec:
           }
         },
         "server_config": {
-          "server_type": "ASYNC_SERVER",
+          "server_type": "SYNC_SERVER",
           "security_params": {
             "use_test_ca": true,
             "server_host_override": "foo.test.google.fr"
@@ -87,20 +90,14 @@ spec:
       }
     }
   servers:
-  - build:
-      command:
-      - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: csharp
+  - language: ruby
     name: '0'
+    pool: ${workers_pool}
     run:
       args:
-      - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - /execute/src/ruby/qps/worker.rb
       command:
-      - dotnet
+      - ruby
+      image: ${prebuilt_image_prefix}/ruby:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400
