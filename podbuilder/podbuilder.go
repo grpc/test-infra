@@ -310,6 +310,19 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 		})
 	}
 
+	if pb.defaults.PodTimeout == "" {
+		// if a PodTimeout was not set up through defaults.yaml, the PodTimeout
+		// falls back on LoadTest timeout.
+		pb.defaults.PodTimeout = string(pb.test.Spec.TimeoutSeconds)
+	}
+	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
+		Name:  config.PodTimeout,
+		Value: pb.defaults.PodTimeout})
+
+	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
+		Name:  config.KillAfter,
+		Value: pb.defaults.KillAfter})
+
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s-%s", pb.test.Name, pb.role, pb.name),

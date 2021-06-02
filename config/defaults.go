@@ -17,9 +17,12 @@ limitations under the License.
 package config
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Defaults defines the default settings for the system.
@@ -48,6 +51,12 @@ type Defaults struct {
 	// Languages specifies the default build and run container images
 	// for each known language.
 	Languages []LanguageDefault `json:"languages,omitempty"`
+
+	//
+	PodTimeout string `json:"podTimeout"`
+
+	//
+	KillAfter string `json:"killAfter"`
 }
 
 // Validate ensures that the required fields are present and an acceptable
@@ -78,6 +87,15 @@ func (d *Defaults) Validate() error {
 		if ld.RunImage == "" {
 			return errors.Errorf("language %q (index %d) missing image for run container", ld.Language, i)
 		}
+	}
+
+	if d.PodTimeout == "" {
+		fmt.Println("PodTimeout is not set-up default to Loadtest timeout")
+	}
+
+	if d.KillAfter == "" {
+		fmt.Println("KillAfter time is not set-up default to 15s")
+		d.KillAfter = "15s"
 	}
 
 	return nil
@@ -148,6 +166,18 @@ func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Ru
 		}
 
 		run.Image = &runImage
+
+		run.Env = append(run.Env, corev1.EnvVar{
+			Name:  KillAfter,
+			Value: d.KillAfter,
+		})
+
+		if d.PodTimeout != "" {
+			run.Env = append(run.Env, corev1.EnvVar{
+				Name:  PodTimeout,
+				Value: d.PodTimeout,
+			})
+		}
 	}
 
 	return nil

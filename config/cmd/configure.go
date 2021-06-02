@@ -41,6 +41,8 @@ type DefaultsData struct {
 	InitImagePrefix  string
 	ImagePrefix      string
 	BuildImagePrefix string
+	PodTimeout       string
+	KillAfter        string
 }
 
 func init() {
@@ -88,6 +90,10 @@ This -image-prefix flag allows a specific prefix to apply to all
 container images that are not used as init containers.`)
 
 	flag.BoolVar(&validate, "validate", true, "validate the output configuration for correctness")
+
+	flag.StringVar(&data.PodTimeout, "pod-timeout", "", `timeout for running process within pod`)
+
+	flag.StringVar(&data.KillAfter, "kill-after", "", `time allowed for pod to response`)
 
 	flag.Parse()
 
