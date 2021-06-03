@@ -10,7 +10,7 @@ The scripts in this folder:
 
 The
 script [prepare_prebuilt_workers.go](pre_built_workers/prepare_prebuilt_workers.go)
-builds images and pushes them to a user specified Google clooud registry. For
+builds images and pushes them to a user specified Google cloud registry. For
 example, the following shows this process (building and pushing prebuilt images)
 for cxx and go workers:
 
