@@ -17,8 +17,6 @@ limitations under the License.
 package config
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/pkg/errors"
@@ -52,10 +50,7 @@ type Defaults struct {
 	// for each known language.
 	Languages []LanguageDefault `json:"languages,omitempty"`
 
-	//
-	PodTimeout string `json:"podTimeout"`
-
-	//
+	// KillAfter specifies the allowed time for a time to respond to a singnal
 	KillAfter string `json:"killAfter"`
 }
 
@@ -89,13 +84,8 @@ func (d *Defaults) Validate() error {
 		}
 	}
 
-	if d.PodTimeout == "" {
-		fmt.Println("PodTimeout is not set-up default to Loadtest timeout")
-	}
-
 	if d.KillAfter == "" {
-		fmt.Println("KillAfter time is not set-up default to 15s")
-		d.KillAfter = "15s"
+		return errors.Errorf("killAfter missing")
 	}
 
 	return nil
@@ -171,13 +161,6 @@ func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Ru
 			Name:  KillAfter,
 			Value: d.KillAfter,
 		})
-
-		if d.PodTimeout != "" {
-			run.Env = append(run.Env, corev1.EnvVar{
-				Name:  PodTimeout,
-				Value: d.PodTimeout,
-			})
-		}
 	}
 
 	return nil

@@ -54,6 +54,7 @@ var _ = Describe("Defaults", func() {
 					RunImage:   "gcr.io/grpc-fake-project/test-infra/java",
 				},
 			},
+			KillAfter: "20",
 		}
 	})
 

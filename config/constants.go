@@ -111,9 +111,6 @@ const (
 	// the init containers and containers for a driver or worker pod.
 	WorkspaceVolumeName = "workspace"
 
-	// PodTimeout set the time limit of the process running within a pod
-	PodTimeout = "POD_TIMEOUT"
-
-	// KillAfter set the allowed response time for a pod
-	KillAfter = "Kill_AFTER"
+	// KillAfter sets the allowed response time for a pod
+	KillAfter = "KILL_AFTER"
 )

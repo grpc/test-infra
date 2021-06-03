@@ -18,6 +18,7 @@ package podbuilder
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -310,14 +311,9 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 		})
 	}
 
-	if pb.defaults.PodTimeout == "" {
-		// if a PodTimeout was not set up through defaults.yaml, the PodTimeout
-		// falls back on LoadTest timeout.
-		pb.defaults.PodTimeout = string(pb.test.Spec.TimeoutSeconds)
-	}
 	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
-		Name:  config.PodTimeout,
-		Value: pb.defaults.PodTimeout})
+		Name:  "POD_TIMEOUT",
+		Value: strconv.FormatInt(int64(pb.test.Spec.TimeoutSeconds), 10)})
 
 	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
 		Name:  config.KillAfter,

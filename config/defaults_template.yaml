@@ -11,9 +11,7 @@ readyImage: "{{ .InitImagePrefix }}ready:{{ .Version }}"
 
 driverImage: "{{ .ImagePrefix }}driver:{{ .Version }}"
 
-killAfter: "15s"
-
-podTimeout: "1m"
+killAfter: "{{ .KillAfter }}"
 
 languages:
 - language: csharp
