@@ -102,7 +102,7 @@ func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, do
 				r.afterInterval()
 				continue
 			}
-			reporter.Error("Aborting after %d retries to create test %s: %v", r.retries, name, err)
+			reporter.Error("Aborting after %d retries to create test %s: %v", r.retries, config.Name, err)
 			done <- reporter
 			return
 		}
@@ -122,7 +122,7 @@ func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, do
 				r.afterInterval()
 				continue
 			}
-			reporter.Error("Aborting test after %d retries to poll test %s: %v", r.retries, name, err)
+			reporter.Error("Aborting test after %d retries to poll test %s: %v", r.retries, config.Name, err)
 			done <- reporter
 			return
 		}
