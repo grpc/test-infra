@@ -10,7 +10,7 @@ metadata:
   labels:
     language: go
     prefix: examples
-  name: examples-e12e66a5-69e3-5799-a29f-80aa21c9cd69
+  name: examples-go-generic-sync-streaming-ping-pong-secure-basic
 spec:
   clients:
   - build:

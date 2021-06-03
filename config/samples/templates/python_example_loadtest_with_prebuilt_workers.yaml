@@ -11,7 +11,7 @@ metadata:
   labels:
     language: python
     prefix: examples
-  name: examples-de7fb84f-0648-5375-9cf9-a1dcfad7080c
+  name: examples-python-generic-sync-streaming-ping-pong-prebuilt
 spec:
   clients:
   - language: python

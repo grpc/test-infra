@@ -10,7 +10,7 @@ metadata:
   labels:
     language: python_asyncio
     prefix: examples
-  name: examples-574ce847-7b08-5f1d-9b9f-a07025efcf81
+  name: examples-python-asyncio-generic-async-streaming-ping-pong-basic
 spec:
   clients:
   - build:

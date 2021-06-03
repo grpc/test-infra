@@ -11,7 +11,7 @@ metadata:
   labels:
     language: csharp
     prefix: examples
-  name: examples-018878b8-c2e0-5fd6-b1e4-15691aeb456b
+  name: examples-csharp-protobuf-async-unary-ping-pong-prebuilt
 spec:
   clients:
   - language: csharp

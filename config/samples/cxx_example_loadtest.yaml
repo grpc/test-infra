@@ -10,7 +10,7 @@ metadata:
   labels:
     language: cxx
     prefix: examples
-  name: examples-33252061-4a8d-503f-a3cd-c0418a7e847b
+  name: examples-cpp-generic-async-streaming-ping-pong-secure-basic
 spec:
   clients:
   - build:

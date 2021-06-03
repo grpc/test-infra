@@ -10,7 +10,7 @@ metadata:
   labels:
     language: csharp
     prefix: examples
-  name: examples-a38b6f78-b1aa-5802-aed9-57ab0828105f
+  name: examples-csharp-protobuf-async-unary-ping-pong-basic
 spec:
   clients:
   - build:

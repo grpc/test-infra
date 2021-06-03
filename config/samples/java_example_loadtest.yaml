@@ -10,7 +10,7 @@ metadata:
   labels:
     language: java
     prefix: examples
-  name: examples-9a72ec2a-2765-566d-8569-7380998ec183
+  name: examples-java-generic-async-streaming-ping-pong-secure-basic
 spec:
   clients:
   - build:
