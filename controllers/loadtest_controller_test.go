@@ -486,6 +486,35 @@ var _ = Describe("LoadTest controller", func() {
 
 	It("updates the test status when driver pod terminated with errors", func() {
 		By("creating a fake environment with errored pods")
+
+		var err error
+		clusterCfg := &testClusterConfig{
+			pools: []*testPool{
+				{
+					name:     "drivers",
+					capacity: 1,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Driver: "true",
+					},
+				},
+				{
+					name:     "workers-a",
+					capacity: 2,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Client: "true",
+						defaults.DefaultPoolLabels.Server: "true",
+					},
+				},
+			},
+		}
+		cluster, err := createCluster(context.Background(), k8sClient, clusterCfg)
+		Expect(err).ToNot(HaveOccurred())
+		defer deleteCluster(context.Background(), k8sClient, cluster)
+
+		test.Spec.Driver.Pool = &cluster.pools[0].name
+		test.Spec.Clients[0].Pool = &cluster.pools[1].name
+		test.Spec.Servers[0].Pool = &cluster.pools[1].name
+
 		runningState := corev1.ContainerState{
 			Running: &corev1.ContainerStateRunning{},
 		}
@@ -501,7 +530,6 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
-		var err error
 		for i := range testSpec.Servers {
 			pod, err = builder.PodForServer(&testSpec.Servers[i])
 			Expect(err).ToNot(HaveOccurred())
@@ -547,6 +575,34 @@ var _ = Describe("LoadTest controller", func() {
 
 	It("updates the test status when server pods terminate with errors", func() {
 		By("creating a fake environment with errored pods")
+
+		var err error
+		clusterCfg := &testClusterConfig{
+			pools: []*testPool{
+				{
+					name:     "drivers",
+					capacity: 1,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Driver: "true",
+					},
+				},
+				{
+					name:     "workers-a",
+					capacity: 2,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Client: "true",
+						defaults.DefaultPoolLabels.Server: "true",
+					},
+				},
+			},
+		}
+		cluster, err := createCluster(context.Background(), k8sClient, clusterCfg)
+		Expect(err).ToNot(HaveOccurred())
+		defer deleteCluster(context.Background(), k8sClient, cluster)
+
+		test.Spec.Driver.Pool = &cluster.pools[0].name
+		test.Spec.Clients[0].Pool = &cluster.pools[1].name
+		test.Spec.Servers[0].Pool = &cluster.pools[1].name
 		runningState := corev1.ContainerState{
 			Running: &corev1.ContainerStateRunning{},
 		}
@@ -562,7 +618,6 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
-		var err error
 		for i := range testSpec.Servers {
 			pod, err = builder.PodForServer(&testSpec.Servers[i])
 			Expect(err).ToNot(HaveOccurred())
@@ -608,6 +663,34 @@ var _ = Describe("LoadTest controller", func() {
 
 	It("updates the test status when pods are running", func() {
 		By("creating a fake environment with running pods")
+
+		var err error
+		clusterCfg := &testClusterConfig{
+			pools: []*testPool{
+				{
+					name:     "drivers",
+					capacity: 1,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Driver: "true",
+					},
+				},
+				{
+					name:     "workers-a",
+					capacity: 2,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Client: "true",
+						defaults.DefaultPoolLabels.Server: "true",
+					},
+				},
+			},
+		}
+		cluster, err := createCluster(context.Background(), k8sClient, clusterCfg)
+		Expect(err).ToNot(HaveOccurred())
+		defer deleteCluster(context.Background(), k8sClient, cluster)
+
+		test.Spec.Driver.Pool = &cluster.pools[0].name
+		test.Spec.Clients[0].Pool = &cluster.pools[1].name
+		test.Spec.Servers[0].Pool = &cluster.pools[1].name
 		runningState := corev1.ContainerState{
 			Running: &corev1.ContainerStateRunning{},
 		}
@@ -618,7 +701,6 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
-		var err error
 		for i := range testSpec.Servers {
 			pod, err = builder.PodForServer(&testSpec.Servers[i])
 			Expect(err).ToNot(HaveOccurred())
@@ -664,6 +746,34 @@ var _ = Describe("LoadTest controller", func() {
 
 	It("updates the test status when pods terminate successfully", func() {
 		By("creating a fake environment with finished pods")
+
+		var err error
+		clusterCfg := &testClusterConfig{
+			pools: []*testPool{
+				{
+					name:     "drivers",
+					capacity: 1,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Driver: "true",
+					},
+				},
+				{
+					name:     "workers-a",
+					capacity: 2,
+					labels: map[string]string{
+						defaults.DefaultPoolLabels.Client: "true",
+						defaults.DefaultPoolLabels.Server: "true",
+					},
+				},
+			},
+		}
+		cluster, err := createCluster(context.Background(), k8sClient, clusterCfg)
+		Expect(err).ToNot(HaveOccurred())
+		defer deleteCluster(context.Background(), k8sClient, cluster)
+
+		test.Spec.Driver.Pool = &cluster.pools[0].name
+		test.Spec.Clients[0].Pool = &cluster.pools[1].name
+		test.Spec.Servers[0].Pool = &cluster.pools[1].name
 		successState := corev1.ContainerState{
 			Terminated: &corev1.ContainerStateTerminated{
 				ExitCode: 0,
@@ -676,7 +786,6 @@ var _ = Describe("LoadTest controller", func() {
 		builder := podbuilder.New(newDefaults(), test)
 		testSpec := &test.Spec
 		var pod *corev1.Pod
-		var err error
 		for i := range testSpec.Servers {
 			pod, err = builder.PodForServer(&testSpec.Servers[i])
 			Expect(err).ToNot(HaveOccurred())
