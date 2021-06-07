@@ -19,3 +19,4 @@ export GEM_HOME=/src/workspace/vendor/bundle/
 
 bundle install
 
+rake compile
