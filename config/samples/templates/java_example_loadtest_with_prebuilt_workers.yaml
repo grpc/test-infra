@@ -11,7 +11,7 @@ metadata:
   labels:
     language: java
     prefix: examples
-  name: examples-54ec47a7-daa9-51b0-a38c-cbec4a276c2e
+  name: examples-java-generic-async-streaming-ping-pong-secure-prebuilt
 spec:
   clients:
   - language: java

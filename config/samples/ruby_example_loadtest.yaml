@@ -10,7 +10,7 @@ metadata:
   labels:
     language: ruby
     prefix: examples
-  name: examples-61f0ec4a-46ea-5183-8d6a-3c0633953c08
+  name: examples-ruby-protobuf-sync-streaming-ping-pong-basic
 spec:
   clients:
   - build:

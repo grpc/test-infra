@@ -11,7 +11,7 @@ metadata:
   labels:
     language: go
     prefix: examples
-  name: examples-dd3819c7-e4f3-5939-8b69-d11ccbeba3c7
+  name: examples-go-generic-sync-streaming-ping-pong-secure-prebuilt
 spec:
   clients:
   - language: go

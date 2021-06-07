@@ -10,7 +10,7 @@ metadata:
   labels:
     language: python
     prefix: examples
-  name: examples-8841ef86-f060-52ab-9d96-f54f640e6edf
+  name: examples-python-generic-sync-streaming-ping-pong-basic
 spec:
   clients:
   - build:

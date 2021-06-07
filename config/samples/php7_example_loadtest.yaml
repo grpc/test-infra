@@ -10,7 +10,7 @@ metadata:
   labels:
     language: php7
     prefix: examples
-  name: examples-249c9dd6-12a2-50ee-a93d-0513edabadd2
+  name: examples-php7-protobuf-php-extension-to-cpp-protobuf-sync-unary-ping-pong-basic
 spec:
   clients:
   - build:

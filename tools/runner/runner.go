@@ -16,7 +16,6 @@ limitations under the License.
 package runner
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -90,41 +89,40 @@ func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporte
 
 // runTest creates a single LoadTest and monitors it to completion.
 func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, done chan *TestCaseReporter) {
-	name := nameString(config)
 	var s, status string
 	var retries uint
 
 	for {
 		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
 		if err != nil {
-			reporter.Warning("Failed to create test %s: %v", name, err)
+			reporter.Warning("Failed to create test %s: %v", config.Name, err)
 			if retries < r.retries {
 				retries++
 				reporter.Info("Scheduling retry %d/%d to create test", retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			reporter.Error("Aborting after %d retries to create test %s: %v", r.retries, name, err)
+			reporter.Error("Aborting after %d retries to create test %s: %v", r.retries, config.Name, err)
 			done <- reporter
 			return
 		}
 		retries = 0
 		config.Status = loadTest.Status
-		reporter.Info("Created test %s", name)
+		reporter.Info("Created test %s", config.Name)
 		break
 	}
 
 	for {
 		loadTest, err := r.loadTestGetter.Get(config.Name, metav1.GetOptions{})
 		if err != nil {
-			reporter.Warning("Failed to poll test %s: %v", name, err)
+			reporter.Warning("Failed to poll test %s: %v", config.Name, err)
 			if retries < r.retries {
 				retries++
 				reporter.Info("Scheduling retry %d/%d to poll test", retries, r.retries)
 				r.afterInterval()
 				continue
 			}
-			reporter.Error("Aborting test after %d retries to poll test %s: %v", r.retries, name, err)
+			reporter.Error("Aborting test after %d retries to poll test %s: %v", r.retries, config.Name, err)
 			done <- reporter
 			return
 		}
@@ -149,37 +147,6 @@ func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, do
 			r.afterInterval()
 		}
 	}
-}
-
-// nameString returns a string to represent the test name in logs.
-// This string consists of two names: (1) the test name in the LoadTest
-// metadata, (2) a test name derived from the prefix, scenario and uniquifier
-// (if these elements are present in labels and annotations). This is a
-// workaround for the fact that we cannot use the second name in the metadata.
-// The LoadTest name is currently used as a label in pods, to refer back to the
-// correspondingLoadTest (instead of the LoadTest UID). Labels are limited to
-// 63 characters, while names themselves can go up to 253.
-func nameString(config *grpcv1.LoadTest) string {
-	var prefix, scenario string
-	var ok bool
-	if prefix, ok = config.Labels["prefix"]; !ok {
-		return config.Name
-	}
-	if scenario, ok = config.Annotations["scenario"]; !ok {
-		return config.Name
-	}
-	elems := []string{prefix}
-	if scenario != "" {
-		elems = append(elems, strings.Split(scenario, "_")...)
-	}
-	if uniquifier := config.Annotations["uniquifier"]; uniquifier != "" {
-		elems = append(elems, uniquifier)
-	}
-	name := strings.Join(elems, "-")
-	if name == config.Name {
-		return config.Name
-	}
-	return fmt.Sprintf("%s [%s]", name, config.Name)
 }
 
 // statusString returns a string to represent the test status in logs.

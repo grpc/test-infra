@@ -10,7 +10,7 @@ metadata:
   labels:
     language: node
     prefix: examples
-  name: examples-95266726-dde4-515b-938f-f6e2d0bb4331
+  name: examples-node-to-node-generic-async-streaming-ping-pong-secure-basic
 spec:
   clients:
   - build:
