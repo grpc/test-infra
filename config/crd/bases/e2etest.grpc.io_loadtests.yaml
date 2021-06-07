@@ -8,6 +8,13 @@ metadata:
   creationTimestamp: null
   name: loadtests.e2etest.grpc.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.state
+    name: State
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
   group: e2etest.grpc.io
   names:
     kind: LoadTest

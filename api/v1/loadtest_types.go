@@ -320,7 +320,7 @@ type LoadTestSpec struct {
 // components. If any one component has errored, the load test will be marked in
 // an Errored state, too. This will occur even if the other components are
 // running or succeeded.
-// +kubebuilder:default=Unrecognized
+// +kubebuilder:default=Unknown
 type LoadTestState string
 
 const (
@@ -416,6 +416,8 @@ type LoadTestStatus struct {
 // +kubebuilder:subresource:status
 
 // LoadTest is the Schema for the loadtests API
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 type LoadTest struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
