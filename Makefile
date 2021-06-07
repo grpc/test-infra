@@ -205,23 +205,23 @@ ruby-image:
 push-ruby-image:
 	docker push ${IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION}
 
-# Build the PHP build image
-php-build-image:
-	docker build -t ${BUILD_IMAGE_PREFIX}php:${TEST_INFRA_VERSION} \
-		containers/init/build/php
+# Build the PHP7 build image
+php7-build-image:
+	docker build -t ${BUILD_IMAGE_PREFIX}php7:${TEST_INFRA_VERSION} \
+		containers/init/build/php7
 
-# Push the PHP runtime image to a docker registry
-push-php-build-image:
-	docker push ${BUILD_IMAGE_PREFIX}php:${TEST_INFRA_VERSION}
+# Push the PHP7 runtime image to a docker registry
+push-php7-build-image:
+	docker push ${BUILD_IMAGE_PREFIX}php7:${TEST_INFRA_VERSION}
 
-# Build the PHP runtime image
-php-image:
-	docker build -t ${IMAGE_PREFIX}php:${TEST_INFRA_VERSION} \
-		containers/runtime/php
+# Build the PHP7 runtime image
+php7-image:
+	docker build -t ${IMAGE_PREFIX}php7:${TEST_INFRA_VERSION} \
+		containers/runtime/php7
 
-# Push the PHP runtime image to a docker registry
-push-php-image:
-	docker push ${IMAGE_PREFIX}php:${TEST_INFRA_VERSION}
+# Push the PHP7 runtime image to a docker registry
+push-php7-image:
+	docker push ${IMAGE_PREFIX}php7:${TEST_INFRA_VERSION}
 
 # Build the Python runtime image
 python-image:
@@ -251,8 +251,8 @@ all-images: \
 	node-build-image \
 	node-image \
 	python-image \
-	php-build-image \
-	php-image \
+	php7-build-image \
+	php7-image \
 	ruby-build-image \
 	ruby-image \
 	csharp-build-image \
@@ -269,8 +269,8 @@ push-all-images: \
 	push-node-build-image \
 	push-node-image \
 	push-java-image \
-	push-php-build-image \
-	push-php-image \
+	push-php7-build-image \
+	push-php7-image \
 	push-python-image \
 	push-ruby-build-image \
 	push-ruby-image \
