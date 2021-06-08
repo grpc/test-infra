@@ -38,6 +38,10 @@ import (
 // maximum amount of time to wait for pods to become ready.
 const TimeoutEnv = "READY_TIMEOUT"
 
+// LoadtestUUIDEnv is the name of the environment variable that will contain the
+// loadtest's uuid so that driver could match correct pods.
+const LoadtestUUIDEnv = "LOADTEST_UUID"
+
 // DefaultTimeout specifies the amount of time to wait for ready pods if the
 // environment variable specified by the TimeoutEnv constant is not set.
 const DefaultTimeout = 25 * time.Minute
@@ -139,7 +143,7 @@ func findDriverPort(pod *corev1.Pod) int32 {
 //
 // If the timeout is exceeded or there is a problem communicating with the
 // Kubernetes API, an error is returned.
-func WaitForReadyPods(ctx context.Context, pl PodLister, sels []string) ([]string, error) {
+func WaitForReadyPods(ctx context.Context, pl PodLister, sels []string, UUID string) ([]string, error) {
 	timeoutsEnabled := true
 	deadline, ok := ctx.Deadline()
 	if !ok {
@@ -185,12 +189,21 @@ func WaitForReadyPods(ctx context.Context, pl PodLister, sels []string) ([]strin
 				}
 
 				if selector.Matches(labels.Set(pod.Labels)) {
-					ip := pod.Status.PodIP
-					driverPort := findDriverPort(&pod)
-					podAddresses[i] = fmt.Sprintf("%s:%d", ip, driverPort)
-					matchingPods[pod.Name] = true
-					matchCount++
-					break
+					var matched = false
+					for _, owner := range pod.GetOwnerReferences() {
+						if string(owner.UID) == UUID {
+							matched = true
+							break
+						}
+					}
+					if matched {
+						ip := pod.Status.PodIP
+						driverPort := findDriverPort(&pod)
+						podAddresses[i] = fmt.Sprintf("%s:%d", ip, driverPort)
+						matchingPods[pod.Name] = true
+						matchCount++
+						break
+					}
 				}
 			}
 		}
@@ -214,6 +227,11 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to parse $%s: %v", TimeoutEnv, err)
 		}
+	}
+
+	UUID, ok := os.LookupEnv(LoadtestUUIDEnv)
+	if !ok {
+		log.Fatal("fail to get environment variable LOADTEST_UUID")
 	}
 
 	var clientset kubernetes.Interface
@@ -240,7 +258,7 @@ func main() {
 	defer cancel()
 
 	log.Printf("Waiting for ready pods")
-	podIPs, err := WaitForReadyPods(ctx, clientset.CoreV1().Pods(metav1.NamespaceAll), os.Args[1:])
+	podIPs, err := WaitForReadyPods(ctx, clientset.CoreV1().Pods(metav1.NamespaceAll), os.Args[1:], UUID)
 	if err != nil {
 		log.Fatalf("failed to wait for ready pods: %v", err)
 	}

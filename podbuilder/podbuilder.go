@@ -98,6 +98,10 @@ func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Cont
 				Name:  "READY_TIMEOUT",
 				Value: fmt.Sprintf("%d%s", test.Spec.TimeoutSeconds, "s"),
 			},
+			{
+				Name:  "LOADTEST_UUID",
+				Value: string(test.GetUID()),
+			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
