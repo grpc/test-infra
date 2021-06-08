@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package runner contains code for a test runner that can run a list of
-// load tests, wait for them to complete, and report on the results.
 package runner
 
 import (
