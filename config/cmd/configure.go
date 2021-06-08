@@ -41,7 +41,7 @@ type DefaultsData struct {
 	InitImagePrefix  string
 	ImagePrefix      string
 	BuildImagePrefix string
-	KillAfter        string
+	KillAfterSeconds int64
 }
 
 func init() {
@@ -90,7 +90,7 @@ container images that are not used as init containers.`)
 
 	flag.BoolVar(&validate, "validate", true, "validate the output configuration for correctness")
 
-	flag.StringVar(&data.KillAfter, "kill-after", "", "time allowed for pod to response")
+	flag.Int64Var(&data.KillAfterSeconds, "kill-after", -1, "time allowed for pod to response after timeout")
 
 	flag.Parse()
 

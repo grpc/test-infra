@@ -50,8 +50,8 @@ type Defaults struct {
 	// for each known language.
 	Languages []LanguageDefault `json:"languages,omitempty"`
 
-	// KillAfter specifies the allowed time for a time to respond to a singnal
-	KillAfter string `json:"killAfter"`
+	// KillAfterSeconds time allowed for pods to respond after timeout.
+	KillAfterSeconds int64 `json:"killAfterSeconds"`
 }
 
 // Validate ensures that the required fields are present and an acceptable
@@ -84,8 +84,8 @@ func (d *Defaults) Validate() error {
 		}
 	}
 
-	if d.KillAfter == "" {
-		return errors.Errorf("killAfter missing")
+	if d.KillAfterSeconds == -1 {
+		return errors.Errorf("killAfterSeconds missing")
 	}
 
 	return nil
@@ -158,8 +158,8 @@ func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Ru
 		run.Image = &runImage
 
 		run.Env = append(run.Env, corev1.EnvVar{
-			Name:  KillAfter,
-			Value: d.KillAfter,
+			Name:  KillAfterSeconds,
+			Value: d.KillAfterSeconds,
 		})
 	}
 

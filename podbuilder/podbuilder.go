@@ -18,7 +18,6 @@ package podbuilder
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -313,11 +312,11 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 
 	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
 		Name:  "POD_TIMEOUT",
-		Value: strconv.FormatInt(int64(pb.test.Spec.TimeoutSeconds), 10)})
+		Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds)})
 
 	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
-		Name:  config.KillAfter,
-		Value: pb.defaults.KillAfter})
+		Name:  config.KillAfterSeconds,
+		Value: string(pb.defaults.KillAfterSeconds)})
 
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
