@@ -17,6 +17,8 @@ limitations under the License.
 package config
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/pkg/errors"
@@ -159,7 +161,7 @@ func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Ru
 
 		run.Env = append(run.Env, corev1.EnvVar{
 			Name:  KillAfterSeconds,
-			Value: d.KillAfterSeconds,
+			Value: fmt.Sprintf("%d", d.KillAfterSeconds),
 		})
 	}
 
