@@ -21,90 +21,204 @@ import (
 	"time"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/tools/runner/junit"
 )
 
-// TestSuiteReporter manages reports for tests that share a runner queue.
-type TestSuiteReporter struct {
-	qName         string
-	logPrefixFmt  string
-	testCaseCount int
+// Reporter instances log the progress of the test suites and cases, filling a
+// junit.Report instance if provided.
+type Reporter struct {
+	report    *junit.Report
+	startTime time.Time
+	endTime   time.Time
+}
+
+// NewReporter constructs a new reporter instance.
+func NewReporter(report *junit.Report) *Reporter {
+	return &Reporter{report: report}
+}
+
+// SetStartTime records the start time for the test suites as a whole.
+func (r *Reporter) SetStartTime(t time.Time) {
+	r.startTime = t
+}
+
+// SetEndTime records the end time for the test suites as a whole.
+func (r *Reporter) SetEndTime(t time.Time) {
+	r.endTime = t
+
+	if r.report == nil {
+		return
+	}
+	r.report.TimeInSeconds = t.Sub(r.startTime).Seconds()
+}
+
+// Duration returns the elapsed time between the time.Time instances passed to
+// the SetStartTime and SetEndTime methods. Ideally, these should be used at the
+// beginning and end of running all test suites to produce the wall-clock time.
+// If these values are not set, a zero value is returned.
+func (r *Reporter) Duration() time.Duration {
+	if r.startTime.IsZero() || r.endTime.IsZero() {
+		return 0
+	}
+
+	return r.endTime.Sub(r.startTime)
 }
 
 // NewTestSuiteReporter creates a new suite reporter instance.
-// TODO: Add a report to be filled in by the reporter.
-func NewTestSuiteReporter(qName string, logPrefixFmt string) *TestSuiteReporter {
-	return &TestSuiteReporter{
+func (r *Reporter) NewTestSuiteReporter(qName string, logPrefixFmt string) *TestSuiteReporter {
+	suiteReporter := &TestSuiteReporter{
 		qName:        qName,
 		logPrefixFmt: logPrefixFmt,
 	}
+
+	if r.report != nil {
+		testSuite := &junit.TestSuite{
+			ID:   junit.Dashify(qName),
+			Name: qName,
+		}
+		r.report.Suites = append(r.report.Suites, testSuite)
+		suiteReporter.testSuite = testSuite
+	}
+
+	return suiteReporter
+}
+
+// TestSuiteReporter manages reports for tests that share a runner queue.
+type TestSuiteReporter struct {
+	testSuite    *junit.TestSuite
+	qName        string
+	logPrefixFmt string
+	startTime    time.Time
+	endTime      time.Time
 }
 
 // Queue returns the name of the queue containing tests for this test suite.
-func (r *TestSuiteReporter) Queue() string {
-	return r.qName
+func (tsr *TestSuiteReporter) Queue() string {
+	return tsr.qName
+}
+
+// SetStartTime records the start time of the test suite.
+func (tsr *TestSuiteReporter) SetStartTime(t time.Time) {
+	tsr.startTime = t
+}
+
+// SetEndTime records the end time of the test suite.
+func (tsr *TestSuiteReporter) SetEndTime(t time.Time) {
+	tsr.endTime = t
+
+	if tsr.testSuite == nil {
+		return
+	}
+	tsr.testSuite.TimeInSeconds = tsr.Duration().Seconds()
+}
+
+// Duration returns the elapsed time between the time.Time instances passed to
+// the SetStartTime and SetEndTime methods. Ideally, these should be used at the
+// beginning and end of the test suite to produce the wall-clock time. If these
+// values are not set, a zero value is returned.
+func (tsr *TestSuiteReporter) Duration() time.Duration {
+	if tsr.startTime.IsZero() || tsr.endTime.IsZero() {
+		return 0
+	}
+
+	return tsr.endTime.Sub(tsr.startTime)
 }
 
 // NewTestCaseReporter creates a new reporter instance.
-// TODO: Add a report to be filled in by the reporter.
-func (r *TestSuiteReporter) NewTestCaseReporter(config *grpcv1.LoadTest) *TestCaseReporter {
-	logPrefix := fmt.Sprintf(r.logPrefixFmt, r.qName, r.testCaseCount)
-	index := r.testCaseCount
-	r.testCaseCount++
-	return &TestCaseReporter{
+func (tsr *TestSuiteReporter) NewTestCaseReporter(config *grpcv1.LoadTest) *TestCaseReporter {
+	index := len(tsr.testSuite.Cases)
+	logPrefix := fmt.Sprintf(tsr.logPrefixFmt, tsr.qName, index)
+
+	caseReporter := &TestCaseReporter{
 		logPrintf: func(format string, v ...interface{}) {
 			log.Printf(logPrefix+format, v...)
 		},
 		index: index,
 	}
+
+	if tsr.testSuite != nil {
+		testCase := &junit.TestCase{
+			ID:   junit.Dashify(config.Name),
+			Name: config.Name,
+		}
+		tsr.testSuite.Cases = append(tsr.testSuite.Cases, testCase)
+		caseReporter.testCase = testCase
+	}
+
+	return caseReporter
 }
 
 // TestCaseReporter collects events for logging and reporting during a test.
 type TestCaseReporter struct {
-	// startTime and duration are placeholders.
-	// TODO: Record startTime and duration in a report.
-	startTime time.Time
-	duration  time.Duration
+	testCase  *junit.TestCase
 	logPrintf func(format string, v ...interface{})
 	index     int
+	startTime time.Time
+	endTime   time.Time
 }
 
 // Index returns the index of the test case in the test suite (and queue).
-func (r *TestCaseReporter) Index() int {
-	return r.index
+func (tcr *TestCaseReporter) Index() int {
+	return tcr.index
 }
 
 // Info records an informational message generated by the test.
-func (r *TestCaseReporter) Info(format string, v ...interface{}) {
-	r.logPrintf(format, v...)
+func (tcr *TestCaseReporter) Info(format string, v ...interface{}) {
+	tcr.logPrintf(format, v...)
 }
 
 // Warning records a warning message generated during the test.
 // The error that caused the message to be generated is also included.
-func (r *TestCaseReporter) Warning(format string, v ...interface{}) {
-	// TODO: Record warning.
-	r.logPrintf(format, v...)
+func (tcr *TestCaseReporter) Warning(format string, v ...interface{}) {
+	tcr.logPrintf(format, v...)
+
+	if tcr.testCase == nil {
+		return
+	}
+	tcr.testCase.Failures = append(tcr.testCase.Failures, &junit.Failure{
+		Type: junit.Warning,
+		Text: fmt.Sprintf(format, v...),
+	})
+
 }
 
 // Error records an error message generated during the test.
 // The error that caused the message to be generated is also included.
-func (r *TestCaseReporter) Error(format string, v ...interface{}) {
-	// TODO: Record error.
-	r.logPrintf(format, v...)
+func (tcr *TestCaseReporter) Error(format string, v ...interface{}) {
+	tcr.logPrintf(format, v...)
+
+	if tcr.testCase == nil {
+		return
+	}
+	tcr.testCase.Failures = append(tcr.testCase.Failures, &junit.Failure{
+		Type: junit.Error,
+		Text: fmt.Sprintf(format, v...),
+	})
 }
 
 // SetStartTime records the start time of the test.
-func (r *TestCaseReporter) SetStartTime(startTime time.Time) {
-	// TODO: Record startTime in a report.
-	r.startTime = startTime
+func (tcr *TestCaseReporter) SetStartTime(t time.Time) {
+	tcr.startTime = t
 }
 
 // SetEndTime records the end time of the test.
-func (r *TestCaseReporter) SetEndTime(endTime time.Time) {
-	// TODO: Record duration in a report.
-	r.duration = endTime.Sub(r.startTime)
+func (tcr *TestCaseReporter) SetEndTime(t time.Time) {
+	tcr.endTime = t
+
+	if tcr.testCase == nil {
+		return
+	}
+	tcr.testCase.TimeInSeconds = tcr.Duration().Seconds()
 }
 
-// TestDuration returns the duration of the test.
-func (r *TestCaseReporter) TestDuration() time.Duration {
-	return r.duration
+// Duration returns the elapsed time between the time.Time instances passed to
+// the SetStartTime and SetEndTime methods. Ideally, these should be used at the
+// beginning and end of the test to produce the wall-clock time. If these values
+// are not set, a zero value is returned.
+func (tcr *TestCaseReporter) Duration() time.Duration {
+	if tcr.startTime.IsZero() || tcr.endTime.IsZero() {
+		return 0
+	}
+
+	return tcr.endTime.Sub(tcr.startTime)
 }
