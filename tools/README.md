@@ -32,7 +32,7 @@ The script `prepare_for_prebuilt_workers.go` takes the following options:
   GITREF to build the workers from can be specified as `language:COMMIT_SHA`.
   May be repeated. Valid input for language names are all in lower case:
   `java`, `go`, `csharp`, `c++`, `cxx`, `node`, `node_purejs`, `ruby`, `php7`
-  , `php7_protobuf_c`, `python` and `python_asyncio`
+  , `php7_protobuf_c`, `python` and `python_asyncio`.
 * `-t` <br> Tag for prebuilt images. Tag is a required fields. Tag complies with
   [docker tag's restrictions](https://docs.docker.com/engine/reference/commandline/tag/#extended-description)
   .
@@ -51,15 +51,14 @@ The script `prepare_for_prebuilt_workers.go` takes the following options:
   manually.
 
   The Dockerfiles that the script uses to build are available
-  in [test-infra/containers/pre_built_images](test-infra/containers/pre_built_images)
-  .
+  in [test-infra/containers/pre_built_images](test-infra/containers/pre_built_images).
 
 ## Delete the images
 
 The
 script [delete_prebuilt_workers.go](prebuilt_workers/delete_prebuilt_workers.go)
-deletes images within user specified registry. The script lists all images
-within the specified registry, then check if the image has the user specified
+deletes images within a user specified registry. The script lists all images
+within the specified registry, then checks if the image has the user specified
 tag. This script only supports Google Container Registry, because it relies on
 the google-cloud-sdk.
 
@@ -74,9 +73,10 @@ go run test-infra/tools/delete_prebuilt_workers/delete_prebuilt_workers.go \
 ```
 
 * `-t` <br> Tag for prebuilt images. Tag is the unique identifier for images to
-  delete. If the image have multiple tags including the user specified tag, the
+  delete. If the image has multiple tags including the user specified tag, the
   tag specified here is removed from image's tag list, otherwise the image is
   deleted.
-* `-p` <br> Image registry to search images from. Only take image registry
-  without the image name. The image registry should also be the most direct
-  registry of images, the directories within image registry will not be checked.
+* `-p` <br> Image registry to search images from. Only accepts the image
+  registry prefix, not the actual image name. If the image registry supports
+  nested repositories, the image registry prefix should be the absolute path to
+  the image's parent repository.
