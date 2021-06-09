@@ -315,8 +315,8 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 		Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds)})
 
 	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
-		Name:  config.KillAfterSeconds,
-		Value: fmt.Sprintf("%d", pb.defaults.KillAfterSeconds)})
+		Name:  config.KillAfter,
+		Value: fmt.Sprintf("%f", pb.defaults.KillAfter.Seconds())})
 
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{

@@ -111,6 +111,6 @@ const (
 	// the init containers and containers for a driver or worker pod.
 	WorkspaceVolumeName = "workspace"
 
-	// KillAfterSeconds sets the allowed response time for a pod after timeout.
-	KillAfterSeconds = "KILL_AFTER_SECONDS"
+	// KillAfter sets the allowed response time for a pod after timeout.
+	KillAfter = "KILL_AFTER"
 )

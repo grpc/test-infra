@@ -29,6 +29,7 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/grpc/test-infra/config"
 	"sigs.k8s.io/yaml"
@@ -41,7 +42,7 @@ type DefaultsData struct {
 	InitImagePrefix  string
 	ImagePrefix      string
 	BuildImagePrefix string
-	KillAfterSeconds int64
+	KillAfter        time.Duration
 }
 
 func init() {
@@ -90,7 +91,7 @@ container images that are not used as init containers.`)
 
 	flag.BoolVar(&validate, "validate", true, "validate the output configuration for correctness")
 
-	flag.Int64Var(&data.KillAfterSeconds, "kill-after", -1, "time allowed for pod to response after timeout")
+	flag.DurationVar(&data.KillAfter, "kill-after", -1, "time allowed for pod to response after timeout")
 
 	flag.Parse()
 

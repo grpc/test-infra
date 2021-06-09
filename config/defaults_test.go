@@ -17,6 +17,8 @@ limitations under the License.
 package config
 
 import (
+	"time"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -54,7 +56,7 @@ var _ = Describe("Defaults", func() {
 					RunImage:   "gcr.io/grpc-fake-project/test-infra/java",
 				},
 			},
-			KillAfterSeconds: 20,
+			KillAfter: time.Duration(20) * time.Second,
 		}
 	})
 
