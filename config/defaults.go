@@ -18,7 +18,6 @@ package config
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	grpcv1 "github.com/grpc/test-infra/api/v1"
@@ -54,7 +53,7 @@ type Defaults struct {
 	Languages []LanguageDefault `json:"languages,omitempty"`
 
 	// KillAfter is the duration allowed for pods to respond after timeout.
-	KillAfter time.Duration `json:"killAfter"`
+	KillAfter float64 `json:"killAfter"`
 }
 
 // Validate ensures that the required fields are present and an acceptable
@@ -87,8 +86,8 @@ func (d *Defaults) Validate() error {
 		}
 	}
 
-	if d.KillAfter == -1 {
-		return errors.Errorf("killAfter missing")
+	if d.KillAfter < 0 {
+		return errors.Errorf(fmt.Sprintf("invalid entry of killAfter time, input value: %f", d.KillAfter))
 	}
 
 	return nil
@@ -162,7 +161,7 @@ func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Ru
 
 		run.Env = append(run.Env, corev1.EnvVar{
 			Name:  KillAfter,
-			Value: fmt.Sprintf("%f", d.KillAfter.Seconds()),
+			Value: fmt.Sprintf("%f", d.KillAfter),
 		})
 	}
 
