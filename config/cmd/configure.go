@@ -99,6 +99,10 @@ container images that are not used as init containers.`)
 		exitWithErrorf(1, true, "missing required arguments")
 	}
 
+	if math.IsNaN(data.KillAfter) {
+		exitWithErrorf(1, true, "missing kill-after argument")
+	}
+
 	templ, err := template.ParseFiles(flag.Arg(0))
 	if err != nil {
 		exitWithErrorf(1, true, "could not open and parse <template-file>: %v", err)

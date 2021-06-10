@@ -87,7 +87,7 @@ func (d *Defaults) Validate() error {
 	}
 
 	if d.KillAfter < 0 {
-		return errors.Errorf(fmt.Sprintf("invalid entry of killAfter time, input value: %f", d.KillAfter))
+		return errors.Errorf(fmt.Sprintf("killAfter must not be negative, input value is: %f", d.KillAfter))
 	}
 
 	return nil
