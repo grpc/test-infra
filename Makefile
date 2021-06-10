@@ -64,6 +64,12 @@ prepare_prebuilt_workers: $(TOOLSPREREQ)
 delete_prebuilt_workers: $(TOOLSPREREQ)
 	go build $(GOARGS) -o bin/delete_prebuilt_workers tools/delete_prebuilt_workers/delete_prebuilt_workers.go
 
+# Install both CRDs and RBACs
+install: installCRD installRBAC
+
+# Uninstall both CRDs and RBACs
+uninstall: uninstallCRD uninstallRBAC
+
 # Install CRDs into a cluster
 installCRD: manifests
 	kustomize build config/crd | kubectl apply -f - 
