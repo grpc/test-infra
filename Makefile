@@ -65,26 +65,26 @@ delete_prebuilt_workers: $(TOOLSPREREQ)
 	go build $(GOARGS) -o bin/delete_prebuilt_workers tools/delete_prebuilt_workers/delete_prebuilt_workers.go
 
 # Install both CRDs and RBACs
-install: installCRD installRBAC
+install: install-crd install-rbac
 
 # Uninstall both CRDs and RBACs
-uninstall: uninstallCRD uninstallRBAC
+uninstall: uninstall-crd uninstall-rbac
 
 # Install CRDs into a cluster
-installCRD: manifests
+install-crd: manifests
 	kustomize build config/crd | kubectl apply -f - 
 
 # Uninstall CRDs from a cluster
-uninstallCRD: manifests
+uninstall-crd: manifests
 	kustomize build config/crd | kubectl delete -f -
 
 
 # Install RBACs into a cluster
-installRBAC: manifests
+install-rbac: manifests
 	kustomize build config/rbac | kubectl apply -f -
 
 # Uninstall RBACs from a cluster
-uninstallRBAC: manifests
+uninstall-rbac: manifests
 	kustomize build config/rbac | kubectl delete -f -
 
 # Deploy both controller and cleanup_agent to the cluster

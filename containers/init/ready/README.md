@@ -1,13 +1,13 @@
 # Ready
 
-Ready is a container that waits for a list of pods within a loadtest to
+Ready is a container that waits for a list of pods within a load test to
 become available. It exits successfully when all worker pods are ready, writing a
 comma-separated list of their IP addresses to a file. It exits unsuccessfully if
 a timeout was exceeded before all pods were ready.
 
 ## Usage
 
-The container relies on command line argument to specify the loadtest's name.
+The container relies on command line argument to specify the load test's name.
 For example,
 
 ```shell

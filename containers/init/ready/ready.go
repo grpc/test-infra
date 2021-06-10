@@ -75,7 +75,7 @@ type PodLister interface {
 	List(metav1.ListOptions) (*corev1.PodList, error)
 }
 
-// LoadtestGetter fetch a loadtest with a specific loadtest name.
+// LoadtestGetter fetch a load test with a specific name.
 type LoadtestGetter interface {
 	Get(string, metav1.GetOptions) (*grpcv1.LoadTest, error)
 }
@@ -118,7 +118,8 @@ func findDriverPort(pod *corev1.Pod) int32 {
 	return DefaultDriverPort
 }
 
-// WaitForReadyPods blocks until worker pods belonging to the loadtest are ready.
+// WaitForReadyPods blocks until all worker pods belonging to the load test are
+// ready.
 // It accepts a context, allowing a timeout or deadline to be specified. When
 // all pods are ready, it returns a slice of strings with the IP address and
 // driver port for each matching pod. server pod would come before client pod.
