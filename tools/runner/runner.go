@@ -57,7 +57,7 @@ func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), re
 }
 
 // Run runs a set of LoadTests at a given concurrency level.
-func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, done chan string) {
+func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, done chan<- *TestSuiteReporter) {
 	var count, n int
 	qName := suiteReporter.Queue()
 	testDone := make(chan *TestCaseReporter)
@@ -65,7 +65,7 @@ func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporte
 		for n >= concurrencyLevel {
 			reporter := <-testDone
 			reporter.SetEndTime(time.Now())
-			log.Printf("Finished test in queue %s after %v", qName, reporter.TestDuration())
+			log.Printf("Finished test in queue %s after %v", qName, reporter.Duration())
 			n--
 			count++
 			log.Printf("Finished %d tests in queue %s", count, qName)
@@ -79,16 +79,16 @@ func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporte
 	for n > 0 {
 		reporter := <-testDone
 		reporter.SetEndTime(time.Now())
-		log.Printf("Finished test in queue %s after %v", qName, reporter.TestDuration())
+		log.Printf("Finished test in queue %s after %v", qName, reporter.Duration())
 		n--
 		count++
 		log.Printf("Finished %d tests in queue %s", count, qName)
 	}
-	done <- qName
+	done <- suiteReporter
 }
 
 // runTest creates a single LoadTest and monitors it to completion.
-func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, done chan *TestCaseReporter) {
+func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, done chan<- *TestCaseReporter) {
 	var s, status string
 	var retries uint
 
@@ -132,7 +132,11 @@ func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, do
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			reporter.Info("%s", status)
+			if status != "Succeeded" {
+				reporter.Error("Test failed with reason %q: %v", loadTest.Status.Reason, loadTest.Status.Message)
+			} else {
+				reporter.Info("Test terminated with a status of %q", status)
+			}
 			done <- reporter
 			return
 		case loadTest.Status.State == grpcv1.Running:
