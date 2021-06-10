@@ -87,7 +87,7 @@ func (d *Defaults) Validate() error {
 	}
 
 	if d.KillAfter < 0 {
-		return errors.Errorf(fmt.Sprintf("killAfter must not be negative, input value is: %f", d.KillAfter))
+		return errors.Errorf("killAfter must not be negative")
 	}
 
 	return nil
@@ -160,7 +160,7 @@ func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Ru
 		run.Image = &runImage
 
 		run.Env = append(run.Env, corev1.EnvVar{
-			Name:  KillAfter,
+			Name:  KillAfterEnv,
 			Value: fmt.Sprintf("%f", d.KillAfter),
 		})
 	}

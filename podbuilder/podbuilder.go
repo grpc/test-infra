@@ -315,7 +315,7 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 		Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds)})
 
 	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
-		Name:  config.KillAfter,
+		Name:  config.KillAfterEnv,
 		Value: fmt.Sprintf("%f", pb.defaults.KillAfter)})
 
 	return &corev1.Pod{

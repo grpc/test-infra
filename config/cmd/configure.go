@@ -91,7 +91,7 @@ container images that are not used as init containers.`)
 
 	flag.BoolVar(&validate, "validate", true, "validate the output configuration for correctness")
 
-	flag.Float64Var(&data.KillAfter, "kill-after", math.NaN(), "time allowed for pod to response after timeout, the value should be in seconds")
+	flag.Float64Var(&data.KillAfter, "kill-after", math.NaN(), "time allowed for pod to respond after timeout, the value should be in seconds")
 
 	flag.Parse()
 
@@ -100,7 +100,7 @@ container images that are not used as init containers.`)
 	}
 
 	if math.IsNaN(data.KillAfter) {
-		exitWithErrorf(1, true, "missing kill-after argument")
+		exitWithErrorf(1, true, "missing required flag: kill-after")
 	}
 
 	templ, err := template.ParseFiles(flag.Arg(0))
