@@ -72,7 +72,7 @@ uninstall: uninstall-crd uninstall-rbac
 
 # Install CRDs into a cluster
 install-crd: manifests
-	kustomize build config/crd | kubectl apply -f - 
+	kustomize build config/crd | kubectl apply -f -
 
 # Uninstall CRDs from a cluster
 uninstall-crd: manifests

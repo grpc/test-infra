@@ -8,13 +8,12 @@ a timeout was exceeded before all pods were ready.
 ## Usage
 
 The container relies on command line argument to specify the load test's name.
-For example,
+For example,, the following waits for all worker pods which belong to the LoadTest
+named `<LOADTEST_NAME>`:
 
 ```shell
-go run ready.go LOADTEST_NAME
+go run ready.go <LOADTEST_NAME>
 ```
-
-Will wait for all worker pods which belongs to LOADTEST_NAME
 
 Meanwhile, users can set environment variables to override some defaults:
 

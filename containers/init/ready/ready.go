@@ -75,8 +75,8 @@ type PodLister interface {
 	List(metav1.ListOptions) (*corev1.PodList, error)
 }
 
-// LoadtestGetter fetch a load test with a specific name.
-type LoadtestGetter interface {
+// LoadTestGetter fetch a load test with a specific name.
+type LoadTestGetter interface {
 	Get(string, metav1.GetOptions) (*grpcv1.LoadTest, error)
 }
 
@@ -118,8 +118,7 @@ func findDriverPort(pod *corev1.Pod) int32 {
 	return DefaultDriverPort
 }
 
-// WaitForReadyPods blocks until all worker pods belonging to the load test are
-// ready.
+// WaitForReadyPods blocks until all worker pods within the load test are ready.
 // It accepts a context, allowing a timeout or deadline to be specified. When
 // all pods are ready, it returns a slice of strings with the IP address and
 // driver port for each matching pod. server pod would come before client pod.
@@ -130,26 +129,27 @@ func findDriverPort(pod *corev1.Pod) int32 {
 //
 // If the timeout is exceeded or there is a problem communicating with the
 // Kubernetes API, an error is returned.
-func WaitForReadyPods(ctx context.Context, lg LoadtestGetter, pl PodLister, testName string) ([]string, error) {
-	timeoutsEnabled := true
-	deadline, ok := ctx.Deadline()
-	if !ok {
-		timeoutsEnabled = false
-		log.Printf("no timeout is set; this could block forever")
-	}
+func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, testName string) ([]string, error) {
 	var loadtest *grpcv1.LoadTest
 	var clientPodAddresses []string
 	var serverPodAddresses []string
 	clientMatchCount := 0
 	serverMatchCount := 0
+	timeoutsEnabled := true
 	matchingPods := make(map[string]bool)
+
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		timeoutsEnabled = false
+		log.Printf("no timeout is set; this could block forever")
+	}
 
 	for {
 		if timeoutsEnabled && time.Now().After(deadline) {
 			return nil, errors.Errorf("deadline exceeded (%v)", deadline)
 		}
 		if loadtest == nil {
-			l, err := lg.Get(testName, metav1.GetOptions{})
+			l, err := ltg.Get(testName, metav1.GetOptions{})
 			if err != nil {
 				log.Printf("failed to fetch loadtest: %v", err)
 				time.Sleep(pollInterval)
@@ -172,7 +172,7 @@ func WaitForReadyPods(ctx context.Context, lg LoadtestGetter, pl PodLister, test
 			if !isPodReady(pod) {
 				continue
 			}
-			if pod.GetLabels()[config.RoleLabel] == config.DriverRole {
+			if pod.Labels[config.RoleLabel] == config.DriverRole {
 				continue
 			}
 			if _, alreadyMatched := matchingPods[pod.Name]; alreadyMatched {
@@ -181,7 +181,7 @@ func WaitForReadyPods(ctx context.Context, lg LoadtestGetter, pl PodLister, test
 			matchingPods[pod.Name] = true
 			ip := pod.Status.PodIP
 			driverPort := findDriverPort(pod)
-			if pod.GetLabels()[config.RoleLabel] == config.ServerRole {
+			if pod.Labels[config.RoleLabel] == config.ServerRole {
 				serverPodAddresses[serverMatchCount] = fmt.Sprintf("%s:%d", ip, driverPort)
 				serverMatchCount++
 			} else {

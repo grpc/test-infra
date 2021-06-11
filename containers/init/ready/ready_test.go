@@ -64,10 +64,10 @@ var _ = Describe("WaitForReadyPods", func() {
 			PodList: &corev1.PodList{},
 		}
 
-		loadGetterMock := &LoadtestGetterMock{
+		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(0, 0),
 		}
-		podAddresses, err := WaitForReadyPods(ctx, loadGetterMock, podListerMock, "test name")
+		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(BeEmpty())
 	})
@@ -82,10 +82,10 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		loadGetterMock := &LoadtestGetterMock{
+		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(1, 0),
 		}
-		_, err := WaitForReadyPods(ctx, loadGetterMock, podListerMock, "test name")
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -103,11 +103,11 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		loadGetterMock := &LoadtestGetterMock{
+		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
 		}
 
-		_, err := WaitForReadyPods(ctx, loadGetterMock, podListerMock, "test name")
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -122,10 +122,10 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		loadGetterMock := &LoadtestGetterMock{
+		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(0, 1),
 		}
-		_, err := WaitForReadyPods(ctx, loadGetterMock, podListerMock, "test name")
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -141,10 +141,10 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		loadGetterMock := &LoadtestGetterMock{
+		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
 		}
-		_, err := WaitForReadyPods(ctx, loadGetterMock, podListerMock, "test name")
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -167,11 +167,11 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		loadGetterMock := &LoadtestGetterMock{
+		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 1),
 		}
 
-		podAddresses, err := WaitForReadyPods(ctx, loadGetterMock, podListerMock, "test name")
+		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(Equal([]string{
 			fmt.Sprintf("%s:%d", serverPod.Status.PodIP, DefaultDriverPort),
@@ -199,11 +199,11 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		loadGetterMock := &LoadtestGetterMock{
+		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
 		}
 
-		podAddresses, err := WaitForReadyPods(ctx, loadGetterMock, podListerMock, "test name")
+		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(Equal([]string{
 			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
@@ -220,10 +220,10 @@ var _ = Describe("WaitForReadyPods", func() {
 			PodList:       &corev1.PodList{},
 		}
 
-		loadGetterMock := &LoadtestGetterMock{
+		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
 		}
-		_, err := WaitForReadyPods(ctx, loadGetterMock, podListerMock, "test name")
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 })
@@ -245,14 +245,14 @@ func (plm *PodListerMock) List(opts metav1.ListOptions) (*corev1.PodList, error)
 	return plm.PodList, nil
 }
 
-type LoadtestGetterMock struct {
+type LoadTestGetterMock struct {
 	Loadtest      *grpcv1.LoadTest
 	SleepDuration time.Duration
 	Error         error
 	invocation    int
 }
 
-func (lgm *LoadtestGetterMock) Get(testName string, opts metav1.GetOptions) (*grpcv1.LoadTest, error) {
+func (lgm *LoadTestGetterMock) Get(testName string, opts metav1.GetOptions) (*grpcv1.LoadTest, error) {
 	time.Sleep(lgm.SleepDuration)
 
 	if lgm.Error != nil {
