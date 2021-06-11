@@ -71,18 +71,7 @@ func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Cont
 	}
 
 	var args []string
-	for _, server := range test.Spec.Servers {
-		args = append(args, fmt.Sprintf("%s=%s,%s=%s",
-			config.RoleLabel, config.ServerRole,
-			config.ComponentNameLabel, *server.Name,
-		))
-	}
-	for _, client := range test.Spec.Clients {
-		args = append(args, fmt.Sprintf("%s=%s,%s=%s",
-			config.RoleLabel, config.ClientRole,
-			config.ComponentNameLabel, *client.Name,
-		))
-	}
+	args = append(args, test.GetName())
 
 	return corev1.Container{
 		Name:    config.ReadyInitContainerName,

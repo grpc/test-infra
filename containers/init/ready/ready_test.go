@@ -23,7 +23,9 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
+	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/kubehelpers"
 
@@ -35,7 +37,6 @@ var _ = Describe("WaitForReadyPods", func() {
 	var fastDuration time.Duration
 	var slowDuration time.Duration
 
-	var irrelevantPod corev1.Pod
 	var driverPod corev1.Pod
 	var serverPod corev1.Pod
 	var clientPod corev1.Pod
@@ -43,8 +44,6 @@ var _ = Describe("WaitForReadyPods", func() {
 	BeforeEach(func() {
 		fastDuration = 1 * time.Millisecond * timeMultiplier
 		slowDuration = 100 * time.Millisecond * timeMultiplier
-
-		irrelevantPod = corev1.Pod{}
 
 		driverPod = newTestPod("driver")
 		driverRunContainer := kubehelpers.ContainerForName(config.RunContainerName, driverPod.Spec.Containers)
@@ -61,11 +60,14 @@ var _ = Describe("WaitForReadyPods", func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		mock := &PodListerMock{
+		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{},
 		}
 
-		podAddresses, err := WaitForReadyPods(ctx, mock, []string{})
+		loadTestGetterMock := &LoadTestGetterMock{
+			Loadtest: newLoadTestWithMultipleClientsAndServers(0, 0),
+		}
+		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(BeEmpty())
 	})
@@ -73,14 +75,17 @@ var _ = Describe("WaitForReadyPods", func() {
 	It("timeout reached when no matching pods are found", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
 		defer cancel()
-
-		mock := &PodListerMock{
+		clientPod.ObjectMeta.OwnerReferences[0].UID = types.UID("other-test-uid")
+		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{
-				Items: []corev1.Pod{irrelevantPod},
+				Items: []corev1.Pod{clientPod},
 			},
 		}
 
-		_, err := WaitForReadyPods(ctx, mock, []string{"hello=anyone-out-there"})
+		loadTestGetterMock := &LoadTestGetterMock{
+			Loadtest: newLoadTestWithMultipleClientsAndServers(1, 0),
+		}
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -88,7 +93,7 @@ var _ = Describe("WaitForReadyPods", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
 		defer cancel()
 
-		mock := &PodListerMock{
+		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{
 				Items: []corev1.Pod{
 					driverPod,
@@ -98,37 +103,29 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		_, err := WaitForReadyPods(ctx, mock, []string{"role=driver", "role=client", "role=client"})
+		loadTestGetterMock := &LoadTestGetterMock{
+			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
+		}
+
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
-	It("timeout reached when pod does not match all labels", func() {
+	It("timeout reached when no ready pod matches", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
 		defer cancel()
 
-		mock := &PodListerMock{
+		serverPod.Status.ContainerStatuses[0].Ready = false
+		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{
-				Items: []corev1.Pod{driverPod},
+				Items: []corev1.Pod{serverPod},
 			},
 		}
 
-		_, err := WaitForReadyPods(ctx, mock, []string{"role=driver,loadtest=loadtest-1"})
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("timeout reached when not ready pod matches", func() {
-		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
-		defer cancel()
-
-		driverPod.Status.ContainerStatuses[0].Ready = false
-
-		mock := &PodListerMock{
-			PodList: &corev1.PodList{
-				Items: []corev1.Pod{driverPod},
-			},
+		loadTestGetterMock := &LoadTestGetterMock{
+			Loadtest: newLoadTestWithMultipleClientsAndServers(0, 1),
 		}
-
-		_, err := WaitForReadyPods(ctx, mock, []string{"role=driver"})
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -136,7 +133,7 @@ var _ = Describe("WaitForReadyPods", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), slowDuration)
 		defer cancel()
 
-		mock := &PodListerMock{
+		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{
 				Items: []corev1.Pod{
 					clientPod,
@@ -144,10 +141,10 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		_, err := WaitForReadyPods(ctx, mock, []string{
-			"role=client",
-			"role=client",
-		})
+		loadTestGetterMock := &LoadTestGetterMock{
+			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
+		}
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -159,26 +156,24 @@ var _ = Describe("WaitForReadyPods", func() {
 		client2Pod.Name = "client-2"
 		client2Pod.Status.PodIP = "127.0.0.4"
 
-		mock := &PodListerMock{
+		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{
 				Items: []corev1.Pod{
 					driverPod,
-					serverPod,
 					clientPod,
 					client2Pod,
+					serverPod,
 				},
 			},
 		}
 
-		podAddresses, err := WaitForReadyPods(ctx, mock, []string{
-			"role=driver",
-			"role=server",
-			"role=client",
-			"role=client",
-		})
+		loadTestGetterMock := &LoadTestGetterMock{
+			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 1),
+		}
+
+		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(Equal([]string{
-			fmt.Sprintf("%s:%d", driverPod.Status.PodIP, DefaultDriverPort),
 			fmt.Sprintf("%s:%d", serverPod.Status.PodIP, DefaultDriverPort),
 			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
 			fmt.Sprintf("%s:%d", client2Pod.Status.PodIP, DefaultDriverPort),
@@ -195,7 +190,7 @@ var _ = Describe("WaitForReadyPods", func() {
 		client2PodContainer := kubehelpers.ContainerForName(config.RunContainerName, client2Pod.Spec.Containers)
 		client2PodContainer.Ports[0].ContainerPort = customPort
 
-		mock := &PodListerMock{
+		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{
 				Items: []corev1.Pod{
 					clientPod,
@@ -204,10 +199,11 @@ var _ = Describe("WaitForReadyPods", func() {
 			},
 		}
 
-		podAddresses, err := WaitForReadyPods(ctx, mock, []string{
-			"role=client",
-			"role=client",
-		})
+		loadTestGetterMock := &LoadTestGetterMock{
+			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
+		}
+
+		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(Equal([]string{
 			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
@@ -219,12 +215,15 @@ var _ = Describe("WaitForReadyPods", func() {
 		ctx, cancel := context.WithTimeout(context.Background(), fastDuration)
 		defer cancel()
 
-		mock := &PodListerMock{
+		podListerMock := &PodListerMock{
 			SleepDuration: slowDuration,
 			PodList:       &corev1.PodList{},
 		}
 
-		_, err := WaitForReadyPods(ctx, mock, []string{"example"})
+		loadTestGetterMock := &LoadTestGetterMock{
+			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
+		}
+		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 })
@@ -244,4 +243,21 @@ func (plm *PodListerMock) List(opts metav1.ListOptions) (*corev1.PodList, error)
 	}
 
 	return plm.PodList, nil
+}
+
+type LoadTestGetterMock struct {
+	Loadtest      *grpcv1.LoadTest
+	SleepDuration time.Duration
+	Error         error
+	invocation    int
+}
+
+func (lgm *LoadTestGetterMock) Get(testName string, opts metav1.GetOptions) (*grpcv1.LoadTest, error) {
+	time.Sleep(lgm.SleepDuration)
+
+	if lgm.Error != nil {
+		return nil, lgm.Error
+	}
+
+	return lgm.Loadtest, nil
 }

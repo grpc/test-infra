@@ -25,13 +25,18 @@ import (
 	"strings"
 	"time"
 
+	grpcv1 "github.com/grpc/test-infra/api/v1"
+	grpcclientset "github.com/grpc/test-infra/clientset"
+	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/status"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/grpc/test-infra/kubehelpers"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // TimeoutEnv is the name of the environment variable that will contain the
@@ -70,21 +75,9 @@ type PodLister interface {
 	List(metav1.ListOptions) (*corev1.PodList, error)
 }
 
-// parseSelectors accepts a slice of strings and converts them into Kubernetes
-// selectors. It returns an error if any of the strings is not a valid selector.
-func parseSelectors(sels []string) ([]labels.Selector, error) {
-	var selectors []labels.Selector
-
-	for i, arg := range sels {
-		selector, err := labels.Parse(arg)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse selector #%d (%s): %v", i+1, arg, err)
-		}
-
-		selectors = append(selectors, selector)
-	}
-
-	return selectors, nil
+// LoadTestGetter fetch a load test with a specific name.
+type LoadTestGetter interface {
+	Get(string, metav1.GetOptions) (*grpcv1.LoadTest, error)
 }
 
 // isPodReady returns true if the pod has been assigned an IP address and all of
@@ -125,13 +118,10 @@ func findDriverPort(pod *corev1.Pod) int32 {
 	return DefaultDriverPort
 }
 
-// WaitForReadyPods blocks until pods with matching label selectors are ready.
+// WaitForReadyPods blocks until all worker pods within the load test are ready.
 // It accepts a context, allowing a timeout or deadline to be specified. When
 // all pods are ready, it returns a slice of strings with the IP address and
-// driver port for each matching pod. The order will match the label selectors.
-//
-// The syntax for the selectors is defined in the Parse function documented at
-// pkg.go.dev/k8s.io/apimachinery/pkg/labels.
+// driver port for each matching pod. server pod would come before client pod.
 //
 // The driver port is determined by searching the pod for a container with a TCP
 // port named "driver". If there is no port named "driver" exposed on any of the
@@ -139,69 +129,74 @@ func findDriverPort(pod *corev1.Pod) int32 {
 //
 // If the timeout is exceeded or there is a problem communicating with the
 // Kubernetes API, an error is returned.
-func WaitForReadyPods(ctx context.Context, pl PodLister, sels []string) ([]string, error) {
+func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, testName string) ([]string, error) {
+	var loadtest *grpcv1.LoadTest
+	var clientPodAddresses []string
+	var serverPodAddresses []string
+	clientMatchCount := 0
+	serverMatchCount := 0
 	timeoutsEnabled := true
+	matchingPods := make(map[string]bool)
+
 	deadline, ok := ctx.Deadline()
 	if !ok {
 		timeoutsEnabled = false
 		log.Printf("no timeout is set; this could block forever")
 	}
 
-	selectors, err := parseSelectors(sels)
-	if err != nil {
-		return nil, err
-	}
-
-	var podAddresses []string
-	for range selectors {
-		podAddresses = append(podAddresses, "")
-	}
-
-	matchCount := 0
-	matchingPods := make(map[string]bool)
-
 	for {
 		if timeoutsEnabled && time.Now().After(deadline) {
 			return nil, errors.Errorf("deadline exceeded (%v)", deadline)
 		}
-
+		if loadtest == nil {
+			l, err := ltg.Get(testName, metav1.GetOptions{})
+			if err != nil {
+				log.Printf("failed to fetch loadtest: %v", err)
+				time.Sleep(pollInterval)
+				continue
+			}
+			loadtest = l
+			for range loadtest.Spec.Clients {
+				clientPodAddresses = append(clientPodAddresses, "")
+			}
+			for range loadtest.Spec.Servers {
+				serverPodAddresses = append(serverPodAddresses, "")
+			}
+		}
 		podList, err := pl.List(metav1.ListOptions{})
 		if err != nil {
 			log.Fatalf("failed to fetch list of pods: %v", err)
 		}
-
-		for _, pod := range podList.Items {
-			if !isPodReady(&pod) {
+		ownedPods := status.PodsForLoadTest(loadtest, podList.Items)
+		for _, pod := range ownedPods {
+			if !isPodReady(pod) {
 				continue
 			}
-
+			if pod.Labels[config.RoleLabel] == config.DriverRole {
+				continue
+			}
 			if _, alreadyMatched := matchingPods[pod.Name]; alreadyMatched {
 				continue
 			}
-
-			for i, selector := range selectors {
-				if podAddresses[i] != "" {
-					continue
-				}
-
-				if selector.Matches(labels.Set(pod.Labels)) {
-					ip := pod.Status.PodIP
-					driverPort := findDriverPort(&pod)
-					podAddresses[i] = fmt.Sprintf("%s:%d", ip, driverPort)
-					matchingPods[pod.Name] = true
-					matchCount++
-					break
-				}
+			matchingPods[pod.Name] = true
+			ip := pod.Status.PodIP
+			driverPort := findDriverPort(pod)
+			if pod.Labels[config.RoleLabel] == config.ServerRole {
+				serverPodAddresses[serverMatchCount] = fmt.Sprintf("%s:%d", ip, driverPort)
+				serverMatchCount++
+			} else {
+				clientPodAddresses[clientMatchCount] = fmt.Sprintf("%s:%d", ip, driverPort)
+				clientMatchCount++
 			}
 		}
 
-		if matchCount == len(selectors) {
+		if clientMatchCount == len(clientPodAddresses) && serverMatchCount == len(serverPodAddresses) {
 			break
 		}
 
 		time.Sleep(pollInterval)
 	}
-
+	podAddresses := append(serverPodAddresses, clientPodAddresses...)
 	return podAddresses, nil
 }
 
@@ -216,18 +211,45 @@ func main() {
 		}
 	}
 
-	var clientset kubernetes.Interface
-	kubeConfigFile, ok := os.LookupEnv(KubeConfigEnv)
-	if ok {
-		clientset, err = kubehelpers.ConnectWithConfig(kubeConfigFile)
-		if err != nil {
-			log.Fatalf("failed to read kubeconfig: %v", err)
+	schemebuilder := runtime.NewSchemeBuilder(func(scheme *runtime.Scheme) error {
+		scheme.AddKnownTypes(grpcv1.GroupVersion,
+			&grpcv1.LoadTest{},
+			&grpcv1.LoadTestList{},
+		)
+		metav1.AddToGroupVersion(scheme, grpcv1.GroupVersion)
+		return nil
+	})
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		if err != rest.ErrNotInCluster {
+			log.Fatalf("failed to connect within cluster: %v", err)
 		}
-	} else {
-		clientset, err = kubehelpers.ConnectWithinCluster()
-		if err != nil {
-			log.Fatalf("failed to connect with implicit kubeconfig: %v", err)
+
+		kubeConfigFile, ok := os.LookupEnv(KubeConfigEnv)
+		if !ok {
+			log.Fatalf("could not find kubenetes config file")
 		}
+
+		config, err = clientcmd.BuildConfigFromFlags("", kubeConfigFile)
+		if err != nil {
+			log.Fatalf("failed to construct config for path %q: %v", kubeConfigFile, err)
+		}
+	}
+
+	schemebuilder.AddToScheme(clientgoscheme.Scheme)
+	scheme := clientgoscheme.Scheme
+	types := scheme.AllKnownTypes()
+	_ = types
+
+	grpcClientset, err := grpcclientset.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("failed to create a grpc clientset: %v", err)
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("failed to connect with implicit kubeconfig: %v", err)
 	}
 
 	outputFile := DefaultOutputFile
@@ -238,9 +260,8 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-
 	log.Printf("Waiting for ready pods")
-	podIPs, err := WaitForReadyPods(ctx, clientset.CoreV1().Pods(metav1.NamespaceAll), os.Args[1:])
+	podIPs, err := WaitForReadyPods(ctx, grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault), clientset.CoreV1().Pods(metav1.NamespaceAll), os.Args[1])
 	if err != nil {
 		log.Fatalf("failed to wait for ready pods: %v", err)
 	}
