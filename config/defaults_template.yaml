@@ -11,6 +11,8 @@ readyImage: "{{ .InitImagePrefix }}ready:{{ .Version }}"
 
 driverImage: "{{ .ImagePrefix }}driver:{{ .Version }}"
 
+killAfter: {{ .KillAfter }}
+
 languages:
 - language: csharp
   buildImage: "{{ .BuildImagePrefix }}csharp:{{ .Version }}"

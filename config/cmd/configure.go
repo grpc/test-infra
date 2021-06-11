@@ -26,6 +26,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"text/template"
@@ -41,6 +42,7 @@ type DefaultsData struct {
 	InitImagePrefix  string
 	ImagePrefix      string
 	BuildImagePrefix string
+	KillAfter        float64
 }
 
 func init() {
@@ -89,10 +91,16 @@ container images that are not used as init containers.`)
 
 	flag.BoolVar(&validate, "validate", true, "validate the output configuration for correctness")
 
+	flag.Float64Var(&data.KillAfter, "kill-after", math.NaN(), "time allowed for pod to respond after timeout, the value should be in seconds")
+
 	flag.Parse()
 
 	if flag.NArg() != 2 {
 		exitWithErrorf(1, true, "missing required arguments")
+	}
+
+	if math.IsNaN(data.KillAfter) {
+		exitWithErrorf(1, true, "missing required flag: kill-after")
 	}
 
 	templ, err := template.ParseFiles(flag.Arg(0))

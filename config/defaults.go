@@ -17,9 +17,12 @@ limitations under the License.
 package config
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Defaults defines the default settings for the system.
@@ -48,6 +51,9 @@ type Defaults struct {
 	// Languages specifies the default build and run container images
 	// for each known language.
 	Languages []LanguageDefault `json:"languages,omitempty"`
+
+	// KillAfter is the duration allowed for pods to respond after timeout.
+	KillAfter float64 `json:"killAfter"`
 }
 
 // Validate ensures that the required fields are present and an acceptable
@@ -78,6 +84,10 @@ func (d *Defaults) Validate() error {
 		if ld.RunImage == "" {
 			return errors.Errorf("language %q (index %d) missing image for run container", ld.Language, i)
 		}
+	}
+
+	if d.KillAfter < 0 {
+		return errors.Errorf("killAfter must not be negative")
 	}
 
 	return nil
@@ -148,6 +158,11 @@ func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Ru
 		}
 
 		run.Image = &runImage
+
+		run.Env = append(run.Env, corev1.EnvVar{
+			Name:  KillAfterEnv,
+			Value: fmt.Sprintf("%f", d.KillAfter),
+		})
 	}
 
 	return nil

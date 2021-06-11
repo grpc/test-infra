@@ -110,4 +110,10 @@ const (
 	// WorkspaceVolumeName contains the name of the volume that is shared between
 	// the init containers and containers for a driver or worker pod.
 	WorkspaceVolumeName = "workspace"
+
+	// KillAfterEnv sets the allowed response time for a pod after timeout.
+	KillAfterEnv = "KILL_AFTER"
+
+	// PodTimeoutEnv sets the timeout for a pod.
+	PodTimeoutEnv = "POD_TIMEOUT"
 )

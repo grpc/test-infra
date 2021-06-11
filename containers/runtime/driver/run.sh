@@ -19,7 +19,7 @@ if [ -n "$QPS_WORKERS_FILE" ]; then
   export QPS_WORKERS=$(cat $QPS_WORKERS_FILE)
 fi
 
-/src/code/bazel-bin/test/cpp/qps/qps_json_driver --scenarios_file=$SCENARIOS_FILE \
+timeout --kill-after=$KILL_AFTER $POD_TIMEOUT /src/code/bazel-bin/test/cpp/qps/qps_json_driver --scenarios_file=$SCENARIOS_FILE \
   --scenario_result_file='scenario_result.json'
 
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --quit=true
