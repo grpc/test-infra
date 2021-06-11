@@ -86,6 +86,7 @@ func (r *Reporter) NewTestSuiteReporter(qName string, logPrefixFmt string) *Test
 // TestSuiteReporter manages reports for tests that share a runner queue.
 type TestSuiteReporter struct {
 	testSuite    *junit.TestSuite
+	testCount    int
 	qName        string
 	logPrefixFmt string
 	startTime    time.Time
@@ -126,9 +127,10 @@ func (tsr *TestSuiteReporter) Duration() time.Duration {
 
 // NewTestCaseReporter creates a new reporter instance.
 func (tsr *TestSuiteReporter) NewTestCaseReporter(config *grpcv1.LoadTest) *TestCaseReporter {
-	index := len(tsr.testSuite.Cases)
-	logPrefix := fmt.Sprintf(tsr.logPrefixFmt, tsr.qName, index)
+	index := tsr.testCount
+	tsr.testCount++
 
+	logPrefix := fmt.Sprintf(tsr.logPrefixFmt, tsr.qName, index)
 	caseReporter := &TestCaseReporter{
 		logPrintf: func(format string, v ...interface{}) {
 			log.Printf(logPrefix+format, v...)
