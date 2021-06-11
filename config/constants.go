@@ -113,4 +113,7 @@ const (
 
 	// KillAfterEnv sets the allowed response time for a pod after timeout.
 	KillAfterEnv = "KILL_AFTER"
+
+	// PodTimeoutEnv sets the timeout for a pod.
+	PodTimeoutEnv = "POD_TIMEOUT"
 )

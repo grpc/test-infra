@@ -54,6 +54,7 @@ var _ = Describe("Defaults", func() {
 					RunImage:   "gcr.io/grpc-fake-project/test-infra/java",
 				},
 			},
+			// KillAfter is the duration allowed for pods to respond after timeout, the value is in seconds.
 			KillAfter: 20,
 		}
 	})

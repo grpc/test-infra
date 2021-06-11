@@ -311,7 +311,7 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 	}
 
 	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
-		Name:  "POD_TIMEOUT",
+		Name:  config.PodTimeoutEnv,
 		Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds)})
 
 	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
