@@ -211,7 +211,6 @@ func main() {
 		}
 	}
 
-	kubeConfigFile, _ := os.LookupEnv(KubeConfigEnv)
 	schemebuilder := runtime.NewSchemeBuilder(func(scheme *runtime.Scheme) error {
 		scheme.AddKnownTypes(grpcv1.GroupVersion,
 			&grpcv1.LoadTest{},
@@ -226,8 +225,10 @@ func main() {
 		if err != rest.ErrNotInCluster {
 			log.Fatalf("failed to connect within cluster: %v", err)
 		}
-		if err != nil {
-			log.Fatalf("could not find a home directory for user: %v", err)
+
+		kubeConfigFile, ok := os.LookupEnv(KubeConfigEnv)
+		if !ok {
+			log.Fatalf("could not find kubenetes config file")
 		}
 
 		config, err = clientcmd.BuildConfigFromFlags("", kubeConfigFile)
