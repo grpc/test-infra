@@ -19,10 +19,12 @@ spec:
     pool: ${workers_pool}
     run:
       args:
-      - exec
-      - /execute/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT dotnet \
+              exec /execute/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+              --driver_port=$DRIVER_PORT"
       command:
-      - dotnet
+      - bash
       image: ${prebuilt_image_prefix}/csharp:${prebuilt_image_tag}
   driver:
     language: cxx
@@ -96,10 +98,12 @@ spec:
     pool: ${workers_pool}
     run:
       args:
-      - exec
-      - /execute/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT dotnet \
+              exec /execute/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+              --driver_port=$DRIVER_PORT"
       command:
-      - dotnet
+      - bash
       image: ${prebuilt_image_prefix}/csharp:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400

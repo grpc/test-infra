@@ -24,12 +24,14 @@ spec:
     name: '0'
     run:
       args:
-      - -r
-      - ./test/fixtures/native_native.js
-      - test/performance/worker.js
-      - --benchmark_impl=grpc
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT node -r \
+              ./test/fixtures/native_native.js \
+              test/performance/worker.js  \
+              --benchmark_impl=grpc \
+              --driver_port=$DRIVER_PORT"
       command:
-      - node
+      - bash
   scenariosJSON: |
     {
       "scenarios": {
@@ -106,11 +108,13 @@ spec:
     name: '0'
     run:
       args:
-      - -r
-      - ./test/fixtures/native_native.js
-      - test/performance/worker.js
-      - --benchmark_impl=grpc
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT node -r \
+              ./test/fixtures/native_native.js \
+              test/performance/worker.js  \
+              --benchmark_impl=grpc \
+              --driver_port=$DRIVER_PORT"
       command:
-      - node
+      - bash
   timeoutSeconds: 900
   ttlSeconds: 86400

@@ -18,9 +18,13 @@ spec:
     name: '0'
     pool: ${workers_pool}
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT /execute/worker-linux  \
+               --benchmark_impl=grpc \
+               --driver_port=$DRIVER_PORT"
       command:
-      - /execute/worker-linux
-      - --benchmark_impl=grpc
+      - bash
       image: ${prebuilt_image_prefix}/node:${prebuilt_image_tag}
   driver:
     language: cxx
@@ -99,9 +103,13 @@ spec:
     name: '0'
     pool: ${workers_pool}
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT /execute/worker-linux  \
+                    --benchmark_impl=grpc \
+                    --driver_port=$DRIVER_PORT"
       command:
-      - /execute/worker-linux
-      - --benchmark_impl=grpc
+      - bash
       image: ${prebuilt_image_prefix}/node:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400

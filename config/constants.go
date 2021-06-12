@@ -63,6 +63,9 @@ const (
 	// instructions and receive results from the servers and clients.
 	DriverPort = 10000
 
+	// DriverPortEnv specifies the name of the env variable that contains driver port.
+	DriverPortEnv = "DRIVER_PORT"
+
 	// PoolLabel is the key for a label which will have the name of a pool as
 	// the value.
 	PoolLabel = "pool"
@@ -111,9 +114,9 @@ const (
 	// the init containers and containers for a driver or worker pod.
 	WorkspaceVolumeName = "workspace"
 
-	// KillAfterEnv sets the allowed response time for a pod after timeout.
+	// KillAfterEnv specifies the name of the env variable that sets the allowed response time for a pod after timeout.
 	KillAfterEnv = "KILL_AFTER"
 
-	// PodTimeoutEnv sets the timeout for a pod.
+	// PodTimeoutEnv specifies the name of the env variable that sets the timeout for a pod.
 	PodTimeoutEnv = "POD_TIMEOUT"
 )

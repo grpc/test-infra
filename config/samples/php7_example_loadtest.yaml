@@ -25,7 +25,7 @@ spec:
     run:
       command:
       - bash
-      - /run_scripts/run_worker.sh
+      - /run_scripts/run_php7_worker.sh
   scenariosJSON: |
     {
       "scenarios": {
@@ -98,8 +98,11 @@ spec:
     name: '0'
     run:
       args:
-      - --server_port=10010
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT bazel-bin/test/cpp/qps/qps_worker \
+               --driver_port=$DRIVER_PORT \
+               --server_port=10010"
       command:
-      - bazel-bin/test/cpp/qps/qps_worker
+      - bash
   timeoutSeconds: 900
   ttlSeconds: 86400

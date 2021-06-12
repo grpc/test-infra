@@ -26,8 +26,13 @@ spec:
     language: java
     name: '0'
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
+              benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker \
+              --driver_port=$DRIVER_PORT"
       command:
-      - benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker
+      - bash
   scenariosJSON: |
     {
       "scenarios": {
@@ -106,7 +111,12 @@ spec:
     language: java
     name: '0'
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
+              benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker \
+              --driver_port=$DRIVER_PORT"
       command:
-      - benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker
+      - bash
   timeoutSeconds: 900
   ttlSeconds: 86400

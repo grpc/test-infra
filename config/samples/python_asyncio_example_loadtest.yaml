@@ -25,8 +25,13 @@ spec:
     language: python_asyncio
     name: '0'
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
+              bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker \
+              --driver_port=$DRIVER_PORT"
       command:
-      - bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker
+      - bash
   scenariosJSON: |
     {
       "scenarios": {
@@ -104,7 +109,12 @@ spec:
     language: python_asyncio
     name: '0'
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
+                bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker \
+                --driver_port=$DRIVER_PORT"
       command:
-      - bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker
+      - bash
   timeoutSeconds: 900
   ttlSeconds: 86400

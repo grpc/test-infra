@@ -102,5 +102,5 @@ COPY --from=0 /pre/saved/bundle/ /execute/saved/bundle/
 COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
 
 RUN mkdir /run_scripts
-ADD run_worker.sh /run_scripts
+ADD run_php7_worker.sh /run_scripts
 CMD ["bash"]

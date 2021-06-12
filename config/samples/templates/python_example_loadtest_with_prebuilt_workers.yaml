@@ -18,8 +18,13 @@ spec:
     name: '0'
     pool: ${workers_pool}
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
+                    /execute/qps_worker \
+                    --driver_port=$DRIVER_PORT"
       command:
-      - /execute/qps_worker
+      - bash
       image: ${prebuilt_image_prefix}/python:${prebuilt_image_tag}
   driver:
     language: cxx
@@ -98,8 +103,13 @@ spec:
     name: '0'
     pool: ${workers_pool}
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
+              /execute/qps_worker \
+              --driver_port=$DRIVER_PORT"
       command:
-      - /execute/qps_worker
+      - bash
       image: ${prebuilt_image_prefix}/python:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400

@@ -25,8 +25,13 @@ spec:
     language: python
     name: '0'
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
+              bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker \
+              --driver_port=$DRIVER_PORT"
       command:
-      - bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker
+      - bash
   scenariosJSON: |
     {
       "scenarios": {
@@ -104,7 +109,12 @@ spec:
     language: python
     name: '0'
     run:
+      args:
+      - -c
+      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
+              bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker \
+              --driver_port=$DRIVER_PORT"
       command:
-      - bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker
+      - bash
   timeoutSeconds: 900
   ttlSeconds: 86400
