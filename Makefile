@@ -76,7 +76,7 @@ install-crd: manifests
 
 # Uninstall CRDs from a cluster
 uninstall-crd: manifests
-	kustomize build config/crd | kubectl delete --ignore-not-found=true -
+	kustomize build config/crd | kubectl delete --ignore-not-found=true -f -
 
 
 # Install RBACs into a cluster
@@ -85,7 +85,7 @@ install-rbac: manifests
 
 # Uninstall RBACs from a cluster
 uninstall-rbac: manifests
-	kustomize build config/rbac | kubectl delete --ignore-not-found=true -
+	kustomize build config/rbac | kubectl delete --ignore-not-found=true -f -
 
 # Deploy both controller and cleanup_agent to the cluster
 deploy: deploy-controller deploy-cleanup-agent
