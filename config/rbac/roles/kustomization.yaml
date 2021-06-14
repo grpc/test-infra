@@ -4,5 +4,5 @@ resources:
 - leader_election_role.yaml
 - loadtest_editor_role.yaml
 - loadtest_viewer_role.yaml
-- pod_viewer_role.yaml
 - pod_driver_role.yaml
+- pod_viewer_role.yaml
