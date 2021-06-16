@@ -35,8 +35,8 @@ languages:
   runImage: "{{ .ImagePrefix }}node:{{ .Version }}"
 
 - language: php7
-  buildImage: "{{ .BuildImagePrefix }}php:{{ .Version }}"
-  runImage: "{{ .ImagePrefix }}php:{{ .Version }}"
+  buildImage: "{{ .BuildImagePrefix }}php7:{{ .Version }}"
+  runImage: "{{ .ImagePrefix }}php7:{{ .Version }}"
 
 - language: python
   buildImage: l.gcr.io/google/bazel:latest
