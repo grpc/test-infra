@@ -26,6 +26,10 @@ spec:
       command:
       - bash
       - /run_scripts/run_worker.sh
+  driver:
+    language: cxx
+    name: '0'
+    run: {}
   scenariosJSON: |
     {
       "scenarios": {

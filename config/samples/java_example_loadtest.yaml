@@ -28,6 +28,10 @@ spec:
     run:
       command:
       - benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker
+  driver:
+    language: cxx
+    name: '0'
+    run: {}
   scenariosJSON: |
     {
       "scenarios": {
