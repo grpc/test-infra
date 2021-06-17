@@ -802,7 +802,6 @@ spec:
                   type: object
               required:
               - language
-              - run
               type: object
             results:
               description: Results configures where the results of the test should

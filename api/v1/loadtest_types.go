@@ -161,6 +161,7 @@ type Driver struct {
 
 	// Run describes the run container, which is the runtime of the driver for
 	// the actual test.
+	// +optional
 	Run Run `json:"run"`
 }
 
