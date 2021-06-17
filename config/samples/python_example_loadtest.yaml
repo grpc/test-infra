@@ -27,9 +27,10 @@ spec:
     run:
       args:
       - -c
-      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
-              bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker \
-              --driver_port=$DRIVER_PORT"
+      - |
+        timeout --kill-after=$${KILL_AFTER}
+        bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker
+        --driver_port=$${DRIVER_PORT}
       command:
       - bash
   scenariosJSON: |
@@ -111,9 +112,10 @@ spec:
     run:
       args:
       - -c
-      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT \
-              bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker \
-              --driver_port=$DRIVER_PORT"
+      - |
+        timeout --kill-after=$${KILL_AFTER}
+        bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker
+        --driver_port=$${DRIVER_PORT}
       command:
       - bash
   timeoutSeconds: 900

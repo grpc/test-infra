@@ -25,9 +25,10 @@ spec:
     run:
       args:
       - -c
-      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT dotnet exec \
-              qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
-              --driver_port=$DRIVER_PORT"
+      - |
+        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT} dotnet exec
+        qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+        --driver_port=$${DRIVER_PORT}
       command:
       - bash
   scenariosJSON: |
@@ -101,9 +102,10 @@ spec:
     run:
       args:
       - -c
-      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT dotnet exec \
-              qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
-              --driver_port=$DRIVER_PORT"
+      - |
+        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT} dotnet exec
+        qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+        --driver_port=$${DRIVER_PORT}
       command:
       - bash
   timeoutSeconds: 900

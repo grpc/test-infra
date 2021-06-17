@@ -39,6 +39,6 @@ RUN /bin/bash -l -c "echo 'rvm --default use ruby-2.5' >> ~/.bashrc"
 RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
 
 RUN mkdir /run_scripts
-ADD run_php7_worker.sh /run_scripts
+ADD run_worker.sh /run_scripts
 
 CMD ["bash"]

@@ -20,9 +20,10 @@ spec:
     run:
       args:
       - -c
-      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT /execute/worker-linux  \
-               --benchmark_impl=grpc \
-               --driver_port=$DRIVER_PORT"
+      - |
+        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT}
+        /execute/worker-linux --benchmark_impl=grpc
+        --driver_port=$${DRIVER_PORT}
       command:
       - bash
       image: ${prebuilt_image_prefix}/node:${prebuilt_image_tag}
@@ -105,9 +106,10 @@ spec:
     run:
       args:
       - -c
-      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT /execute/worker-linux  \
-                    --benchmark_impl=grpc \
-                    --driver_port=$DRIVER_PORT"
+      - |
+        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT}
+        /execute/worker-linux --benchmark_impl=grpc
+        --driver_port=$${DRIVER_PORT}
       command:
       - bash
       image: ${prebuilt_image_prefix}/node:${prebuilt_image_tag}

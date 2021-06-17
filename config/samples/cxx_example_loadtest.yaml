@@ -27,8 +27,9 @@ spec:
     run:
       args:
       - -c
-      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT bazel-bin/test/cpp/qps/qps_worker \
-              --driver_port=$DRIVER_PORT"
+      - |
+        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT}
+        bazel-bin/test/cpp/qps/qps_worker --driver_port=$${DRIVER_PORT}
       command:
       - bash
   scenariosJSON: |
@@ -110,9 +111,10 @@ spec:
     run:
       args:
       - -c
-      - "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT bazel-bin/test/cpp/qps/qps_worker \
-              --driver_port=$DRIVER_PORT \
-              --server_port=10010"
+      - |
+        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT}
+        bazel-bin/test/cpp/qps/qps_worker --driver_port=$${DRIVER_PORT}
+        --server_port=10010
       command:
       - bash
   timeoutSeconds: 900
