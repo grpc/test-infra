@@ -30,6 +30,10 @@ spec:
       - --benchmark_impl=grpc
       command:
       - node
+  driver:
+    language: cxx
+    name: '0'
+    run: {}
   scenariosJSON: |
     {
       "scenarios": {

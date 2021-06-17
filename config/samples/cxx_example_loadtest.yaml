@@ -27,6 +27,10 @@ spec:
     run:
       command:
       - bazel-bin/test/cpp/qps/qps_worker
+  driver:
+    language: cxx
+    name: '0'
+    run: {}
   scenariosJSON: |
     {
       "scenarios": {
