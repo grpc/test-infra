@@ -26,8 +26,8 @@ spec:
       args:
       - -c
       - |
-        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT} ruby
-        src/ruby/qps/worker.rb --driver_port=$${DRIVER_PORT}
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" ruby \
+            src/ruby/qps/worker.rb --driver_port="${DRIVER_PORT}"
       command:
       - bash
   scenariosJSON: |
@@ -102,8 +102,8 @@ spec:
       args:
       - -c
       - |
-        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT} ruby
-        src/ruby/qps/worker.rb --driver_port=$${DRIVER_PORT}
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" ruby \
+            src/ruby/qps/worker.rb --driver_port="${DRIVER_PORT}"
       command:
       - bash
   timeoutSeconds: 900

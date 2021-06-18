@@ -21,8 +21,9 @@ spec:
       args:
       - -c
       - |
-        timeout --kill-after=$${KILL_AFTER} /execute/qps_worker
-        --driver_port=$${DRIVER_PORT}
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /execute/qps_worker \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
       image: ${prebuilt_image_prefix}/python:${prebuilt_image_tag}
@@ -106,8 +107,9 @@ spec:
       args:
       - -c
       - |
-        timeout --kill-after=$${KILL_AFTER} /execute/qps_worker
-        --driver_port=$${DRIVER_PORT}
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /execute/qps_worker \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
       image: ${prebuilt_image_prefix}/python:${prebuilt_image_tag}

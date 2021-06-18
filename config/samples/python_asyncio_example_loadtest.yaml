@@ -28,9 +28,9 @@ spec:
       args:
       - -c
       - |
-        timeout --kill-after=$${KILL_AFTER}
-        bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker
-        --driver_port=$${DRIVER_PORT}
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
   scenariosJSON: |
@@ -113,9 +113,9 @@ spec:
       args:
       - -c
       - |
-        timeout --kill-after=$${KILL_AFTER}
-        bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker
-        --driver_port=$${DRIVER_PORT}
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
   timeoutSeconds: 900

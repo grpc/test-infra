@@ -21,8 +21,9 @@ spec:
       args:
       - -c
       - |
-        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT} ruby
-        /execute/src/ruby/qps/worker.rb --driver_port=$${DRIVER_PORT}
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /execute/src/ruby/qps/worker.rb \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
       image: ${prebuilt_image_prefix}/ruby:${prebuilt_image_tag}
@@ -100,8 +101,9 @@ spec:
       args:
       - -c
       - |
-        timeout --kill-after=$${KILL_AFTER} $${POD_TIMEOUT} ruby
-        /execute/src/ruby/qps/worker.rb --driver_port=$${DRIVER_PORT}
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /execute/src/ruby/qps/worker.rb \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
       image: ${prebuilt_image_prefix}/ruby:${prebuilt_image_tag}
