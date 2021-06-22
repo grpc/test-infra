@@ -154,7 +154,7 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 
 	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  config.DriverPortEnv,
-		Value: fmt.Sprintf("%d", config.DriverPort)})
+		Value: fmt.Sprint(config.DriverPort)})
 
 	runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
 		Name:          "driver",
