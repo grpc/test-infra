@@ -17,6 +17,8 @@ set -ex
 while getopts s: flag; do
   case "${flag}" in
   s) input_server_port=${OPTARG} ;;
+  *) echo "usage: $0 -s [server_port]" >&1
+       exit 1 ;;
   esac
 done
 
@@ -27,11 +29,11 @@ export GEM_HOME=/execute/saved/bundle/
 
 if [ -z "$input_server_port" ]; then
     echo "Server port is not set, starting the worker as a client"
-  timeout --kill-after=$KILL_AFTER $POD_TIMEOUT ruby /execute/src/ruby/qps/proxy-worker.rb \
-    --driver_port=$DRIVER_PORT
+  timeout --kill-after="$KILL_AFTER" "$POD_TIMEOUT" ruby /execute/src/ruby/qps/proxy-worker.rb \
+    --driver_port="$DRIVER_PORT"
 else
   echo "Server port: $input_server_port"
-  timeout --kill-after=$KILL_AFTER $POD_TIMEOUT ruby /execute/src/ruby/qps/proxy-worker.rb \
-    --driver_port=$DRIVER_PORT \
+  timeout --kill-after="$KILL_AFTER" "$POD_TIMEOUT" ruby /execute/src/ruby/qps/proxy-worker.rb \
+    --driver_port="$DRIVER_PORT" \
     --server_port="$input_server_port"
 fi
