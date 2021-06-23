@@ -1,25 +1,19 @@
 # Ready
 
-Ready is a container that waits for a list of pods with specific labels to
-become available. It exits successfully when all pods are ready, writing a
+Ready is a container that waits for a list of pods within a load test to
+become available. It exits successfully when all worker pods are ready, writing a
 comma-separated list of their IP addresses to a file. It exits unsuccessfully if
 a timeout was exceeded before all pods were ready.
 
 ## Usage
 
-The container relies on command line arguments to specify the labels pods should
-match. These arguments are in the form of `key=value,key2=value2` where commas
-are treated as `AND`s and spaces delineate separate pods. For example,
+The container relies on command line argument to specify the load test's name.
+For example,, the following waits for all worker pods which belong to the LoadTest
+named `<LOADTEST_NAME>`:
 
 ```shell
-go run ready.go role=server,proxy=envoy role=client role=client
+go run ready.go <LOADTEST_NAME>
 ```
-
-Will wait for three pods:
-
-1. pod with labels role=server AND proxy=envoy
-2. pod with label role=client
-3. another pod with label role=client
 
 Meanwhile, users can set environment variables to override some defaults:
 

@@ -34,6 +34,11 @@ spec:
             /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
       command:
       - bash
+  driver:
+    language: cxx
+    name: '0'
+    run: {}
+
   scenariosJSON: |
     {
       "scenarios": {

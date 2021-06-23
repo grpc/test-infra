@@ -32,6 +32,10 @@ spec:
             bazel-bin/test/cpp/qps/qps_worker --driver_port="${DRIVER_PORT}"
       command:
       - bash
+  driver:
+    language: cxx
+    name: '0'
+    run: {}
   scenariosJSON: |
     {
       "scenarios": {

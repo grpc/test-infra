@@ -30,6 +30,10 @@ spec:
             src/ruby/qps/worker.rb --driver_port="${DRIVER_PORT}"
       command:
       - bash
+  driver:
+    language: cxx
+    name: '0'
+    run: {}
   scenariosJSON: |
     {
       "scenarios": {

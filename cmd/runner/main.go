@@ -1,9 +1,12 @@
 /*
 Copyright 2021 gRPC authors.
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
+
     http://www.apache.org/licenses/LICENSE-2.0
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +18,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -24,22 +26,18 @@ import (
 	"github.com/grpc/test-infra/tools/runner/junit"
 )
 
-// defaultJUnitSuiteName provides a default name for the testsuites tag in an
-// XML report. It is based on the number of nanoseconds since the UNIX epoch.
-var defaultJUnitSuiteName = fmt.Sprintf("benchmarks-%d", time.Now().UnixNano())
-
 func main() {
 	var i runner.FileNames
 	var o string
-	var junitSuitesName string
+	var xunitSuitesName string
 	var c runner.ConcurrencyLevels
 	var a string
 	var p time.Duration
 	var retries uint
 
 	flag.Var(&i, "i", "input files containing load test configurations")
-	flag.StringVar(&o, "o", "", "name of the output file for junit xml report")
-	flag.StringVar(&junitSuitesName, "junit-suites-name", defaultJUnitSuiteName, "name field for testsuites in junit xml report")
+	flag.StringVar(&o, "o", "", "name of the output file for xunit xml report")
+	flag.StringVar(&xunitSuitesName, "xunit-suites-name", "", "name field for testsuites in xunit xml report")
 	flag.Var(&c, "c", "concurrency level, in the form [<queue name>:]<concurrency level>")
 	flag.StringVar(&a, "annotation-key", "pool", "annotation key to parse for queue assignment")
 	flag.DurationVar(&p, "polling-interval", 20*time.Second, "polling interval for load test status")
@@ -70,8 +68,8 @@ func main() {
 	var report *junit.Report
 	if o != "" {
 		report = &junit.Report{
-			ID:   junit.Dashify(junitSuitesName),
-			Name: junitSuitesName,
+			ID:   junit.Dashify(xunitSuitesName),
+			Name: xunitSuitesName,
 		}
 	}
 

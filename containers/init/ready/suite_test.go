@@ -17,13 +17,16 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	grpcv1 "github.com/grpc/test-infra/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 // timeMultiplier provides a way to increase or decrease the timeouts for each
@@ -40,7 +43,12 @@ func newTestPod(role string) corev1.Pod {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: role,
 			Labels: map[string]string{
-				"role": role,
+				"loadtest-role": role,
+			},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					UID: types.UID("matching-test-uid"),
+				},
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -66,4 +74,109 @@ func newTestPod(role string) corev1.Pod {
 			},
 		},
 	}
+}
+
+// newLoadTestWithMultipleClientsAndServers attempts to create a
+// loadtest with multiple clients and servers for test.
+func newLoadTestWithMultipleClientsAndServers(clientNum int, serverNum int) *grpcv1.LoadTest {
+	cloneImage := "docker.pkg.github.com/grpc/test-infra/clone"
+	cloneRepo := "https://github.com/grpc/grpc.git"
+	cloneGitRef := "master"
+
+	buildImage := "l.gcr.io/google/bazel:latest"
+	buildCommand := []string{"bazel"}
+	buildArgs := []string{"build", "//test/cpp/qps:qps_worker"}
+
+	driverImage := "docker.pkg.github.com/grpc/test-infra/driver"
+	runImage := "docker.pkg.github.com/grpc/test-infra/cxx"
+	runCommand := []string{"bazel-bin/test/cpp/qps/qps_worker"}
+
+	clientRunArgs := []string{"--driver_port=10000"}
+	serverRunArgs := append(clientRunArgs, "--server_port=10010")
+
+	bigQueryTable := "grpc-testing.e2e_benchmark.foobarbuzz"
+
+	driverPool := "drivers"
+	workerPool := "workers"
+
+	driverComponentName := "driver-1"
+
+	createdLoadTest := &grpcv1.LoadTest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-loadtest-multiple-clients-and-servers",
+			Namespace: "default",
+		},
+
+		Spec: grpcv1.LoadTestSpec{
+			Driver: &grpcv1.Driver{
+				Name:     &driverComponentName,
+				Language: "cxx",
+				Pool:     &driverPool,
+				Run: grpcv1.Run{
+					Image: &driverImage,
+				},
+			},
+			Results: &grpcv1.Results{
+				BigQueryTable: &bigQueryTable,
+			},
+
+			ScenariosJSON: "{\"scenarios\": []}",
+		},
+	}
+
+	serverNames := []string{}
+	for i := 1; i <= serverNum; i++ {
+		serverNames = append(serverNames, fmt.Sprintf("server-%d", i))
+	}
+	for i := 1; i <= len(serverNames); i++ {
+		createdLoadTest.Spec.Servers = append(createdLoadTest.Spec.Servers, grpcv1.Server{
+			Name:     &serverNames[i-1],
+			Language: "cxx",
+			Pool:     &workerPool,
+			Clone: &grpcv1.Clone{
+				Image:  &cloneImage,
+				Repo:   &cloneRepo,
+				GitRef: &cloneGitRef,
+			},
+			Build: &grpcv1.Build{
+				Image:   &buildImage,
+				Command: buildCommand,
+				Args:    buildArgs,
+			},
+			Run: grpcv1.Run{
+				Image:   &runImage,
+				Command: runCommand,
+				Args:    serverRunArgs,
+			},
+		})
+	}
+
+	clientName := []string{}
+	for i := 1; i <= clientNum; i++ {
+		clientName = append(clientName, fmt.Sprintf("client-%d", i))
+	}
+	for i := 1; i <= len(clientName); i++ {
+		createdLoadTest.Spec.Clients = append(createdLoadTest.Spec.Clients, grpcv1.Client{
+			Name:     &clientName[i-1],
+			Language: "cxx",
+			Pool:     &workerPool,
+			Clone: &grpcv1.Clone{
+				Image:  &cloneImage,
+				Repo:   &cloneRepo,
+				GitRef: &cloneGitRef,
+			},
+			Build: &grpcv1.Build{
+				Image:   &buildImage,
+				Command: buildCommand,
+				Args:    buildArgs,
+			},
+			Run: grpcv1.Run{
+				Image:   &runImage,
+				Command: runCommand,
+				Args:    clientRunArgs,
+			},
+		})
+	}
+	createdLoadTest.SetUID(types.UID("matching-test-uid"))
+	return createdLoadTest
 }
