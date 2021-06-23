@@ -27,12 +27,18 @@ spec:
     language: go
     name: '0'
     run:
+      args:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
       command:
-      - /src/workspace/bin/worker
+      - bash
   driver:
     language: cxx
     name: '0'
     run: {}
+
   scenariosJSON: |
     {
       "scenarios": {
@@ -112,7 +118,12 @@ spec:
     language: go
     name: '0'
     run:
+      args:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
       command:
-      - /src/workspace/bin/worker
+      - bash
   timeoutSeconds: 900
   ttlSeconds: 86400

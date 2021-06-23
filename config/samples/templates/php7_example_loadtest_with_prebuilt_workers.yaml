@@ -94,9 +94,13 @@ spec:
     pool: ${workers_pool}
     run:
       args:
-      - --server_port=10010
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /source/code/bazel-bin/test/cpp/qps/qps_worker \
+            --driver_port="${DRIVER_PORT}" --server_port=10010
       command:
-      - /source/code/bazel-bin/test/cpp/qps/qps_worker
+      - bash
       image: ${prebuilt_image_prefix}/cxx:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400

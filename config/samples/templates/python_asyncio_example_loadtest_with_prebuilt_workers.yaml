@@ -18,8 +18,14 @@ spec:
     name: '0'
     pool: ${workers_pool}
     run:
+      args:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /execute/benchmark_worker \
+            --driver_port="${DRIVER_PORT}"
       command:
-      - /execute/benchmark_worker
+      - bash
       image: ${prebuilt_image_prefix}/python:${prebuilt_image_tag}
   driver:
     language: cxx
@@ -99,7 +105,13 @@ spec:
     pool: ${workers_pool}
     run:
       command:
-      - /execute/benchmark_worker
+      - bash
       image: ${prebuilt_image_prefix}/python:${prebuilt_image_tag}
+      rgs:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /execute/benchmark_worker \
+            --driver_port="${DRIVER_PORT}"
   timeoutSeconds: 900
   ttlSeconds: 86400

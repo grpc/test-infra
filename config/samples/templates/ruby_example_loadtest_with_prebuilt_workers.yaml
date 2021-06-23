@@ -19,9 +19,13 @@ spec:
     pool: ${workers_pool}
     run:
       args:
-      - /execute/src/ruby/qps/worker.rb
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /execute/src/ruby/qps/worker.rb \
+            --driver_port="${DRIVER_PORT}"
       command:
-      - ruby
+      - bash
       image: ${prebuilt_image_prefix}/ruby:${prebuilt_image_tag}
   driver:
     language: cxx
@@ -95,9 +99,13 @@ spec:
     pool: ${workers_pool}
     run:
       args:
-      - /execute/src/ruby/qps/worker.rb
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /execute/src/ruby/qps/worker.rb \
+            --driver_port="${DRIVER_PORT}"
       command:
-      - ruby
+      - bash
       image: ${prebuilt_image_prefix}/ruby:${prebuilt_image_tag}
   timeoutSeconds: 900
   ttlSeconds: 86400

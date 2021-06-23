@@ -141,7 +141,10 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 
 	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 
-	runContainer.Args = append(runContainer.Args, fmt.Sprintf("--driver_port=%d", config.DriverPort))
+	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
+		Name:  config.DriverPortEnv,
+		Value: fmt.Sprint(config.DriverPort)})
+
 	runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
 		Name:          "driver",
 		Protocol:      corev1.ProtocolTCP,
@@ -230,7 +233,10 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 
 	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 
-	runContainer.Args = append(runContainer.Args, fmt.Sprintf("--driver_port=%d", config.DriverPort))
+	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
+		Name:  config.DriverPortEnv,
+		Value: fmt.Sprintf("%d", config.DriverPort)})
+
 	runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
 		Name:          "driver",
 		Protocol:      corev1.ProtocolTCP,
@@ -299,14 +305,6 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 		})
 	}
 
-	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
-		Name:  config.PodTimeoutEnv,
-		Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds)})
-
-	pb.run.Env = append(pb.run.Env, corev1.EnvVar{
-		Name:  config.KillAfterEnv,
-		Value: fmt.Sprintf("%f", pb.defaults.KillAfter)})
-
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s-%s", pb.test.Name, pb.role, pb.name),
@@ -320,11 +318,20 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 			InitContainers: initContainers,
 			Containers: []corev1.Container{
 				{
-					Name:       config.RunContainerName,
-					Image:      safeStrUnwrap(pb.run.Image),
-					Command:    pb.run.Command,
-					Args:       pb.run.Args,
-					Env:        pb.run.Env,
+					Name:    config.RunContainerName,
+					Image:   safeStrUnwrap(pb.run.Image),
+					Command: pb.run.Command,
+					Args:    pb.run.Args,
+					Env: []corev1.EnvVar{
+						{
+							Name:  config.KillAfterEnv,
+							Value: fmt.Sprintf("%f", pb.defaults.KillAfter),
+						},
+						{
+							Name:  config.PodTimeoutEnv,
+							Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds),
+						},
+					},
 					WorkingDir: config.WorkspaceMountPath,
 					VolumeMounts: []corev1.VolumeMount{
 						{
