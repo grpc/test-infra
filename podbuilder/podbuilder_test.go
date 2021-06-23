@@ -17,7 +17,6 @@ limitations under the License.
 package podbuilder
 
 import (
-	"fmt"
 	"reflect"
 
 	. "github.com/onsi/ginkgo"
@@ -317,19 +316,6 @@ var _ = Describe("PodBuilder", func() {
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
 				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
 			})
-
-			It("appends the driver port command line argument", func() {
-				client.Run = grpcv1.Run{}
-				client.Run.Command = []string{"go"}
-				client.Run.Args = []string{"run", "main.go"}
-
-				pod, err := builder.PodForClient(client)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(pod.Spec.Containers).ToNot(BeEmpty())
-
-				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-				Expect(runContainer.Args).To(ContainElement(fmt.Sprintf("--driver_port=%d", config.DriverPort)))
-			})
 		})
 
 		It("sets a pod anti-affinity", func() {
@@ -575,19 +561,6 @@ var _ = Describe("PodBuilder", func() {
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
 				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
-			})
-
-			It("appends the driver port command line argument", func() {
-				server.Run = grpcv1.Run{}
-				server.Run.Command = []string{"go"}
-				server.Run.Args = []string{"run", "main.go"}
-
-				pod, err := builder.PodForServer(server)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(pod.Spec.Containers).ToNot(BeEmpty())
-
-				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
-				Expect(runContainer.Args).To(ContainElement(fmt.Sprintf("--driver_port=%d", config.DriverPort)))
 			})
 		})
 

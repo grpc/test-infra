@@ -24,9 +24,12 @@ spec:
     name: '0'
     run:
       args:
-      - src/ruby/qps/worker.rb
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" ruby \
+            src/ruby/qps/worker.rb --driver_port="${DRIVER_PORT}"
       command:
-      - ruby
+      - bash
   driver:
     language: cxx
     name: '0'
@@ -101,8 +104,11 @@ spec:
     name: '0'
     run:
       args:
-      - src/ruby/qps/worker.rb
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" ruby \
+            src/ruby/qps/worker.rb --driver_port="${DRIVER_PORT}"
       command:
-      - ruby
+      - bash
   timeoutSeconds: 900
   ttlSeconds: 86400
