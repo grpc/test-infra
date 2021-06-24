@@ -12,12 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.16
-
-RUN mkdir -p /src/ready
-WORKDIR /src/ready
-
-COPY . .
-RUN go install ./containers/init/ready
-
-CMD ["ready"]
+set -ex
+source /usr/local/rvm/scripts/rvm
+export GEM_HOME=/execute/saved/bundle/
+ruby /execute/src/ruby/qps/proxy-worker.rb

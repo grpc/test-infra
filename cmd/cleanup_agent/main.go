@@ -17,44 +17,55 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
-	"time"
+
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that exec-entrypoint and run can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/cleanup"
-	"k8s.io/apimachinery/pkg/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	// +kubebuilder:scaffold:imports
+	//+kubebuilder:scaffold:imports
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme = runtime.NewScheme()
 )
 
 func init() {
-	_ = clientgoscheme.AddToScheme(scheme)
-	_ = grpcv1.AddToScheme(scheme)
-	// +kubebuilder:scaffold:scheme
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(grpcv1.AddToScheme(scheme))
+	//+kubebuilder:scaffold:scheme
 }
 
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var namespace string
-	var cleanupTimeout time.Duration
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":3778", "Address the metrics endpoint binds to.")
 	flag.StringVar(&namespace, "namespace", "", "Limits resources considered to a specific namespace.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false, "Enable leader election (ensures only one controller is active).")
-	flag.DurationVar(&cleanupTimeout, "cleanup-timeout", 0, "Timeout for each round of cleanup.")
+	opts := zap.Options{Development: true}
+	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	log.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	logger := log.FromContext(ctx).WithValues("controller", "CleanupAgent")
+	logger.Info("starting manager")
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -64,26 +75,32 @@ func main() {
 		LeaderElectionID:   "284e7070.e2etest.grpc.io",
 		Namespace:          namespace,
 	})
-
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		logger.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
 	if err = (&cleanup.Agent{
-		Client:  mgr.GetClient(),
-		Log:     ctrl.Log.WithName("CleanupAgent").WithName("LoadTest"),
-		Scheme:  mgr.GetScheme(),
-		Timeout: cleanupTimeout,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create CleanupAgent", "cleanupAgent", "LoadTest")
+		logger.Error(err, "unable to create CleanupAgent", "cleanupAgent", "LoadTest")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 
-	setupLog.Info("starting manager")
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		logger.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		logger.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
+		logger.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }

@@ -47,7 +47,6 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
-var stop chan struct{}
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -57,8 +56,8 @@ func TestAPIs(t *testing.T) {
 		[]Reporter{printer.NewlineReporter{}})
 }
 
-var _ = BeforeSuite(func(done Done) {
-	logf.SetLogger(zap.LoggerTo(GinkgoWriter, true))
+var _ = BeforeSuite(func() {
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
@@ -73,6 +72,8 @@ var _ = BeforeSuite(func(done Done) {
 	err = grpcv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
+	//+kubebuilder:scaffold:scheme
+
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
 		Scheme:             scheme.Scheme,
 		MetricsBindAddress: ":3777",
@@ -80,35 +81,28 @@ var _ = BeforeSuite(func(done Done) {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
+	k8sClient = k8sManager.GetClient()
+	Expect(k8sClient).ToNot(BeNil())
+
 	agent := &Agent{
-		Client: k8sManager.GetClient(),
+		Client: k8sClient,
 		Scheme: k8sManager.GetScheme(),
-		Log:    ctrl.Log.WithName("controller").WithName("LoadTest"),
 	}
 	err = agent.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())
 
-	// +kubebuilder:scaffold:scheme
-
-	k8sClient = k8sManager.GetClient()
-	Expect(k8sClient).ToNot(BeNil())
-
-	stop = make(chan struct{})
 	go func() {
-		err := k8sManager.Start(stop)
+		err := k8sManager.Start(context.Background())
 		Expect(err).ToNot(HaveOccurred())
 	}()
 
 	for _, node := range nodes {
 		Expect(k8sClient.Create(context.Background(), node)).To(Succeed())
 	}
-
-	close(done)
 }, 60)
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
-	close(stop)
 	err := testEnv.Stop()
 	Expect(err).ToNot(HaveOccurred())
 })
