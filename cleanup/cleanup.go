@@ -24,7 +24,6 @@ package cleanup
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-logr/logr"
 	"google.golang.org/grpc"
@@ -32,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
@@ -42,9 +42,7 @@ import (
 // Agent cleanup unwanted processes.
 type Agent struct {
 	client.Client
-	Log     logr.Logger
-	Scheme  *runtime.Scheme
-	Timeout time.Duration
+	Scheme *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch
@@ -55,26 +53,14 @@ type Agent struct {
 // Reconcile attempts to check status of workers of the triggering LoadTest. If
 // a terminated LoadTest has workers running, reconcile will send callQuitter RPC
 // to stop the workers.
-func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	var ctx context.Context
-	var cancel context.CancelFunc
+func (a *Agent) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var err error
-
-	// A timeout could be set on cleanup agent as a time limit for each reconcile
-	// round, if not set the default value for each reconciliation is 2 mins.
-	if a.Timeout == 0 {
-		ctx, cancel = context.WithTimeout(context.Background(), 2*time.Minute)
-	} else {
-		ctx, cancel = context.WithTimeout(context.Background(), a.Timeout)
-	}
-	defer cancel()
-
-	log := a.Log.WithValues("loadtest", req.NamespacedName)
+	logger := log.FromContext(ctx).WithValues("loadtest", req.NamespacedName)
 
 	// Fetch the LoadTest that triggers the event.
 	loadtest := new(grpcv1.LoadTest)
 	if err = a.Get(ctx, req.NamespacedName, loadtest); err != nil {
-		log.Error(err, "failed to get LoadTest")
+		logger.Error(err, "failed to get LoadTest")
 		// do not requeue, the load test may have been deleted
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -87,7 +73,7 @@ func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// Fetch all the pods live on the cluster.
 	pods := new(corev1.PodList)
 	if err = a.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
-		log.Error(err, "failed to list pods")
+		logger.Error(err, "failed to list pods")
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -95,7 +81,7 @@ func (a *Agent) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ownedPods := status.PodsForLoadTest(loadtest, pods.Items)
 
 	q := quitClient{}
-	quitWorkers(ctx, &q, ownedPods, log)
+	quitWorkers(ctx, &q, ownedPods, logger)
 
 	return ctrl.Result{}, nil
 }

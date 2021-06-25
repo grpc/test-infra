@@ -16,7 +16,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.14
+        go-version: ^1.16
       id: go
 
     - name: Check out code into the Go module directory
@@ -25,11 +25,12 @@ jobs:
     - name: Install kubebuilder
       # see kubebuilder book: https://book.kubebuilder.io/quick-start.html
       run: |
+        version="3.1.0"
         os=$(go env GOOS)
         arch=$(go env GOARCH)
-        curl -L https://go.kubebuilder.io/dl/2.3.1/${os}/${arch} | tar -xz -C /tmp/
-        sudo mv /tmp/kubebuilder_2.3.1_${os}_${arch} /usr/local/kubebuilder
-        export PATH=$PATH:/usr/local/kubebuilder/bin
+        curl -L -o kubebuilder https://github.com/kubernetes-sigs/kubebuilder/releases/download/v${version}/kubebuilder_${os}_${arch}
+        sudo chmod +x kubebuilder
+        sudo mv kubebuilder /usr/local/
 
     - name: Get go dependencies
       run: |
@@ -56,13 +57,7 @@ jobs:
       run: go build ./...
 
     - name: Vet
-      run: go vet -all ./...
+      run: make vet
 
     - name: Test
-      run: go test -v ./...
-
-    - name: Test race conditions
-      run: go test -race ./...
-
-    - name: Test coverage
-      run: go test -cover ./...
+      run: make test

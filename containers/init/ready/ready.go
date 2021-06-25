@@ -72,12 +72,12 @@ const pollInterval = 3 * time.Second
 
 // PodLister lists pods known to a Kubernetes cluster.
 type PodLister interface {
-	List(metav1.ListOptions) (*corev1.PodList, error)
+	List(context.Context, metav1.ListOptions) (*corev1.PodList, error)
 }
 
 // LoadTestGetter fetch a load test with a specific name.
 type LoadTestGetter interface {
-	Get(string, metav1.GetOptions) (*grpcv1.LoadTest, error)
+	Get(context.Context, string, metav1.GetOptions) (*grpcv1.LoadTest, error)
 }
 
 // isPodReady returns true if the pod has been assigned an IP address and all of
@@ -149,7 +149,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 			return nil, errors.Errorf("deadline exceeded (%v)", deadline)
 		}
 		if loadtest == nil {
-			l, err := ltg.Get(testName, metav1.GetOptions{})
+			l, err := ltg.Get(ctx, testName, metav1.GetOptions{})
 			if err != nil {
 				log.Printf("failed to fetch loadtest: %v", err)
 				time.Sleep(pollInterval)
@@ -163,7 +163,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 				serverPodAddresses = append(serverPodAddresses, "")
 			}
 		}
-		podList, err := pl.List(metav1.ListOptions{})
+		podList, err := pl.List(ctx, metav1.ListOptions{})
 		if err != nil {
 			log.Fatalf("failed to fetch list of pods: %v", err)
 		}

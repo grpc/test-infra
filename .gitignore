@@ -10,6 +10,7 @@ bin/*
 
 # Test binary, built with `go test -c`
 *.test
+testbin/
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
@@ -25,4 +26,3 @@ config/defaults.yaml
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-

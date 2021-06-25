@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -89,7 +90,11 @@ func main() {
 	}
 	testGetter := grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	test, err := testGetter.Create(
+		ctx,
 		&grpcv1.LoadTest{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("client-test-manual-go-example-%s", uuid.New().String()),
@@ -203,12 +208,12 @@ func main() {
 		metav1.CreateOptions{},
 	)
 
-	_, err = testGetter.Get(test.Name, metav1.GetOptions{})
+	_, err = testGetter.Get(ctx, test.Name, metav1.GetOptions{})
 	if err != nil {
 		log.Fatalf("failed to fetch the newly created test: %v", err)
 	}
 
-	testList, err := testGetter.List(metav1.ListOptions{})
+	testList, err := testGetter.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		log.Fatalf("failed to list tests using client: %v", err)
 	}
@@ -223,7 +228,7 @@ func main() {
 		log.Fatalf("failed to find newly created test in list: %v", err)
 	}
 
-	err = testGetter.Delete(test.Name, metav1.DeleteOptions{})
+	err = testGetter.Delete(ctx, test.Name, metav1.DeleteOptions{})
 	if err != nil {
 		log.Fatalf("failed to delete newly-created test using client: %v", err)
 	}

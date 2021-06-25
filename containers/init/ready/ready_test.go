@@ -235,7 +235,9 @@ type PodListerMock struct {
 	invocation    int
 }
 
-func (plm *PodListerMock) List(opts metav1.ListOptions) (*corev1.PodList, error) {
+var _ PodLister = &PodListerMock{}
+
+func (plm *PodListerMock) List(_ context.Context, opts metav1.ListOptions) (*corev1.PodList, error) {
 	time.Sleep(plm.SleepDuration)
 
 	if plm.Error != nil {
@@ -252,7 +254,9 @@ type LoadTestGetterMock struct {
 	invocation    int
 }
 
-func (lgm *LoadTestGetterMock) Get(testName string, opts metav1.GetOptions) (*grpcv1.LoadTest, error) {
+var _ LoadTestGetter = &LoadTestGetterMock{}
+
+func (lgm *LoadTestGetterMock) Get(_ context.Context, testName string, opts metav1.GetOptions) (*grpcv1.LoadTest, error) {
 	time.Sleep(lgm.SleepDuration)
 
 	if lgm.Error != nil {

@@ -1,7 +1,16 @@
 domain: e2etest.grpc.io
+layout:
+- go.kubebuilder.io/v3
+projectName: test-infra
 repo: github.com/grpc/test-infra
 resources:
-- group: e2etest.grpc.io
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: e2etest.grpc.io
+  group: e2etest.grpc.io
   kind: LoadTest
+  path: github.com/grpc/test-infra/api/v1
   version: v1
-version: "2"
+version: "3"

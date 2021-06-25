@@ -1,20 +1,13 @@
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.5
+    controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
   name: loadtests.e2etest.grpc.io
 spec:
-  additionalPrinterColumns:
-  - JSONPath: .status.state
-    name: State
-    type: string
-  - JSONPath: .metadata.creationTimestamp
-    name: Age
-    type: date
   group: e2etest.grpc.io
   names:
     kind: LoadTest
@@ -22,39 +15,434 @@ spec:
     plural: loadtests
     singular: loadtest
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: LoadTest is the Schema for the loadtests API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: LoadTestSpec defines the desired state of LoadTest
-          properties:
-            clients:
-              description: Clients are a list of components that send traffic to servers.
-              items:
-                description: Client defines a component that sends traffic to a server
-                  component.
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: LoadTest is the Schema for the loadtests API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: LoadTestSpec defines the desired state of LoadTest
+            properties:
+              clients:
+                description: Clients are a list of components that send traffic to
+                  servers.
+                items:
+                  description: Client defines a component that sends traffic to a
+                    server component.
+                  properties:
+                    build:
+                      description: "Build describes how the cloned code should be
+                        built, including any compiler arguments or flags. This field
+                        is only necessary if the output from the clone container must
+                        be pre-processed before running the tests in the run container.
+                        \n When build is specified on a test, the operator will use
+                        the client's language to find a container with a compiler
+                        for that language. If the language is unknown to the operator,
+                        a user must include a custom docker image. \n Note that it
+                        does not usually make sense to include build instructions
+                        without clone instructions. If doing so, the build container
+                        must include its input and write its output into the /src/workspace
+                        directory for the run container to access it."
+                      properties:
+                        args:
+                          description: Args provide command line arguments to the
+                            command. If a command is not specified, these arguments
+                            will be ignored in favor of the default arguments for
+                            container's entrypoint.
+                          items:
+                            type: string
+                          type: array
+                        command:
+                          description: Command is the path to the executable that
+                            will build the code in the /src/workspace directory. If
+                            unspecified, the entrypoint for the container is used.
+                          items:
+                            type: string
+                          type: array
+                        env:
+                          description: Env are environment variables that should be
+                            set within the build container. This is provided for compilers
+                            that alter behavior due to certain environment variables.
+                          items:
+                            description: EnvVar represents an environment variable
+                              present in a Container.
+                            properties:
+                              name:
+                                description: Name of the environment variable. Must
+                                  be a C_IDENTIFIER.
+                                type: string
+                              value:
+                                description: 'Variable references $(VAR_NAME) are
+                                  expanded using the previous defined environment
+                                  variables in the container and any service environment
+                                  variables. If a variable cannot be resolved, the
+                                  reference in the input string will be unchanged.
+                                  The $(VAR_NAME) syntax can be escaped with a double
+                                  $$, ie: $$(VAR_NAME). Escaped references will never
+                                  be expanded, regardless of whether the variable
+                                  exists or not. Defaults to "".'
+                                type: string
+                              valueFrom:
+                                description: Source for the environment variable's
+                                  value. Cannot be used if value is not empty.
+                                properties:
+                                  configMapKeyRef:
+                                    description: Selects a key of a ConfigMap.
+                                    properties:
+                                      key:
+                                        description: The key to select.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the ConfigMap
+                                          or its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  fieldRef:
+                                    description: 'Selects a field of the pod: supports
+                                      metadata.name, metadata.namespace, `metadata.labels[''<KEY>'']`,
+                                      `metadata.annotations[''<KEY>'']`, spec.nodeName,
+                                      spec.serviceAccountName, status.hostIP, status.podIP,
+                                      status.podIPs.'
+                                    properties:
+                                      apiVersion:
+                                        description: Version of the schema the FieldPath
+                                          is written in terms of, defaults to "v1".
+                                        type: string
+                                      fieldPath:
+                                        description: Path of the field to select in
+                                          the specified API version.
+                                        type: string
+                                    required:
+                                    - fieldPath
+                                    type: object
+                                  resourceFieldRef:
+                                    description: 'Selects a resource of the container:
+                                      only resources limits and requests (limits.cpu,
+                                      limits.memory, limits.ephemeral-storage, requests.cpu,
+                                      requests.memory and requests.ephemeral-storage)
+                                      are currently supported.'
+                                    properties:
+                                      containerName:
+                                        description: 'Container name: required for
+                                          volumes, optional for env vars'
+                                        type: string
+                                      divisor:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        description: Specifies the output format of
+                                          the exposed resources, defaults to "1"
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      resource:
+                                        description: 'Required: resource to select'
+                                        type: string
+                                    required:
+                                    - resource
+                                    type: object
+                                  secretKeyRef:
+                                    description: Selects a key of a secret in the
+                                      pod's namespace
+                                    properties:
+                                      key:
+                                        description: The key of the secret to select
+                                          from.  Must be a valid secret key.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the Secret or
+                                          its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
+                          type: array
+                        image:
+                          description: "Image is the name of the container image that
+                            can build code, placing an executable in the /src/workspace
+                            directory. \n This field is optional when a Language is
+                            specified on the Component. For example, a developer may
+                            specify a \"java\" server. Then, this image will default
+                            to the most recent gradle image."
+                          type: string
+                      type: object
+                    clone:
+                      description: Clone specifies the repository and snapshot where
+                        the code for the client can be found. This field should not
+                        be set if the code has been prebuilt in the run image.
+                      properties:
+                        gitRef:
+                          description: GitRef is a branch, tag or commit hash to checkout
+                            after a successful clone. This will be the version of
+                            the code in the /src/workspace directory.
+                          type: string
+                        image:
+                          description: "Image is the name of the container image that
+                            can clone code, placing it in a /src/workspace directory.
+                            \n This field is optional. When omitted, a container that
+                            can clone public GitHub repos over HTTPs is used."
+                          type: string
+                        repo:
+                          description: Repo is the URL to clone a git repository.
+                            With GitHub, this should end in a `.git` extension.
+                          type: string
+                      type: object
+                    language:
+                      description: "Language is the code that identifies the programming
+                        language used by the client. For example, \"go\" may represent
+                        Go. \n Specifying a language is required. If the language
+                        is unknown to the operator, a user must manually set a run
+                        image. If the user intends for the operator to clone and build
+                        code, it must also manually set a build image."
+                      type: string
+                    name:
+                      description: "Name is a string that distinguishes this client
+                        from others in the test. Explicitly setting a name is recommended
+                        when it is helpful to differentiate between multiple clients.
+                        For example, a test may use clients with different settings.
+                        \n Most often, this field will not be set. When unset, the
+                        operator will assign a name to the client."
+                      type: string
+                    pool:
+                      description: Pool specifies the name of the set of nodes where
+                        this client should be scheduled. If unset, the controller
+                        will choose a pool based on defaults.
+                      type: string
+                    run:
+                      description: Run describes the run container, which is the runtime
+                        of the client for the actual test.
+                      properties:
+                        args:
+                          description: Args provide command line arguments to the
+                            command.
+                          items:
+                            type: string
+                          type: array
+                        command:
+                          description: Command is the path to the executable that
+                            will run the component of the test. When unset, the entrypoint
+                            of the container image will be used.
+                          items:
+                            type: string
+                          type: array
+                        env:
+                          description: Env are environment variables that should be
+                            set within the running container.
+                          items:
+                            description: EnvVar represents an environment variable
+                              present in a Container.
+                            properties:
+                              name:
+                                description: Name of the environment variable. Must
+                                  be a C_IDENTIFIER.
+                                type: string
+                              value:
+                                description: 'Variable references $(VAR_NAME) are
+                                  expanded using the previous defined environment
+                                  variables in the container and any service environment
+                                  variables. If a variable cannot be resolved, the
+                                  reference in the input string will be unchanged.
+                                  The $(VAR_NAME) syntax can be escaped with a double
+                                  $$, ie: $$(VAR_NAME). Escaped references will never
+                                  be expanded, regardless of whether the variable
+                                  exists or not. Defaults to "".'
+                                type: string
+                              valueFrom:
+                                description: Source for the environment variable's
+                                  value. Cannot be used if value is not empty.
+                                properties:
+                                  configMapKeyRef:
+                                    description: Selects a key of a ConfigMap.
+                                    properties:
+                                      key:
+                                        description: The key to select.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the ConfigMap
+                                          or its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  fieldRef:
+                                    description: 'Selects a field of the pod: supports
+                                      metadata.name, metadata.namespace, `metadata.labels[''<KEY>'']`,
+                                      `metadata.annotations[''<KEY>'']`, spec.nodeName,
+                                      spec.serviceAccountName, status.hostIP, status.podIP,
+                                      status.podIPs.'
+                                    properties:
+                                      apiVersion:
+                                        description: Version of the schema the FieldPath
+                                          is written in terms of, defaults to "v1".
+                                        type: string
+                                      fieldPath:
+                                        description: Path of the field to select in
+                                          the specified API version.
+                                        type: string
+                                    required:
+                                    - fieldPath
+                                    type: object
+                                  resourceFieldRef:
+                                    description: 'Selects a resource of the container:
+                                      only resources limits and requests (limits.cpu,
+                                      limits.memory, limits.ephemeral-storage, requests.cpu,
+                                      requests.memory and requests.ephemeral-storage)
+                                      are currently supported.'
+                                    properties:
+                                      containerName:
+                                        description: 'Container name: required for
+                                          volumes, optional for env vars'
+                                        type: string
+                                      divisor:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        description: Specifies the output format of
+                                          the exposed resources, defaults to "1"
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      resource:
+                                        description: 'Required: resource to select'
+                                        type: string
+                                    required:
+                                    - resource
+                                    type: object
+                                  secretKeyRef:
+                                    description: Selects a key of a secret in the
+                                      pod's namespace
+                                    properties:
+                                      key:
+                                        description: The key of the secret to select
+                                          from.  Must be a valid secret key.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the Secret or
+                                          its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
+                          type: array
+                        image:
+                          description: "Image is the name of the container image that
+                            provides the runtime for the test component. \n This field
+                            is optional when a Language is specified on the Component.
+                            For example, a developer may specify a \"python3\" client.
+                            This field will be implicitly set to the most recent supported
+                            python3 image."
+                          type: string
+                        volumeMounts:
+                          description: VolumeMounts permit sharing directories across
+                            containers.
+                          items:
+                            description: VolumeMount describes a mounting of a Volume
+                              within a container.
+                            properties:
+                              mountPath:
+                                description: Path within the container at which the
+                                  volume should be mounted.  Must not contain ':'.
+                                type: string
+                              mountPropagation:
+                                description: mountPropagation determines how mounts
+                                  are propagated from the host to container and the
+                                  other way around. When not set, MountPropagationNone
+                                  is used. This field is beta in 1.10.
+                                type: string
+                              name:
+                                description: This must match the Name of a Volume.
+                                type: string
+                              readOnly:
+                                description: Mounted read-only if true, read-write
+                                  otherwise (false or unspecified). Defaults to false.
+                                type: boolean
+                              subPath:
+                                description: Path within the volume from which the
+                                  container's volume should be mounted. Defaults to
+                                  "" (volume's root).
+                                type: string
+                              subPathExpr:
+                                description: Expanded path within the volume from
+                                  which the container's volume should be mounted.
+                                  Behaves similarly to SubPath but environment variable
+                                  references $(VAR_NAME) are expanded using the container's
+                                  environment. Defaults to "" (volume's root). SubPathExpr
+                                  and SubPath are mutually exclusive.
+                                type: string
+                            required:
+                            - mountPath
+                            - name
+                            type: object
+                          type: array
+                      type: object
+                  required:
+                  - language
+                  - run
+                  type: object
+                type: array
+              driver:
+                description: Driver is the component that orchestrates the test. It
+                  may be unspecified, allowing the system to choose the appropriate
+                  driver.
                 properties:
                   build:
                     description: "Build describes how the cloned code should be built,
                       including any compiler arguments or flags. This field is only
                       necessary if the output from the clone container must be pre-processed
                       before running the tests in the run container. \n When build
-                      is specified on a test, the operator will use the client's language
+                      is specified on a test, the operator will use the driver's language
                       to find a container with a compiler for that language. If the
                       language is unknown to the operator, a user must include a custom
                       docker image. \n Note that it does not usually make sense to
@@ -125,9 +513,10 @@ spec:
                                   type: object
                                 fieldRef:
                                   description: 'Selects a field of the pod: supports
-                                    metadata.name, metadata.namespace, metadata.labels,
-                                    metadata.annotations, spec.nodeName, spec.serviceAccountName,
-                                    status.hostIP, status.podIP, status.podIPs.'
+                                    metadata.name, metadata.namespace, `metadata.labels[''<KEY>'']`,
+                                    `metadata.annotations[''<KEY>'']`, spec.nodeName,
+                                    spec.serviceAccountName, status.hostIP, status.podIP,
+                                    status.podIPs.'
                                   properties:
                                     apiVersion:
                                       description: Version of the schema the FieldPath
@@ -202,8 +591,10 @@ spec:
                     type: object
                   clone:
                     description: Clone specifies the repository and snapshot where
-                      the code for the client can be found. This field should not
-                      be set if the code has been prebuilt in the run image.
+                      the code for the driver can be found. This is used to test alternative
+                      implementations for the driver. Most often, this will not be
+                      set. When unset, the operator will use a default driver that
+                      is prebuilt.
                     properties:
                       gitRef:
                         description: GitRef is a branch, tag or commit hash to checkout
@@ -223,28 +614,26 @@ spec:
                     type: object
                   language:
                     description: "Language is the code that identifies the programming
-                      language used by the client. For example, \"go\" may represent
-                      Go. \n Specifying a language is required. If the language is
+                      language used by the driver. For example, \"cxx\" may represent
+                      C++. \n Specifying a language is required. If the language is
                       unknown to the operator, a user must manually set a run image.
                       If the user intends for the operator to clone and build code,
                       it must also manually set a build image."
                     type: string
                   name:
-                    description: "Name is a string that distinguishes this client
-                      from others in the test. Explicitly setting a name is recommended
-                      when it is helpful to differentiate between multiple clients.
-                      For example, a test may use clients with different settings.
-                      \n Most often, this field will not be set. When unset, the operator
-                      will assign a name to the client."
+                    description: Name is a string that uniquely names this driver.
+                      Since load tests only support one driver, it is not recommended
+                      to set this field. If no name is explicitly provided, the operator
+                      will assign one.
                     type: string
                   pool:
                     description: Pool specifies the name of the set of nodes where
-                      this client should be scheduled. If unset, the controller will
+                      this driver should be scheduled. If unset, the controller will
                       choose a pool based on defaults.
                     type: string
                   run:
                     description: Run describes the run container, which is the runtime
-                      of the client for the actual test.
+                      of the driver for the actual test.
                     properties:
                       args:
                         description: Args provide command line arguments to the command.
@@ -305,9 +694,10 @@ spec:
                                   type: object
                                 fieldRef:
                                   description: 'Selects a field of the pod: supports
-                                    metadata.name, metadata.namespace, metadata.labels,
-                                    metadata.annotations, spec.nodeName, spec.serviceAccountName,
-                                    status.hostIP, status.podIP, status.podIPs.'
+                                    metadata.name, metadata.namespace, `metadata.labels[''<KEY>'']`,
+                                    `metadata.annotations[''<KEY>'']`, spec.nodeName,
+                                    spec.serviceAccountName, status.hostIP, status.podIP,
+                                    status.podIPs.'
                                   properties:
                                     apiVersion:
                                       description: Version of the schema the FieldPath
@@ -426,836 +816,461 @@ spec:
                 - language
                 - run
                 type: object
-              type: array
-            driver:
-              description: Driver is the component that orchestrates the test. It
-                may be unspecified, allowing the system to choose the appropriate
-                driver.
-              properties:
-                build:
-                  description: "Build describes how the cloned code should be built,
-                    including any compiler arguments or flags. This field is only
-                    necessary if the output from the clone container must be pre-processed
-                    before running the tests in the run container. \n When build is
-                    specified on a test, the operator will use the driver's language
-                    to find a container with a compiler for that language. If the
-                    language is unknown to the operator, a user must include a custom
-                    docker image. \n Note that it does not usually make sense to include
-                    build instructions without clone instructions. If doing so, the
-                    build container must include its input and write its output into
-                    the /src/workspace directory for the run container to access it."
-                  properties:
-                    args:
-                      description: Args provide command line arguments to the command.
-                        If a command is not specified, these arguments will be ignored
-                        in favor of the default arguments for container's entrypoint.
-                      items:
-                        type: string
-                      type: array
-                    command:
-                      description: Command is the path to the executable that will
-                        build the code in the /src/workspace directory. If unspecified,
-                        the entrypoint for the container is used.
-                      items:
-                        type: string
-                      type: array
-                    env:
-                      description: Env are environment variables that should be set
-                        within the build container. This is provided for compilers
-                        that alter behavior due to certain environment variables.
-                      items:
-                        description: EnvVar represents an environment variable present
-                          in a Container.
-                        properties:
-                          name:
-                            description: Name of the environment variable. Must be
-                              a C_IDENTIFIER.
-                            type: string
-                          value:
-                            description: 'Variable references $(VAR_NAME) are expanded
-                              using the previous defined environment variables in
-                              the container and any service environment variables.
-                              If a variable cannot be resolved, the reference in the
-                              input string will be unchanged. The $(VAR_NAME) syntax
-                              can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
-                              references will never be expanded, regardless of whether
-                              the variable exists or not. Defaults to "".'
-                            type: string
-                          valueFrom:
-                            description: Source for the environment variable's value.
-                              Cannot be used if value is not empty.
-                            properties:
-                              configMapKeyRef:
-                                description: Selects a key of a ConfigMap.
-                                properties:
-                                  key:
-                                    description: The key to select.
-                                    type: string
-                                  name:
-                                    description: 'Name of the referent. More info:
-                                      https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                      TODO: Add other useful fields. apiVersion, kind,
-                                      uid?'
-                                    type: string
-                                  optional:
-                                    description: Specify whether the ConfigMap or
-                                      its key must be defined
-                                    type: boolean
-                                required:
-                                - key
-                                type: object
-                              fieldRef:
-                                description: 'Selects a field of the pod: supports
-                                  metadata.name, metadata.namespace, metadata.labels,
-                                  metadata.annotations, spec.nodeName, spec.serviceAccountName,
-                                  status.hostIP, status.podIP, status.podIPs.'
-                                properties:
-                                  apiVersion:
-                                    description: Version of the schema the FieldPath
-                                      is written in terms of, defaults to "v1".
-                                    type: string
-                                  fieldPath:
-                                    description: Path of the field to select in the
-                                      specified API version.
-                                    type: string
-                                required:
-                                - fieldPath
-                                type: object
-                              resourceFieldRef:
-                                description: 'Selects a resource of the container:
-                                  only resources limits and requests (limits.cpu,
-                                  limits.memory, limits.ephemeral-storage, requests.cpu,
-                                  requests.memory and requests.ephemeral-storage)
-                                  are currently supported.'
-                                properties:
-                                  containerName:
-                                    description: 'Container name: required for volumes,
-                                      optional for env vars'
-                                    type: string
-                                  divisor:
-                                    anyOf:
-                                    - type: integer
-                                    - type: string
-                                    description: Specifies the output format of the
-                                      exposed resources, defaults to "1"
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    x-kubernetes-int-or-string: true
-                                  resource:
-                                    description: 'Required: resource to select'
-                                    type: string
-                                required:
-                                - resource
-                                type: object
-                              secretKeyRef:
-                                description: Selects a key of a secret in the pod's
-                                  namespace
-                                properties:
-                                  key:
-                                    description: The key of the secret to select from.  Must
-                                      be a valid secret key.
-                                    type: string
-                                  name:
-                                    description: 'Name of the referent. More info:
-                                      https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                      TODO: Add other useful fields. apiVersion, kind,
-                                      uid?'
-                                    type: string
-                                  optional:
-                                    description: Specify whether the Secret or its
-                                      key must be defined
-                                    type: boolean
-                                required:
-                                - key
-                                type: object
-                            type: object
-                        required:
-                        - name
-                        type: object
-                      type: array
-                    image:
-                      description: "Image is the name of the container image that
-                        can build code, placing an executable in the /src/workspace
-                        directory. \n This field is optional when a Language is specified
-                        on the Component. For example, a developer may specify a \"java\"
-                        server. Then, this image will default to the most recent gradle
-                        image."
-                      type: string
-                  type: object
-                clone:
-                  description: Clone specifies the repository and snapshot where the
-                    code for the driver can be found. This is used to test alternative
-                    implementations for the driver. Most often, this will not be set.
-                    When unset, the operator will use a default driver that is prebuilt.
-                  properties:
-                    gitRef:
-                      description: GitRef is a branch, tag or commit hash to checkout
-                        after a successful clone. This will be the version of the
-                        code in the /src/workspace directory.
-                      type: string
-                    image:
-                      description: "Image is the name of the container image that
-                        can clone code, placing it in a /src/workspace directory.
-                        \n This field is optional. When omitted, a container that
-                        can clone public GitHub repos over HTTPs is used."
-                      type: string
-                    repo:
-                      description: Repo is the URL to clone a git repository. With
-                        GitHub, this should end in a `.git` extension.
-                      type: string
-                  type: object
-                language:
-                  description: "Language is the code that identifies the programming
-                    language used by the driver. For example, \"cxx\" may represent
-                    C++. \n Specifying a language is required. If the language is
-                    unknown to the operator, a user must manually set a run image.
-                    If the user intends for the operator to clone and build code,
-                    it must also manually set a build image."
-                  type: string
-                name:
-                  description: Name is a string that uniquely names this driver. Since
-                    load tests only support one driver, it is not recommended to set
-                    this field. If no name is explicitly provided, the operator will
-                    assign one.
-                  type: string
-                pool:
-                  description: Pool specifies the name of the set of nodes where this
-                    driver should be scheduled. If unset, the controller will choose
-                    a pool based on defaults.
-                  type: string
-                run:
-                  description: Run describes the run container, which is the runtime
-                    of the driver for the actual test.
-                  properties:
-                    args:
-                      description: Args provide command line arguments to the command.
-                      items:
-                        type: string
-                      type: array
-                    command:
-                      description: Command is the path to the executable that will
-                        run the component of the test. When unset, the entrypoint
-                        of the container image will be used.
-                      items:
-                        type: string
-                      type: array
-                    env:
-                      description: Env are environment variables that should be set
-                        within the running container.
-                      items:
-                        description: EnvVar represents an environment variable present
-                          in a Container.
-                        properties:
-                          name:
-                            description: Name of the environment variable. Must be
-                              a C_IDENTIFIER.
-                            type: string
-                          value:
-                            description: 'Variable references $(VAR_NAME) are expanded
-                              using the previous defined environment variables in
-                              the container and any service environment variables.
-                              If a variable cannot be resolved, the reference in the
-                              input string will be unchanged. The $(VAR_NAME) syntax
-                              can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
-                              references will never be expanded, regardless of whether
-                              the variable exists or not. Defaults to "".'
-                            type: string
-                          valueFrom:
-                            description: Source for the environment variable's value.
-                              Cannot be used if value is not empty.
-                            properties:
-                              configMapKeyRef:
-                                description: Selects a key of a ConfigMap.
-                                properties:
-                                  key:
-                                    description: The key to select.
-                                    type: string
-                                  name:
-                                    description: 'Name of the referent. More info:
-                                      https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                      TODO: Add other useful fields. apiVersion, kind,
-                                      uid?'
-                                    type: string
-                                  optional:
-                                    description: Specify whether the ConfigMap or
-                                      its key must be defined
-                                    type: boolean
-                                required:
-                                - key
-                                type: object
-                              fieldRef:
-                                description: 'Selects a field of the pod: supports
-                                  metadata.name, metadata.namespace, metadata.labels,
-                                  metadata.annotations, spec.nodeName, spec.serviceAccountName,
-                                  status.hostIP, status.podIP, status.podIPs.'
-                                properties:
-                                  apiVersion:
-                                    description: Version of the schema the FieldPath
-                                      is written in terms of, defaults to "v1".
-                                    type: string
-                                  fieldPath:
-                                    description: Path of the field to select in the
-                                      specified API version.
-                                    type: string
-                                required:
-                                - fieldPath
-                                type: object
-                              resourceFieldRef:
-                                description: 'Selects a resource of the container:
-                                  only resources limits and requests (limits.cpu,
-                                  limits.memory, limits.ephemeral-storage, requests.cpu,
-                                  requests.memory and requests.ephemeral-storage)
-                                  are currently supported.'
-                                properties:
-                                  containerName:
-                                    description: 'Container name: required for volumes,
-                                      optional for env vars'
-                                    type: string
-                                  divisor:
-                                    anyOf:
-                                    - type: integer
-                                    - type: string
-                                    description: Specifies the output format of the
-                                      exposed resources, defaults to "1"
-                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                    x-kubernetes-int-or-string: true
-                                  resource:
-                                    description: 'Required: resource to select'
-                                    type: string
-                                required:
-                                - resource
-                                type: object
-                              secretKeyRef:
-                                description: Selects a key of a secret in the pod's
-                                  namespace
-                                properties:
-                                  key:
-                                    description: The key of the secret to select from.  Must
-                                      be a valid secret key.
-                                    type: string
-                                  name:
-                                    description: 'Name of the referent. More info:
-                                      https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                      TODO: Add other useful fields. apiVersion, kind,
-                                      uid?'
-                                    type: string
-                                  optional:
-                                    description: Specify whether the Secret or its
-                                      key must be defined
-                                    type: boolean
-                                required:
-                                - key
-                                type: object
-                            type: object
-                        required:
-                        - name
-                        type: object
-                      type: array
-                    image:
-                      description: "Image is the name of the container image that
-                        provides the runtime for the test component. \n This field
-                        is optional when a Language is specified on the Component.
-                        For example, a developer may specify a \"python3\" client.
-                        This field will be implicitly set to the most recent supported
-                        python3 image."
-                      type: string
-                    volumeMounts:
-                      description: VolumeMounts permit sharing directories across
-                        containers.
-                      items:
-                        description: VolumeMount describes a mounting of a Volume
-                          within a container.
-                        properties:
-                          mountPath:
-                            description: Path within the container at which the volume
-                              should be mounted.  Must not contain ':'.
-                            type: string
-                          mountPropagation:
-                            description: mountPropagation determines how mounts are
-                              propagated from the host to container and the other
-                              way around. When not set, MountPropagationNone is used.
-                              This field is beta in 1.10.
-                            type: string
-                          name:
-                            description: This must match the Name of a Volume.
-                            type: string
-                          readOnly:
-                            description: Mounted read-only if true, read-write otherwise
-                              (false or unspecified). Defaults to false.
-                            type: boolean
-                          subPath:
-                            description: Path within the volume from which the container's
-                              volume should be mounted. Defaults to "" (volume's root).
-                            type: string
-                          subPathExpr:
-                            description: Expanded path within the volume from which
-                              the container's volume should be mounted. Behaves similarly
-                              to SubPath but environment variable references $(VAR_NAME)
-                              are expanded using the container's environment. Defaults
-                              to "" (volume's root). SubPathExpr and SubPath are mutually
-                              exclusive.
-                            type: string
-                        required:
-                        - mountPath
-                        - name
-                        type: object
-                      type: array
-                  type: object
-              required:
-              - language
-              - run
-              type: object
-            results:
-              description: Results configures where the results of the test should
-                be stored. When omitted, the results will only be stored in Kubernetes
-                for a limited time.
-              properties:
-                bigQueryTable:
-                  description: BigQueryTable names a dataset where the results of
-                    the test should be stored. If omitted, no results are saved to
-                    BigQuery.
-                  type: string
-              type: object
-            scenariosJSON:
-              description: 'ScenariosJSON is string with the contents of a Scenarios
-                message, formatted as JSON. See the Scenarios protobuf definition
-                for details: https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.'
-              type: string
-            servers:
-              description: Servers are a list of components that receive traffic from
-                clients.
-              items:
-                description: Server defines a component that receives traffic from
-                  a set of client components.
+              results:
+                description: Results configures where the results of the test should
+                  be stored. When omitted, the results will only be stored in Kubernetes
+                  for a limited time.
                 properties:
-                  build:
-                    description: "Build describes how the cloned code should be built,
-                      including any compiler arguments or flags. This field is only
-                      necessary if the output from the clone container must be pre-processed
-                      before running the tests in the run container. \n When build
-                      is specified on a test, the operator will use the server's language
-                      to find a container with a compiler for that language. If the
-                      language is unknown to the operator, a user must include a custom
-                      docker image. \n Note that it does not usually make sense to
-                      include build instructions without clone instructions. If doing
-                      so, the build container must include its input and write its
-                      output into the /src/workspace directory for the run container
-                      to access it."
-                    properties:
-                      args:
-                        description: Args provide command line arguments to the command.
-                          If a command is not specified, these arguments will be ignored
-                          in favor of the default arguments for container's entrypoint.
-                        items:
-                          type: string
-                        type: array
-                      command:
-                        description: Command is the path to the executable that will
-                          build the code in the /src/workspace directory. If unspecified,
-                          the entrypoint for the container is used.
-                        items:
-                          type: string
-                        type: array
-                      env:
-                        description: Env are environment variables that should be
-                          set within the build container. This is provided for compilers
-                          that alter behavior due to certain environment variables.
-                        items:
-                          description: EnvVar represents an environment variable present
-                            in a Container.
-                          properties:
-                            name:
-                              description: Name of the environment variable. Must
-                                be a C_IDENTIFIER.
-                              type: string
-                            value:
-                              description: 'Variable references $(VAR_NAME) are expanded
-                                using the previous defined environment variables in
-                                the container and any service environment variables.
-                                If a variable cannot be resolved, the reference in
-                                the input string will be unchanged. The $(VAR_NAME)
-                                syntax can be escaped with a double $$, ie: $$(VAR_NAME).
-                                Escaped references will never be expanded, regardless
-                                of whether the variable exists or not. Defaults to
-                                "".'
-                              type: string
-                            valueFrom:
-                              description: Source for the environment variable's value.
-                                Cannot be used if value is not empty.
-                              properties:
-                                configMapKeyRef:
-                                  description: Selects a key of a ConfigMap.
-                                  properties:
-                                    key:
-                                      description: The key to select.
-                                      type: string
-                                    name:
-                                      description: 'Name of the referent. More info:
-                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion,
-                                        kind, uid?'
-                                      type: string
-                                    optional:
-                                      description: Specify whether the ConfigMap or
-                                        its key must be defined
-                                      type: boolean
-                                  required:
-                                  - key
-                                  type: object
-                                fieldRef:
-                                  description: 'Selects a field of the pod: supports
-                                    metadata.name, metadata.namespace, metadata.labels,
-                                    metadata.annotations, spec.nodeName, spec.serviceAccountName,
-                                    status.hostIP, status.podIP, status.podIPs.'
-                                  properties:
-                                    apiVersion:
-                                      description: Version of the schema the FieldPath
-                                        is written in terms of, defaults to "v1".
-                                      type: string
-                                    fieldPath:
-                                      description: Path of the field to select in
-                                        the specified API version.
-                                      type: string
-                                  required:
-                                  - fieldPath
-                                  type: object
-                                resourceFieldRef:
-                                  description: 'Selects a resource of the container:
-                                    only resources limits and requests (limits.cpu,
-                                    limits.memory, limits.ephemeral-storage, requests.cpu,
-                                    requests.memory and requests.ephemeral-storage)
-                                    are currently supported.'
-                                  properties:
-                                    containerName:
-                                      description: 'Container name: required for volumes,
-                                        optional for env vars'
-                                      type: string
-                                    divisor:
-                                      anyOf:
-                                      - type: integer
-                                      - type: string
-                                      description: Specifies the output format of
-                                        the exposed resources, defaults to "1"
-                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                      x-kubernetes-int-or-string: true
-                                    resource:
-                                      description: 'Required: resource to select'
-                                      type: string
-                                  required:
-                                  - resource
-                                  type: object
-                                secretKeyRef:
-                                  description: Selects a key of a secret in the pod's
-                                    namespace
-                                  properties:
-                                    key:
-                                      description: The key of the secret to select
-                                        from.  Must be a valid secret key.
-                                      type: string
-                                    name:
-                                      description: 'Name of the referent. More info:
-                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion,
-                                        kind, uid?'
-                                      type: string
-                                    optional:
-                                      description: Specify whether the Secret or its
-                                        key must be defined
-                                      type: boolean
-                                  required:
-                                  - key
-                                  type: object
-                              type: object
-                          required:
-                          - name
-                          type: object
-                        type: array
-                      image:
-                        description: "Image is the name of the container image that
-                          can build code, placing an executable in the /src/workspace
-                          directory. \n This field is optional when a Language is
-                          specified on the Component. For example, a developer may
-                          specify a \"java\" server. Then, this image will default
-                          to the most recent gradle image."
-                        type: string
-                    type: object
-                  clone:
-                    description: Clone specifies the repository and snapshot where
-                      the code for the server can be found. This field should not
-                      be set if the code has been prebuilt in the run image.
-                    properties:
-                      gitRef:
-                        description: GitRef is a branch, tag or commit hash to checkout
-                          after a successful clone. This will be the version of the
-                          code in the /src/workspace directory.
-                        type: string
-                      image:
-                        description: "Image is the name of the container image that
-                          can clone code, placing it in a /src/workspace directory.
-                          \n This field is optional. When omitted, a container that
-                          can clone public GitHub repos over HTTPs is used."
-                        type: string
-                      repo:
-                        description: Repo is the URL to clone a git repository. With
-                          GitHub, this should end in a `.git` extension.
-                        type: string
-                    type: object
-                  language:
-                    description: "Language is the code that identifies the programming
-                      language used by the server. For example, \"java\" may represent
-                      Java. \n Specifying a language is required. If the language
-                      is unknown to the operator, a user must manually set a run image.
-                      If the user intends for the operator to clone and build code,
-                      it must also manually set a build image."
+                  bigQueryTable:
+                    description: BigQueryTable names a dataset where the results of
+                      the test should be stored. If omitted, no results are saved
+                      to BigQuery.
                     type: string
-                  name:
-                    description: Name is a string that distinguishes this server from
-                      others in the test. Since tests are currently limited to one
-                      server, setting this field is not recommended. set this field.
-                      If no name is explicitly provided, the operator will assign
-                      one.
-                    type: string
-                  pool:
-                    description: Pool specifies the name of the set of nodes where
-                      this server should be scheduled. If unset, the controller will
-                      choose a pool based on defaults.
-                    type: string
-                  run:
-                    description: Run describes the run container, which is the runtime
-                      of the server for the actual test.
-                    properties:
-                      args:
-                        description: Args provide command line arguments to the command.
-                        items:
-                          type: string
-                        type: array
-                      command:
-                        description: Command is the path to the executable that will
-                          run the component of the test. When unset, the entrypoint
-                          of the container image will be used.
-                        items:
-                          type: string
-                        type: array
-                      env:
-                        description: Env are environment variables that should be
-                          set within the running container.
-                        items:
-                          description: EnvVar represents an environment variable present
-                            in a Container.
-                          properties:
-                            name:
-                              description: Name of the environment variable. Must
-                                be a C_IDENTIFIER.
-                              type: string
-                            value:
-                              description: 'Variable references $(VAR_NAME) are expanded
-                                using the previous defined environment variables in
-                                the container and any service environment variables.
-                                If a variable cannot be resolved, the reference in
-                                the input string will be unchanged. The $(VAR_NAME)
-                                syntax can be escaped with a double $$, ie: $$(VAR_NAME).
-                                Escaped references will never be expanded, regardless
-                                of whether the variable exists or not. Defaults to
-                                "".'
-                              type: string
-                            valueFrom:
-                              description: Source for the environment variable's value.
-                                Cannot be used if value is not empty.
-                              properties:
-                                configMapKeyRef:
-                                  description: Selects a key of a ConfigMap.
-                                  properties:
-                                    key:
-                                      description: The key to select.
-                                      type: string
-                                    name:
-                                      description: 'Name of the referent. More info:
-                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion,
-                                        kind, uid?'
-                                      type: string
-                                    optional:
-                                      description: Specify whether the ConfigMap or
-                                        its key must be defined
-                                      type: boolean
-                                  required:
-                                  - key
-                                  type: object
-                                fieldRef:
-                                  description: 'Selects a field of the pod: supports
-                                    metadata.name, metadata.namespace, metadata.labels,
-                                    metadata.annotations, spec.nodeName, spec.serviceAccountName,
-                                    status.hostIP, status.podIP, status.podIPs.'
-                                  properties:
-                                    apiVersion:
-                                      description: Version of the schema the FieldPath
-                                        is written in terms of, defaults to "v1".
-                                      type: string
-                                    fieldPath:
-                                      description: Path of the field to select in
-                                        the specified API version.
-                                      type: string
-                                  required:
-                                  - fieldPath
-                                  type: object
-                                resourceFieldRef:
-                                  description: 'Selects a resource of the container:
-                                    only resources limits and requests (limits.cpu,
-                                    limits.memory, limits.ephemeral-storage, requests.cpu,
-                                    requests.memory and requests.ephemeral-storage)
-                                    are currently supported.'
-                                  properties:
-                                    containerName:
-                                      description: 'Container name: required for volumes,
-                                        optional for env vars'
-                                      type: string
-                                    divisor:
-                                      anyOf:
-                                      - type: integer
-                                      - type: string
-                                      description: Specifies the output format of
-                                        the exposed resources, defaults to "1"
-                                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                                      x-kubernetes-int-or-string: true
-                                    resource:
-                                      description: 'Required: resource to select'
-                                      type: string
-                                  required:
-                                  - resource
-                                  type: object
-                                secretKeyRef:
-                                  description: Selects a key of a secret in the pod's
-                                    namespace
-                                  properties:
-                                    key:
-                                      description: The key of the secret to select
-                                        from.  Must be a valid secret key.
-                                      type: string
-                                    name:
-                                      description: 'Name of the referent. More info:
-                                        https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                                        TODO: Add other useful fields. apiVersion,
-                                        kind, uid?'
-                                      type: string
-                                    optional:
-                                      description: Specify whether the Secret or its
-                                        key must be defined
-                                      type: boolean
-                                  required:
-                                  - key
-                                  type: object
-                              type: object
-                          required:
-                          - name
-                          type: object
-                        type: array
-                      image:
-                        description: "Image is the name of the container image that
-                          provides the runtime for the test component. \n This field
-                          is optional when a Language is specified on the Component.
-                          For example, a developer may specify a \"python3\" client.
-                          This field will be implicitly set to the most recent supported
-                          python3 image."
-                        type: string
-                      volumeMounts:
-                        description: VolumeMounts permit sharing directories across
-                          containers.
-                        items:
-                          description: VolumeMount describes a mounting of a Volume
-                            within a container.
-                          properties:
-                            mountPath:
-                              description: Path within the container at which the
-                                volume should be mounted.  Must not contain ':'.
-                              type: string
-                            mountPropagation:
-                              description: mountPropagation determines how mounts
-                                are propagated from the host to container and the
-                                other way around. When not set, MountPropagationNone
-                                is used. This field is beta in 1.10.
-                              type: string
-                            name:
-                              description: This must match the Name of a Volume.
-                              type: string
-                            readOnly:
-                              description: Mounted read-only if true, read-write otherwise
-                                (false or unspecified). Defaults to false.
-                              type: boolean
-                            subPath:
-                              description: Path within the volume from which the container's
-                                volume should be mounted. Defaults to "" (volume's
-                                root).
-                              type: string
-                            subPathExpr:
-                              description: Expanded path within the volume from which
-                                the container's volume should be mounted. Behaves
-                                similarly to SubPath but environment variable references
-                                $(VAR_NAME) are expanded using the container's environment.
-                                Defaults to "" (volume's root). SubPathExpr and SubPath
-                                are mutually exclusive.
-                              type: string
-                          required:
-                          - mountPath
-                          - name
-                          type: object
-                        type: array
-                    type: object
-                required:
-                - language
-                - run
                 type: object
-              type: array
-            timeoutSeconds:
-              description: Timeout provides the longest running time allowed for a
-                LoadTest.
-              format: int32
-              minimum: 1
-              type: integer
-            ttlSeconds:
-              description: TTL provides the longest time a LoadTest can live on the
-                cluster.
-              format: int32
-              minimum: 1
-              type: integer
-          required:
-          - timeoutSeconds
-          - ttlSeconds
-          type: object
-        status:
-          description: LoadTestStatus defines the observed state of LoadTest
-          properties:
-            message:
-              description: Message is a human legible string that describes the current
-                state.
-              type: string
-            reason:
-              description: Reason is a camel-case string that indicates the reasoning
-                behind the current state.
-              type: string
-            startTime:
-              description: StartTime is the time when the controller first reconciled
-                the load test. It is maintained in a best-attempt effort; meaning,
-                it is not guaranteed to be correct.
-              format: date-time
-              type: string
-            state:
-              description: State identifies the current state of the load test. It
-                is important to note that this state is level-based. This means its
-                transition is non-deterministic.
-              type: string
-            stopTime:
-              description: StopTime is the time when the controller last entered the
-                Succeeded, Failed or Errored states.
-              format: date-time
-              type: string
-          required:
-          - state
-          type: object
-      type: object
-  version: v1
-  versions:
-  - name: v1
+              scenariosJSON:
+                description: 'ScenariosJSON is string with the contents of a Scenarios
+                  message, formatted as JSON. See the Scenarios protobuf definition
+                  for details: https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto.'
+                type: string
+              servers:
+                description: Servers are a list of components that receive traffic
+                  from clients.
+                items:
+                  description: Server defines a component that receives traffic from
+                    a set of client components.
+                  properties:
+                    build:
+                      description: "Build describes how the cloned code should be
+                        built, including any compiler arguments or flags. This field
+                        is only necessary if the output from the clone container must
+                        be pre-processed before running the tests in the run container.
+                        \n When build is specified on a test, the operator will use
+                        the server's language to find a container with a compiler
+                        for that language. If the language is unknown to the operator,
+                        a user must include a custom docker image. \n Note that it
+                        does not usually make sense to include build instructions
+                        without clone instructions. If doing so, the build container
+                        must include its input and write its output into the /src/workspace
+                        directory for the run container to access it."
+                      properties:
+                        args:
+                          description: Args provide command line arguments to the
+                            command. If a command is not specified, these arguments
+                            will be ignored in favor of the default arguments for
+                            container's entrypoint.
+                          items:
+                            type: string
+                          type: array
+                        command:
+                          description: Command is the path to the executable that
+                            will build the code in the /src/workspace directory. If
+                            unspecified, the entrypoint for the container is used.
+                          items:
+                            type: string
+                          type: array
+                        env:
+                          description: Env are environment variables that should be
+                            set within the build container. This is provided for compilers
+                            that alter behavior due to certain environment variables.
+                          items:
+                            description: EnvVar represents an environment variable
+                              present in a Container.
+                            properties:
+                              name:
+                                description: Name of the environment variable. Must
+                                  be a C_IDENTIFIER.
+                                type: string
+                              value:
+                                description: 'Variable references $(VAR_NAME) are
+                                  expanded using the previous defined environment
+                                  variables in the container and any service environment
+                                  variables. If a variable cannot be resolved, the
+                                  reference in the input string will be unchanged.
+                                  The $(VAR_NAME) syntax can be escaped with a double
+                                  $$, ie: $$(VAR_NAME). Escaped references will never
+                                  be expanded, regardless of whether the variable
+                                  exists or not. Defaults to "".'
+                                type: string
+                              valueFrom:
+                                description: Source for the environment variable's
+                                  value. Cannot be used if value is not empty.
+                                properties:
+                                  configMapKeyRef:
+                                    description: Selects a key of a ConfigMap.
+                                    properties:
+                                      key:
+                                        description: The key to select.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the ConfigMap
+                                          or its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  fieldRef:
+                                    description: 'Selects a field of the pod: supports
+                                      metadata.name, metadata.namespace, `metadata.labels[''<KEY>'']`,
+                                      `metadata.annotations[''<KEY>'']`, spec.nodeName,
+                                      spec.serviceAccountName, status.hostIP, status.podIP,
+                                      status.podIPs.'
+                                    properties:
+                                      apiVersion:
+                                        description: Version of the schema the FieldPath
+                                          is written in terms of, defaults to "v1".
+                                        type: string
+                                      fieldPath:
+                                        description: Path of the field to select in
+                                          the specified API version.
+                                        type: string
+                                    required:
+                                    - fieldPath
+                                    type: object
+                                  resourceFieldRef:
+                                    description: 'Selects a resource of the container:
+                                      only resources limits and requests (limits.cpu,
+                                      limits.memory, limits.ephemeral-storage, requests.cpu,
+                                      requests.memory and requests.ephemeral-storage)
+                                      are currently supported.'
+                                    properties:
+                                      containerName:
+                                        description: 'Container name: required for
+                                          volumes, optional for env vars'
+                                        type: string
+                                      divisor:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        description: Specifies the output format of
+                                          the exposed resources, defaults to "1"
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      resource:
+                                        description: 'Required: resource to select'
+                                        type: string
+                                    required:
+                                    - resource
+                                    type: object
+                                  secretKeyRef:
+                                    description: Selects a key of a secret in the
+                                      pod's namespace
+                                    properties:
+                                      key:
+                                        description: The key of the secret to select
+                                          from.  Must be a valid secret key.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the Secret or
+                                          its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
+                          type: array
+                        image:
+                          description: "Image is the name of the container image that
+                            can build code, placing an executable in the /src/workspace
+                            directory. \n This field is optional when a Language is
+                            specified on the Component. For example, a developer may
+                            specify a \"java\" server. Then, this image will default
+                            to the most recent gradle image."
+                          type: string
+                      type: object
+                    clone:
+                      description: Clone specifies the repository and snapshot where
+                        the code for the server can be found. This field should not
+                        be set if the code has been prebuilt in the run image.
+                      properties:
+                        gitRef:
+                          description: GitRef is a branch, tag or commit hash to checkout
+                            after a successful clone. This will be the version of
+                            the code in the /src/workspace directory.
+                          type: string
+                        image:
+                          description: "Image is the name of the container image that
+                            can clone code, placing it in a /src/workspace directory.
+                            \n This field is optional. When omitted, a container that
+                            can clone public GitHub repos over HTTPs is used."
+                          type: string
+                        repo:
+                          description: Repo is the URL to clone a git repository.
+                            With GitHub, this should end in a `.git` extension.
+                          type: string
+                      type: object
+                    language:
+                      description: "Language is the code that identifies the programming
+                        language used by the server. For example, \"java\" may represent
+                        Java. \n Specifying a language is required. If the language
+                        is unknown to the operator, a user must manually set a run
+                        image. If the user intends for the operator to clone and build
+                        code, it must also manually set a build image."
+                      type: string
+                    name:
+                      description: Name is a string that distinguishes this server
+                        from others in the test. Since tests are currently limited
+                        to one server, setting this field is not recommended. set
+                        this field. If no name is explicitly provided, the operator
+                        will assign one.
+                      type: string
+                    pool:
+                      description: Pool specifies the name of the set of nodes where
+                        this server should be scheduled. If unset, the controller
+                        will choose a pool based on defaults.
+                      type: string
+                    run:
+                      description: Run describes the run container, which is the runtime
+                        of the server for the actual test.
+                      properties:
+                        args:
+                          description: Args provide command line arguments to the
+                            command.
+                          items:
+                            type: string
+                          type: array
+                        command:
+                          description: Command is the path to the executable that
+                            will run the component of the test. When unset, the entrypoint
+                            of the container image will be used.
+                          items:
+                            type: string
+                          type: array
+                        env:
+                          description: Env are environment variables that should be
+                            set within the running container.
+                          items:
+                            description: EnvVar represents an environment variable
+                              present in a Container.
+                            properties:
+                              name:
+                                description: Name of the environment variable. Must
+                                  be a C_IDENTIFIER.
+                                type: string
+                              value:
+                                description: 'Variable references $(VAR_NAME) are
+                                  expanded using the previous defined environment
+                                  variables in the container and any service environment
+                                  variables. If a variable cannot be resolved, the
+                                  reference in the input string will be unchanged.
+                                  The $(VAR_NAME) syntax can be escaped with a double
+                                  $$, ie: $$(VAR_NAME). Escaped references will never
+                                  be expanded, regardless of whether the variable
+                                  exists or not. Defaults to "".'
+                                type: string
+                              valueFrom:
+                                description: Source for the environment variable's
+                                  value. Cannot be used if value is not empty.
+                                properties:
+                                  configMapKeyRef:
+                                    description: Selects a key of a ConfigMap.
+                                    properties:
+                                      key:
+                                        description: The key to select.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the ConfigMap
+                                          or its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                  fieldRef:
+                                    description: 'Selects a field of the pod: supports
+                                      metadata.name, metadata.namespace, `metadata.labels[''<KEY>'']`,
+                                      `metadata.annotations[''<KEY>'']`, spec.nodeName,
+                                      spec.serviceAccountName, status.hostIP, status.podIP,
+                                      status.podIPs.'
+                                    properties:
+                                      apiVersion:
+                                        description: Version of the schema the FieldPath
+                                          is written in terms of, defaults to "v1".
+                                        type: string
+                                      fieldPath:
+                                        description: Path of the field to select in
+                                          the specified API version.
+                                        type: string
+                                    required:
+                                    - fieldPath
+                                    type: object
+                                  resourceFieldRef:
+                                    description: 'Selects a resource of the container:
+                                      only resources limits and requests (limits.cpu,
+                                      limits.memory, limits.ephemeral-storage, requests.cpu,
+                                      requests.memory and requests.ephemeral-storage)
+                                      are currently supported.'
+                                    properties:
+                                      containerName:
+                                        description: 'Container name: required for
+                                          volumes, optional for env vars'
+                                        type: string
+                                      divisor:
+                                        anyOf:
+                                        - type: integer
+                                        - type: string
+                                        description: Specifies the output format of
+                                          the exposed resources, defaults to "1"
+                                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                        x-kubernetes-int-or-string: true
+                                      resource:
+                                        description: 'Required: resource to select'
+                                        type: string
+                                    required:
+                                    - resource
+                                    type: object
+                                  secretKeyRef:
+                                    description: Selects a key of a secret in the
+                                      pod's namespace
+                                    properties:
+                                      key:
+                                        description: The key of the secret to select
+                                          from.  Must be a valid secret key.
+                                        type: string
+                                      name:
+                                        description: 'Name of the referent. More info:
+                                          https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          TODO: Add other useful fields. apiVersion,
+                                          kind, uid?'
+                                        type: string
+                                      optional:
+                                        description: Specify whether the Secret or
+                                          its key must be defined
+                                        type: boolean
+                                    required:
+                                    - key
+                                    type: object
+                                type: object
+                            required:
+                            - name
+                            type: object
+                          type: array
+                        image:
+                          description: "Image is the name of the container image that
+                            provides the runtime for the test component. \n This field
+                            is optional when a Language is specified on the Component.
+                            For example, a developer may specify a \"python3\" client.
+                            This field will be implicitly set to the most recent supported
+                            python3 image."
+                          type: string
+                        volumeMounts:
+                          description: VolumeMounts permit sharing directories across
+                            containers.
+                          items:
+                            description: VolumeMount describes a mounting of a Volume
+                              within a container.
+                            properties:
+                              mountPath:
+                                description: Path within the container at which the
+                                  volume should be mounted.  Must not contain ':'.
+                                type: string
+                              mountPropagation:
+                                description: mountPropagation determines how mounts
+                                  are propagated from the host to container and the
+                                  other way around. When not set, MountPropagationNone
+                                  is used. This field is beta in 1.10.
+                                type: string
+                              name:
+                                description: This must match the Name of a Volume.
+                                type: string
+                              readOnly:
+                                description: Mounted read-only if true, read-write
+                                  otherwise (false or unspecified). Defaults to false.
+                                type: boolean
+                              subPath:
+                                description: Path within the volume from which the
+                                  container's volume should be mounted. Defaults to
+                                  "" (volume's root).
+                                type: string
+                              subPathExpr:
+                                description: Expanded path within the volume from
+                                  which the container's volume should be mounted.
+                                  Behaves similarly to SubPath but environment variable
+                                  references $(VAR_NAME) are expanded using the container's
+                                  environment. Defaults to "" (volume's root). SubPathExpr
+                                  and SubPath are mutually exclusive.
+                                type: string
+                            required:
+                            - mountPath
+                            - name
+                            type: object
+                          type: array
+                      type: object
+                  required:
+                  - language
+                  - run
+                  type: object
+                type: array
+              timeoutSeconds:
+                description: Timeout provides the longest running time allowed for
+                  a LoadTest.
+                format: int32
+                minimum: 1
+                type: integer
+              ttlSeconds:
+                description: TTL provides the longest time a LoadTest can live on
+                  the cluster.
+                format: int32
+                minimum: 1
+                type: integer
+            required:
+            - timeoutSeconds
+            - ttlSeconds
+            type: object
+          status:
+            description: LoadTestStatus defines the observed state of LoadTest
+            properties:
+              message:
+                description: Message is a human legible string that describes the
+                  current state.
+                type: string
+              reason:
+                description: Reason is a camel-case string that indicates the reasoning
+                  behind the current state.
+                type: string
+              startTime:
+                description: StartTime is the time when the controller first reconciled
+                  the load test. It is maintained in a best-attempt effort; meaning,
+                  it is not guaranteed to be correct.
+                format: date-time
+                type: string
+              state:
+                description: State identifies the current state of the load test.
+                  It is important to note that this state is level-based. This means
+                  its transition is non-deterministic.
+                type: string
+              stopTime:
+                description: StopTime is the time when the controller last entered
+                  the Succeeded, Failed or Errored states.
+                format: date-time
+                type: string
+            required:
+            - state
+            type: object
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
