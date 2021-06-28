@@ -87,4 +87,4 @@ ENV QPS_WORKERS_FILE=""
 ENV SCENARIOS_FILE="/src/driver/example.json"
 ENV BQ_RESULT_TABLE=""
 
-CMD ["bash", "-c", "timeout --kill-after=$KILL_AFTER $POD_TIMEOUT /src/driver/run.sh"]
+CMD ["bash", "-c", "timeout --kill-after=${KILL_AFTER} ${POD_TIMEOUT} /src/driver/run.sh"]
