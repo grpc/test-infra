@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 gRPC authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,18 +23,16 @@ while getopts s: flag; do
   esac
 done
 
-echo "Server port: $input_server_port"
-
 source /usr/local/rvm/scripts/rvm
 export GEM_HOME=/src/workspace/saved/bundle/
 
 if [ -z "$input_server_port" ]; then
   echo "Server port is not set, starting the worker without server port provided"
-  timeout --kill-after="$KILL_AFTER" "$POD_TIMEOUT" ruby src/ruby/qps/proxy-worker.rb \
+  ruby src/ruby/qps/proxy-worker.rb \
     --driver_port="$DRIVER_PORT"
 else
   echo "Server port: $input_server_port"
-  timeout --kill-after="$KILL_AFTER" "$POD_TIMEOUT" ruby src/ruby/qps/proxy-worker.rb \
+  ruby src/ruby/qps/proxy-worker.rb \
     --driver_port="$DRIVER_PORT" \
     --server_port="$input_server_port"
 fi

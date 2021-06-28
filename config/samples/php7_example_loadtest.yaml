@@ -23,9 +23,13 @@ spec:
     language: php7
     name: '0'
     run:
+      args:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+        /run_scripts/run_worker.sh
       command:
       - bash
-      - /run_scripts/run_worker.sh
   driver:
     language: cxx
     name: '0'
