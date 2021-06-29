@@ -96,9 +96,9 @@ func main() {
 
 	test.languagesToGitref = map[string]string{}
 	converterToImageLanguage := map[string]string{
-		"c++":             "cxx",
-		"node_purejs":     "node",
-		"python_asyncio":  "python",
+		"c++":            "cxx",
+		"node_purejs":    "node",
+		"python_asyncio": "python",
 	}
 
 	for _, pair := range languagesSelected {
