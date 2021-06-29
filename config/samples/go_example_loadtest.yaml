@@ -38,7 +38,6 @@ spec:
     language: cxx
     name: '0'
     run: {}
-
   scenariosJSON: |
     {
       "scenarios": {
