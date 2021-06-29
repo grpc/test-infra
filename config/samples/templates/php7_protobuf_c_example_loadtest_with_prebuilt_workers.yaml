@@ -1,0 +1,110 @@
+# Load test configurations generated from a template by loadtest_config.py.
+# See documentation below:
+# https://github.com/grpc/grpc/blob/master/tools/run_tests/performance/README.md#grpc-oss-benchmarks
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  annotations:
+    pool: ${workers_pool}
+    scenario: php7_protobuf_c_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong
+    uniquifier: prebuilt
+  labels:
+    language: php7_protobuf_c
+    prefix: examples
+  name: examples-php7-protobuf-php-extension-to-cpp-protobuf-sync-unary-ping-pong-prebuilt
+spec:
+  clients:
+  - language: php7_protobuf_c
+    name: '0'
+    pool: ${workers_pool}
+    run:
+      args:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+        /run_scripts/run_worker.sh
+      command:
+      - bash
+      image: ${prebuilt_image_prefix}/php7_protobuf_c:${prebuilt_image_tag}
+  driver:
+    language: cxx
+    name: '0'
+    pool: ${driver_pool}
+    run:
+      image: ${driver_image}
+  results:
+    bigQueryTable: ${big_query_table}
+  scenariosJSON: |
+    {
+      "scenarios": {
+        "name": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong",
+        "num_servers": 1,
+        "num_clients": 1,
+        "client_config": {
+          "client_type": "SYNC_CLIENT",
+          "security_params": {
+            "use_test_ca": true,
+            "server_host_override": "foo.test.google.fr"
+          },
+          "outstanding_rpcs_per_channel": 1,
+          "client_channels": 1,
+          "async_client_threads": 1,
+          "client_processes": 0,
+          "threads_per_cq": 0,
+          "rpc_type": "UNARY",
+          "histogram_params": {
+            "resolution": 0.01,
+            "max_possible": 60000000000.0
+          },
+          "channel_args": [
+            {
+              "name": "grpc.optimization_target",
+              "str_value": "latency"
+            }
+          ],
+          "payload_config": {
+            "simple_params": {
+              "req_size": 0,
+              "resp_size": 0
+            }
+          },
+          "load_params": {
+            "closed_loop": {}
+          }
+        },
+        "server_config": {
+          "server_type": "SYNC_SERVER",
+          "security_params": {
+            "use_test_ca": true,
+            "server_host_override": "foo.test.google.fr"
+          },
+          "async_server_threads": 1,
+          "server_processes": 0,
+          "threads_per_cq": 0,
+          "channel_args": [
+            {
+              "name": "grpc.optimization_target",
+              "str_value": "latency"
+            }
+          ]
+        },
+        "warmup_seconds": 5,
+        "benchmark_seconds": 30
+      }
+    }
+  servers:
+  - language: cxx
+    name: '0'
+    pool: ${workers_pool}
+    run:
+      args:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+            /source/code/bazel-bin/test/cpp/qps/qps_worker \
+            --driver_port="${DRIVER_PORT}" --server_port=10010
+      command:
+      - bash
+      image: ${prebuilt_image_prefix}/cxx:${prebuilt_image_tag}
+  timeoutSeconds: 900
+  ttlSeconds: 86400
