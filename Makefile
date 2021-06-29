@@ -238,15 +238,6 @@ php7-image:
 push-php7-image:
 	docker push ${IMAGE_PREFIX}php7:${TEST_INFRA_VERSION}
 
-# Build the PHP7_protobuf_c runtime image
-php7-protobuf-c-image:
-	docker build -t ${IMAGE_PREFIX}php7_protobuf_c:${TEST_INFRA_VERSION} \
-		containers/runtime/php7_protobuf_c
-
-# Push the PHP7_protobuf_c runtime image to a docker registry
-push-php7-protobuf-c-image:
-	docker push ${IMAGE_PREFIX}php7_protobuf_c:${TEST_INFRA_VERSION}
-
 # Build the Python runtime image
 python-image:
 	docker build -t ${IMAGE_PREFIX}python:${TEST_INFRA_VERSION} \
@@ -277,7 +268,6 @@ all-images: \
 	python-image \
 	php7-build-image \
 	php7-image \
-	php7-protobuf-c-image \
 	ruby-build-image \
 	ruby-image \
 	csharp-build-image \
@@ -296,7 +286,6 @@ push-all-images: \
 	push-java-image \
 	push-php7-build-image \
 	push-php7-image \
-	push-php7-protobuf-c-image \
 	push-python-image \
 	push-ruby-build-image \
 	push-ruby-image \

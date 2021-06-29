@@ -39,7 +39,8 @@ RUN /bin/bash -l -c "echo 'rvm --default use ruby-2.5' >> ~/.bashrc"
 RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
 
 RUN mkdir /run_scripts
-ADD run_worker.sh /ruscripts
-RUN chmod 777 /run_scripts/run_worker.sh
+ADD run_worker.sh /run_scripts
+ADD run_protobuf_c_worker.sh /run_scripts
+RUN chmod -R 777 /run_scripts
 
 CMD ["bash"]
