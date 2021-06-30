@@ -103,4 +103,7 @@ COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
 
 RUN mkdir /run_scripts
 ADD run_worker.sh /run_scripts
+ADD run_protobuf_c_worker.sh /run_scripts
+RUN chmod -R 777 /run_scripts
+
 CMD ["bash"]

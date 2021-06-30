@@ -38,6 +38,10 @@ languages:
   buildImage: "{{ .BuildImagePrefix }}php7:{{ .Version }}"
   runImage: "{{ .ImagePrefix }}php7:{{ .Version }}"
 
+- language: php7_protobuf_c
+  buildImage: "{{ .BuildImagePrefix }}php7:{{ .Version }}"
+  runImage: "{{ .ImagePrefix }}php7:{{ .Version }}"
+
 - language: python
   buildImage: l.gcr.io/google/bazel:latest
   runImage: "{{ .ImagePrefix }}python:{{ .Version }}"

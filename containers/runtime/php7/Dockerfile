@@ -40,5 +40,7 @@ RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
 
 RUN mkdir /run_scripts
 ADD run_worker.sh /run_scripts
+ADD run_protobuf_c_worker.sh /run_scripts
+RUN chmod -R 777 /run_scripts
 
 CMD ["bash"]
