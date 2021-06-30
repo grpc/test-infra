@@ -10,7 +10,7 @@ metadata:
   labels:
     language: php7_protobuf_c
     prefix: examples
-  name: examples-php7-protobuf-c-php-extension-to-cpp-protobuf-sync-unary-ping-pong-basic
+  name: examples-php7-protobuf-c-extension-to-cpp-protobuf-sync-unary-ping-pong-basic
 spec:
   clients:
   - build:
@@ -33,7 +33,7 @@ spec:
   driver:
     language: cxx
     name: '0'
-    run: { }
+    run: {}
   scenariosJSON: |
     {
       "scenarios": {
@@ -52,7 +52,7 @@ spec:
           "client_processes": 0,
           "threads_per_cq": 0,
           "rpc_type": "UNARY",
-            "histogram_params": {
+          "histogram_params": {
             "resolution": 0.01,
             "max_possible": 60000000000.0
           },
@@ -67,7 +67,7 @@ spec:
               "req_size": 0,
               "resp_size": 0
             }
-         },
+          },
           "load_params": {
             "closed_loop": {}
           }

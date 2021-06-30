@@ -6,12 +6,12 @@ kind: LoadTest
 metadata:
   annotations:
     pool: ${workers_pool}
-    scenario: php7_protobuf_c_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong
+    scenario: php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong
     uniquifier: prebuilt
   labels:
     language: php7_protobuf_c
     prefix: examples
-  name: examples-php7-protobuf-php-extension-to-cpp-protobuf-sync-unary-ping-pong-prebuilt
+  name: examples-php7-protobuf-c-extension-to-cpp-protobuf-sync-unary-ping-pong-prebuilt
 spec:
   clients:
   - language: php7_protobuf_c
@@ -37,7 +37,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong",
+        "name": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
