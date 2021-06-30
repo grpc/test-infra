@@ -54,15 +54,15 @@ cleanup-agent: generate fmt vet
 
 # Build test runner tool
 runner: $(TOOLSPREREQ)
-	go build $(GOARGS) -o bin/runner cmd/runner/main.go
+	go build $(GOARGS) -o bin/runner tools/cmd/runner/main.go
 
 # Build prepare_prebuilt_workers tool
 prepare_prebuilt_workers: $(TOOLSPREREQ)
-	go build $(GOARGS) -o bin/prepare_prebuilt_workers tools/prepare_prebuilt_workers/prepare_prebuilt_workers.go
+	go build $(GOARGS) -o bin/prepare_prebuilt_workers tools/cmd/prepare_prebuilt_workers/main.go
 
 # Build delete_prebuilt_workers tool
 delete_prebuilt_workers: $(TOOLSPREREQ)
-	go build $(GOARGS) -o bin/delete_prebuilt_workers tools/delete_prebuilt_workers/delete_prebuilt_workers.go
+	go build $(GOARGS) -o bin/delete_prebuilt_workers tools/cmd/delete_prebuilt_workers/main.go
 
 # Install both CRDs and RBACs
 install: install-crd install-rbac

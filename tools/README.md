@@ -11,6 +11,19 @@ in that repository.
 
 [grpc/grpc]: https://github.com/grpc/grpc
 
+## Building the tools
+
+You can also run any of the tools in this folder with
+`go run tools/cmd/${tool}/main.go`.
+
+You can also build tool binaries using the makefile:
+
+```shell
+make all-tools
+```
+
+You can then invoke the binary for each tool as `bin/${tool}`.
+
 ## Test runner
 
 The [runner](../cmd/runner/main.go) tool runs collections of tests, optionally
@@ -43,14 +56,14 @@ annotation (the most common case in production, where tests run simultaneously
 on separate node pools):
 
 ```shell
-./bin/runner -i input.yaml -c queue1:2 -c queue2:3 -o sponge_log.xml
+bin/runner -i input.yaml -c queue1:2 -c queue2:3 -o sponge_log.xml
 ```
 
 The following examples runs tests from two different files on a single queue
 (useful for tests that run on a default pool):
 
 ```shell
-./bin/runner -i input1.yaml input2.yaml -annotation_key= -c :2
+bin/runner -i input1.yaml input2.yaml -annotation_key= -c :2
 ```
 
 The queue in the second example is unnamed. The two examples represent choices
@@ -60,7 +73,8 @@ it must be the only queue and all tests must be assigned to it.
 
 ## Using prebuilt images with gRPC OSS benchmarks
 
-The tools in the folder [pre_built_workers](pre_built_workers):
+The tools [prepare_prebuilt_workers](cmd/prepare_prebuilt_workers/main.go) and
+[delete_prebuilt_workers](cmd/delete_prebuiilt_workers/main.go):
 
 - Build the images with the worker executables compiled and embedded.
 - Push the images to specified registry.
@@ -68,18 +82,18 @@ The tools in the folder [pre_built_workers](pre_built_workers):
 
 ### Build and push images
 
-The [prepare_prebuilt_workers](pre_built_workers/prepare_prebuilt_workers.go)
-tool builds images and pushes them to a user specified Google cloud registry.
-For example, the following shows this process (building and pushing prebuilt
-images) for `cxx` and `go` workers:
+The [prepare_prebuilt_workers](cmd/prepare_prebuilt_workers/main.go) tool builds
+images and pushes them to a user specified Google cloud registry. For example,
+the following shows this process (building and pushing prebuilt images) for
+`cxx` and `go` workers:
 
 ```shell
-go run test-infra/tools/prepare_prebuilt_workers/prepare_prebuilt_workers.go \
+bin/prepare_prebuilt_workers \
      -l cxx:master \
      -l go:master \
      -p "${image_registry}" \
      -t "${tag}" \
-     -r test-infra/containers/pre_built_workers
+     -r containers/pre_built_workers
 ```
 
 This builds `cxx` and `go` images contain workers built from the commit/branch
@@ -109,21 +123,21 @@ script with the flag `-build-only=true`. The user could then push the images
 manually.
 
 The Dockerfiles that the script uses to build are available in
-[../containers/pre_built_images](../containers/pre_built_images).
+[../containers/pre_built_workers](../containers/pre_built_workers).
 
 ### Delete the images
 
-The tool [delete_prebuilt_workers](prebuilt_workers/delete_prebuilt_workers.go)
-deletes images within a user specified registry. The script lists all images
-within the specified registry, then checks if the image has the user specified
-tag. This script only supports Google Container Registry, because it relies on
-the google-cloud-sdk.
+The tool [delete_prebuilt_workers](cmd/delete_prebuilt_workers/main.go) deletes
+images within a user specified registry. The script lists all images within the
+specified registry, then checks if the image has the user specified tag. This
+script only supports Google Container Registry, because it relies on the
+google-cloud-sdk.
 
 The following example deletes all images within `${image_registry}` that have
 tag `${tag}`:
 
 ```shell
-go run test-infra/tools/delete_prebuilt_workers/delete_prebuilt_workers.go \
+bin/delete_prebuilt_workers \
     -p "${image_registry}" \
     -t "${tag}"
 ```
