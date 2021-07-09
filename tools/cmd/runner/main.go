@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/grpc/test-infra/tools/runner"
-	"github.com/grpc/test-infra/tools/runner/junit"
+	"github.com/grpc/test-infra/tools/runner/xunit"
 )
 
 func main() {
@@ -65,10 +65,9 @@ func main() {
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 
-	var report *junit.Report
+	var report *xunit.Report
 	if o != "" {
-		report = &junit.Report{
-			ID:   junit.Dashify(xunitSuitesName),
+		report = &xunit.Report{
 			Name: xunitSuitesName,
 		}
 	}
@@ -98,7 +97,7 @@ func main() {
 			log.Fatalf("Failed to create output file %q: %v", o, err)
 		}
 
-		err = report.WriteToStream(outputFile, junit.ReportWritingOptions{
+		err = report.WriteToStream(outputFile, xunit.ReportWritingOptions{
 			IndentSize: 2,
 			MaxRetries: 3,
 		})
