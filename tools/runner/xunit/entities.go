@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package junit
+package xunit
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
 	"strings"
 
@@ -27,10 +28,9 @@ import (
 // Report encapsulates the data for a JUnit XML report.
 type Report struct {
 	XMLName       xml.Name     `xml:"testsuites"`
-	ID            string       `xml:"id,attr"`
 	Name          string       `xml:"name,attr"`
 	TestCount     int          `xml:"tests,attr"`
-	FailureCount  int          `xml:"failures,attr"`
+	ErrorCount    int          `xml:"errors,attr"`
 	TimeInSeconds float64      `xml:"time,attr"`
 	Suites        []*TestSuite `xml:"testsuite"`
 }
@@ -38,10 +38,9 @@ type Report struct {
 // DeepCopy makes an exact copy of a Report object and all child objects.
 func (r *Report) DeepCopy() *Report {
 	c := &Report{
-		ID:            r.ID,
 		Name:          r.Name,
 		TestCount:     r.TestCount,
-		FailureCount:  r.FailureCount,
+		ErrorCount:    r.ErrorCount,
 		TimeInSeconds: r.TimeInSeconds,
 	}
 	for _, ts := range r.Suites {
@@ -63,14 +62,15 @@ func (r *Report) Finalize() *Report {
 	c := r.DeepCopy()
 	c.TestCount = 0
 
-	for _, testSuite := range c.Suites {
-		testSuite.FailureCount = 0
+	for i, testSuite := range c.Suites {
+		testSuite.ID = fmt.Sprint(i)
+		testSuite.ErrorCount = 0
 		testSuite.TestCount = len(testSuite.Cases)
 		for _, testCase := range testSuite.Cases {
-			testSuite.FailureCount += len(testCase.Failures)
+			testSuite.ErrorCount += len(testCase.Errors)
 		}
 
-		c.FailureCount += testSuite.FailureCount
+		c.ErrorCount += testSuite.ErrorCount
 		c.TestCount += testSuite.TestCount
 	}
 
@@ -118,7 +118,7 @@ type TestSuite struct {
 	ID            string      `xml:"id,attr"`
 	Name          string      `xml:"name,attr"`
 	TestCount     int         `xml:"tests,attr"`
-	FailureCount  int         `xml:"failures,attr"`
+	ErrorCount    int         `xml:"errors,attr"`
 	TimeInSeconds float64     `xml:"time,attr"`
 	Cases         []*TestCase `xml:"testcase"`
 }
@@ -129,7 +129,7 @@ func (ts *TestSuite) DeepCopy() *TestSuite {
 		ID:            ts.ID,
 		Name:          ts.Name,
 		TestCount:     ts.TestCount,
-		FailureCount:  ts.FailureCount,
+		ErrorCount:    ts.ErrorCount,
 		TimeInSeconds: ts.TimeInSeconds,
 	}
 	for _, tc := range ts.Cases {
@@ -140,50 +140,34 @@ func (ts *TestSuite) DeepCopy() *TestSuite {
 
 // TestCase encapsulates metadata regarding a single test.
 type TestCase struct {
-	XMLName       xml.Name   `xml:"testcase"`
-	ID            string     `xml:"id,attr"`
-	Name          string     `xml:"name,attr"`
-	TimeInSeconds float64    `xml:"time,attr"`
-	Failures      []*Failure `xml:"failure"`
+	XMLName       xml.Name `xml:"testcase"`
+	Name          string   `xml:"name,attr"`
+	TimeInSeconds float64  `xml:"time,attr"`
+	Errors        []*Error `xml:"error"`
 }
 
 // DeepCopy makes an exact copy of a TestCase object and all child objects.
 func (tc *TestCase) DeepCopy() *TestCase {
 	c := &TestCase{
-		ID:            tc.ID,
 		Name:          tc.Name,
 		TimeInSeconds: tc.TimeInSeconds,
 	}
-	for _, f := range tc.Failures {
-		c.Failures = append(c.Failures, f.DeepCopy())
+	for _, f := range tc.Errors {
+		c.Errors = append(c.Errors, f.DeepCopy())
 	}
 	return c
 }
 
-// FailureType is a possible value of the "type" attribute on the
-// Failure JUnit XML tag.
-type FailureType string
-
-const (
-	// Warning signals that an error occurred which is not fatal.
-	Warning FailureType = "warning"
-
-	// Error signals that an error occurred which is fatal.
-	Error FailureType = "error"
-)
-
-// Failure encapsulates metadata regarding a test failure or warning.
-type Failure struct {
-	XMLName xml.Name    `xml:"failure"`
-	Type    FailureType `xml:"type,attr"`
-	Message string      `xml:"message,attr"`
-	Text    string      `xml:",chardata"`
+// Error encapsulates metadata regarding a test error.
+type Error struct {
+	XMLName xml.Name `xml:"error"`
+	Message string   `xml:"message,attr,omitempty"`
+	Text    string   `xml:",chardata"`
 }
 
 // DeepCopy makes an exact copy of a Failure object and all child objects.
-func (f *Failure) DeepCopy() *Failure {
-	return &Failure{
-		Type:    f.Type,
+func (f *Error) DeepCopy() *Error {
+	return &Error{
 		Message: f.Message,
 		Text:    f.Text,
 	}

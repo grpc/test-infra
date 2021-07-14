@@ -22,19 +22,19 @@ import (
 	"time"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/tools/runner/junit"
+	"github.com/grpc/test-infra/tools/runner/xunit"
 )
 
 // Reporter instances log the progress of the test suites and cases, filling a
-// junit.Report instance if provided.
+// xunit.Report instance if provided.
 type Reporter struct {
-	report    *junit.Report
+	report    *xunit.Report
 	startTime time.Time
 	endTime   time.Time
 }
 
 // NewReporter constructs a new reporter instance.
-func NewReporter(report *junit.Report) *Reporter {
+func NewReporter(report *xunit.Report) *Reporter {
 	return &Reporter{report: report}
 }
 
@@ -73,8 +73,7 @@ func (r *Reporter) NewTestSuiteReporter(qName string, logPrefixFmt string) *Test
 	}
 
 	if r.report != nil {
-		testSuite := &junit.TestSuite{
-			ID:   junit.Dashify(qName),
+		testSuite := &xunit.TestSuite{
 			Name: qName,
 		}
 		r.report.Suites = append(r.report.Suites, testSuite)
@@ -86,7 +85,7 @@ func (r *Reporter) NewTestSuiteReporter(qName string, logPrefixFmt string) *Test
 
 // TestSuiteReporter manages reports for tests that share a runner queue.
 type TestSuiteReporter struct {
-	testSuite    *junit.TestSuite
+	testSuite    *xunit.TestSuite
 	testCount    int
 	qName        string
 	logPrefixFmt string
@@ -140,8 +139,7 @@ func (tsr *TestSuiteReporter) NewTestCaseReporter(config *grpcv1.LoadTest) *Test
 	}
 
 	if tsr.testSuite != nil {
-		testCase := &junit.TestCase{
-			ID:   junit.Dashify(config.Name),
+		testCase := &xunit.TestCase{
 			Name: config.Name,
 		}
 		tsr.testSuite.Cases = append(tsr.testSuite.Cases, testCase)
@@ -153,7 +151,7 @@ func (tsr *TestSuiteReporter) NewTestCaseReporter(config *grpcv1.LoadTest) *Test
 
 // TestCaseReporter collects events for logging and reporting during a test.
 type TestCaseReporter struct {
-	testCase  *junit.TestCase
+	testCase  *xunit.TestCase
 	logPrintf func(format string, v ...interface{})
 	index     int
 	startTime time.Time
@@ -174,15 +172,6 @@ func (tcr *TestCaseReporter) Info(format string, v ...interface{}) {
 // The error that caused the message to be generated is also included.
 func (tcr *TestCaseReporter) Warning(format string, v ...interface{}) {
 	tcr.logPrintf(format, v...)
-
-	if tcr.testCase == nil {
-		return
-	}
-	tcr.testCase.Failures = append(tcr.testCase.Failures, &junit.Failure{
-		Type: junit.Warning,
-		Text: fmt.Sprintf(format, v...),
-	})
-
 }
 
 // Error records an error message generated during the test.
@@ -193,8 +182,7 @@ func (tcr *TestCaseReporter) Error(format string, v ...interface{}) {
 	if tcr.testCase == nil {
 		return
 	}
-	tcr.testCase.Failures = append(tcr.testCase.Failures, &junit.Failure{
-		Type: junit.Error,
+	tcr.testCase.Errors = append(tcr.testCase.Errors, &xunit.Error{
 		Text: fmt.Sprintf(format, v...),
 	})
 }
