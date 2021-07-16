@@ -92,6 +92,8 @@ func main() {
 	reporter.SetEndTime(time.Now())
 
 	if report != nil {
+		report.Finalize()
+
 		outputFile, err := os.Create(o)
 		if err != nil {
 			log.Fatalf("Failed to create output file %q: %v", o, err)

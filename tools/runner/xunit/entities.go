@@ -25,7 +25,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Report encapsulates the data for a JUnit XML report.
+// Report encapsulates the data for a xUnit XML report.
 type Report struct {
 	XMLName       xml.Name     `xml:"testsuites"`
 	Name          string       `xml:"name,attr"`
@@ -35,34 +35,14 @@ type Report struct {
 	Suites        []*TestSuite `xml:"testsuite"`
 }
 
-// DeepCopy makes an exact copy of a Report object and all child objects.
-func (r *Report) DeepCopy() *Report {
-	c := &Report{
-		Name:          r.Name,
-		TestCount:     r.TestCount,
-		ErrorCount:    r.ErrorCount,
-		TimeInSeconds: r.TimeInSeconds,
-	}
-	for _, ts := range r.Suites {
-		c.Suites = append(c.Suites, ts.DeepCopy())
-	}
-	return c
-}
+// Finalize iterates over the document object model and recomputes the counter
+// values for parent objects. This ensures, for instance, that the errors
+// attribute of a test suite specifies the correct sum of errors from its child
+// test cases. This method should be called once all test cases are complete.
+func (r *Report) Finalize() {
+	r.TestCount = 0
 
-// Finalize makes a deep copy of the report. Then, it recursively maps over the
-// document object model and recomputes the counter values for parent objects.
-// This ensures, for instance, that the failures attribute of a test suite
-// specifies the correct sum of failures from its child test cases. Finally, it
-// returns the copy with the correct values.
-//
-// This immutability ensures that there is thread-safety between reading and
-// writing to the report. This allows the report to be written even if not all
-// test cases have completed without harming later reporting.
-func (r *Report) Finalize() *Report {
-	c := r.DeepCopy()
-	c.TestCount = 0
-
-	for i, testSuite := range c.Suites {
+	for i, testSuite := range r.Suites {
 		testSuite.ID = fmt.Sprint(i)
 		testSuite.ErrorCount = 0
 		testSuite.TestCount = len(testSuite.Cases)
@@ -70,11 +50,9 @@ func (r *Report) Finalize() *Report {
 			testSuite.ErrorCount += len(testCase.Errors)
 		}
 
-		c.ErrorCount += testSuite.ErrorCount
-		c.TestCount += testSuite.TestCount
+		r.ErrorCount += testSuite.ErrorCount
+		r.TestCount += testSuite.TestCount
 	}
-
-	return c
 }
 
 // ReportWritingOptions wraps optional settings for the output report.
@@ -89,19 +67,19 @@ type ReportWritingOptions struct {
 
 // WriteToStream accepts any io.Writer and writes the contents of the report to
 // the stream. It accepts a ReportWritingOptions instance, which provides
-// additional granularity for tweaking the output.
+// additional granularity for tweaking the output. The method r.Finalize()
+// should be called before writing the report.
 func (r *Report) WriteToStream(w io.Writer, opts ReportWritingOptions) error {
-	c := r.Finalize()
-	bytes, err := xml.MarshalIndent(c, "", strings.Repeat(" ", opts.IndentSize))
+	bytes, err := xml.MarshalIndent(r, "", strings.Repeat(" ", opts.IndentSize))
 	if err != nil {
-		return errors.Wrapf(err, "failed to write JUnit report to stream")
+		return errors.Wrapf(err, "failed to write xUnit report to stream")
 	}
 
 	for n, prevN, retries := 0, 0, 0; n < len(bytes); {
 		n, err = w.Write(bytes[n:])
 		if err != nil {
 			if n == prevN && retries >= opts.MaxRetries {
-				return errors.Wrapf(err, "failed to write %d bytes of JUnit report to stream", len(bytes)-n)
+				return errors.Wrapf(err, "failed to write %d bytes of xUnit report to stream", len(bytes)-n)
 			}
 
 			prevN = n
@@ -123,21 +101,6 @@ type TestSuite struct {
 	Cases         []*TestCase `xml:"testcase"`
 }
 
-// DeepCopy makes an exact copy of a TestSuite object and all child objects.
-func (ts *TestSuite) DeepCopy() *TestSuite {
-	c := &TestSuite{
-		ID:            ts.ID,
-		Name:          ts.Name,
-		TestCount:     ts.TestCount,
-		ErrorCount:    ts.ErrorCount,
-		TimeInSeconds: ts.TimeInSeconds,
-	}
-	for _, tc := range ts.Cases {
-		c.Cases = append(c.Cases, tc.DeepCopy())
-	}
-	return c
-}
-
 // TestCase encapsulates metadata regarding a single test.
 type TestCase struct {
 	XMLName       xml.Name `xml:"testcase"`
@@ -146,29 +109,9 @@ type TestCase struct {
 	Errors        []*Error `xml:"error"`
 }
 
-// DeepCopy makes an exact copy of a TestCase object and all child objects.
-func (tc *TestCase) DeepCopy() *TestCase {
-	c := &TestCase{
-		Name:          tc.Name,
-		TimeInSeconds: tc.TimeInSeconds,
-	}
-	for _, f := range tc.Errors {
-		c.Errors = append(c.Errors, f.DeepCopy())
-	}
-	return c
-}
-
 // Error encapsulates metadata regarding a test error.
 type Error struct {
 	XMLName xml.Name `xml:"error"`
 	Message string   `xml:"message,attr,omitempty"`
 	Text    string   `xml:",chardata"`
-}
-
-// DeepCopy makes an exact copy of a Failure object and all child objects.
-func (f *Error) DeepCopy() *Error {
-	return &Error{
-		Message: f.Message,
-		Text:    f.Text,
-	}
 }
