@@ -287,6 +287,9 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		adjustAvailabilityForDefaults(status.DefaultServerPool, defaultServerPool)
 
 		for pool, requiredNodeCount := range missingPods.NodeCountByPool {
+			if requiredNodeCount == 0 {
+				continue
+			}
 			availableNodeCount, ok := poolAvailabilities[pool]
 			if !ok {
 				log.Error(errNonexistentPool, "requested pool does not exist and cannot be considered when scheduling", "requestedPool", pool)
