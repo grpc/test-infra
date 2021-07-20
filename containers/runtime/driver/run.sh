@@ -26,5 +26,6 @@ fi
 
 if [ "$BQ_RESULT_TABLE" != "" ]
 then
+  mv /var/data/qps_workers/metadata.json metadata.json
   python3 /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="$BQ_RESULT_TABLE"
 fi

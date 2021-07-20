@@ -135,8 +135,12 @@ php7-image: ## Build the PHP7 test runtime container image.
 python-image: ## Build the Python test runtime container image.
 	docker build -t ${IMAGE_PREFIX}python:${TEST_INFRA_VERSION} containers/runtime/python
 
-ready-image: ## Build the ready init container image.
-	docker build -t ${INIT_IMAGE_PREFIX}ready:${TEST_INFRA_VERSION} -f containers/init/ready/Dockerfile .
+# Build the driver container image at the $DRIVER_VERSION
+driver-image:
+	docker build --build-arg GITREF=${DRIVER_VERSION} \
+	  --build-arg BREAK_CACHE="$(date +%Y%m%d%H%M%S)" \
+		-t ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION} \
+		containers/runtime/driver
 
 ruby-build-image: ## Build the Ruby build-time container image.
 	docker build -t ${BUILD_IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION} containers/init/build/ruby

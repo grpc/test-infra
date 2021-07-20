@@ -87,6 +87,10 @@ func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Cont
 				Name:  "READY_TIMEOUT",
 				Value: fmt.Sprintf("%d%s", test.Spec.TimeoutSeconds, "s"),
 			},
+			{
+				Name:  "METADATA_OUTPUT_FILE",
+				Value: config.ReadyMetadataOutputFile,
+			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{
