@@ -277,22 +277,18 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		adjustAvailabilityForDefaults := func(defaultPoolKey, defaultPoolName string) bool {
-			if c, ok := missingPods.NodeCountByPool[defaultPoolKey]; ok {
-				if c > 0 {
-					if defaultPoolName != "" {
-						missingPods.NodeCountByPool[defaultPoolName] += c
-					} else {
-						log.Error(errNonexistentPool, "default pool is not defined or does not existed in the cluster", "requestedDefaultPool", defaultPoolKey)
-						test.Status.State = grpcv1.Errored
-						test.Status.Reason = grpcv1.PoolError
-						test.Status.Message = fmt.Sprintf("default pool %q is not defined or does not existed in the cluster", defaultPoolKey)
-						if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-							log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
-						}
-						return false
+			if c, ok := missingPods.NodeCountByPool[defaultPoolKey]; ok && c > 0 {
+				if defaultPoolName == "" {
+					log.Error(errNonexistentPool, "default pool is not defined or does not existed in the cluster", "requestedDefaultPool", defaultPoolKey)
+					test.Status.State = grpcv1.Errored
+					test.Status.Reason = grpcv1.PoolError
+					test.Status.Message = fmt.Sprintf("default pool %q is not defined or does not existed in the cluster", defaultPoolKey)
+					if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+						log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
 					}
+					return false
 				}
-
+				missingPods.NodeCountByPool[defaultPoolName] += c
 			}
 			delete(missingPods.NodeCountByPool, defaultPoolKey)
 			return true
