@@ -276,20 +276,38 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			}
 		}
 
-		adjustAvailabilityForDefaults := func(defaultPoolKey, defaultPoolName string) {
+		adjustAvailabilityForDefaults := func(defaultPoolKey, defaultPoolName string) bool {
 			if c, ok := missingPods.NodeCountByPool[defaultPoolKey]; ok {
-				missingPods.NodeCountByPool[defaultPoolName] += c
+				if c > 0 {
+					if defaultPoolName != "" {
+						missingPods.NodeCountByPool[defaultPoolName] += c
+					} else {
+						log.Error(errNonexistentPool, "default pool is not defined or does not existed in the cluster", "requestedDefaultPool", defaultPoolKey)
+						test.Status.State = grpcv1.Errored
+						test.Status.Reason = grpcv1.PoolError
+						test.Status.Message = fmt.Sprintf("default pool %q is not defined or does not existed in the cluster", defaultPoolKey)
+						if updateErr := r.Status().Update(ctx, test); updateErr != nil {
+							log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
+						}
+						return false
+					}
+				}
+
 			}
 			delete(missingPods.NodeCountByPool, defaultPoolKey)
+			return true
 		}
-		adjustAvailabilityForDefaults(status.DefaultClientPool, defaultClientPool)
-		adjustAvailabilityForDefaults(status.DefaultDriverPool, defaultDriverPool)
-		adjustAvailabilityForDefaults(status.DefaultServerPool, defaultServerPool)
+		if ok := adjustAvailabilityForDefaults(status.DefaultClientPool, defaultClientPool); !ok {
+			return ctrl.Result{Requeue: false}, nil
+		}
+		if ok := adjustAvailabilityForDefaults(status.DefaultDriverPool, defaultDriverPool); !ok {
+			return ctrl.Result{Requeue: false}, nil
+		}
+		if ok := adjustAvailabilityForDefaults(status.DefaultServerPool, defaultServerPool); !ok {
+			return ctrl.Result{Requeue: false}, nil
+		}
 
 		for pool, requiredNodeCount := range missingPods.NodeCountByPool {
-			if requiredNodeCount == 0 {
-				continue
-			}
 			availableNodeCount, ok := poolAvailabilities[pool]
 			if !ok {
 				log.Error(errNonexistentPool, "requested pool does not exist and cannot be considered when scheduling", "requestedPool", pool)
