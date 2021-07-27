@@ -17,6 +17,7 @@ limitations under the License.
 package runner
 
 import (
+	"context"
 	"log"
 	"strings"
 	"time"
@@ -58,7 +59,7 @@ func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), re
 }
 
 // Run runs a set of LoadTests at a given concurrency level.
-func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, done chan<- *TestSuiteReporter) {
+func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, done chan<- *TestSuiteReporter) {
 	var count, n int
 	qName := suiteReporter.Queue()
 	testDone := make(chan *TestCaseReporter)
@@ -75,7 +76,7 @@ func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporte
 		reporter := suiteReporter.NewTestCaseReporter(config)
 		log.Printf("Starting test %d in queue %s", reporter.Index(), qName)
 		reporter.SetStartTime(time.Now())
-		go r.runTest(config, reporter, testDone)
+		go r.runTest(ctx, config, reporter, testDone)
 	}
 	for n > 0 {
 		reporter := <-testDone
@@ -89,12 +90,12 @@ func (r *Runner) Run(configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporte
 }
 
 // runTest creates a single LoadTest and monitors it to completion.
-func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, done chan<- *TestCaseReporter) {
+func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter *TestCaseReporter, done chan<- *TestCaseReporter) {
 	var s, status string
 	var retries uint
 
 	for {
-		loadTest, err := r.loadTestGetter.Create(config, metav1.CreateOptions{})
+		loadTest, err := r.loadTestGetter.Create(ctx, config, metav1.CreateOptions{})
 		if err != nil {
 			reporter.Warning("Failed to create test %s: %v", config.Name, err)
 			if retries < r.retries {
@@ -114,7 +115,7 @@ func (r *Runner) runTest(config *grpcv1.LoadTest, reporter *TestCaseReporter, do
 	}
 
 	for {
-		loadTest, err := r.loadTestGetter.Get(config.Name, metav1.GetOptions{})
+		loadTest, err := r.loadTestGetter.Get(ctx, config.Name, metav1.GetOptions{})
 		if err != nil {
 			reporter.Warning("Failed to poll test %s: %v", config.Name, err)
 			if retries < r.retries {

@@ -1,4 +1,13 @@
 resources:
-- ./roles
-- ./bindings
-- ./role.yaml
+- auth_proxy_client_clusterrole.yaml
+- auth_proxy_role.yaml
+- auth_proxy_service.yaml
+- auth_proxy_role_binding.yaml
+- leader_election_role.yaml
+- leader_election_role_binding.yaml
+- loadtest_editor_role.yaml
+- loadtest_viewer_role.yaml
+- role.yaml
+- manager_binding.yaml
+- loadtest_component_bindings.yaml
+- service_account.yaml

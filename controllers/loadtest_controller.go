@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
@@ -47,9 +48,7 @@ type LoadTestReconciler struct {
 	client.Client
 	mgr      ctrl.Manager
 	Defaults *config.Defaults
-	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	Timeout  time.Duration
 }
 
 // +kubebuilder:rbac:groups=e2etest.grpc.io,resources=loadtests,verbs=get;list;watch;create;update;patch;delete
@@ -63,22 +62,13 @@ type LoadTestReconciler struct {
 // Reconcile attempts to bring the current state of the load test into agreement
 // with its declared spec. This may mean provisioning resources, doing nothing
 // or handling the termination of its pods.
-func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	var ctx context.Context
-	var cancel context.CancelFunc
+func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var err error
-	log := r.Log.WithValues("loadtest", req.NamespacedName)
-
-	if r.Timeout == 0 {
-		ctx, cancel = context.WithCancel(context.Background())
-	} else {
-		ctx, cancel = context.WithTimeout(context.Background(), r.Timeout)
-	}
-	defer cancel()
+	logger := log.FromContext(ctx).WithValues("loadtest", req.NamespacedName)
 
 	rawTest := new(grpcv1.LoadTest)
 	if err = r.Get(ctx, req.NamespacedName, rawTest); err != nil {
-		log.Error(err, "failed to get test", "name", req.NamespacedName)
+		logger.Error(err, "failed to get test", "name", req.NamespacedName)
 		err = client.IgnoreNotFound(err)
 		return ctrl.Result{Requeue: err != nil}, err
 	}
@@ -87,14 +77,14 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	testTimeout := time.Duration(rawTest.Spec.TimeoutSeconds) * time.Second
 
 	if testTimeout > testTTL {
-		log.Info("testTTL is less than testTimeout", "testTimeout", testTimeout, "testTTL", testTTL)
+		logger.Info("testTTL is less than testTimeout", "testTimeout", testTimeout, "testTTL", testTTL)
 	}
 
 	if rawTest.Status.State.IsTerminated() {
 		if time.Now().Sub(rawTest.Status.StartTime.Time) >= testTTL {
-			log.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "testTTL", testTTL)
+			logger.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "testTTL", testTTL)
 			if err = r.Delete(ctx, rawTest); err != nil {
-				log.Error(err, "fail to delete test")
+				logger.Error(err, "fail to delete test")
 				return ctrl.Result{Requeue: true}, err
 			}
 		}
@@ -104,25 +94,25 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	// TODO(codeblooded): Consider moving this to a mutating webhook
 	test := rawTest.DeepCopy()
 	if err = r.Defaults.SetLoadTestDefaults(test); err != nil {
-		log.Error(err, "failed to clone test with defaults")
+		logger.Error(err, "failed to clone test with defaults")
 		test.Status.State = grpcv1.Errored
 		test.Status.Reason = grpcv1.FailedSettingDefaultsError
 		test.Status.Message = fmt.Sprintf("failed to reconcile tests with defaults: %v", err)
 		if err = r.Status().Update(ctx, test); err != nil {
-			log.Error(err, "failed to update test status when setting defaults failed")
+			logger.Error(err, "failed to update test status when setting defaults failed")
 		}
 		return ctrl.Result{Requeue: false}, nil
 	}
 	if !reflect.DeepEqual(rawTest, test) {
 		if err = r.Update(ctx, test); err != nil {
-			log.Error(err, "failed to update test with defaults")
+			logger.Error(err, "failed to update test with defaults")
 			return ctrl.Result{Requeue: true}, err
 		}
 	}
 
 	cfgMap := new(corev1.ConfigMap)
 	if err = r.Get(ctx, req.NamespacedName, cfgMap); err != nil {
-		log.Info("failed to find existing scenarios ConfigMap")
+		logger.Info("failed to find existing scenarios ConfigMap")
 
 		if client.IgnoreNotFound(err) != nil {
 			// The ConfigMap existence was not at issue, so this is likely an
@@ -132,7 +122,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			test.Status.Reason = grpcv1.KubernetesError
 			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): failed to get scenarios ConfigMap: %v", err)
 			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				log.Error(updateErr, "failed to update status after failure to get scenarios ConfigMap: %v", err)
+				logger.Error(updateErr, "failed to update status after failure to get scenarios ConfigMap: %v", err)
 			}
 			return ctrl.Result{Requeue: true}, err
 		}
@@ -155,25 +145,25 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			// ConfigMap. This breaks garbage collection. If left to continue
 			// for manual cleanup, it could create hidden errors when a load
 			// test with the same name is created.
-			log.Error(refError, "could not set controller reference on scenarios ConfigMap")
+			logger.Error(refError, "could not set controller reference on scenarios ConfigMap")
 			test.Status.State = grpcv1.Unknown
 			test.Status.Reason = grpcv1.KubernetesError
 			test.Status.Message = fmt.Sprintf("kubernetes error (retrying): could not setup garbage collection for scenarios ConfigMap: %v", refError)
 			if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-				log.Error(updateErr, "failed to update status after failure to get and create scenarios ConfigMap")
+				logger.Error(updateErr, "failed to update status after failure to get and create scenarios ConfigMap")
 			}
 			return ctrl.Result{Requeue: true}, refError
 		}
 
 		if createErr := r.Create(ctx, cfgMap); createErr != nil {
-			log.Error(err, "failed to create scenarios ConfigMap")
+			logger.Error(err, "failed to create scenarios ConfigMap")
 			return ctrl.Result{Requeue: true}, createErr
 		}
 	}
 
 	pods := new(corev1.PodList)
 	if err = r.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
-		log.Error(err, "failed to list pods", "namespace", req.Namespace)
+		logger.Error(err, "failed to list pods", "namespace", req.Namespace)
 		return ctrl.Result{Requeue: true}, err
 	}
 	ownedPods := status.PodsForLoadTest(test, pods.Items)
@@ -191,23 +181,23 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// is already updated, this error is not a real, not requeue this
 		// reconciliation would not hurt the function of our current controller.
 		if kerrors.IsConflict(err) {
-			log.Info("racing condition arises when multiple threads attempt to update the status of the same LoadTest")
+			logger.Info("racing condition arises when multiple threads attempt to update the status of the same LoadTest")
 			return ctrl.Result{Requeue: false}, nil
 		}
-		log.Error(err, "failed to update test status")
+		logger.Error(err, "failed to update test status")
 		return ctrl.Result{Requeue: true}, err
 	}
 
 	missingPods := status.CheckMissingPods(test, ownedPods)
 	if !missingPods.IsEmpty() {
-		if !r.mgr.GetCache().WaitForCacheSync(ctx.Done()) {
-			log.Error(errCacheSync, "could not invalidate the cache which is required to gang schedule")
+		if !r.mgr.GetCache().WaitForCacheSync(ctx) {
+			logger.Error(errCacheSync, "could not invalidate the cache which is required to gang schedule")
 			return ctrl.Result{Requeue: true}, errCacheSync
 		}
 
 		nodes := new(corev1.NodeList)
 		if err = r.List(ctx, nodes); err != nil {
-			log.Error(err, "failed to list nodes")
+			logger.Error(err, "failed to list nodes")
 			return ctrl.Result{Requeue: true}, err
 		}
 
@@ -215,7 +205,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		// we need to reload the pods for any missed changes
 		pods = new(corev1.PodList)
 		if err = r.List(ctx, pods, client.InNamespace(req.Namespace)); err != nil {
-			log.Error(err, "failed to list pods", "namespace", req.Namespace)
+			logger.Error(err, "failed to list pods", "namespace", req.Namespace)
 			return ctrl.Result{Requeue: true}, err
 		}
 
@@ -232,7 +222,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		for _, node := range nodes.Items {
 			pool, ok := node.Labels[config.PoolLabel]
 			if !ok {
-				log.Info("encountered a node without a pool label", "nodeName", node.Name)
+				logger.Info("encountered a node without a pool label", "nodeName", node.Name)
 				continue
 			}
 
@@ -268,7 +258,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		for _, pod := range pods.Items {
 			pool, ok := pod.Labels[config.PoolLabel]
 			if !ok {
-				log.Info("encountered a pod without a pool label", "pod", pod)
+				logger.Info("encountered a pod without a pool label", "pod", pod)
 				continue
 			}
 			if pod.Status.Phase != corev1.PodSucceeded && pod.Status.Phase != corev1.PodFailed {
@@ -289,18 +279,18 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		for pool, requiredNodeCount := range missingPods.NodeCountByPool {
 			availableNodeCount, ok := poolAvailabilities[pool]
 			if !ok {
-				log.Error(errNonexistentPool, "requested pool does not exist and cannot be considered when scheduling", "requestedPool", pool)
+				logger.Error(errNonexistentPool, "requested pool does not exist and cannot be considered when scheduling", "requestedPool", pool)
 				test.Status.State = grpcv1.Errored
 				test.Status.Reason = grpcv1.PoolError
 				test.Status.Message = fmt.Sprintf("requested pool %q does not exist", pool)
 				if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-					log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
+					logger.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
 				}
 				return ctrl.Result{Requeue: false}, nil
 			}
 
 			if requiredNodeCount > availableNodeCount {
-				log.Info("cannot schedule test: inadequate availability for pool", "pool", pool, "requiredNodeCount", requiredNodeCount, "availableNodeCount", availableNodeCount)
+				logger.Info("cannot schedule test: inadequate availability for pool", "pool", pool, "requiredNodeCount", requiredNodeCount, "availableNodeCount", availableNodeCount)
 				return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 			}
 		}
@@ -308,12 +298,12 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		builder := podbuilder.New(r.Defaults, test)
 		createPod := func(pod *corev1.Pod) (*ctrl.Result, error) {
 			if err = ctrl.SetControllerReference(test, pod, r.Scheme); err != nil {
-				log.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
+				logger.Error(err, "could not set controller reference on pod, pod will not be garbage collected", "pod", pod)
 				return &ctrl.Result{Requeue: true}, err
 			}
 
 			if err = r.Create(ctx, pod); err != nil {
-				log.Error(err, "could not create new pod", "pod", pod)
+				logger.Error(err, "could not create new pod", "pod", pod)
 				return &ctrl.Result{Requeue: true}, err
 			}
 
@@ -321,7 +311,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		}
 
 		for i := range missingPods.Servers {
-			logWithServer := log.WithValues("server", missingPods.Servers[i])
+			logWithServer := logger.WithValues("server", missingPods.Servers[i])
 
 			pod, err := builder.PodForServer(&missingPods.Servers[i])
 			if err != nil {
@@ -354,7 +344,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			}
 		}
 		for i := range missingPods.Clients {
-			logWithClient := log.WithValues("client", missingPods.Clients[i])
+			logWithClient := logger.WithValues("client", missingPods.Clients[i])
 
 			pod, err := builder.PodForClient(&missingPods.Clients[i])
 			if err != nil {
@@ -387,7 +377,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 			}
 		}
 		if missingPods.Driver != nil {
-			logWithDriver := log.WithValues("driver", missingPods.Driver)
+			logWithDriver := logger.WithValues("driver", missingPods.Driver)
 
 			pod, err := builder.PodForDriver(missingPods.Driver)
 			if err != nil {
@@ -422,7 +412,7 @@ func (r *LoadTestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 setRequeueTime:
-	requeueTime := getRequeueTime(test, previousStatus, log)
+	requeueTime := getRequeueTime(test, previousStatus, logger)
 	if requeueTime != 0 {
 		return ctrl.Result{RequeueAfter: requeueTime}, nil
 	}

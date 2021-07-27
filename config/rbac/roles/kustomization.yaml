@@ -1,8 +1,0 @@
-resources:
-- auth_proxy_client_clusterrole.yaml
-- auth_proxy_role.yaml
-- leader_election_role.yaml
-- loadtest_editor_role.yaml
-- loadtest_viewer_role.yaml
-- pod_driver_role.yaml
-- pod_viewer_role.yaml
