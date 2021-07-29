@@ -24,10 +24,17 @@ spec:
     name: '0'
     run:
       args:
-      - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
+            qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+            --driver_port="${DRIVER_PORT}"
       command:
-      - dotnet
+      - bash
+  driver:
+    language: cxx
+    name: '0'
+    run: {}
   scenariosJSON: |
     {
       "scenarios": {
@@ -98,9 +105,12 @@ spec:
     name: '0'
     run:
       args:
-      - exec
-      - qps_worker/Grpc.IntegrationTesting.QpsWorker.dll
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
+            qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+            --driver_port="${DRIVER_PORT}"
       command:
-      - dotnet
+      - bash
   timeoutSeconds: 900
   ttlSeconds: 86400

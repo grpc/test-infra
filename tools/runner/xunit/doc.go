@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package junit defines types and utility functions in order to generate XML
+// Package xunit defines types and utility functions in order to generate XML
 // reports. The reports comply with the JUnit XML schema defined at:
 // https://github.com/windyroad/JUnit-Schema/blob/master/JUnit.xsd
-package junit
+package xunit

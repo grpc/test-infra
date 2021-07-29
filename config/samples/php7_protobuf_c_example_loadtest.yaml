@@ -5,12 +5,12 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong
+    scenario: php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong
     uniquifier: basic
   labels:
-    language: php7
+    language: php7_protobuf_c
     prefix: examples
-  name: examples-php7-protobuf-php-extension-to-cpp-protobuf-sync-unary-ping-pong-basic
+  name: examples-php7-protobuf-c-extension-to-cpp-protobuf-sync-unary-ping-pong-basic
 spec:
   clients:
   - build:
@@ -20,14 +20,14 @@ spec:
     clone:
       gitRef: master
       repo: https://github.com/grpc/grpc.git
-    language: php7
+    language: php7_protobuf_c
     name: '0'
     run:
       args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-        /run_scripts/run_worker.sh
+        /run_scripts/run_protobuf_c_worker.sh
       command:
       - bash
   driver:
@@ -37,7 +37,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong",
+        "name": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {

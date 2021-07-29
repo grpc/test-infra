@@ -94,13 +94,13 @@ cleanup-agent: generate fmt vet ## Build cleanup agent binary.
 	go build $(GOARGS) -o bin/cleanup_agent cmd/cleanup_agent/main.go
 
 runner: $(TOOLSPREREQ) ## Build the runner tool binary.
-	go build $(GOARGS) -o bin/runner cmd/runner/main.go
+	go build $(GOARGS) -o bin/runner tools/cmd/runner/main.go
 
 prepare_prebuilt_workers: $(TOOLSPREREQ) ## Build the prepare_prebuilt_workers tool binary.
-	go build $(GOARGS) -o bin/prepare_prebuilt_workers tools/prepare_prebuilt_workers/prepare_prebuilt_workers.go
+	go build $(GOARGS) -o bin/prepare_prebuilt_workers tools/cmd/prepare_prebuilt_workers/main.go
 
 delete_prebuilt_workers: $(TOOLSPREREQ) ## Build the delete_prebuilt_workers tool binary.
-	go build $(GOARGS) -o bin/delete_prebuilt_workers tools/delete_prebuilt_workers/delete_prebuilt_workers.go
+	go build $(GOARGS) -o bin/delete_prebuilt_workers tools/cmd/delete_prebuilt_workers/main.go
 
 ##@ Build container images
 
