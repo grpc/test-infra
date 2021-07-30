@@ -17,6 +17,8 @@ CONTROLLER_IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
 CLEAN_IMG ?= ${IMAGE_PREFIX}cleanup:${TEST_INFRA_VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
+# Flag to decide if we deploy the cleanup agent
+DEPLOY_CLEANUP_AGENT ?= false
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -87,8 +89,13 @@ install-rbac: manifests
 uninstall-rbac: manifests
 	kustomize build config/rbac | kubectl delete --ignore-not-found=true -f -
 
-# Deploy both controller and cleanup_agent to the cluster
+# Deploy both controller and cleanup_agent or controller only based on
+# the environment variable
+ifeq (${DEPLOY_CLEANUP_AGENT}, true)
 deploy: deploy-controller deploy-cleanup-agent
+else
+deploy: deploy-controller
+endif
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy-controller: manifests
