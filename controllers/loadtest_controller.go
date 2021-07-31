@@ -58,6 +58,7 @@ type LoadTestReconciler struct {
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=nodes/status,verbs=get
+// +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
 
 // Reconcile attempts to bring the current state of the load test into agreement
@@ -270,12 +271,12 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		adjustAvailabilityForDefaults := func(defaultPoolKey, defaultPoolName string) bool {
 			if c, ok := missingPods.NodeCountByPool[defaultPoolKey]; ok && c > 0 {
 				if defaultPoolName == "" {
-					log.Error(errNonexistentPool, "default pool is not defined or does not existed in the cluster", "requestedDefaultPool", defaultPoolKey)
+					logger.Error(errNonexistentPool, "default pool is not defined or does not existed in the cluster", "requestedDefaultPool", defaultPoolKey)
 					test.Status.State = grpcv1.Errored
 					test.Status.Reason = grpcv1.PoolError
 					test.Status.Message = fmt.Sprintf("default pool %q is not defined or does not existed in the cluster", defaultPoolKey)
 					if updateErr := r.Status().Update(ctx, test); updateErr != nil {
-						log.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
+						logger.Error(updateErr, "failed to update status after failure due to requesting nodes from a nonexistent pool")
 					}
 					return false
 				}
