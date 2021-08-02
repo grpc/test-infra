@@ -13,12 +13,8 @@ BUILD_IMAGE_PREFIX ?= ""
 IMAGE_PREFIX ?= ""
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
-# Image URL to use all building/pushing image targets
-CLEAN_IMG ?= ${IMAGE_PREFIX}cleanup:${TEST_INFRA_VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
-# Flag to decide if we deploy the cleanup agent
-DEPLOY_CLEANUP_AGENT ?= false
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -38,7 +34,7 @@ GOARGS=
 TOOLSPREREQ=
 endif
 
-all: controller cleanup-agent all-tools
+all: controller all-tools
 
 all-tools: runner prepare_prebuilt_workers delete_prebuilt_workers
 
@@ -49,10 +45,6 @@ test: generate fmt vet manifests
 # Build controller manager binary
 controller: generate fmt vet
 	go build $(GOARGS) -o bin/controller cmd/controller/main.go
-
-# Build cleanup_agent manager binary
-cleanup-agent: generate fmt vet
-	go build $(GOARGS) -o bin/cleanup_agent cmd/cleanup_agent/main.go
 
 # Build test runner tool
 runner: $(TOOLSPREREQ)
@@ -89,23 +81,10 @@ install-rbac: manifests
 uninstall-rbac: manifests
 	kustomize build config/rbac | kubectl delete --ignore-not-found=true -f -
 
-# Deploy both controller and cleanup_agent or controller only based on
-# the environment variable
-ifeq (${DEPLOY_CLEANUP_AGENT}, true)
-deploy: deploy-controller deploy-cleanup-agent
-else
-deploy: deploy-controller
-endif
-
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy-controller: manifests
+deploy: manifests
 	cd config/manager && kustomize edit set image controller=${CONTROLLER_IMG}
 	kustomize build config/default | kubectl apply -f -
-
-# Deploy cleanup_agent in the configured Kubernetes cluster in ~/.kube/config
-deploy-cleanup-agent: manifests
-	cd config/cleanup_agent && kustomize edit set image cleanup_agent=${CLEAN_IMG}
-	kustomize build config/cleanup_agent | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
@@ -128,17 +107,9 @@ generate: controller-gen
 controller-image:
 	docker build -t ${CONTROLLER_IMG} -f containers/runtime/controller/Dockerfile .
 
-# Build the manager image with the cleanup_agent
-cleanup-agent-image:
-	docker build -t ${CLEAN_IMG} -f containers/runtime/cleanup_agent/Dockerfile .
-
 # Push the controller manager image to a docker registry
 push-controller-image:
 	docker push ${CONTROLLER_IMG}
-
-# Push the cleanup-agent manager image to a docker registry
-push-cleanup-agent-image:
-	docker push ${CLEAN_IMG}
 
 # Build the clone init container image
 clone-image:
@@ -279,7 +250,6 @@ all-images: \
 	ruby-image \
 	csharp-build-image \
 	controller-image\
-	cleanup-agent-image
 
 # Push all init container and runtime container images to a docker registry
 push-all-images: \
@@ -298,7 +268,6 @@ push-all-images: \
 	push-ruby-image \
 	push-csharp-build-image \
 	push-controller-image \
-	push-cleanup-agent-image
 
 # find or download controller-gen
 # download controller-gen if necessary
