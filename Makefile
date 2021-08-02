@@ -19,9 +19,6 @@ IMAGE_PREFIX ?= ""
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
 
-# Image URL to use all building/pushing image targets
-CLEAN_IMG ?= ${IMAGE_PREFIX}cleanup:${TEST_INFRA_VERSION}
-
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -31,6 +28,8 @@ GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+
+GOVERSION=$(shell go version | cut -f3 -d' ' | cut -c3-)
 
 # Make tools build compatible with go 1.12
 ifeq (1.13,$(shell echo -e "1.13\n$(GOVERSION)" | sort -V | head -n1))
@@ -47,7 +46,9 @@ endif
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-all: build
+all: controller all-tools
+
+all-tools: runner prepare_prebuilt_workers delete_prebuilt_workers
 
 ##@ General
 
@@ -79,19 +80,13 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet ## Run tests.
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out -race -v
+	go test ./... -coverprofile cover.out
 
 ##@ Build executables
 
 controller: generate fmt vet ## Build load test controller binary.
 	go build $(GOARGS) -o bin/controller cmd/controller/main.go
-
-cleanup-agent: generate fmt vet ## Build cleanup agent binary.
-	go build $(GOARGS) -o bin/cleanup_agent cmd/cleanup_agent/main.go
 
 runner: $(TOOLSPREREQ) ## Build the runner tool binary.
 	go build $(GOARGS) -o bin/runner tools/cmd/runner/main.go
@@ -104,13 +99,10 @@ delete_prebuilt_workers: $(TOOLSPREREQ) ## Build the delete_prebuilt_workers too
 
 ##@ Build container images
 
-all-images: clone-image cleanup-agent-image controller-image csharp-build-image cxx-image driver-image go-image java-image node-image php7-build-image php7-image python-image ready-image ruby-build-image ruby-image ## Build all container images.
+all-images: clone-image controller-image csharp-build-image cxx-image driver-image go-image java-image node-build-image node-image php7-build-image php7-image python-image ready-image ruby-build-image ruby-image ## Build all container images.
 
 clone-image: ## Build the clone init container image.
 	docker build -t ${INIT_IMAGE_PREFIX}clone:${TEST_INFRA_VERSION} containers/init/clone
-
-cleanup-agent-image: ## Build the cleanup agent container image.
-	docker build -t ${CLEAN_IMG} -f containers/runtime/cleanup_agent/Dockerfile .
 
 controller-image: ## Build the load test controller container image.
 	docker build -t ${CONTROLLER_IMG} -f containers/runtime/controller/Dockerfile .
@@ -130,6 +122,9 @@ go-image: ## Build the Go test runtime container image.
 java-image: ## Build the Java test runtime container image.
 	docker build -t ${IMAGE_PREFIX}java:${TEST_INFRA_VERSION} containers/runtime/java
 
+node-build-image: ## Build the Node.js build image
+	docker build -t ${BUILD_IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/init/build/node
+	
 node-image: ## Build the Node.js test runtime container image.
 	docker build -t ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/runtime/node
 
@@ -153,13 +148,10 @@ ruby-image: ## Build the Ruby test runtime container image.
 
 ##@ Publish container images
 
-push-all-images: push-clone-image push-cleanup-agent-image push-controller-image push-csharp-build-image push-cxx-image push-driver-image push-go-image push-java-image push-node-image push-php7-build-image push-php7-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
+push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-driver-image push-go-image push-java-image push-node-build-image push-node-image push-php7-build-image push-php7-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
 
 push-clone-image: ## Push the clone init container image to a registry.
 	docker push ${INIT_IMAGE_PREFIX}clone:${TEST_INFRA_VERSION}
-
-push-cleanup-agent-image: ## Push the cleanup agent container image to a registry.
-	docker push ${CLEAN_IMG}
 
 push-controller-image: ## Push the load test controller container image to a registry.
 	docker push ${CONTROLLER_IMG}
@@ -178,6 +170,9 @@ push-go-image: ## Push the Go test runtime container image to a registry.
 
 push-java-image: ## Push the Java test runtime container image to a registry.
 	docker push ${IMAGE_PREFIX}java:${TEST_INFRA_VERSION}
+
+push-node-build-image: ## Push the Node.js build image to a docker registry
+	docker push ${BUILD_IMAGE_PREFIX}node:${TEST_INFRA_VERSION}
 
 push-node-image: ## Push the Node.js test runtime container image to a registry.
 	docker push ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION}
@@ -202,11 +197,23 @@ push-ruby-image: ## Push the Ruby test runtime container image to a registry.
 
 ##@ Deployment
 
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+install: ## Install both CRDs and RBACs
+	install-crd install-rbac
+
+uninstall: ## Uninstall both CRDs and RBACs
+	uninstall-crd uninstall-rbac
+
+install-crd: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+uninstall-crd: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/crd | kubectl delete --ignore-not-found=true -f -
+
+install-rbac: manifests kustomize ## Install RBACs into the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/rbac | kubectl apply -f -
+
+uninstall-rbac: manifests kustomize ## Uninstall RBACs from the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/rbac | kubectl delete --ignore-not-found=true -f -
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}
