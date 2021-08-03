@@ -25,11 +25,30 @@ spec:
       nodeSelector:
         default-system-pool: "true"
       containers:
+      # securityContext:
+      #   runAsNonRoot: true
+      containers:
       - command:
         - /workspace/bin/controller
         args:
-        - --enable-leader-election
-        - --reconciliation-timeout=2m
+        - --leader-elect
         image: controller:latest
         name: manager
+        securityContext:
+          allowPrivilegeEscalation: false
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+      # TODO: Kubebuilder 3 recommends creating a dedicated service account for
+      # the controller. For simplicity now, we are using the default.
+      #serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

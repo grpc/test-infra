@@ -1,5 +1,0 @@
-resources:
-- auth_proxy_role_binding.yaml
-- component_role_binding.yaml
-- leader_election_role_binding.yaml
-- manager_role_binding.yaml

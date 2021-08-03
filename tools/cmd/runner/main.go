@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -75,12 +76,15 @@ func main() {
 	reporter := runner.NewReporter(report)
 	reporter.SetStartTime(time.Now())
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	done := make(chan *runner.TestSuiteReporter)
 
 	for qName, configs := range configQueueMap {
 		testSuiteReporter := reporter.NewTestSuiteReporter(qName, logPrefixFmt)
 		testSuiteReporter.SetStartTime(time.Now())
-		go r.Run(configs, testSuiteReporter, c[qName], done)
+		go r.Run(ctx, configs, testSuiteReporter, c[qName], done)
 	}
 
 	for range configQueueMap {

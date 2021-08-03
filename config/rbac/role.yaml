@@ -21,6 +21,18 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - nodes
   verbs:
   - get
@@ -50,6 +62,15 @@ rules:
   - pods/status
   verbs:
   - get
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - list
+  - update
 - apiGroups:
   - e2etest.grpc.io
   resources:
