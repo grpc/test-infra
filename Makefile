@@ -200,11 +200,9 @@ push-ruby-image: ## Push the Ruby test runtime container image to a registry.
 
 ##@ Deployment
 
-install: ## Install both CRDs and RBACs
-	install-crd install-rbac
+install: install-crd install-rbac ## Install both CRDs and RBACs
 
-uninstall: ## Uninstall both CRDs and RBACs
-	uninstall-crd uninstall-rbac
+uninstall: uninstall-crd uninstall-rbac ## Uninstall both CRDs and RBACs
 
 install-crd: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
