@@ -48,13 +48,6 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
-        resources:
-          limits:
-            cpu: 100m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
       # TODO: Kubebuilder 3 recommends creating a dedicated service account for
       # the controller. For simplicity now, we are using the default.
       #serviceAccountName: controller-manager
