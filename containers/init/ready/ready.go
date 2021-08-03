@@ -290,7 +290,7 @@ func main() {
 		outputMetadataFile = outputMetadataFileOverride
 	}
 
-	metaDataSet := test.ObjectMeta
+	metaDataSet := test.ObjectMeta.Annotations
 	metaDataBody, _ := json.Marshal(metaDataSet)
 	ioutil.WriteFile(outputMetadataFile, metaDataBody, 0777)
 }
