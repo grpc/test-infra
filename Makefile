@@ -29,16 +29,11 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-GOVERSION=$(shell go version | cut -f3 -d' ' | cut -c3-)
+# Golang command for build
+GOCMD ?= go
 
-# Make tools build compatible with go 1.12
-ifeq (1.13,$(shell echo -e "1.13\n$(GOVERSION)" | sort -V | head -n1))
-GOARGS=-trimpath
-TOOLSPREREQ=fmt vet
-else
-GOARGS=
-TOOLSPREREQ=
-endif
+# Golang build arguments
+GOARGS = -trimpath
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -75,10 +70,10 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 fmt: ## Run go fmt against code.
-	go fmt ./...
+	$(GOCMD) fmt ./...
 
 vet: ## Run go vet against code.
-	go vet ./...
+	$(GOCMD) vet ./...
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet ## Run tests.
@@ -89,16 +84,16 @@ test: manifests generate fmt vet ## Run tests.
 ##@ Build executables
 
 controller: generate fmt vet ## Build load test controller binary.
-	go build $(GOARGS) -o bin/controller cmd/controller/main.go
+	$(GOCMD) build $(GOARGS) -o bin/controller cmd/controller/main.go
 
-runner: $(TOOLSPREREQ) ## Build the runner tool binary.
-	go build $(GOARGS) -o bin/runner tools/cmd/runner/main.go
+runner: fmt vet ## Build the runner tool binary.
+	$(GOCMD) build $(GOARGS) -o bin/runner tools/cmd/runner/main.go
 
-prepare_prebuilt_workers: $(TOOLSPREREQ) ## Build the prepare_prebuilt_workers tool binary.
-	go build $(GOARGS) -o bin/prepare_prebuilt_workers tools/cmd/prepare_prebuilt_workers/main.go
+prepare_prebuilt_workers: fmt vet ## Build the prepare_prebuilt_workers tool binary.
+	$(GOCMD) build $(GOARGS) -o bin/prepare_prebuilt_workers tools/cmd/prepare_prebuilt_workers/main.go
 
-delete_prebuilt_workers: $(TOOLSPREREQ) ## Build the delete_prebuilt_workers tool binary.
-	go build $(GOARGS) -o bin/delete_prebuilt_workers tools/cmd/delete_prebuilt_workers/main.go
+delete_prebuilt_workers: fmt vet ## Build the delete_prebuilt_workers tool binary.
+	$(GOCMD) build $(GOARGS) -o bin/delete_prebuilt_workers tools/cmd/delete_prebuilt_workers/main.go
 
 ##@ Build container images
 
@@ -127,7 +122,7 @@ java-image: ## Build the Java test runtime container image.
 
 node-build-image: ## Build the Node.js build image
 	docker build -t ${BUILD_IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/init/build/node
-	
+
 node-image: ## Build the Node.js test runtime container image.
 	docker build -t ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/runtime/node
 
