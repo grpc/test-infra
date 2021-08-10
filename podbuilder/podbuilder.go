@@ -197,10 +197,14 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 		MountPath: config.ScenariosMountPath,
 		ReadOnly:  true,
 	})
-	runContainer.Env = append(runContainer.Env, corev1.EnvVar{
-		Name:  config.ScenariosFileEnv,
-		Value: config.ScenariosMountPath + "/scenarios.json",
-	})
+	runContainer.Env = append(runContainer.Env,
+		corev1.EnvVar{
+			Name:  config.ScenariosFileEnv,
+			Value: config.ScenariosMountPath + "/scenarios.json"},
+		corev1.EnvVar{
+			Name:  "METADATA_OUTPUT_FILE",
+			Value: config.ReadyMetadataOutputFile,
+		})
 
 	if results := pb.test.Spec.Results; results != nil {
 		if bigQueryTable := results.BigQueryTable; bigQueryTable != nil {

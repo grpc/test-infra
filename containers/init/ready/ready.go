@@ -54,7 +54,7 @@ const DefaultTimeout = 25 * time.Minute
 const OutputFileEnv = "READY_OUTPUT_FILE"
 
 // OutputMetadataEnv is the optional name of the file where the executable should
-// write a comma-separated list of IP addresses.
+// write all metadata.
 const OutputMetadataEnv = "METADATA_OUTPUT_FILE"
 
 // DefaultMetadataOutputFile is the name of the default file where the executable should
@@ -279,7 +279,7 @@ func main() {
 	workerFileBody := strings.Join(podIPs, ",")
 	ioutil.WriteFile(outputFile, []byte(workerFileBody), 0777)
 
-	test, err := grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault).Get(os.Args[1], metav1.GetOptions{})
+	test, err := grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault).Get(ctx, os.Args[1], metav1.GetOptions{})
 	if err != nil {
 		log.Fatalf("failed to fetch loadtest for obtaining metadata: %v", err)
 	}
@@ -290,7 +290,10 @@ func main() {
 		outputMetadataFile = outputMetadataFileOverride
 	}
 
-	metaDataSet := test.ObjectMeta.Annotations
-	metaDataBody, _ := json.Marshal(metaDataSet)
+	metaDataSet := test.ObjectMeta
+	metaDataBody, err := json.Marshal(metaDataSet)
+	if err != nil {
+		log.Fatalf("failed to marshal metaData for loadtest %s: %v", test.Name, err)
+	}
 	ioutil.WriteFile(outputMetadataFile, metaDataBody, 0777)
 }
