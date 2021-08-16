@@ -66,14 +66,11 @@ func main() {
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 
-	var report *xunit.Report
-	if o != "" {
-		report = &xunit.Report{
-			Name: xunitSuitesName,
-		}
+	report := xunit.Report{
+		Name: xunitSuitesName,
 	}
 
-	reporter := runner.NewReporter(report)
+	reporter := runner.NewReporter(&report)
 	reporter.SetStartTime(time.Now())
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -95,9 +92,9 @@ func main() {
 
 	reporter.SetEndTime(time.Now())
 
-	if report != nil {
-		report.Finalize()
+	report.Finalize()
 
+	if o != "" {
 		outputFile, err := os.Create(o)
 		if err != nil {
 			log.Fatalf("Failed to create output file %q: %v", o, err)
@@ -110,5 +107,9 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to write XML report to output file %q: %v", o, err)
 		}
+	}
+
+	if report.ErrorCount > 0 {
+		log.Fatalf("Errors found during test run: %d", report.ErrorCount)
 	}
 }
