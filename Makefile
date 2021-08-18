@@ -112,7 +112,7 @@ cxx-image: ## Build the C++ test runtime container image.
 	docker build -t ${IMAGE_PREFIX}cxx:${TEST_INFRA_VERSION} containers/runtime/cxx
 
 driver-image: ## Build the driver container image.
-	docker build --build-arg GITREF=${DRIVER_VERSION} -t ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION} containers/runtime/driver
+	docker build --build-arg GITREF=${DRIVER_VERSION} --build-arg BREAK_CACHE="$(date +%Y%m%d%H%M%S)" -t ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION} containers/runtime/driver
 
 go-image: ## Build the Go test runtime container image.
 	docker build -t ${IMAGE_PREFIX}go:${TEST_INFRA_VERSION} containers/runtime/go
@@ -135,12 +135,8 @@ php7-image: ## Build the PHP7 test runtime container image.
 python-image: ## Build the Python test runtime container image.
 	docker build -t ${IMAGE_PREFIX}python:${TEST_INFRA_VERSION} containers/runtime/python
 
-
-driver-image: ## Build the driver container image at the $DRIVER_VERSION
-	docker build --build-arg GITREF=${DRIVER_VERSION} \
-	  --build-arg BREAK_CACHE="$(date +%Y%m%d%H%M%S)" \
-		-t ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION} \
-		containers/runtime/driver
+ready-image: ## Build the ready init container image.
+	docker build -t ${INIT_IMAGE_PREFIX}ready:${TEST_INFRA_VERSION} -f containers/init/ready/Dockerfile
 
 ruby-build-image: ## Build the Ruby build-time container image.
 	docker build -t ${BUILD_IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION} containers/init/build/ruby
