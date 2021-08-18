@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -51,6 +52,14 @@ const DefaultTimeout = 25 * time.Minute
 // write a comma-separated list of IP addresses. If this environment variable is
 // unset, DefaultOutputFile will be used as the default.
 const OutputFileEnv = "READY_OUTPUT_FILE"
+
+// OutputMetadataEnv is the optional name of the file where the executable should
+// write all metadata.
+const OutputMetadataEnv = "METADATA_OUTPUT_FILE"
+
+// DefaultMetadataOutputFile is the name of the default file where the executable should
+// write the metadata.
+const DefaultMetadataOutputFile = "/tmp/metadata.json"
 
 // DefaultOutputFile is the name of the default file where the executable should
 // write the comma-separated list of IP addresses.
@@ -269,4 +278,22 @@ func main() {
 	log.Printf("all pods ready, exiting successfully")
 	workerFileBody := strings.Join(podIPs, ",")
 	ioutil.WriteFile(outputFile, []byte(workerFileBody), 0777)
+
+	test, err := grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault).Get(ctx, os.Args[1], metav1.GetOptions{})
+	if err != nil {
+		log.Fatalf("failed to fetch loadtest for obtaining metadata: %v", err)
+	}
+
+	outputMetadataFile := DefaultMetadataOutputFile
+	outputMetadataFileOverride, ok := os.LookupEnv(OutputMetadataEnv)
+	if ok {
+		outputMetadataFile = outputMetadataFileOverride
+	}
+
+	metaDataSet := test.ObjectMeta
+	metaDataBody, err := json.Marshal(metaDataSet)
+	if err != nil {
+		log.Fatalf("failed to marshal metaData for loadtest %s: %v", test.Name, err)
+	}
+	ioutil.WriteFile(outputMetadataFile, metaDataBody, 0777)
 }

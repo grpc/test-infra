@@ -82,6 +82,10 @@ const (
 	// should write all IP addresses and port numbers for ready workers.
 	ReadyOutputFile = ReadyMountPath + "/addresses"
 
+	// ReadyMetadataOutputFile is the name of the file where the ready init container
+	// should write all Metadata.
+	ReadyMetadataOutputFile = ReadyMountPath + "/metadata.json"
+
 	// ReadyVolumeName is the name of the volume that permits sharing files
 	// between the ready init container and the driver's run container.
 	ReadyVolumeName = "worker-addresses"
