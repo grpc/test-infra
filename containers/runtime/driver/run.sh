@@ -15,16 +15,16 @@
 
 set -ex
 
-if [ -n "$QPS_WORKERS_FILE" ]; then
-  export QPS_WORKERS=$(cat $QPS_WORKERS_FILE)
+if [ -n "${QPS_WORKERS_FILE}" ]; then
+  export QPS_WORKERS=$(cat "${QPS_WORKERS_FILE}")
 fi
 
-/src/code/bazel-bin/test/cpp/qps/qps_json_driver --scenarios_file=$SCENARIOS_FILE \
-  --scenario_result_file='scenario_result.json'
+/src/code/bazel-bin/test/cpp/qps/qps_json_driver --scenarios_file="${SCENARIOS_FILE}" \
+  --scenario_result_file=scenario_result.json
 
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --quit=true
 
-if [ "$BQ_RESULT_TABLE" != "" -a "$METADATA_OUTPUT_FILE" ]; then
-  cp $METADATA_OUTPUT_FILE metadata.json
-  python3 /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="$BQ_RESULT_TABLE"
+if [ -n "${BQ_RESULT_TABLE}" ] && [ -r "${METADATA_OUTPUT_FILE}" ]; then
+  cp "${METADATA_OUTPUT_FILE}" metadata.json
+  python3 /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="${BQ_RESULT_TABLE}"
 fi
