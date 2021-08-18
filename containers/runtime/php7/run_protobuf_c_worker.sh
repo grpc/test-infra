@@ -23,20 +23,20 @@ while getopts s: flag; do
   esac
 done
 
-echo "Server port: $input_server_port"
+echo "Server port: ${input_server_port}"
 
 source /usr/local/rvm/scripts/rvm
 export GEM_HOME=/src/workspace/saved/bundle/
 
-if [ -z "$input_server_port" ]; then
+if [ -z "${input_server_port}" ]; then
   echo "Server port is not set, starting the worker without server port provided"
   ruby src/ruby/qps/proxy-worker.rb \
     --use_protobuf_c_extension \
-    --driver_port="$DRIVER_PORT"
+    --driver_port="${DRIVER_PORT}"
 else
-  echo "Server port: $input_server_port"
+  echo "Server port: ${input_server_port}"
   ruby src/ruby/qps/proxy-worker.rb \
     --use_protobuf_c_extension \
-    --driver_port="$DRIVER_PORT" \
-    --server_port="$input_server_port"
+    --driver_port="${DRIVER_PORT}" \
+    --server_port="${input_server_port}"
 fi

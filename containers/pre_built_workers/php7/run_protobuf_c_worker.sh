@@ -23,18 +23,18 @@ while getopts s: flag; do
   esac
 done
 
-echo "Server port: $input_server_port"
+echo "Server port: ${input_server_port}"
 
 source /usr/local/rvm/scripts/rvm
 export GEM_HOME=/execute/saved/bundle/
 
-if [ -z "$input_server_port" ]; then
+if [ -z "${input_server_port}" ]; then
     echo "Server port is not set, starting the worker as a client"
-  timeout --kill-after="$KILL_AFTER" "$POD_TIMEOUT" ruby /execute/src/ruby/qps/proxy-worker.rb \
-    --driver_port="$DRIVER_PORT"
+  timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" ruby /execute/src/ruby/qps/proxy-worker.rb \
+    --driver_port="${DRIVER_PORT}"
 else
-  echo "Server port: $input_server_port"
-  timeout --kill-after="$KILL_AFTER" "$POD_TIMEOUT" ruby /execute/src/ruby/qps/proxy-worker.rb \
-    --driver_port="$DRIVER_PORT" \
-    --server_port="$input_server_port"
+  echo "Server port: ${input_server_port}"
+  timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" ruby /execute/src/ruby/qps/proxy-worker.rb \
+    --driver_port="${DRIVER_PORT}" \
+    --server_port="${input_server_port}"
 fi
