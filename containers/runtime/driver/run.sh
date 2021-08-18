@@ -24,9 +24,7 @@ fi
 
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --quit=true
 
-if [ "$BQ_RESULT_TABLE" != "" ]; then
-  if [ -n "$METADATA_OUTPUT_FILE" ]; then
-    cp $METADATA_OUTPUT_FILE metadata.json
-  fi
+if [ "$BQ_RESULT_TABLE" != "" -a "$METADATA_OUTPUT_FILE" ]; then
+  cp $METADATA_OUTPUT_FILE metadata.json
   python3 /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="$BQ_RESULT_TABLE"
 fi
