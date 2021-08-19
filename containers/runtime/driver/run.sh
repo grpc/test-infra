@@ -24,7 +24,8 @@ fi
 
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --quit=true
 
-if [ -n "${BQ_RESULT_TABLE}" ] && [ -r "${METADATA_OUTPUT_FILE}" ]; then
+if [ -n "${BQ_RESULT_TABLE}" ] && [ -r "${METADATA_OUTPUT_FILE}" ] && [ -r "${NODE_INFO_OUTPUT_FILE}" ]; then
   cp "${METADATA_OUTPUT_FILE}" metadata.json
+  cp "${NODE_INFO_OUTPUT_FILE}" node_info.json
   python3 /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="${BQ_RESULT_TABLE}"
 fi

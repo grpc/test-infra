@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -57,13 +58,21 @@ const OutputFileEnv = "READY_OUTPUT_FILE"
 // write all metadata.
 const OutputMetadataEnv = "METADATA_OUTPUT_FILE"
 
-// DefaultMetadataOutputFile is the name of the default file where the executable should
-// write the metadata.
-const DefaultMetadataOutputFile = "/tmp/metadata.json"
+// OutputNodeInfoEnv is the optional name of the file where the executable should
+// write the node information.
+const OutputNodeInfoEnv = "NODE_INFO_OUTPUT_FILE"
 
 // DefaultOutputFile is the name of the default file where the executable should
 // write the comma-separated list of IP addresses.
 const DefaultOutputFile = "/tmp/loadtest_workers"
+
+// DefaultMetadataOutputFile is the name of the default file where the executable should
+// write the metadata.
+const DefaultMetadataOutputFile = "/tmp/metadata.json"
+
+// DefaultNodeInfoOutputFile is the name of the default file where the executable should
+// write the node infomation.
+const DefaultNodeInfoOutputFile = "/tmp/node_info"
 
 // DefaultDriverPort is the default port for communication between the driver
 // and worker pods. When another port could not be found on a pod, this port is
@@ -87,6 +96,16 @@ type PodLister interface {
 // LoadTestGetter fetch a load test with a specific name.
 type LoadTestGetter interface {
 	Get(context.Context, string, metav1.GetOptions) (*grpcv1.LoadTest, error)
+}
+type NodeInfo struct {
+	Name     string
+	PodIP    string
+	NodeName string
+}
+type NodesInfo struct {
+	Driver  NodeInfo
+	Servers []NodeInfo
+	Clients []NodeInfo
 }
 
 // isPodReady returns true if the pod has been assigned an IP address and all of
@@ -138,12 +157,14 @@ func findDriverPort(pod *corev1.Pod) int32 {
 //
 // If the timeout is exceeded or there is a problem communicating with the
 // Kubernetes API, an error is returned.
-func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, testName string) ([]string, error) {
+func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, testName string) ([]string, *NodesInfo, error) {
 	var loadtest *grpcv1.LoadTest
 	var clientPodAddresses []string
 	var serverPodAddresses []string
+	var nodesInfo NodesInfo
 	clientMatchCount := 0
 	serverMatchCount := 0
+	driverMatched := false
 	timeoutsEnabled := true
 	matchingPods := make(map[string]bool)
 
@@ -155,7 +176,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 
 	for {
 		if timeoutsEnabled && time.Now().After(deadline) {
-			return nil, errors.Errorf("deadline exceeded (%v)", deadline)
+			return nil, nil, errors.Errorf("deadline exceeded (%v)", deadline)
 		}
 		if loadtest == nil {
 			l, err := ltg.Get(ctx, testName, metav1.GetOptions{})
@@ -178,10 +199,18 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 		}
 		ownedPods := status.PodsForLoadTest(loadtest, podList.Items)
 		for _, pod := range ownedPods {
-			if !isPodReady(pod) {
+			if pod.Labels[config.RoleLabel] == config.DriverRole {
+				if !driverMatched && pod.Status.PodIP != "" {
+					nodesInfo.Driver = NodeInfo{
+						Name:     pod.Name,
+						PodIP:    net.JoinHostPort(pod.Status.PodIP, fmt.Sprint(findDriverPort(pod))),
+						NodeName: pod.Spec.NodeName,
+					}
+					driverMatched = true
+				}
 				continue
 			}
-			if pod.Labels[config.RoleLabel] == config.DriverRole {
+			if !isPodReady(pod) {
 				continue
 			}
 			if _, alreadyMatched := matchingPods[pod.Name]; alreadyMatched {
@@ -191,22 +220,32 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 			ip := pod.Status.PodIP
 			driverPort := findDriverPort(pod)
 			if pod.Labels[config.RoleLabel] == config.ServerRole {
-				serverPodAddresses[serverMatchCount] = fmt.Sprintf("%s:%d", ip, driverPort)
+				serverPodAddresses[serverMatchCount] = net.JoinHostPort(ip, fmt.Sprint(driverPort))
+				nodesInfo.Servers = append(nodesInfo.Servers, NodeInfo{
+					Name:     pod.Name,
+					PodIP:    serverPodAddresses[serverMatchCount],
+					NodeName: pod.Spec.NodeName,
+				})
 				serverMatchCount++
 			} else {
-				clientPodAddresses[clientMatchCount] = fmt.Sprintf("%s:%d", ip, driverPort)
+				clientPodAddresses[clientMatchCount] = net.JoinHostPort(ip, fmt.Sprint(driverPort))
+				nodesInfo.Clients = append(nodesInfo.Clients, NodeInfo{
+					Name:     pod.Name,
+					PodIP:    clientPodAddresses[clientMatchCount],
+					NodeName: pod.Spec.NodeName,
+				})
 				clientMatchCount++
 			}
 		}
 
-		if clientMatchCount == len(clientPodAddresses) && serverMatchCount == len(serverPodAddresses) {
+		if clientMatchCount == len(clientPodAddresses) && serverMatchCount == len(serverPodAddresses) && driverMatched {
 			break
 		}
 
 		time.Sleep(pollInterval)
 	}
 	podAddresses := append(serverPodAddresses, clientPodAddresses...)
-	return podAddresses, nil
+	return podAddresses, &nodesInfo, nil
 }
 
 func main() {
@@ -267,10 +306,16 @@ func main() {
 		outputFile = outputFileOverride
 	}
 
+	outputNodeInfoFile := DefaultNodeInfoOutputFile
+	outputNodeInfoFileOverride, ok := os.LookupEnv(OutputNodeInfoEnv)
+	if ok {
+		outputNodeInfoFile = outputNodeInfoFileOverride
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	log.Printf("Waiting for ready pods")
-	podIPs, err := WaitForReadyPods(ctx, grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault), clientset.CoreV1().Pods(metav1.NamespaceAll), os.Args[1])
+	podIPs, nodesInfo, err := WaitForReadyPods(ctx, grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault), clientset.CoreV1().Pods(metav1.NamespaceAll), os.Args[1])
 	if err != nil {
 		log.Fatalf("failed to wait for ready pods: %v", err)
 	}
@@ -296,4 +341,10 @@ func main() {
 		log.Fatalf("failed to marshal metaData for loadtest %s: %v", test.Name, err)
 	}
 	ioutil.WriteFile(outputMetadataFile, metaDataBody, 0777)
+
+	nodeInfoFileBody, err := json.Marshal(*nodesInfo)
+	if err != nil {
+		log.Fatalf("failed to marshal node information for loadtest %s: %v", test.Name, err)
+	}
+	ioutil.WriteFile(outputNodeInfoFile, nodeInfoFileBody, 0777)
 }
