@@ -97,11 +97,15 @@ type PodLister interface {
 type LoadTestGetter interface {
 	Get(context.Context, string, metav1.GetOptions) (*grpcv1.LoadTest, error)
 }
+
+// NodeInfo contain a pod name, pod IP and node name for one worker or driver.
 type NodeInfo struct {
 	Name     string
 	PodIP    string
 	NodeName string
 }
+
+// NodesInfo contain all pods' NodeInfo included in a load test.
 type NodesInfo struct {
 	Driver  NodeInfo
 	Servers []NodeInfo
