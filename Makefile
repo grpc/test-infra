@@ -136,7 +136,7 @@ python-image: ## Build the Python test runtime container image.
 	docker build -t ${IMAGE_PREFIX}python:${TEST_INFRA_VERSION} containers/runtime/python
 
 ready-image: ## Build the ready init container image.
-	docker build -t ${INIT_IMAGE_PREFIX}ready:${TEST_INFRA_VERSION} -f containers/init/ready/Dockerfile
+	docker build -t ${INIT_IMAGE_PREFIX}ready:${TEST_INFRA_VERSION} -f containers/init/ready/Dockerfile .
 
 ruby-build-image: ## Build the Ruby build-time container image.
 	docker build -t ${BUILD_IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION} containers/init/build/ruby
