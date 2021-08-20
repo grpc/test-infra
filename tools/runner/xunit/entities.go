@@ -74,6 +74,7 @@ func (r *Report) WriteToStream(w io.Writer, opts ReportWritingOptions) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to write xUnit report to stream")
 	}
+	bytes = append(bytes, '\n')
 
 	for n, prevN, retries := 0, 0, 0; n < len(bytes); {
 		n, err = w.Write(bytes[n:])
