@@ -93,12 +93,12 @@ type PodLister interface {
 	List(context.Context, metav1.ListOptions) (*corev1.PodList, error)
 }
 
-// LoadTestGetter fetch a load test with a specific name.
+// LoadTestGetter fetches a load test with a specific name.
 type LoadTestGetter interface {
 	Get(context.Context, string, metav1.GetOptions) (*grpcv1.LoadTest, error)
 }
 
-// NodeInfo contain pod name, pod IP and node name in which the pod reside for one worker or driver.
+// NodeInfo contains pod name, pod IP and node name in which the pod reside for one worker or driver.
 type NodeInfo struct {
 	Name     string
 	PodIP    string
