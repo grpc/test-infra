@@ -72,7 +72,7 @@ const DefaultMetadataOutputFile = "/tmp/metadata.json"
 
 // DefaultNodeInfoOutputFile is the name of the default file where the executable should
 // write the node infomation.
-const DefaultNodeInfoOutputFile = "/tmp/node_info"
+const DefaultNodeInfoOutputFile = "/tmp/node_info.json"
 
 // DefaultDriverPort is the default port for communication between the driver
 // and worker pods. When another port could not be found on a pod, this port is
@@ -348,7 +348,7 @@ func main() {
 
 	nodeInfoFileBody, err := json.Marshal(*nodesInfo)
 	if err != nil {
-		log.Fatalf("failed to marshal node information for loadtest %s: %v", test.Name, err)
+		log.Fatalf("failed to marshal nodes information for loadtest %s: %v", test.Name, err)
 	}
 	ioutil.WriteFile(outputNodeInfoFile, nodeInfoFileBody, 0777)
 }
