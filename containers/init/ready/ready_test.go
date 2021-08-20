@@ -19,7 +19,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -76,7 +75,7 @@ var _ = Describe("WaitForReadyPods", func() {
 		Expect(*nodesInfo).To(Equal(NodesInfo{
 			Driver: NodeInfo{
 				Name:     driverPod.Name,
-				PodIP:    net.JoinHostPort(driverPod.Status.PodIP, "10000"),
+				PodIP:    driverPod.Status.PodIP,
 				NodeName: driverPod.Spec.NodeName,
 			},
 		}))

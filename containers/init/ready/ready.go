@@ -105,7 +105,7 @@ type NodeInfo struct {
 	NodeName string
 }
 
-// NodesInfo contain all pods' NodeInfo included in a load test.
+// NodesInfo contains NodeInfo for all pods included in a load test.
 type NodesInfo struct {
 	Driver  NodeInfo
 	Servers []NodeInfo
@@ -207,7 +207,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 				if !driverMatched && pod.Status.PodIP != "" {
 					nodesInfo.Driver = NodeInfo{
 						Name:     pod.Name,
-						PodIP:    net.JoinHostPort(pod.Status.PodIP, fmt.Sprint(findDriverPort(pod))),
+						PodIP:    pod.Status.PodIP,
 						NodeName: pod.Spec.NodeName,
 					}
 					driverMatched = true
@@ -227,7 +227,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 				serverPodAddresses[serverMatchCount] = net.JoinHostPort(ip, fmt.Sprint(driverPort))
 				nodesInfo.Servers = append(nodesInfo.Servers, NodeInfo{
 					Name:     pod.Name,
-					PodIP:    serverPodAddresses[serverMatchCount],
+					PodIP:    ip,
 					NodeName: pod.Spec.NodeName,
 				})
 				serverMatchCount++
@@ -235,7 +235,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 				clientPodAddresses[clientMatchCount] = net.JoinHostPort(ip, fmt.Sprint(driverPort))
 				nodesInfo.Clients = append(nodesInfo.Clients, NodeInfo{
 					Name:     pod.Name,
-					PodIP:    clientPodAddresses[clientMatchCount],
+					PodIP:    ip,
 					NodeName: pod.Spec.NodeName,
 				})
 				clientMatchCount++
