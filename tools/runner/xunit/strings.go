@@ -17,6 +17,7 @@ limitations under the License.
 package xunit
 
 import (
+	"path"
 	"strings"
 	"unicode"
 )
@@ -35,4 +36,25 @@ func Dashify(s string) string {
 		}
 	}
 	return b.String()
+}
+
+// OutputPath returns a function to select different paths to save XML reports.
+// When writing multple reports to files, the resulting function can be used to
+// add a prefix to each file name, and then save it to a directory with the
+// same name as the prefix. This allows tools like test fusion and TestGrid
+// to distinguish tests with the same name in the different reports and display
+// their results correctly.
+func OutputPath(template string) func(string) string {
+	d, f := path.Split(template)
+	if f == "" {
+		return func(prefix string) string {
+			return path.Join(d, prefix, prefix)
+		}
+	}
+	return func(prefix string) string {
+		if prefix != "" {
+			return path.Join(d, prefix, strings.Join([]string{prefix, f}, "_"))
+		}
+		return path.Join(d, f)
+	}
 }

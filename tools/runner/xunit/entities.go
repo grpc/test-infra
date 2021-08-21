@@ -55,6 +55,23 @@ func (r *Report) Finalize() {
 	}
 }
 
+// Split separates each test suite into a separate XML report.
+// The reports are returned as a map of test suite names to XML reports, where
+// each report contains a single test suite.
+func (r *Report) Split() map[string]*Report {
+	m := make(map[string]*Report)
+	for _, testSuite := range r.Suites {
+		report := &Report{
+			Name:          testSuite.Name,
+			TimeInSeconds: testSuite.TimeInSeconds,
+			Suites:        []*TestSuite{testSuite},
+		}
+		report.Finalize()
+		m[testSuite.Name] = report
+	}
+	return m
+}
+
 // ReportWritingOptions wraps optional settings for the output report.
 type ReportWritingOptions struct {
 	// Number of spaces which should be used for indentation.
