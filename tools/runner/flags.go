@@ -59,7 +59,7 @@ func (c *ConcurrencyLevels) Set(value string) error {
 	cLevel, err := strconv.Atoi(cLevelString)
 	if err != nil {
 		if key == "" {
-			return errors.New("value must be of the form [<queue name>:]<concurrrency level>")
+			return errors.New("value must be of the form [<queue name>:]<concurrency level>")
 		}
 		return fmt.Errorf("concurrency level must be an integer, got %s", cLevelString)
 	}

@@ -19,6 +19,7 @@ package runner
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
@@ -66,10 +67,11 @@ func (r *Reporter) Duration() time.Duration {
 }
 
 // NewTestSuiteReporter creates a new suite reporter instance.
-func (r *Reporter) NewTestSuiteReporter(qName string, logPrefixFmt string) *TestSuiteReporter {
+func (r *Reporter) NewTestSuiteReporter(qName string, logPrefixFmt string, testCaseName func(*grpcv1.LoadTest) string) *TestSuiteReporter {
 	suiteReporter := &TestSuiteReporter{
 		qName:        qName,
 		logPrefixFmt: logPrefixFmt,
+		testCaseName: testCaseName,
 	}
 
 	if r.report != nil {
@@ -89,6 +91,7 @@ type TestSuiteReporter struct {
 	testCount    int
 	qName        string
 	logPrefixFmt string
+	testCaseName func(*grpcv1.LoadTest) string
 	startTime    time.Time
 	endTime      time.Time
 }
@@ -140,7 +143,7 @@ func (tsr *TestSuiteReporter) NewTestCaseReporter(config *grpcv1.LoadTest) *Test
 
 	if tsr.testSuite != nil {
 		testCase := &xunit.TestCase{
-			Name: config.Name,
+			Name: tsr.testCaseName(config),
 		}
 		tsr.testSuite.Cases = append(tsr.testSuite.Cases, testCase)
 		caseReporter.testCase = testCase
@@ -212,4 +215,19 @@ func (tcr *TestCaseReporter) Duration() time.Duration {
 	}
 
 	return tcr.endTime.Sub(tcr.startTime)
+}
+
+// TestCaseNameFromAnnotations returns a function to generate test case names.
+// Test case names are derived from the value of annotations added to the test
+// configuration.
+func TestCaseNameFromAnnotations(annotationKeys ...string) func(*grpcv1.LoadTest) string {
+	return func(config *grpcv1.LoadTest) string {
+		var values []string
+		for _, key := range annotationKeys {
+			if value := config.Annotations[key]; value != "" {
+				values = append(values, strings.ToLower(xunit.Dashify(value)))
+			}
+		}
+		return strings.Join(values, "-")
+	}
 }
