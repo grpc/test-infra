@@ -86,6 +86,10 @@ const (
 	// should write all Metadata.
 	ReadyMetadataOutputFile = ReadyMountPath + "/metadata.json"
 
+	// ReadyNodeInfoOutputFile is the name of the file where the ready init container
+	// should write node infomation.
+	ReadyNodeInfoOutputFile = ReadyMountPath + "/node_info.json"
+
 	// ReadyVolumeName is the name of the volume that permits sharing files
 	// between the ready init container and the driver's run container.
 	ReadyVolumeName = "worker-addresses"

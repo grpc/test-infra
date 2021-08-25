@@ -61,15 +61,24 @@ var _ = Describe("WaitForReadyPods", func() {
 		defer cancel()
 
 		podListerMock := &PodListerMock{
-			PodList: &corev1.PodList{},
+			PodList: &corev1.PodList{
+				Items: []corev1.Pod{driverPod},
+			},
 		}
 
 		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(0, 0),
 		}
-		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
+		podAddresses, nodesInfo, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(BeEmpty())
+		Expect(*nodesInfo).To(Equal(NodesInfo{
+			Driver: NodeInfo{
+				Name:     driverPod.Name,
+				PodIP:    driverPod.Status.PodIP,
+				NodeName: driverPod.Spec.NodeName,
+			},
+		}))
 	})
 
 	It("timeout reached when no matching pods are found", func() {
@@ -78,14 +87,17 @@ var _ = Describe("WaitForReadyPods", func() {
 		clientPod.ObjectMeta.OwnerReferences[0].UID = types.UID("other-test-uid")
 		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{
-				Items: []corev1.Pod{clientPod},
+				Items: []corev1.Pod{
+					clientPod,
+					driverPod,
+				},
 			},
 		}
 
 		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(1, 0),
 		}
-		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
+		_, _, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -107,7 +119,7 @@ var _ = Describe("WaitForReadyPods", func() {
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
 		}
 
-		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
+		_, _, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -118,14 +130,17 @@ var _ = Describe("WaitForReadyPods", func() {
 		serverPod.Status.ContainerStatuses[0].Ready = false
 		podListerMock := &PodListerMock{
 			PodList: &corev1.PodList{
-				Items: []corev1.Pod{serverPod},
+				Items: []corev1.Pod{
+					serverPod,
+					driverPod,
+				},
 			},
 		}
 
 		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(0, 1),
 		}
-		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
+		_, _, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -137,6 +152,7 @@ var _ = Describe("WaitForReadyPods", func() {
 			PodList: &corev1.PodList{
 				Items: []corev1.Pod{
 					clientPod,
+					driverPod,
 				},
 			},
 		}
@@ -144,7 +160,7 @@ var _ = Describe("WaitForReadyPods", func() {
 		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
 		}
-		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
+		_, _, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -171,7 +187,7 @@ var _ = Describe("WaitForReadyPods", func() {
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 1),
 		}
 
-		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
+		podAddresses, _, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(Equal([]string{
 			fmt.Sprintf("%s:%d", serverPod.Status.PodIP, DefaultDriverPort),
@@ -195,6 +211,7 @@ var _ = Describe("WaitForReadyPods", func() {
 				Items: []corev1.Pod{
 					clientPod,
 					client2Pod,
+					driverPod,
 				},
 			},
 		}
@@ -203,7 +220,7 @@ var _ = Describe("WaitForReadyPods", func() {
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
 		}
 
-		podAddresses, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
+		podAddresses, _, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(podAddresses).To(Equal([]string{
 			fmt.Sprintf("%s:%d", clientPod.Status.PodIP, DefaultDriverPort),
@@ -223,7 +240,7 @@ var _ = Describe("WaitForReadyPods", func() {
 		loadTestGetterMock := &LoadTestGetterMock{
 			Loadtest: newLoadTestWithMultipleClientsAndServers(2, 0),
 		}
-		_, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
+		_, _, err := WaitForReadyPods(ctx, loadTestGetterMock, podListerMock, "test name")
 		Expect(err).To(HaveOccurred())
 	})
 })
