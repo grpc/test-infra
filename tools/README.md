@@ -26,7 +26,7 @@ You can then invoke the binary for each tool as `bin/${tool}`.
 
 ## Test runner
 
-The [runner](../cmd/runner/main.go) tool runs collections of tests, optionally
+The [runner](cmd/runner/main.go) tool runs collections of tests, optionally
 assigning them to separate _queues_. The queue name for each test is taken from
 an annotation in the test configuration. The key for this annotation is
 specified by the option `annotation-key`.
