@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
+	"path/filepath"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -15,7 +17,18 @@ import (
 	"github.com/grpc/test-infra/status"
 )
 
-func saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTest) error {
+type PodLogger struct {
+	outputDir string
+}
+
+func NewPodLogger(oFlag string) *PodLogger {
+	outputDir := createPodLogOutputDir(oFlag)
+	return &PodLogger{
+		outputDir: outputDir,
+	}
+}
+
+func (pl *PodLogger) saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTest) error {
 	clientset := GetGenericClientset()
 	podLister := clientset.CoreV1().Pods(metav1.NamespaceAll)
 
@@ -40,7 +53,7 @@ func saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTest) error {
 
 	// Attempt to write driver logs to file
 	if foundDriverPod {
-		// open log stream
+		// Open log stream
 		req := clientset.CoreV1().Pods(driverPod.Namespace).GetLogs(driverPod.Name, &corev1.PodLogOptions{})
 		driverLogs, err := req.Stream(ctx)
 		defer driverLogs.Close()
@@ -48,15 +61,16 @@ func saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTest) error {
 			return errors.New("Could not open driver log stream")
 		}
 
-		// open output file
+		// Open output file
 		logFileName := driverPod.Name + ".log"
-		// logFileName := "pod_logs/" + driverPod.Name + ".log" // TODO: save into "pod_logs" directory
-		f, err := os.Create(logFileName)
+		logFilePath := filepath.Join(pl.outputDir, logFileName)
+		f, err := os.Create(logFilePath)
 		defer f.Close()
 		if err != nil {
-			return fmt.Errorf("Could not open %s for writing", logFileName)
+			return fmt.Errorf("Could not open %s for writing", logFilePath)
 		}
 
+		// Write log to output file
 		io.Copy(f, driverLogs)
 		f.Sync()
 
@@ -65,4 +79,18 @@ func saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTest) error {
 	}
 
 	return nil
+}
+
+// Attempt to create containing directory for log file
+// Return path of created or existing directory
+func createPodLogOutputDir(oFlag string) string {
+	pathDir := filepath.Dir(oFlag)
+
+	// Attempt to create directory. Will not error if directory already exists
+	err := os.MkdirAll(pathDir, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Failed to create output directory %q: %v", pathDir, err)
+	}
+
+	return pathDir
 }

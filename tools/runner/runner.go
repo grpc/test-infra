@@ -47,14 +47,17 @@ type Runner struct {
 	// retries is the number of times to retry create and poll operations before
 	// failing each test.
 	retries uint
+	// podLogger stores pod log files
+	podLogger *PodLogger
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, podLogger *PodLogger) *Runner {
 	return &Runner{
 		loadTestGetter: loadTestGetter,
 		afterInterval:  afterInterval,
 		retries:        retries,
+		podLogger:      podLogger,
 	}
 }
 
@@ -139,10 +142,13 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 			} else {
 				reporter.Info("Test terminated with a status of %q", status)
 			}
-			err = saveDriverLogs(ctx, loadTest)
+
+			// Save driver logs
+			err = r.podLogger.saveDriverLogs(ctx, loadTest)
 			if err != nil {
 				reporter.Error("Could not save driver logs %s: ", err)
 			}
+
 			done <- reporter
 			return
 		case loadTest.Status.State == grpcv1.Running:

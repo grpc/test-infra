@@ -61,7 +61,8 @@ func main() {
 	log.Printf("Test counts per queue: %v", runner.CountConfigs(configQueueMap))
 	log.Printf("Queue concurrency levels: %v", c)
 
-	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries)
+	podLogger := runner.NewPodLogger(o)
+	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, podLogger)
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 
