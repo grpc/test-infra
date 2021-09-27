@@ -26,15 +26,6 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	clientset "github.com/grpc/test-infra/clientset"
-
-	testconfig "github.com/grpc/test-infra/config"
-	podStatus "github.com/grpc/test-infra/status"
-	"io"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"os"
 )
 
 // AfterIntervalFunction returns a function that stops for a time interval.
@@ -143,12 +134,14 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			getDriverLogs(ctx, loadTest, reporter)
-
 			if status != "Succeeded" {
 				reporter.Error("Test failed with reason %q: %v", loadTest.Status.Reason, loadTest.Status.Message)
 			} else {
 				reporter.Info("Test terminated with a status of %q", status)
+			}
+			err = saveDriverLogs(ctx, loadTest)
+			if err != nil {
+				reporter.Error("Could not save driver logs %s: ", err)
 			}
 			done <- reporter
 			return
@@ -177,86 +170,4 @@ func statusString(config *grpcv1.LoadTest) string {
 		s = append(s, message)
 	}
 	return strings.Join(s, "; ")
-}
-
-func getDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTest, reporter *TestCaseReporter) {
-	var err error
-	config, err := rest.InClusterConfig()
-
-	if err != nil {
-		if err != rest.ErrNotInCluster {
-			log.Fatalf("failed to connect within cluster: %v", err)
-		}
-
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			log.Fatalf("could not find a home directory for user: %v", err)
-		}
-
-		cfgPathBuilder := &strings.Builder{}
-		cfgPathBuilder.WriteString(homeDir)
-		if homeDir[:len(homeDir)-1] != "/" {
-			cfgPathBuilder.WriteString("/")
-		}
-		cfgPathBuilder.WriteString(".kube/config")
-		cfgPath := cfgPathBuilder.String()
-
-		config, err = clientcmd.BuildConfigFromFlags("", cfgPath)
-		if err != nil {
-			log.Fatalf("failed to construct config for path %q: %v", cfgPath, err)
-		}
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		reporter.Info("[BP] Problem creating clientset")
-	}
-	podLister := clientset.CoreV1().Pods(metav1.NamespaceAll)
-
-	// https://github.com/grpc/test-infra/blob/d408f8550d1ec2e920670c44bb3232082878093c/containers/init/ready/ready.go#L200
-	podList, err := podLister.List(ctx, metav1.ListOptions{})
-	if err != nil {
-		reporter.Info("[BP] Failed to fetch list of pods")
-	}
-
-	// get pods for this specific test
-	testPods := podStatus.PodsForLoadTest(loadTest, podList.Items) // change loadTest to `config` if needed
-
-	//reporter.Info("[BP] List of pods for this test: %+v", testPods)
-
-	foundDriverPod := false
-	var driverPod *corev1.Pod
-
-	for _, pod := range testPods {
-		if pod.Labels[testconfig.RoleLabel] == testconfig.DriverRole {
-			foundDriverPod = true
-			driverPod = pod
-		}
-	}
-
-	if foundDriverPod == true {
-		reporter.Info("[BP] Driver name: %+v", driverPod.Name)
-
-		// open log stream
-		req := clientset.CoreV1().Pods(driverPod.Namespace).GetLogs(driverPod.Name, &corev1.PodLogOptions{})
-		driverLogs, err := req.Stream(ctx)
-		if err != nil {
-			reporter.Info("[BP] Could not open driver log stream")
-		}
-		defer driverLogs.Close()
-
-		// open output file
-		logOutputFileName := "driverlogs.txt"
-		f, err := os.Create(logOutputFileName)
-		if err != nil {
-			reporter.Info("[BP] Could not driverlogs.txt for writing")
-		}
-		defer f.Close()
-
-		io.Copy(f, driverLogs)
-		f.Sync()
-
-	} else {
-		reporter.Info("[BP] Could not find driver pod")
-	}
 }
