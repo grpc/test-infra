@@ -71,8 +71,11 @@ func (pl *PodLogger) saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTe
 		}
 
 		// Write log to output file
-		io.Copy(f, driverLogs)
+		_, err = io.Copy(f, driverLogs)
 		f.Sync()
+		if err != nil {
+			return fmt.Errorf("Error writing to %s: %v", logFilePath, err)
+		}
 
 	} else {
 		return errors.New("Could not find driver pod")
