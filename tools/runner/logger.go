@@ -29,7 +29,7 @@ func NewPodLogger(oFlag string) *PodLogger {
 }
 
 func (pl *PodLogger) saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTest) error {
-	clientset := GetGenericClientset()
+	clientset := getGenericClientset()
 	podLister := clientset.CoreV1().Pods(metav1.NamespaceAll)
 
 	// Get a list of all pods
@@ -64,15 +64,15 @@ func (pl *PodLogger) saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTe
 		// Open output file
 		logFileName := driverPod.Name + ".podlog"
 		logFilePath := filepath.Join(pl.outputDir, logFileName)
-		f, err := os.Create(logFilePath)
-		defer f.Close()
+		logFile, err := os.Create(logFilePath)
+		defer logFile.Close()
 		if err != nil {
 			return fmt.Errorf("Could not open %s for writing", logFilePath)
 		}
 
 		// Write log to output file
-		_, err = io.Copy(f, driverLogs)
-		f.Sync()
+		_, err = io.Copy(logFile, driverLogs)
+		logFile.Sync()
 		if err != nil {
 			return fmt.Errorf("Error writing to %s: %v", logFilePath, err)
 		}

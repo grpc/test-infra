@@ -63,8 +63,8 @@ func NewLoadTestGetter() clientset.LoadTestGetter {
 	return grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault)
 }
 
-// GetGenericClientset returns the standard K8 clientset.
-func GetGenericClientset() *kubernetes.Clientset {
+// getGenericClientset returns the standard K8 clientset.
+func getGenericClientset() *kubernetes.Clientset {
 	config := getConfig()
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
