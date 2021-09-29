@@ -84,10 +84,12 @@ func (pl *PodLogger) saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTe
 	return nil
 }
 
-// Attempt to create containing directory for log file
+// Attempt to create containing directory for log files
 // Return path of created or existing directory
 func createPodLogOutputDir(oFlag string) string {
+	subDir := "pod-logs"
 	pathDir := filepath.Dir(oFlag)
+	pathDir = filepath.Join(pathDir, subDir)
 
 	// Attempt to create directory. Will not error if directory already exists
 	err := os.MkdirAll(pathDir, os.ModePerm)
