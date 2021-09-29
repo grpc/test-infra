@@ -144,9 +144,9 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 			}
 
 			// Save driver logs
-			err = r.podLogger.saveDriverLogs(ctx, loadTest)
+			err = r.podLogger.savePodLogs(ctx, loadTest)
 			if err != nil {
-				reporter.Error("Could not save driver logs %s: ", err)
+				reporter.Error("Could not save pod logs: %s", err)
 			}
 
 			done <- reporter
