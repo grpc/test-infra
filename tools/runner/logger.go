@@ -62,7 +62,7 @@ func (pl *PodLogger) saveDriverLogs(ctx context.Context, loadTest *grpcv1.LoadTe
 		}
 
 		// Open output file
-		logFileName := driverPod.Name + ".podlog"
+		logFileName := driverPod.Name + ".log"
 		logFilePath := filepath.Join(pl.outputDir, logFileName)
 		logFile, err := os.Create(logFilePath)
 		defer logFile.Close()
