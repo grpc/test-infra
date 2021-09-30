@@ -121,10 +121,11 @@ type TestSuite struct {
 
 // TestCase encapsulates metadata regarding a single test.
 type TestCase struct {
-	XMLName       xml.Name `xml:"testcase"`
-	Name          string   `xml:"name,attr"`
-	TimeInSeconds float64  `xml:"time,attr"`
-	Errors        []*Error `xml:"error"`
+	XMLName       xml.Name    `xml:"testcase"`
+	Name          string      `xml:"name,attr"`
+	TimeInSeconds float64     `xml:"time,attr"`
+	Errors        []*Error    `xml:"error"`
+	Properties    []*Property `xml:"properties>property"`
 }
 
 // Error encapsulates metadata regarding a test error.
@@ -132,4 +133,10 @@ type Error struct {
 	XMLName xml.Name `xml:"error"`
 	Message string   `xml:"message,attr,omitempty"`
 	Text    string   `xml:",chardata"`
+}
+
+type Property struct {
+	XMLName xml.Name `xml:"property"`
+	Key     string   `xml:"name,attr"`
+	Value   string   `xml:"value,attr"`
 }
