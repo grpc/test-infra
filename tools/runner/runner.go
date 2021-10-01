@@ -75,8 +75,6 @@ func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteRepor
 		n++
 		reporter := suiteReporter.NewTestCaseReporter(config)
 		log.Printf("Starting test %d in queue %s", reporter.Index(), qName)
-		reporter.AddProperty("brandon", "was here")
-		reporter.AddProperty("ate lunch today", "yes")
 		reporter.SetStartTime(time.Now())
 		go r.runTest(ctx, config, reporter, testDone)
 	}
