@@ -186,7 +186,7 @@ func (tcr *TestCaseReporter) Error(format string, v ...interface{}) {
 		return
 	}
 	tcr.testCase.Errors = append(tcr.testCase.Errors, &xunit.Error{
-		Text: fmt.Sprintf(format, v...),
+		Message: fmt.Sprintf(format, v...),
 	})
 }
 
