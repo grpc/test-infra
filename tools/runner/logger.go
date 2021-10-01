@@ -102,7 +102,7 @@ func (pl *PodLogger) writePodLogToFile(ctx context.Context, pod *corev1.Pod) err
 // Attempt to create containing directory for log files
 // Return path of created or existing directory
 func createPodLogOutputDir(oFlag string) string {
-	subDir := "pod-logs"
+	subDir := "pod_logs"
 	pathDir := filepath.Dir(oFlag)
 	pathDir = filepath.Join(pathDir, subDir)
 
