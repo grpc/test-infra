@@ -135,6 +135,7 @@ type Error struct {
 	Text    string   `xml:",chardata"`
 }
 
+// Property encapsulates metadata regarding a test property.
 type Property struct {
 	XMLName xml.Name `xml:"property"`
 	Key     string   `xml:"name,attr"`
