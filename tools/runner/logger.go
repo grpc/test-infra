@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// PodLogger provides functionality to save pod logs to files
 type PodLogger struct {
 	outputDir string
 }
