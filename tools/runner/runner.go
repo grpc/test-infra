@@ -47,14 +47,18 @@ type Runner struct {
 	// retries is the number of times to retry create and poll operations before
 	// failing each test.
 	retries uint
+	// deleteSuccessfulTests determines whether tests that terminate without
+	// errors should be deleted immediately.
+	deleteSuccessfulTests bool
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool) *Runner {
 	return &Runner{
-		loadTestGetter: loadTestGetter,
-		afterInterval:  afterInterval,
-		retries:        retries,
+		loadTestGetter:        loadTestGetter,
+		afterInterval:         afterInterval,
+		retries:               retries,
+		deleteSuccessfulTests: deleteSuccessfulTests,
 	}
 }
 
@@ -138,6 +142,14 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 				reporter.Error("Test failed with reason %q: %v", loadTest.Status.Reason, loadTest.Status.Message)
 			} else {
 				reporter.Info("Test terminated with a status of %q", status)
+				if r.deleteSuccessfulTests {
+					err = r.loadTestGetter.Delete(ctx, config.Name, metav1.DeleteOptions{})
+					if err != nil {
+						reporter.Info("Failed to delete test %s: %v", config.Name, err)
+					} else {
+						reporter.Info("Deleted test %s", config.Name)
+					}
+				}
 			}
 			done <- reporter
 			return

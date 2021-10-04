@@ -49,7 +49,8 @@ The `runner` tool takes the following options:
   `20s`).
 - `-polling-retries`<br> Maximum retries in case of communication failure
   (default: `2`).
-- `-xunit-suites-name`<br> Name field for testsuites in xunit xml report.
+- `-delete-successful-tests`<br> Delete tests immediately in case of successful
+  termination (default: `false`).
 
 The following example runs tests on two separate queues, specified by the `pool`
 annotation (the most common case in production, where tests run simultaneously
