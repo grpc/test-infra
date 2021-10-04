@@ -223,6 +223,9 @@ func (tcr *TestCaseReporter) AddProperty(key, value string) {
 		Key:   key,
 		Value: value,
 	}
+	if tcr.testCase == nil {
+		return
+	}
 	tcr.testCase.Properties = append(tcr.testCase.Properties, property)
 }
 
