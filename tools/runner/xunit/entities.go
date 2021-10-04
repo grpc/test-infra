@@ -20,6 +20,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -48,6 +49,7 @@ func (r *Report) Finalize() {
 		testSuite.TestCount = len(testSuite.Cases)
 		for _, testCase := range testSuite.Cases {
 			testSuite.ErrorCount += len(testCase.Errors)
+			testCase.sortProperties()
 		}
 
 		r.ErrorCount += testSuite.ErrorCount
@@ -140,4 +142,12 @@ type Property struct {
 	XMLName xml.Name `xml:"property"`
 	Key     string   `xml:"name,attr"`
 	Value   string   `xml:"value,attr"`
+}
+
+// Sort the properties of a testcase alphabetically by key.
+func (ts *TestCase) sortProperties() {
+	props := ts.Properties
+	sort.Slice(props, func(i, j int) bool {
+		return props[i].Key < props[j].Key
+	})
 }
