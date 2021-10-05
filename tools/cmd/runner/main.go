@@ -35,6 +35,7 @@ func main() {
 	var a string
 	var p time.Duration
 	var retries uint
+	var deleteSuccessfulTests bool
 
 	flag.Var(&i, "i", "input files containing load test configurations")
 	flag.StringVar(&o, "o", "", "name of the output file for xunit xml report")
@@ -42,6 +43,7 @@ func main() {
 	flag.StringVar(&a, "annotation-key", "pool", "annotation key to parse for queue assignment")
 	flag.DurationVar(&p, "polling-interval", 20*time.Second, "polling interval for load test status")
 	flag.UintVar(&retries, "polling-retries", 2, "Maximum retries in case of communication failure")
+	flag.BoolVar(&deleteSuccessfulTests, "delete-successful-tests", false, "Delete tests immediately in case of successful termination")
 	flag.Parse()
 
 	inputConfigs, err := runner.DecodeFromFiles(i)
@@ -62,7 +64,7 @@ func main() {
 	log.Printf("Queue concurrency levels: %v", c)
 
 	podLogger := runner.NewPodLogger(o)
-	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, podLogger)
+	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, podLogger)
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 
