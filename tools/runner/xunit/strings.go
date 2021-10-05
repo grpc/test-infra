@@ -39,7 +39,7 @@ func Dashify(s string) string {
 }
 
 // OutputPath returns a function to select different paths to save XML reports.
-// When writing multple reports to files, the resulting function can be used to
+// When writing multiple reports to files, the resulting function can be used to
 // add a prefix to each file name, and then save it to a directory with the
 // same name as the prefix. This allows tools like test fusion and TestGrid
 // to distinguish tests with the same name in the different reports and display
