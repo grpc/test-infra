@@ -145,8 +145,8 @@ type Property struct {
 }
 
 // Sort the properties of a testcase alphabetically by key.
-func (ts *TestCase) sortProperties() {
-	props := ts.Properties
+func (tc *TestCase) sortProperties() {
+	props := tc.Properties
 	sort.Slice(props, func(i, j int) bool {
 		return props[i].Key < props[j].Key
 	})
