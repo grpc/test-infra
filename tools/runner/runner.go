@@ -55,18 +55,18 @@ type Runner struct {
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, podLogger *PodLogger) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool) *Runner {
 	return &Runner{
 		loadTestGetter:        loadTestGetter,
 		afterInterval:         afterInterval,
 		retries:               retries,
 		deleteSuccessfulTests: deleteSuccessfulTests,
-		podLogger:             podLogger,
+		podLogger:             NewPodLogger(),
 	}
 }
 
 // Run runs a set of LoadTests at a given concurrency level.
-func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, done chan<- *TestSuiteReporter) {
+func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, podLogDir string, done chan<- *TestSuiteReporter) {
 	var count, n int
 	qName := suiteReporter.Queue()
 	testDone := make(chan *TestCaseReporter)
@@ -83,7 +83,7 @@ func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteRepor
 		reporter := suiteReporter.NewTestCaseReporter(config)
 		log.Printf("Starting test %d in queue %s", reporter.Index(), qName)
 		reporter.SetStartTime(time.Now())
-		go r.runTest(ctx, config, reporter, testDone)
+		go r.runTest(ctx, config, reporter, podLogDir, testDone)
 	}
 	for n > 0 {
 		reporter := <-testDone
@@ -97,7 +97,7 @@ func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteRepor
 }
 
 // runTest creates a single LoadTest and monitors it to completion.
-func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter *TestCaseReporter, done chan<- *TestCaseReporter) {
+func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter *TestCaseReporter, podLogDir string, done chan<- *TestCaseReporter) {
 	var s, status string
 	var retries uint
 
@@ -156,7 +156,7 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 			}
 
 			// Save driver logs
-			err = r.podLogger.savePodLogs(ctx, loadTest)
+			err = r.podLogger.savePodLogs(ctx, loadTest, podLogDir)
 			if err != nil {
 				reporter.Error("Could not save pod logs: %s", err)
 			}

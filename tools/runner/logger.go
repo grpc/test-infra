@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -15,43 +14,45 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// PodLogger provides functionality to save pod logs to files
+// PodLogger provides functionality to save pod logs to files.
 type PodLogger struct {
-	outputDir string
 }
 
-func NewPodLogger(oFlag string) *PodLogger {
-	outputDir := createPodLogOutputDir(oFlag)
-	return &PodLogger{
-		outputDir: outputDir,
-	}
+// NewPodLogger creates a new PodLogger object.
+func NewPodLogger() *PodLogger {
+	return &PodLogger{}
 }
 
 // Save pod logs to file with same name as pod
-func (pl *PodLogger) savePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest) error {
+func (pl *PodLogger) savePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) error {
 	// Get pods for this test
 	pods, err := pl.getTestPods(ctx, loadTest)
 	if err != nil {
 		return err
 	}
 
-	// Try to write pod's logs to files, collecting possible errors
-	collectedErrors := "One or more errors have occured:\n"
-	errorPresent := false
-	for _, pod := range pods {
-		err = pl.writePodLogToFile(ctx, pod)
-		if err != nil {
-			collectedErrors += fmt.Errorf("\t%w\n", err).Error()
-			errorPresent = true
-		}
+	// Attempt to create directory. Will not error if directory already exists
+	err = os.MkdirAll(podLogDir, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("Failed to create pod log output directory %s: %v", podLogDir, err)
 	}
 
-	if errorPresent {
-		return errors.New(collectedErrors)
+	// Write logs to files
+	errorOccured := false
+	for _, pod := range pods {
+		logFilePath := filepath.Join(podLogDir, pod.Name+".log")
+		err = pl.writePodLogToFile(ctx, pod, logFilePath)
+		if err != nil {
+			errorOccured = true
+		}
+	}
+	if errorOccured {
+		return errors.New("One or more log files could not be written")
 	}
 	return nil
 }
 
+// Get the pods associated with the given LoadTest
 func (pl *PodLogger) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest) ([]*corev1.Pod, error) {
 	clientset := getGenericClientset()
 	podLister := clientset.CoreV1().Pods(metav1.NamespaceAll)
@@ -68,8 +69,7 @@ func (pl *PodLogger) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest)
 }
 
 // Writes a single pod's logs to a file.
-// The file will be named whatever the pod's name is
-func (pl *PodLogger) writePodLogToFile(ctx context.Context, pod *corev1.Pod) error {
+func (pl *PodLogger) writePodLogToFile(ctx context.Context, pod *corev1.Pod, logFilePath string) error {
 	clientset := getGenericClientset()
 
 	// Open log stream
@@ -81,8 +81,6 @@ func (pl *PodLogger) writePodLogToFile(ctx context.Context, pod *corev1.Pod) err
 	}
 
 	// Open output file
-	logFileName := pod.Name + ".log"
-	logFilePath := filepath.Join(pl.outputDir, logFileName)
 	logFile, err := os.Create(logFilePath)
 	defer logFile.Close()
 	if err != nil {
@@ -97,20 +95,4 @@ func (pl *PodLogger) writePodLogToFile(ctx context.Context, pod *corev1.Pod) err
 	}
 
 	return nil
-}
-
-// Attempt to create containing directory for log files
-// Return path of created or existing directory
-func createPodLogOutputDir(oFlag string) string {
-	subDir := "pod_logs"
-	pathDir := filepath.Dir(oFlag)
-	pathDir = filepath.Join(pathDir, subDir)
-
-	// Attempt to create directory. Will not error if directory already exists
-	err := os.MkdirAll(pathDir, os.ModePerm)
-	if err != nil {
-		log.Fatalf("Failed to create output directory %q: %v", pathDir, err)
-	}
-
-	return pathDir
 }

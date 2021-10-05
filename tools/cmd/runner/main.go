@@ -31,6 +31,7 @@ import (
 func main() {
 	var i runner.FileNames
 	var o string
+	var l string
 	var c runner.ConcurrencyLevels
 	var a string
 	var p time.Duration
@@ -39,6 +40,7 @@ func main() {
 
 	flag.Var(&i, "i", "input files containing load test configurations")
 	flag.StringVar(&o, "o", "", "name of the output file for xunit xml report")
+	flag.StringVar(&l, "l", "", "name of the output directory for pod logs")
 	flag.Var(&c, "c", "concurrency level, in the form [<queue name>:]<concurrency level>")
 	flag.StringVar(&a, "annotation-key", "pool", "annotation key to parse for queue assignment")
 	flag.DurationVar(&p, "polling-interval", 20*time.Second, "polling interval for load test status")
@@ -57,14 +59,24 @@ func main() {
 		log.Fatalf("Failed to validate concurrency levels: %v", err)
 	}
 
+	// Determine pod log base directory. If the l flag is absent, use the directory
+	// where the xml report will be written
+	podLogDir := ""
+	if l != "" {
+		podLogDir = l
+	} else {
+		subDir := "pod_logs"
+		podLogDir = path.Dir(o)
+		podLogDir = path.Join(podLogDir, subDir)
+	}
+
 	log.Printf("Annotation key for queue assignment: %s", a)
 	log.Printf("Polling interval: %v", p)
 	log.Printf("Polling retries: %d", retries)
 	log.Printf("Test counts per queue: %v", runner.CountConfigs(configQueueMap))
 	log.Printf("Queue concurrency levels: %v", c)
 
-	podLogger := runner.NewPodLogger(o)
-	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, podLogger)
+	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests)
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 
@@ -81,7 +93,7 @@ func main() {
 	for qName, configs := range configQueueMap {
 		testSuiteReporter := reporter.NewTestSuiteReporter(qName, logPrefixFmt, runner.TestCaseNameFromAnnotations("scenario"))
 		testSuiteReporter.SetStartTime(time.Now())
-		go r.Run(ctx, configs, testSuiteReporter, c[qName], done)
+		go r.Run(ctx, configs, testSuiteReporter, c[qName], podLogDir, done)
 	}
 
 	for range configQueueMap {
