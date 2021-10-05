@@ -57,11 +57,24 @@ func main() {
 		log.Fatalf("Failed to validate concurrency levels: %v", err)
 	}
 
+	outputPath := xunit.OutputPath(o)
+
+	outputDirMap := make(map[string]string)
+	for qName := range configQueueMap {
+		outputFilePath := outputPath(qName)
+		outputDir := path.Dir(outputFilePath)
+		if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
+			log.Fatalf("Failed to create output directory %q: %v", outputDir, err)
+		}
+		outputDirMap[qName] = outputDir
+	}
+
 	log.Printf("Annotation key for queue assignment: %s", a)
 	log.Printf("Polling interval: %v", p)
 	log.Printf("Polling retries: %d", retries)
 	log.Printf("Test counts per queue: %v", runner.CountConfigs(configQueueMap))
 	log.Printf("Queue concurrency levels: %v", c)
+	log.Printf("Output directories: %v", outputDirMap)
 
 	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests)
 
@@ -94,15 +107,8 @@ func main() {
 	report.Finalize()
 
 	if o != "" {
-		outputPath := xunit.OutputPath(o)
-
 		for suiteName, suiteReport := range report.Split() {
 			outputFilePath := outputPath(suiteName)
-
-			outputDir := path.Dir(outputFilePath)
-			if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
-				log.Fatalf("Failed to create output directory %q: %v", outputDir, err)
-			}
 
 			outputFile, err := os.Create(outputFilePath)
 			if err != nil {
