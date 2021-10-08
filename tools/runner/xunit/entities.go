@@ -48,8 +48,8 @@ func (r *Report) Finalize() {
 		testSuite.ErrorCount = 0
 		testSuite.TestCount = len(testSuite.Cases)
 		for _, testCase := range testSuite.Cases {
-			testSuite.ErrorCount += len(testCase.Errors)
 			testCase.sortProperties()
+			testSuite.ErrorCount += len(testCase.Errors)
 		}
 
 		r.ErrorCount += testSuite.ErrorCount
@@ -144,7 +144,7 @@ type Property struct {
 	Value   string   `xml:"value,attr"`
 }
 
-// Sort the properties of a testcase alphabetically by key.
+// sortProperties sorts properties alphabetically by key.
 func (tc *TestCase) sortProperties() {
 	props := tc.Properties
 	sort.Slice(props, func(i, j int) bool {

@@ -219,14 +219,13 @@ func (tcr *TestCaseReporter) Duration() time.Duration {
 
 // AddProperty adds a key-value property to the test case.
 func (tcr *TestCaseReporter) AddProperty(key, value string) {
-	property := &xunit.Property{
-		Key:   key,
-		Value: value,
-	}
 	if tcr.testCase == nil {
 		return
 	}
-	tcr.testCase.Properties = append(tcr.testCase.Properties, property)
+	tcr.testCase.Properties = append(tcr.testCase.Properties, &xunit.Property{
+		Key:   key,
+		Value: value,
+	})
 }
 
 // TestCaseNameFromAnnotations returns a function to generate test case names.
