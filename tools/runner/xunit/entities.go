@@ -20,6 +20,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -47,6 +48,7 @@ func (r *Report) Finalize() {
 		testSuite.ErrorCount = 0
 		testSuite.TestCount = len(testSuite.Cases)
 		for _, testCase := range testSuite.Cases {
+			testCase.sortProperties()
 			testSuite.ErrorCount += len(testCase.Errors)
 		}
 
@@ -121,10 +123,11 @@ type TestSuite struct {
 
 // TestCase encapsulates metadata regarding a single test.
 type TestCase struct {
-	XMLName       xml.Name `xml:"testcase"`
-	Name          string   `xml:"name,attr"`
-	TimeInSeconds float64  `xml:"time,attr"`
-	Errors        []*Error `xml:"error"`
+	XMLName       xml.Name    `xml:"testcase"`
+	Name          string      `xml:"name,attr"`
+	TimeInSeconds float64     `xml:"time,attr"`
+	Errors        []*Error    `xml:"error"`
+	Properties    []*Property `xml:"properties>property"`
 }
 
 // Error encapsulates metadata regarding a test error.
@@ -132,4 +135,19 @@ type Error struct {
 	XMLName xml.Name `xml:"error"`
 	Message string   `xml:"message,attr,omitempty"`
 	Text    string   `xml:",chardata"`
+}
+
+// Property encapsulates metadata regarding a test property.
+type Property struct {
+	XMLName xml.Name `xml:"property"`
+	Key     string   `xml:"name,attr"`
+	Value   string   `xml:"value,attr"`
+}
+
+// sortProperties sorts properties alphabetically by key.
+func (tc *TestCase) sortProperties() {
+	props := tc.Properties
+	sort.Slice(props, func(i, j int) bool {
+		return props[i].Key < props[j].Key
+	})
 }
