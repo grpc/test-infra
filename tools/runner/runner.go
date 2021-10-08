@@ -66,7 +66,7 @@ func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), re
 }
 
 // Run runs a set of LoadTests at a given concurrency level.
-func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, podLogDir string, done chan<- *TestSuiteReporter) {
+func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteReporter *TestSuiteReporter, concurrencyLevel int, outputDir string, done chan<- *TestSuiteReporter) {
 	var count, n int
 	qName := suiteReporter.Queue()
 	testDone := make(chan *TestCaseReporter)
@@ -83,7 +83,7 @@ func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteRepor
 		reporter := suiteReporter.NewTestCaseReporter(config)
 		log.Printf("Starting test %d in queue %s", reporter.Index(), qName)
 		reporter.SetStartTime(time.Now())
-		go r.runTest(ctx, config, reporter, podLogDir, testDone)
+		go r.runTest(ctx, config, reporter, outputDir, testDone)
 	}
 	for n > 0 {
 		reporter := <-testDone
@@ -97,7 +97,7 @@ func (r *Runner) Run(ctx context.Context, configs []*grpcv1.LoadTest, suiteRepor
 }
 
 // runTest creates a single LoadTest and monitors it to completion.
-func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter *TestCaseReporter, podLogDir string, done chan<- *TestCaseReporter) {
+func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter *TestCaseReporter, outputDir string, done chan<- *TestCaseReporter) {
 	var s, status string
 	var retries uint
 
@@ -141,7 +141,7 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			err = r.podLogger.savePodLogs(ctx, loadTest, podLogDir)
+			err = r.podLogger.savePodLogs(ctx, loadTest, outputDir)
 			if err != nil {
 				reporter.Error("Could not save pod logs: %s", err)
 			}
