@@ -36,9 +36,9 @@ import (
 	clientset "github.com/grpc/test-infra/clientset"
 )
 
-// NewLoadTestGetter returns a client to interact with LoadTest resources.
-// The client can be used to create, query for status and delete LoadTests.
-func NewLoadTestGetter() clientset.LoadTestGetter {
+// LoadTestGetter returns a client to interact with LoadTest resources. The
+// client can be used to create, query for status and delete LoadTests.
+func LoadTestGetter(clientset clientset.GRPCTestClientset) clientset.LoadTestGetter {
 	schemebuilder := runtime.NewSchemeBuilder(func(scheme *runtime.Scheme) error {
 		scheme.AddKnownTypes(grpcv1.GroupVersion,
 			&grpcv1.LoadTest{},
@@ -53,13 +53,12 @@ func NewLoadTestGetter() clientset.LoadTestGetter {
 	types := scheme.AllKnownTypes()
 	_ = types
 
-	grpcClientset := NewGRPCTestClientSet()
-	return grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault)
+	return clientset.LoadTestV1().LoadTests(corev1.NamespaceDefault)
 }
 
-// NewGRPCTestClientSet returns a new GRPCTestClientset
+// NewGRPCTestClientSet returns a new GRPCTestClientset.
 func NewGRPCTestClientSet() clientset.GRPCTestClientset {
-	config := getConfig()
+	config := getKubernetesConfig()
 	grpcClientset, err := clientset.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("failed to create a grpc clientset: %v", err)
@@ -67,7 +66,8 @@ func NewGRPCTestClientSet() clientset.GRPCTestClientset {
 	return grpcClientset
 }
 
-func getConfig() *rest.Config {
+// getKubernetesConfig retrieves the kubernetes configuration.
+func getKubernetesConfig() *rest.Config {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		if err != rest.ErrNotInCluster {
