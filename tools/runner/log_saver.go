@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -81,6 +82,13 @@ func (ls *LogSaver) writePodLogToFile(ctx context.Context, pod *corev1.Pod, logF
 	}
 	defer driverLogs.Close()
 
+	// Don't write empty log files
+	logBuffer := new(bytes.Buffer)
+	logBuffer.ReadFrom(driverLogs)
+	if logBuffer.Len() == 0 {
+		return nil
+	}
+
 	// Open output file
 	logFile, err := os.Create(logFilePath)
 	if err != nil {
@@ -89,7 +97,7 @@ func (ls *LogSaver) writePodLogToFile(ctx context.Context, pod *corev1.Pod, logF
 	defer logFile.Close()
 
 	// Write log to output file
-	_, err = io.Copy(logFile, driverLogs)
+	_, err = io.Copy(logFile, logBuffer)
 	logFile.Sync()
 	if err != nil {
 		return fmt.Errorf("Error writing to %s: %v", logFilePath, err)
