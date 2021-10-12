@@ -23,7 +23,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	corev1 "k8s.io/api/core/v1"
@@ -49,29 +48,23 @@ func NewLoadTestGetter() clientset.LoadTestGetter {
 		return nil
 	})
 
-	config := getConfig()
-
 	schemebuilder.AddToScheme(clientgoscheme.Scheme)
 	scheme := clientgoscheme.Scheme
 	types := scheme.AllKnownTypes()
 	_ = types
 
+	grpcClientset := NewGRPCTestClientSet()
+	return grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault)
+}
+
+// NewGRPCTestClientSet returns a new GRPCTestClientset
+func NewGRPCTestClientSet() clientset.GRPCTestClientset {
+	config := getConfig()
 	grpcClientset, err := clientset.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("failed to create a grpc clientset: %v", err)
 	}
-	return grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault)
-}
-
-// getGenericClientset returns the standard K8 clientset.
-func getGenericClientset() *kubernetes.Clientset {
-	config := getConfig()
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Fatalf("Could not create generic clientset")
-	}
-
-	return clientset
+	return grpcClientset
 }
 
 func getConfig() *rest.Config {

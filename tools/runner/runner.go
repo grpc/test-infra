@@ -55,13 +55,13 @@ type Runner struct {
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, podLogger *PodLogger) *Runner {
 	return &Runner{
 		loadTestGetter:        loadTestGetter,
 		afterInterval:         afterInterval,
 		retries:               retries,
 		deleteSuccessfulTests: deleteSuccessfulTests,
-		podLogger:             NewPodLogger(),
+		podLogger:             podLogger,
 	}
 }
 
