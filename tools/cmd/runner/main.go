@@ -76,7 +76,7 @@ func main() {
 	log.Printf("Queue concurrency levels: %v", c)
 	log.Printf("Output directories: %v", outputDirMap)
 
-	podLogger := runner.NewPodLogger(runner.NewGRPCTestClientSet())
+	podLogger := runner.NewLogSaver(runner.NewGRPCTestClientSet())
 	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, podLogger)
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)

@@ -15,22 +15,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// PodLogger provides functionality to save pod logs to files.
-type PodLogger struct {
+// LogSaver provides functionality to save pod logs to files.
+type LogSaver struct {
 	clientset clientset.GRPCTestClientset
 }
 
-// NewPodLogger creates a new PodLogger object.
-func NewPodLogger(clientset clientset.GRPCTestClientset) *PodLogger {
-	return &PodLogger{
+// NewLogSaver creates a new LogSaver object.
+func NewLogSaver(clientset clientset.GRPCTestClientset) *LogSaver {
+	return &LogSaver{
 		clientset: clientset,
 	}
 }
 
-// savePodLogs saves pod logs to files with same name as pod.
-func (pl *PodLogger) savePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) error {
+// SavePodLogs saves pod logs to files with same name as pod.
+func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) error {
 	// Get pods for this test
-	pods, err := pl.getTestPods(ctx, loadTest)
+	pods, err := ls.getTestPods(ctx, loadTest)
 	if err != nil {
 		return err
 	}
@@ -42,23 +42,23 @@ func (pl *PodLogger) savePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest,
 	}
 
 	// Write logs to files
-	errorOccured := false
+	errorOccurred := false
 	for _, pod := range pods {
 		logFilePath := filepath.Join(podLogDir, pod.Name+".log")
-		err = pl.writePodLogToFile(ctx, pod, logFilePath)
+		err = ls.writePodLogToFile(ctx, pod, logFilePath)
 		if err != nil {
-			errorOccured = true
+			errorOccurred = true
 		}
 	}
-	if errorOccured {
+	if errorOccurred {
 		return errors.New("One or more log files could not be written")
 	}
 	return nil
 }
 
 // getTestPods retrieves the pods associated with a LoadTest.
-func (pl *PodLogger) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest) ([]*corev1.Pod, error) {
-	podLister := pl.clientset.CoreV1().Pods(metav1.NamespaceAll)
+func (ls *LogSaver) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest) ([]*corev1.Pod, error) {
+	podLister := ls.clientset.CoreV1().Pods(metav1.NamespaceAll)
 
 	// Get a list of all pods
 	podList, err := podLister.List(ctx, metav1.ListOptions{})
@@ -72,9 +72,9 @@ func (pl *PodLogger) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest)
 }
 
 // writePodLogToFile writes a single pod's logs to a file.
-func (pl *PodLogger) writePodLogToFile(ctx context.Context, pod *corev1.Pod, logFilePath string) error {
+func (ls *LogSaver) writePodLogToFile(ctx context.Context, pod *corev1.Pod, logFilePath string) error {
 	// Open log stream
-	req := pl.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
+	req := ls.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
 	driverLogs, err := req.Stream(ctx)
 	if err != nil {
 		return fmt.Errorf("Could not open log stream for pod: %s", pod.Name)

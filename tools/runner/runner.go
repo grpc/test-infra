@@ -50,18 +50,18 @@ type Runner struct {
 	// deleteSuccessfulTests determines whether tests that terminate without
 	// errors should be deleted immediately.
 	deleteSuccessfulTests bool
-	// podLogger stores pod log files
-	podLogger *PodLogger
+	// logSaver saves pod log files
+	logSaver *LogSaver
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, podLogger *PodLogger) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, logSaver *LogSaver) *Runner {
 	return &Runner{
 		loadTestGetter:        loadTestGetter,
 		afterInterval:         afterInterval,
 		retries:               retries,
 		deleteSuccessfulTests: deleteSuccessfulTests,
-		podLogger:             podLogger,
+		logSaver:              logSaver,
 	}
 }
 
@@ -141,7 +141,7 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			err = r.podLogger.savePodLogs(ctx, loadTest, outputDir)
+			err = r.logSaver.SavePodLogs(ctx, loadTest, outputDir)
 			if err != nil {
 				reporter.Error("Could not save pod logs: %s", err)
 			}
