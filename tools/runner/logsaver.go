@@ -43,16 +43,16 @@ func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, 
 	}
 
 	// Write logs to files
-	errorOccurred := false
 	for _, pod := range pods {
 		logFilePath := filepath.Join(podLogDir, pod.Name+".log")
-		err = ls.writePodLogToFile(ctx, pod, logFilePath)
+		buffer, err := ls.getPodLogBuffer(ctx, pod)
 		if err != nil {
-			errorOccurred = true
+			return fmt.Errorf("could not get log from pod: %s", err)
 		}
-	}
-	if errorOccurred {
-		return errors.New("One or more log files could not be written")
+		err = ls.writeBufferToFile(buffer, logFilePath)
+		if err != nil {
+			return fmt.Errorf("could not write pod log buffer to file: %s", err)
+		}
 	}
 	return nil
 }
@@ -72,35 +72,38 @@ func (ls *LogSaver) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest) 
 	return testPods, nil
 }
 
-// writePodLogToFile writes a single pod's logs to a file.
-func (ls *LogSaver) writePodLogToFile(ctx context.Context, pod *corev1.Pod, logFilePath string) error {
-	// Open log stream
+func (ls *LogSaver) getPodLogBuffer(ctx context.Context, pod *corev1.Pod) (*bytes.Buffer, error) {
 	req := ls.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
 	driverLogs, err := req.Stream(ctx)
 	if err != nil {
-		return fmt.Errorf("Could not open log stream for pod: %s", pod.Name)
+		return nil, err
 	}
 	defer driverLogs.Close()
 
-	// Don't write empty log files
 	logBuffer := new(bytes.Buffer)
 	logBuffer.ReadFrom(driverLogs)
-	if logBuffer.Len() == 0 {
+
+	return logBuffer, nil
+}
+
+func (ls *LogSaver) writeBufferToFile(buffer *bytes.Buffer, filePath string) error {
+	// Don't write empty buffers
+	if buffer.Len() == 0 {
 		return nil
 	}
 
 	// Open output file
-	logFile, err := os.Create(logFilePath)
+	file, err := os.Create(filePath)
 	if err != nil {
-		return fmt.Errorf("Could not open %s for writing", logFilePath)
+		return fmt.Errorf("could not open %s for writing", filePath)
 	}
-	defer logFile.Close()
+	defer file.Close()
 
 	// Write log to output file
-	_, err = io.Copy(logFile, logBuffer)
-	logFile.Sync()
+	_, err = io.Copy(file, buffer)
+	file.Sync()
 	if err != nil {
-		return fmt.Errorf("Error writing to %s: %v", logFilePath, err)
+		return fmt.Errorf("error writing to %s: %v", filePath, err)
 	}
 
 	return nil
