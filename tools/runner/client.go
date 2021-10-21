@@ -23,9 +23,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	corev1 "k8s.io/api/core/v1"
+	corev1types "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -36,9 +38,10 @@ import (
 	clientset "github.com/grpc/test-infra/clientset"
 )
 
-// LoadTestGetter returns a client to interact with LoadTest resources. The
+// NewLoadTestGetter returns a client to interact with LoadTest resources. The
 // client can be used to create, query for status and delete LoadTests.
-func LoadTestGetter(clientset clientset.GRPCTestClientset) clientset.LoadTestGetter {
+func NewLoadTestGetter() clientset.LoadTestGetter {
+	clientset := NewGRPCTestClientset()
 	schemebuilder := runtime.NewSchemeBuilder(func(scheme *runtime.Scheme) error {
 		scheme.AddKnownTypes(grpcv1.GroupVersion,
 			&grpcv1.LoadTest{},
@@ -56,14 +59,30 @@ func LoadTestGetter(clientset clientset.GRPCTestClientset) clientset.LoadTestGet
 	return clientset.LoadTestV1().LoadTests(corev1.NamespaceDefault)
 }
 
-// NewGRPCTestClientSet returns a new GRPCTestClientset.
-func NewGRPCTestClientSet() clientset.GRPCTestClientset {
+// NewGRPCTestClientset returns a new GRPCTestClientset.
+func NewGRPCTestClientset() clientset.GRPCTestClientset {
 	config := getKubernetesConfig()
 	grpcClientset, err := clientset.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("failed to create a grpc clientset: %v", err)
 	}
 	return grpcClientset
+}
+
+// NewK8sClientset returns a new Kubernetes clientset.
+func NewK8sClientset() *kubernetes.Clientset {
+	config := getKubernetesConfig()
+	k8sClientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("failed to create a k8 clientset: %v", err)
+	}
+	return k8sClientset
+}
+
+// NewPodsGetter returns a new PodsGetter.
+func NewPodsGetter() corev1types.PodsGetter {
+	clientset := NewK8sClientset()
+	return clientset.CoreV1()
 }
 
 // getKubernetesConfig retrieves the kubernetes configuration.

@@ -10,21 +10,21 @@ import (
 	"path/filepath"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
-	clientset "github.com/grpc/test-infra/clientset"
 	"github.com/grpc/test-infra/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1types "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // LogSaver provides functionality to save pod logs to files.
 type LogSaver struct {
-	clientset clientset.GRPCTestClientset
+	podsGetter corev1types.PodsGetter
 }
 
 // NewLogSaver creates a new LogSaver object.
-func NewLogSaver(clientset clientset.GRPCTestClientset) *LogSaver {
+func NewLogSaver(podsGetter corev1types.PodsGetter) *LogSaver {
 	return &LogSaver{
-		clientset: clientset,
+		podsGetter: podsGetter,
 	}
 }
 
@@ -59,7 +59,7 @@ func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, 
 
 // getTestPods retrieves the pods associated with a LoadTest.
 func (ls *LogSaver) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest) ([]*corev1.Pod, error) {
-	podLister := ls.clientset.CoreV1().Pods(metav1.NamespaceAll)
+	podLister := ls.podsGetter.Pods(metav1.NamespaceAll)
 
 	// Get a list of all pods
 	podList, err := podLister.List(ctx, metav1.ListOptions{})
@@ -73,7 +73,7 @@ func (ls *LogSaver) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest) 
 }
 
 func (ls *LogSaver) getPodLogBuffer(ctx context.Context, pod *corev1.Pod) (*bytes.Buffer, error) {
-	req := ls.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
+	req := ls.podsGetter.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
 	driverLogs, err := req.Stream(ctx)
 	if err != nil {
 		return nil, err

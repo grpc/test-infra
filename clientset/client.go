@@ -18,7 +18,6 @@ package v1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
@@ -31,7 +30,6 @@ type GRPCTestClientset interface {
 	// LoadTestV1 returns the load test interface, which provides operations on
 	// version 1 load tests.
 	LoadTestV1() LoadTestInterface
-	kubernetes.Interface
 }
 
 type grpcTestV1 struct {
@@ -44,7 +42,6 @@ func (gv1 *grpcTestV1) LoadTestV1() LoadTestInterface {
 
 type gRPCTestClient struct {
 	client rest.Interface
-	kubernetes.Clientset
 }
 
 func (gc *gRPCTestClient) LoadTestV1() LoadTestInterface {
@@ -70,10 +67,5 @@ func NewForConfig(c *rest.Config) (GRPCTestClientset, error) {
 		return nil, err
 	}
 
-	k8Clientset, err := kubernetes.NewForConfig(&config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &gRPCTestClient{client, *k8Clientset}, nil
+	return &gRPCTestClient{client}, nil
 }
