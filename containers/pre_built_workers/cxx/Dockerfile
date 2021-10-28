@@ -38,7 +38,8 @@ RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
 # Build workers and spile the executables to another directory
 RUN mkdir /executables
-RUN bazel --output_user_root=/executables build //test/cpp/qps:qps_worker -c opt
+# note that "--config opt" provides more options that -c/--compilation_mode opt
+RUN bazel --output_user_root=/executables build //test/cpp/qps:qps_worker --config opt
 
 # Copy executables to a new image
 FROM debian:buster
