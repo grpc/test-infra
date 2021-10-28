@@ -49,4 +49,7 @@ WORKDIR /source/code
 COPY --from=0 /source/code/bazel-bin/test/cpp/ /source/code/bazel-bin/test/cpp/
 COPY --from=0 /source/code/GRPC_GIT_COMMIT.txt /source/code/GRPC_GIT_COMMIT.txt
 
+# make sure client and server workers produce a small amount of useful logs
+ENV GRPC_VERBOSITY=debug
+
 CMD ["bash"]
