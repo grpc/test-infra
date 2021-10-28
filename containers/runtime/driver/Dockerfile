@@ -34,12 +34,13 @@ RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 RUN git checkout $GITREF
 
+# TODO(jtattermusch): why is such and old version of bazel used?
 FROM l.gcr.io/google/bazel:0.17.1
 
 COPY --from=0 /src/code /src/code
 RUN mkdir -p /tmp/build_output
 WORKDIR /src/code
-RUN bazel --output_user_root=/tmp/build_output build //test/cpp/qps:qps_json_driver
+RUN bazel --output_user_root=/tmp/build_output build --config opt //test/cpp/qps:qps_json_driver
 
 FROM debian:buster
 
