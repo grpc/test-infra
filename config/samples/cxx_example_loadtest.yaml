@@ -16,6 +16,8 @@ spec:
   - build:
       args:
       - build
+      - --config
+      - opt
       - //test/cpp/qps:qps_worker
       command:
       - bazel
@@ -104,6 +106,8 @@ spec:
   - build:
       args:
       - build
+      - --config
+      - opt
       - //test/cpp/qps:qps_worker
       command:
       - bazel
