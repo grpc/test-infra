@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM gradle:jdk8
+FROM gradle:jdk11
 
 RUN mkdir -p /pre
 WORKDIR /pre
@@ -37,7 +37,7 @@ RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
 RUN gradle -PskipAndroid=true -PskipCodegen=true :grpc-benchmarks:installDist
 
-FROM openjdk:8
+FROM openjdk:11
 
 RUN mkdir -p /execute
 WORKDIR /execute
