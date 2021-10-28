@@ -76,7 +76,7 @@ func main() {
 	log.Printf("Queue concurrency levels: %v", c)
 	log.Printf("Output directories: %v", outputDirMap)
 
-	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests)
+	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, runner.NewLogSaver(runner.NewPodsGetter()))
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 
@@ -93,7 +93,7 @@ func main() {
 	for qName, configs := range configQueueMap {
 		testSuiteReporter := reporter.NewTestSuiteReporter(qName, logPrefixFmt, runner.TestCaseNameFromAnnotations("scenario"))
 		testSuiteReporter.SetStartTime(time.Now())
-		go r.Run(ctx, configs, testSuiteReporter, c[qName], done)
+		go r.Run(ctx, configs, testSuiteReporter, c[qName], outputDirMap[qName], done)
 	}
 
 	for range configQueueMap {
