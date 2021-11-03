@@ -1,4 +1,5 @@
-# Copyright 2020 gRPC authors
+#!/bin/bash
+# Copyright 2021 gRPC authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:11
+set -ex
 
-RUN mkdir -p /src/workspace
-WORKDIR /src/workspace
+PROCESSOR_COUNT=$(nproc)
+echo "Processor count: ${PROCESSOR_COUNT}"
 
-RUN apt-get update && apt-get install -y \
-  bash \
-  curl \
-  git \
-  time && \
-  apt-get clean
-
-RUN mkdir /run_scripts
-ADD run_worker.sh /run_scripts
-RUN chmod -R 777 /run_scripts
-
-CMD ["bash"]
+BENCHMARK_WORKER_OPTS="-XX:ActiveProcessorCount=${PROCESSOR_COUNT}" \
+  timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
+  /execute/bin/benchmark_worker \
+  --driver_port="${DRIVER_PORT}"
