@@ -30,8 +30,7 @@ spec:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker \
-            --driver_port="${DRIVER_PORT}"
+            /run_scripts/run_worker.sh
       command:
       - bash
   driver:
@@ -120,8 +119,7 @@ spec:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            benchmarks/build/install/grpc-benchmarks/bin/benchmark_worker \
-            --driver_port="${DRIVER_PORT}"
+            /run_scripts/run_worker.sh
       command:
       - bash
   timeoutSeconds: 900
