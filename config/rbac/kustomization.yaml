@@ -6,9 +6,9 @@ resources:
 - leader_election_role.yaml
 - leader_election_role_binding.yaml
 - loadtest_editor_role.yaml
+- loadtest_component_bindings.yaml
 - loadtest_viewer_role.yaml
+- manager_binding.yaml
 - pod_viewer_role.yaml
 - role.yaml
-- manager_binding.yaml
-- loadtest_component_bindings.yaml
 - service_account.yaml
