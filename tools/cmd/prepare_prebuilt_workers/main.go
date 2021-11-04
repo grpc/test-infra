@@ -137,14 +137,18 @@ func main() {
 
 			// build image
 			log.Println(fmt.Sprintf("building %s image", lang))
-			buildDockerImage := exec.Command("docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker))
+			// TODO(jtattermusch): allow setting REPOSITORY arg to allow building from user forks e.g. https://github.com/USER_NAME/grpc.git
+			buildCommandTimeoutSeconds := 30 * 60 // 30 mins should be enough for all languages
+			buildDockerImage := exec.Command("timeout", fmt.Sprintf("%ds", buildCommandTimeoutSeconds), "docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker))
 			buildOutput, err := buildDockerImage.CombinedOutput()
 			if err != nil {
-				log.Println(err)
-				log.Fatalf("Failed building %s image: %s", lang, string(buildOutput))
+				log.Printf("Failed building %s image. Dump of command's output will follow:\n", lang)
+				log.Println(string(buildOutput))
+				log.Fatalf("Failed building %s image: %s", lang, err.Error())
 			}
+			log.Printf("Succeeded building %s image. Dump of command's output will follow:\n", lang)
 			log.Println(string(buildOutput))
-			log.Printf("Succeeded building %s worker: %s\n", lang, image)
+			log.Printf("Succeeded building %s image: %s\n", lang, image)
 
 			if !test.buildOnly {
 				// push image
@@ -152,11 +156,13 @@ func main() {
 				pushDockerImage := exec.Command("docker", "push", image)
 				pushOutput, err := pushDockerImage.CombinedOutput()
 				if err != nil {
-					log.Println(err)
-					log.Fatalf("Failed pushing %s image: %s", lang, string(pushOutput))
+					log.Printf("Failed pushing %s image. Dump of command's output will follow:\n", lang)
+					log.Println(string(pushOutput))
+					log.Fatalf("Failed pushing %s image: %s", lang, err.Error())
 				}
+				log.Printf("Succeeded pushing %s image. Dump of command's output will follow:\n", lang)
 				log.Println(string(pushOutput))
-				log.Printf("Succeeded pushing %s worker to %s\n", lang, image)
+				log.Printf("Succeeded pushing %s image to %s\n", lang, image)
 			}
 		}(lang, gitRef)
 	}
