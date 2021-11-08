@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM php:7.2.22-buster
+FROM php:7.2.34-buster
 
 # TODO: when running on kokoro, the "Install" build steps will not be cached
 # since we'll always be on a fresh VM. Re-running this command each
@@ -27,13 +27,13 @@ RUN apt-get update && apt-get install -y \
   apt-get clean
 
 # Install rvm
-# Public keys are cached with the following command:
-# gpg2 --keyserver hkp://keys.openpgp.com --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-# gpg2 --export --armor --output publickeys.txt 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-RUN mkdir /publickeys
-ADD publickeys.txt /publickeys
-RUN gpg2 --import /publickeys/publickeys.txt
-RUN rm /publickeys/publickeys.txt
+# Public key is cached with the following command:
+# gpg2 --recv-keys 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+# gpg2 --export --armor --output publickey.txt 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+RUN mkdir /publickey
+ADD publickey.txt /publickey
+RUN gpg2 --import /publickey/publickey.txt
+RUN rm -rf /publickey
 RUN \curl -sSL https://get.rvm.io | bash -s stable
 
 # Install Ruby 2.5
@@ -44,7 +44,7 @@ RUN /bin/bash -l -c "echo 'gem: --no-document' > ~/.gemrc"
 RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
 
 # Install composer
-RUN curl -sS https://getcomposer.org/installer | php
+RUN \curl -sS https://getcomposer.org/installer | php
 RUN mv composer.phar /usr/local/bin/composer
 
 RUN mkdir -p /pre
@@ -72,7 +72,7 @@ RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
-FROM php:7.2.22-buster
+FROM php:7.2.34-buster
 
 # TODO: when running on kokoro, the "Install" build steps will not be cached
 # since we'll always be on a fresh VM. Re-running this command each
@@ -87,10 +87,10 @@ RUN apt-get update && apt-get install -y \
   apt-get clean
 
 # Install rvm
-RUN mkdir /publickeys
-ADD publickeys.txt /publickeys
-RUN gpg2 --import /publickeys/publickeys.txt
-RUN rm /publickeys/publickeys.txt
+RUN mkdir /publickey
+ADD publickey.txt /publickey
+RUN gpg2 --import /publickey/publickey.txt
+RUN rm -rf /publickey
 RUN \curl -sSL https://get.rvm.io | bash -s stable
 
 # Install Ruby 2.5
