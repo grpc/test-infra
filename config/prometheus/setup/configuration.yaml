@@ -1,5 +1,5 @@
+
 ---
-# Source: base/templates/prometheus-install.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -8,7 +8,6 @@ metadata:
   labels:
     app: prometheus
 ---
-# Source: base/templates/prometheus-operator.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -19,7 +18,6 @@ metadata:
   name: prometheus-operator
   namespace: prometheus
 ---
-# Source: base/templates/prometheus-install.yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
@@ -30,11 +28,10 @@ provisioner: kubernetes.io/gce-pd
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
 ---
-# Source: base/templates/prometheus-install.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: prometheus-wanlin-prometheus
+  name: prometheus-prometheus
   labels:
     app: prometheus
 rules:
@@ -53,7 +50,6 @@ rules:
   - nonResourceURLs: ["/metrics"]
     verbs: ["get"]
 ---
-# Source: base/templates/prometheus-operator.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -144,23 +140,21 @@ rules:
       - list
       - watch
 ---
-# Source: base/templates/prometheus-install.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: prometheus-wanlin-prometheus
+  name: prometheus-prometheus
   labels:
     app: prometheus
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: prometheus-wanlin-prometheus
+  name: prometheus-prometheus
 subjects:
   - kind: ServiceAccount
     name: prometheus
     namespace: prometheus
 ---
-# Source: base/templates/prometheus-operator.yaml
 # From https://raw.githubusercontent.com/coreos/prometheus-operator/v0.38.1/bundle.yaml with namespace replaced
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -183,7 +177,7 @@ subjects:
 apiVersion: v1
 kind: Service
 metadata:
-  name: wanlin-prometheus
+  name: prometheus
   namespace: prometheus
   annotations:
     prometheus.io/scrape: 'true'
@@ -197,7 +191,6 @@ spec:
       protocol: TCP
       port: 9090
 ---
-# Source: base/templates/prometheus-operator.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -217,7 +210,6 @@ spec:
     app.kubernetes.io/component: controller
     app.kubernetes.io/name: prometheus-operator
 ---
-# Source: base/templates/prometheus-operator.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -265,8 +257,6 @@ spec:
         runAsUser: 65534
       serviceAccountName: prometheus-operator
 ---
-# Source: base/templates/prometheus-install.yaml
-# Source: prometheus-operator/templates/prometheus.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
 metadata:
@@ -306,6 +296,6 @@ spec:
           - ReadWriteOnce
         resources:
           requests:
-            # this is a required field
+            # required field
             storage: 20Gi
         storageClassName: ssd

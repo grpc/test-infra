@@ -55,7 +55,7 @@ spec:
       k8s-app: kube-state-metrics
   namespaceSelector:
     matchNames:
-      - test
+      - prometheus
   endpoints:
     - port: http-metric
       scheme: http
