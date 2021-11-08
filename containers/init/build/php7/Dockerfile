@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM php:7-buster
+FROM php:7.2.34-buster
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 

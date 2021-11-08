@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM php:7-buster
+FROM php:7.2.34-buster
 
 # TODO: when running on kokoro, the "Install" build steps will not be cached
 # since we'll always be on a fresh VM. Re-running this command each
