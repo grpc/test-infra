@@ -66,7 +66,7 @@ RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
-FROM php:7-buster
+FROM php:7.2.34-buster
 
 # TODO: when running on kokoro, the "Install" build steps will not be cached
 # since we'll always be on a fresh VM. Re-running this command each
