@@ -38,7 +38,7 @@ RUN /bin/bash -l -c "echo 'gem: --no-document' > ~/.gemrc"
 RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
 
 # Install composer
-RUN curl -sS https://getcomposer.org/installer | php
+RUN \curl -sS https://getcomposer.org/installer | php
 RUN mv composer.phar /usr/local/bin/composer
 
 RUN mkdir -p /pre
