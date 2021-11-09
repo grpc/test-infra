@@ -16,7 +16,7 @@ killAfter: {{ .KillAfter }}
 languages:
 - language: csharp
   buildImage: "{{ .BuildImagePrefix }}csharp:{{ .Version }}"
-  runImage: mcr.microsoft.com/dotnet/runtime:2.1
+  runImage: mcr.microsoft.com/dotnet/runtime:3.1-bullseye-slim
 
 - language: cxx
   buildImage: l.gcr.io/google/bazel:latest
