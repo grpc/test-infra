@@ -145,7 +145,7 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 			if err != nil {
 				reporter.Error("Could not save pod logs: %s", err)
 			}
-			reporter.AddProperty("LoadTest name", loadTest.Name)
+			reporter.AddProperty("name", loadTest.Name)
 
 			if status != "Succeeded" {
 				reporter.Error("Test failed with reason %q: %v", loadTest.Status.Reason, loadTest.Status.Message)
