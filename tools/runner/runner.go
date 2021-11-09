@@ -141,7 +141,7 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			err = r.logSaver.SavePodLogs(ctx, loadTest, outputDir)
+			_, err := r.logSaver.SavePodLogs(ctx, loadTest, outputDir)
 			if err != nil {
 				reporter.Error("Could not save pod logs: %s", err)
 			}
