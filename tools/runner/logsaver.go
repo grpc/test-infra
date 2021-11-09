@@ -28,8 +28,9 @@ func NewLogSaver(podsGetter corev1types.PodsGetter) *LogSaver {
 	}
 }
 
-// SavePodLogs saves pod logs to files with same name as pod. It returns a map
-// where pods are keys and values are the filepath of the saved log.
+// SavePodLogs saves pod logs to files with same name as pod.
+// This function returns a map where pods are keys and values are the filepath
+// of the saved log.
 func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) (map[*corev1.Pod]string, error) {
 	podToLogPath := make(map[*corev1.Pod]string)
 
