@@ -29,17 +29,21 @@ func NewLogSaver(podsGetter corev1types.PodsGetter) *LogSaver {
 }
 
 // SavePodLogs saves pod logs to files with same name as pod.
-func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) error {
+// This function returns a map where pods are keys and values are the filepath
+// of the saved log.
+func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) (map[*corev1.Pod]string, error) {
+	podToLogPath := make(map[*corev1.Pod]string)
+
 	// Get pods for this test
 	pods, err := ls.getTestPods(ctx, loadTest)
 	if err != nil {
-		return err
+		return podToLogPath, err
 	}
 
 	// Attempt to create directory. Will not error if directory already exists
 	err = os.MkdirAll(podLogDir, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("Failed to create pod log output directory %s: %v", podLogDir, err)
+		return podToLogPath, fmt.Errorf("Failed to create pod log output directory %s: %v", podLogDir, err)
 	}
 
 	// Write logs to files
@@ -47,14 +51,15 @@ func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, 
 		logFilePath := filepath.Join(podLogDir, pod.Name+".log")
 		buffer, err := ls.getPodLogBuffer(ctx, pod)
 		if err != nil {
-			return fmt.Errorf("could not get log from pod: %s", err)
+			return podToLogPath, fmt.Errorf("could not get log from pod: %s", err)
 		}
 		err = ls.writeBufferToFile(buffer, logFilePath)
 		if err != nil {
-			return fmt.Errorf("could not write pod log buffer to file: %s", err)
+			return podToLogPath, fmt.Errorf("could not write pod log buffer to file: %s", err)
 		}
+		podToLogPath[pod] = logFilePath
 	}
-	return nil
+	return podToLogPath, nil
 }
 
 // getTestPods retrieves the pods associated with a LoadTest.
