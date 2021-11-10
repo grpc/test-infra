@@ -8,8 +8,8 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
-	"github.com/fsnotify/fsnotify"
 	"github.com/grpc/test-infra/tools/xds"
+	update "github.com/grpc/test-infra/tools/xds/endpointupdater"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,7 +21,6 @@ func main() {
 	}
 
 	var nodeID string
-	var watchDirectoryFileName string
 	var xdsServerPort uint
 
 	// The port that this xDS server listens on
@@ -39,8 +38,8 @@ func main() {
 	// This sets the port that the test listener listens to, this is the port to send traffic if we wish to go through sidecar
 	flag.UintVar(&resource.TestListenerPort, "TestListenerPort", 10000, "This sets the port that the test listener listens to. ")
 
-	// Define the directory to watch for Envoy configuration files
-	flag.StringVar(&watchDirectoryFileName, "watchDirectoryFileName", "config/", "full path to directory to watch for files")
+	// Define the test server port for benchmark, this is the benchmark test server's port
+	flag.UintVar(&resource.TestUpstreamPort, "test server port", 10010, "The benchmark test server's port")
 
 	flag.Parse()
 
@@ -48,44 +47,31 @@ func main() {
 	l := logrus.New()
 	cache := cache.NewSnapshotCache(false, cache.IDHash{}, l)
 
-	// Notify channel for file system events
-	message := make(chan fsnotify.Event)
+    endpointAddress := make (chan string)
 
+	
 	go func() {
-		// Watch for file changes
-		xds.Watch(watchDirectoryFileName, message)
+		update.RunUpdateServer(endpointAddress)
 	}()
-	
+	println("1")
 	select {
-	case msg := <-message:
-		endpoint, err := xds.ParseYaml(msg.Name)
-		if err != nil {
-			l.Errorf("yaml parsing error %q", err)
-			os.Exit(1)
-		}
-		resource.TestUpstreamHost = endpoint.Address
-		resource.TestListenerPort = endpoint.Port
+		case resource.TestUpstreamHost = <-endpointAddress :
+			// Create the snapshot that we'll serve to Envoy
+			println("2")
+			snapshot := resource.GenerateSnapshot()
+			if err := snapshot.Consistent(); err != nil {
+				l.Errorf("snapshot inconsistency: %+v\n%+v", snapshot, err)
+				os.Exit(1)
+			}
+			l.Printf("will serve snapshot %+v", snapshot)
+			// Add the snapshot to the cache
+			if err := cache.SetSnapshot(context.Background(), nodeID, snapshot); err != nil {
+				l.Errorf("snapshot error %q for %+v", err, snapshot)
+				os.Exit(1)
+			}
+			ctx := context.Background()
+			cb := &test.Callbacks{Debug: true}
+			srv := server.NewServer(ctx, cache, cb)
+			xds.RunServer(ctx, srv, xdsServerPort)
 	}
-
-	// Create the snapshot that we'll serve to Envoy
-	snapshot := resource.GenerateSnapshot()
-	if err := snapshot.Consistent(); err != nil {
-		l.Errorf("snapshot inconsistency: %+v\n%+v", snapshot, err)
-		os.Exit(1)
-	}
-	
-	l.Printf("will serve snapshot %+v", snapshot)
-	
-
-	// Add the snapshot to the cache
-	if err := cache.SetSnapshot(context.Background(), nodeID, snapshot); err != nil {
-		l.Errorf("snapshot error %q for %+v", err, snapshot)
-		os.Exit(1)
-	}
-
-	ctx := context.Background()
-	cb := &test.Callbacks{Debug: true}
-	srv := server.NewServer(ctx, cache, cb)
-	xds.RunServer(ctx, srv, xdsServerPort)
-
 }
