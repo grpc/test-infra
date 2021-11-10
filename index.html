@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="robots" content="noindex,nofollow">
+        <title>Prometheus Time Series Collection and Processing Server</title>
+        <link rel="shortcut icon" href="/static/img/favicon.ico?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354">
+        <script src="/static/vendor/js/jquery-3.5.1.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+        <script src="/static/vendor/js/popper.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+        <script src="/static/vendor/bootstrap-4.5.2/js/bootstrap.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+
+        <link type="text/css" rel="stylesheet" href="/static/vendor/bootstrap-4.5.2/css/bootstrap.min.css?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354">
+        <link type="text/css" rel="stylesheet" href="/static/css/prometheus.css?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354">
+        <link type="text/css" rel="stylesheet" href="/static/vendor/bootstrap4-glyphicons/css/bootstrap-glyphicons.min.css?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354">
+
+        <script>
+            var PATH_PREFIX = "";
+            var BUILD_VERSION = "0a7fdd3b76960808c3a91d92267c3d815c1bc354";
+            $(function () {
+                $('[data-toggle="tooltip"]').tooltip()
+            })
+        </script>
+
+        
+    <link type="text/css" rel="stylesheet" href="/static/vendor/rickshaw/rickshaw.min.css?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354">
+    <link type="text/css" rel="stylesheet" href="/static/vendor/eonasdan-bootstrap-datetimepicker/bootstrap-datetimepicker.min.css?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354">
+
+    <script src="/static/vendor/rickshaw/vendor/d3.v3.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    <script src="/static/vendor/rickshaw/vendor/d3.layout.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    <script src="/static/vendor/rickshaw/rickshaw.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    <script src="/static/vendor/moment/moment.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    <script src="/static/vendor/moment/moment-timezone-with-data.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    <script src="/static/vendor/eonasdan-bootstrap-datetimepicker/bootstrap-datetimepicker.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    <script src="/static/vendor/bootstrap3-typeahead/bootstrap3-typeahead.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    <script src="/static/vendor/fuzzy/fuzzy.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+
+    <script src="/static/vendor/mustache/mustache.min.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    <script src="/static/vendor/js/jquery.selection.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+    
+
+    <script src="/static/js/graph/index.js?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354"></script>
+
+    <script id="graph_template" type="text/x-handlebars-template"></script>
+
+    <link type="text/css" rel="stylesheet" href="/static/css/graph.css?v=0a7fdd3b76960808c3a91d92267c3d815c1bc354">
+
+    </head>
+
+    <body>
+        <nav class="navbar fixed-top navbar-expand-sm navbar-dark bg-dark">
+            <div class="container-fluid">      
+
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#nav-content" aria-expanded="false" aria-controls="nav-content" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                    
+                </button>
+
+                <a class="navbar-brand" href="/">Prometheus</a>
+
+
+                <div id="nav-content" class="navbar-collapse collapse">
+                    <ul class="navbar-nav">
+                        
+                        
+                        <li class="nav-item"><a class="nav-link" href="/alerts">Alerts</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/graph">Graph</a></li>
+                        <li class="nav-item dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Status <span class="caret"></span></a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="/status">Runtime &amp; Build Information</a>
+                                <a class="dropdown-item" href="/flags">Command-Line Flags</a>
+                                <a class="dropdown-item" href="/config">Configuration</a>
+                                <a class="dropdown-item" href="/rules">Rules</a>
+                                <a class="dropdown-item" href="/targets">Targets</a>
+                                <a class="dropdown-item" href="/service-discovery">Service Discovery</a>
+                            </div>
+                        </li>
+                        <li class= "nav-item" >
+                            <a class ="nav-link" href="https://prometheus.io/docs/prometheus/latest/getting_started/" target="_blank">Help</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        
+    <div id="graph_container" class="container-fluid">
+      <div class="clearfix">
+        <div class="query-history">
+          <i class="glyphicon glyphicon-unchecked"></i>
+          <button type="button" class="search-history" title="search previous queries">Enable query history</button>
+        </div>
+        <button type="button" class="btn btn-link btn-sm new_ui_button" onclick="window.location.pathname='/new/graph'">Try experimental React UI</button>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div><input class="btn btn-primary" type="submit" value="Add Graph" id="add_graph"></div>
+    </div>
+
+    </body>
+</html>
+
+
+
