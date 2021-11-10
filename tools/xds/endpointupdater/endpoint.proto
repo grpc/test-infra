@@ -1,0 +1,21 @@
+
+
+syntax = "proto3";
+
+option go_package = "github.com/grpc/test-infra/tools/xds/endpointupdater";
+option java_multiple_files = true;
+
+package endpointupdater;
+
+service EndpointUpdater {
+  // Sends an update
+  rpc UpdateEndpoint (EndpointUpdaterRequest) returns (EndpointUpdaterReply) {}
+}
+
+message EndpointUpdaterRequest {
+  string ip_address = 1;
+}
+
+message EndpointUpdaterReply {
+  string error_reason = 1;
+}
