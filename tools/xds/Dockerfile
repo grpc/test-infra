@@ -4,6 +4,7 @@ RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
 COPY . .
-RUN go install ./tools/xds/
+RUN go install ./tools/xds/cmd/main.go -o .
+
 
 CMD ["bash"]
