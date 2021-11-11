@@ -141,11 +141,15 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			_, err := r.logSaver.SavePodLogs(ctx, loadTest, outputDir)
+			podToPathMap, err := r.logSaver.SavePodLogs(ctx, loadTest, outputDir)
 			if err != nil {
 				reporter.Error("Could not save pod logs: %s", err)
 			}
 			reporter.AddProperty("name", loadTest.Name)
+			for pod := range podToPathMap {
+				propertyKey := "pod." + pod.ObjectMeta.Labels["loadtest-role"] + ".name"
+				reporter.AddProperty(propertyKey, pod.Name)
+			}
 
 			if status != "Succeeded" {
 				reporter.Error("Test failed with reason %q: %v", loadTest.Status.Reason, loadTest.Status.Message)
