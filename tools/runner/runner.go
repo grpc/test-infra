@@ -147,7 +147,7 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 			}
 			reporter.AddProperty("name", loadTest.Name)
 			for pod := range podToPathMap {
-				propertyKey := "pod." + pod.ObjectMeta.Labels["loadtest-role"] + ".name"
+				propertyKey := "pod." + strings.TrimPrefix(pod.Name, loadTest.Name+"-") + ".name"
 				reporter.AddProperty(propertyKey, pod.Name)
 			}
 
