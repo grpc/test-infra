@@ -5,7 +5,6 @@ go 1.16
 require (
 	cloud.google.com/go/bigquery v1.4.0
 	github.com/envoyproxy/go-control-plane v0.10.0
-	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-logr/logr v0.3.0
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.1.2
@@ -20,7 +19,6 @@ require (
 	google.golang.org/api v0.20.0
 	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.27.1
-	gopkg.in/yaml.v2 v2.3.0
 	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2
 	k8s.io/client-go v0.20.2

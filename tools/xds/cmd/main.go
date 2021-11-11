@@ -47,31 +47,30 @@ func main() {
 	l := logrus.New()
 	cache := cache.NewSnapshotCache(false, cache.IDHash{}, l)
 
-    endpointAddress := make (chan string)
+	endpointAddress := make(chan string)
 
-	
 	go func() {
 		update.RunUpdateServer(endpointAddress)
 	}()
 	println("1")
 	select {
-		case resource.TestUpstreamHost = <-endpointAddress :
-			// Create the snapshot that we'll serve to Envoy
-			println("2")
-			snapshot := resource.GenerateSnapshot()
-			if err := snapshot.Consistent(); err != nil {
-				l.Errorf("snapshot inconsistency: %+v\n%+v", snapshot, err)
-				os.Exit(1)
-			}
-			l.Printf("will serve snapshot %+v", snapshot)
-			// Add the snapshot to the cache
-			if err := cache.SetSnapshot(context.Background(), nodeID, snapshot); err != nil {
-				l.Errorf("snapshot error %q for %+v", err, snapshot)
-				os.Exit(1)
-			}
-			ctx := context.Background()
-			cb := &test.Callbacks{Debug: true}
-			srv := server.NewServer(ctx, cache, cb)
-			xds.RunServer(ctx, srv, xdsServerPort)
+	case resource.TestUpstreamHost = <-endpointAddress:
+		// Create the snapshot that we'll serve to Envoy
+		println("2")
+		snapshot := resource.GenerateSnapshot()
+		if err := snapshot.Consistent(); err != nil {
+			l.Errorf("snapshot inconsistency: %+v\n%+v", snapshot, err)
+			os.Exit(1)
+		}
+		l.Printf("will serve snapshot %+v", snapshot)
+		// Add the snapshot to the cache
+		if err := cache.SetSnapshot(context.Background(), nodeID, snapshot); err != nil {
+			l.Errorf("snapshot error %q for %+v", err, snapshot)
+			os.Exit(1)
+		}
+		ctx := context.Background()
+		cb := &test.Callbacks{Debug: true}
+		srv := server.NewServer(ctx, cache, cb)
+		xds.RunServer(ctx, srv, xdsServerPort)
 	}
 }
