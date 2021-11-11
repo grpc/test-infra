@@ -20,11 +20,12 @@ type UpdateServer struct {
 
 // UpdateEndpoint implements endpointupdater.EndpointUpdater
 func (us *UpdateServer) UpdateEndpoint(ctx context.Context, in *EndpointUpdaterRequest) (*EndpointUpdaterReply, error) {
-	log.Printf("Received: %v:%v", in.GetIpAddress(), in.GetPort())
+	log.Printf("Received: %v", in.GetIpAddress())
 	us.EndpointAddress <- in.GetIpAddress()
 	return &EndpointUpdaterReply{}, nil
 }
 
+// RunUpdateServer start a gRPC server listening to test server address 
 func RunUpdateServer(targetAddress chan string) {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
