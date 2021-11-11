@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"context"
 	"flag"
@@ -8,8 +9,8 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
-	"github.com/grpc/test-infra/tools/xds"
-	update "github.com/grpc/test-infra/tools/xds/endpointupdater"
+	"github.com/grpc/test-infra/containers/runtime/xds"
+	update "github.com/grpc/test-infra/containers/runtime/xds/update"
 	"github.com/sirupsen/logrus"
 )
 
@@ -52,11 +53,9 @@ func main() {
 	go func() {
 		update.RunUpdateServer(endpointAddress)
 	}()
-	println("1")
 	select {
 	case resource.TestUpstreamHost = <-endpointAddress:
 		// Create the snapshot that we'll serve to Envoy
-		println("2")
 		snapshot := resource.GenerateSnapshot()
 		if err := snapshot.Consistent(); err != nil {
 			l.Errorf("snapshot inconsistency: %+v\n%+v", snapshot, err)
@@ -74,3 +73,4 @@ func main() {
 		xds.RunServer(ctx, srv, xdsServerPort)
 	}
 }
+*/
