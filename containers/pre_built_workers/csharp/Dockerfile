@@ -50,7 +50,7 @@ ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
 # Note that the libgrpc_csharp_ext.so library built by the build image
-# needs to binary compatible with the runtime image (e.g. they need to be based off of the same linux distro)
+# needs to binary-compatible with the runtime image (e.g. they need to be based off of the same linux distro)
 # Because of that, care needs to be taken to always used a runtime image that's compatible with the build image.
 FROM mcr.microsoft.com/dotnet/runtime:3.1-bullseye-slim
 
