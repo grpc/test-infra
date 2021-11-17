@@ -25,6 +25,7 @@ service EndpointUpdater {
 
 message EndpointUpdaterRequest {
   string ip_address = 1;
+  uint32 port = 2;
 }
 
 message EndpointUpdaterReply {}
