@@ -27,6 +27,4 @@ message EndpointUpdaterRequest {
   string ip_address = 1;
 }
 
-message EndpointUpdaterReply {
-  string error_reason = 1;
-}
+message EndpointUpdaterReply {}
