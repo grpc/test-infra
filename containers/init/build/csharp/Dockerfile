@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM mcr.microsoft.com/dotnet/sdk:2.1
+FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
   apt-get clean
 
 # The prerequisites installed below are heavily inspired by the C# testing image from grpc/grpc
-# https://github.com/grpc/grpc/blob/master/tools/dockerfile/test/csharp_stretch_x64/Dockerfile
+# https://github.com/grpc/grpc/blob/master/tools/dockerfile/test/csharp_buster_x64/Dockerfile
 
 # cmake >=3.6 needed to build grpc_csharp_ext
 RUN apt-get update && apt-get install -y cmake && apt-get clean

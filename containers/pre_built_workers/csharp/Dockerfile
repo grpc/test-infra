@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM mcr.microsoft.com/dotnet/sdk:2.1
+FROM mcr.microsoft.com/dotnet/sdk:6.0-bullseye-slim
 
 # TODO: when running on kokoro, this build step will not be cached
 # since we'll always be on a fresh VM. Re-running this command each
@@ -49,7 +49,10 @@ RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
-FROM mcr.microsoft.com/dotnet/runtime:2.1
+# Note that the libgrpc_csharp_ext.so library built by the build image
+# needs to be binary-compatible with the runtime image (e.g. they need to be based off of the same linux distro)
+# Because of that, care needs to be taken to always used a runtime image that's compatible with the build image.
+FROM mcr.microsoft.com/dotnet/runtime:3.1-bullseye-slim
 
 RUN mkdir -p /execute
 WORKDIR /execute

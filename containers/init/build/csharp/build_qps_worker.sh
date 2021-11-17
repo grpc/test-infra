@@ -23,4 +23,4 @@ make -j8 grpc_csharp_ext
 popd
 
 cd src/csharp
-dotnet publish Grpc.IntegrationTesting.QpsWorker/ -c Release -f netcoreapp2.1 -o ../../../qps_worker
+dotnet publish Grpc.IntegrationTesting.QpsWorker/ -c Release -f netcoreapp3.1 -o ../../qps_worker
