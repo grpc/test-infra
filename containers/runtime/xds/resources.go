@@ -29,7 +29,7 @@ type ServerResource struct {
 	TestEnvoyListenerName  string
 	TestListenerPort       uint // this field is only used by Envoy, socket listener
 	TestUpstreamHost       string
-	TestUpstreamPort       uint
+	TestUpstreamPort       uint32
 	TestEndpointName       string
 }
 
