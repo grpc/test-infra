@@ -1,6 +1,5 @@
 package main
 
-/*
 import (
 	"context"
 	"flag"
@@ -10,7 +9,7 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
 	"github.com/grpc/test-infra/containers/runtime/xds"
-	update "github.com/grpc/test-infra/containers/runtime/xds/update"
+	update "github.com/grpc/test-infra/containers/runtime/xds"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,20 +26,20 @@ func main() {
 	// The port that this xDS server listens on
 	flag.UintVar(&xdsServerPort, "xdsServerPort", 18000, "xDS management server port, this is where Envoy gets update")
 
-	// Tell Envoy to use this Node ID
+	// Tell Envoy/ xDS client to use this Node ID
 	flag.StringVar(&nodeID, "nodeID", "test-id", "Node ID")
 
-	// Tne cluster name for Envoy ontain configuration from, should match the cluster name in the bootstrap file.
+	// Tne cluster name for Envoy obtain configuration from, should match the cluster name in the bootstrap file.
 	flag.StringVar(&resource.XDSServerClusterName, "XDSServerClusterName", "xds_cluster", "Tne cluster name for Envoy to obtain configuration, should match the cluster name in the bootstrap file")
 
-	// This sets the test listener name
-	flag.StringVar(&resource.TestListenerName, "TestListenerName", "test-id", "This is the TestListenerName, should match the server_target_string in xds:///server_target_string")
+	// This sets the gRPC test listener name
+	flag.StringVar(&resource.TestGrpcListenerName, "TestGrpcListenerName", "test-id", "This is the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
 
-	// This sets the port that the test listener listens to, this is the port to send traffic if we wish to go through sidecar
-	flag.UintVar(&resource.TestListenerPort, "TestListenerPort", 10000, "This sets the port that the test listener listens to. ")
+	// This sets the Envoy test listener name
+	flag.StringVar(&resource.TestEnvoyListenerName, "TestEnvoyListenerName", "test-id", "This is the Envoy listener's name")
 
-	// Define the test server port for benchmark, this is the benchmark test server's port
-	flag.UintVar(&resource.TestUpstreamPort, "test server port", 10010, "The benchmark test server's port")
+	// This sets the port that the Envoy test listener listens to, this is the port to send traffic if we wish to go through sidecar
+	flag.UintVar(&resource.TestListenerPort, "TestListenerPort", 10000, "This sets the port that the test listener listens to")
 
 	flag.Parse()
 
@@ -49,12 +48,17 @@ func main() {
 	cache := cache.NewSnapshotCache(false, cache.IDHash{}, l)
 
 	endpointAddress := make(chan string)
+	endpointPort := make(chan uint32)
 
 	go func() {
-		update.RunUpdateServer(endpointAddress)
+		update.RunUpdateServer(endpointAddress, endpointPort)
 	}()
+
 	select {
 	case resource.TestUpstreamHost = <-endpointAddress:
+		resource.TestUpstreamPort = <-endpointPort
+		// shutdown the resource update server
+		update.StopUpdateServer()
 		// Create the snapshot that we'll serve to Envoy
 		snapshot := resource.GenerateSnapshot()
 		if err := snapshot.Consistent(); err != nil {
@@ -73,4 +77,3 @@ func main() {
 		xds.RunServer(ctx, srv, xdsServerPort)
 	}
 }
-*/
