@@ -41,7 +41,7 @@ GOARGS = -trimpath
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-all: controller all-tools
+all: controller all-tools postgres_replicator
 
 all-tools: runner prepare_prebuilt_workers delete_prebuilt_workers
 
@@ -94,6 +94,9 @@ prepare_prebuilt_workers: fmt vet ## Build the prepare_prebuilt_workers tool bin
 
 delete_prebuilt_workers: fmt vet ## Build the delete_prebuilt_workers tool binary.
 	$(GOCMD) build $(GOARGS) -o bin/delete_prebuilt_workers tools/cmd/delete_prebuilt_workers/main.go
+
+postgres_replicator: fmt vet
+	$(GOCMD) build $(GOARGS) -o bin/postgres_replicator cmd/postgres_replicator/main.go
 
 ##@ Build container images
 

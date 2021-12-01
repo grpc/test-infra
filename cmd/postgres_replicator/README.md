@@ -5,8 +5,7 @@ This tool replicates streaming data from BigQuery into PostgreSQL.
 
 ## Configuration
 
-It is configured with `postgres_replicator/config/transfer.yaml`. Here is an
-example configuration:
+It is configured with a YAML file. Here is an example configuration file:
 
 ```
 # Source database settings
@@ -53,8 +52,8 @@ By default, the Postgres replicator listens for `GET` requests to `/run` on port
 
 ## Running
 
-This tool is provided as a Go module for easy containerization, but can also be
-run locally with `go run main.go`
+From the test-infra project root, run `make postgres_replicator`, then
+`bin/postgres_replicator -c <config_file>`.
 
 When the postgres replicator receives a `GET` request for `/run`, it will
 transfer new data since the last time it was run. When a transfer is in
