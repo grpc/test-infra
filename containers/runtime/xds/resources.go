@@ -25,9 +25,9 @@ type ServerResource struct {
 	XDSServerClusterName   string
 	TestServiceClusterName string
 	TestRouteName          string
-	TestGrpcListenerName   string
+	TestGrpcListenerName   string // This field is only used by xDS client
 	TestEnvoyListenerName  string
-	TestListenerPort       uint // this field is only used by Envoy, socket listener
+	TestListenerPort       uint // This field is only used by Envoy, socket listener
 	TestUpstreamHost       string
 	TestUpstreamPort       uint32
 	TestEndpointName       string
