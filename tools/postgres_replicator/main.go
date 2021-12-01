@@ -50,14 +50,14 @@ func main() {
 func serveHTTP(dbTransfer *transfer.Transfer, port string, finished chan bool) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "Alive\n")
+		fmt.Fprintln(w, "Alive")
 	})
 	http.HandleFunc("/run", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Request received\n")
+		fmt.Fprintf(w, "Request received")
 		go dbTransfer.Run()
 	})
 	http.HandleFunc("/kill", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Server killed\n")
+		fmt.Fprintln(w, "Server killed")
 		finished <- true
 	})
 
