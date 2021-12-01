@@ -1,0 +1,28 @@
+# This is an example configuration.
+# Variables should be replaced with real values.
+
+# Source database settings
+bigQuery:
+  projectID: ${BQ_PROJECT_ID}
+
+# Destination database settings
+postgres:
+  dbHost: 172.17.0.1
+  dbPort: 5432
+  dbUser: ${PG_USER}
+  dbPass: ${PG_PASS}
+  dbName: ${PG_DATABASE}
+
+# Tables to tranfer from BigQuery to PostgreSQL
+transfer:
+  datasets:
+  - name: datasetExampleName1
+    tables:
+      - name: tableExample1
+        dateField: timeCreated
+      - name: tableExample2
+        dateField: timeCreated
+  - name: datasetExampleName2
+    tables:
+      - name: tableExample3
+        dateField: timeCreated
