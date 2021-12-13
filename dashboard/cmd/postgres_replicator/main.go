@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	pgr "github.com/grpc/test-infra/postgres_replicator"
+	pgr "github.com/grpc/test-infra/dashboard/postgres_replicator"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
