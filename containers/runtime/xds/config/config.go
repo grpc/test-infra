@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"log"
-	"reflect"
 	"time"
 
 	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
@@ -18,53 +17,126 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
 
-
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
-// CustomSnapshot stores the Resources in similar fashion of cache.Snapshot
+// CustomSnapshot include a cache.Snapshot for marshal
+// and unmarshal purpose
 type CustomSnapshot struct {
-	// only be used for delta xDS
-	// https://pkg.go.dev/github.com/envoyproxy/go-control-plane@v0.10.0/pkg/cache/v3#Snapshot
-	Version map[string]map[string]string `json:"version,omitempty"`
-	// ResourceType: [ResourceName: Resource]
-	Resources map[string]map[string]*customResourceWithTTL `json:"resources,omitempty"`
+	cache.Snapshot
 }
 
-// CustomResourceWithTTL
-type customResourceWithTTL struct {
-	TTL      time.Duration  `json:"ttl,omitempty"`
-	Resource customResource `json:"resource,omitempty"`
-}
-// CustomResource
 type customResource struct {
-	proto.Message
+	types.Resource
 }
 
-var (
-	ResourceTypes = []string{
-		resource.ClusterType,
-		resource.ListenerType,
-		resource.EndpointType,
-		resource.ScopedRouteType,
-		resource.SecretType,
-		resource.ExtensionConfigType,
-		resource.RouteType,
-		resource.ExtensionConfigType}
-)
-
-func (cr *customResource) MarshalJSON() ([]byte, error) {
-	anyType, err := anypb.New(cr.Message)
-	if err != nil {
-		log.Fatalf("fail to marshal proto.any message: %v", err)
+// MarshalJSON is custom MarshalJSON() for CustomSnapshot struct
+func (cs CustomSnapshot) MarshalJSON() ([]byte, error) {
+	var customResources [types.UnknownType]cache.Resources
+	for typeURLNumber, typedResources := range cs.Resources {
+		items := make(map[string]types.ResourceWithTTL)
+		for resourceName, resourceWithTTL := range typedResources.Items {
+			items[resourceName] = types.ResourceWithTTL{
+				TTL: resourceWithTTL.TTL,
+				Resource: customResource{
+					Resource: resourceWithTTL.Resource,
+				},
+			}
+		}
+		customResources[typeURLNumber].Items = items
 	}
-	return protojson.MarshalOptions{UseProtoNames: true}.Marshal(anyType)
+	return json.Marshal(&struct {
+		Resources  [types.UnknownType]cache.Resources
+		VersionMap map[string]map[string]string
+	}{
+		Resources:  customResources,
+		VersionMap: cs.VersionMap,
+	})
 }
 
+// MarshalJSON is custom MarshalJSON() for customResource struct
+func (cr customResource) MarshalJSON() ([]byte, error) {
+	anydata, _ := anypb.New(cr.Resource)
+	return protojson.Marshal(anydata)
+}
+
+// UnmarshalJSON is custom UnmarshalJSON() for CustomSnapshot struct
+func (cs *CustomSnapshot) UnmarshalJSON(data []byte) error {
+	var values map[string]json.RawMessage
+	json.Unmarshal(data, &values)
+
+	// unmarshal VersionMap
+	versionMap := make(map[string]map[string]string)
+	if err := json.Unmarshal(values["VersionMap"], &versionMap); err != nil {
+		log.Fatalf("TODO: error message %v", err)
+	}
+	cs.VersionMap = versionMap
+
+	// unmarshal data to cache.Resources
+	var allResourcesData [types.UnknownType]json.RawMessage
+	if err := json.Unmarshal(values["Resources"], &allResourcesData); err != nil {
+		log.Fatalf("fail to obtain json.RawMessage of the caches.Resources: %v", err)
+	}
+
+	var constructedResources [types.UnknownType]cache.Resources
+	for resourceType, typedResourceData := range allResourcesData {
+		var typedResources map[string]json.RawMessage
+		if err := json.Unmarshal(typedResourceData, &typedResources); err != nil {
+			log.Fatalf("fail to obtain json.RawMessage of the caches.Resource: %v", err)
+		}
+
+		itemsData := make(map[string]json.RawMessage)
+		if err := json.Unmarshal(typedResources["Items"], &itemsData); err != nil {
+			log.Fatalf("fail to obtain json.RawMessage of the list of individual types.Resource : %v", err)
+		}
+
+		constructedItems := make(map[string]types.ResourceWithTTL)
+		for resourceWithTTLName, resourceWithTTLData := range itemsData {
+			var resourceWithTTL map[string]json.RawMessage
+			if err := json.Unmarshal(resourceWithTTLData, &resourceWithTTL); err != nil {
+				log.Fatalf("fail to obtain json.RawMessage of the individual types.ResourceWithTTL : %v", err)
+			}
+
+			// get Resource
+			customeResource := customResource{}
+			if err := json.Unmarshal(resourceWithTTL["Resource"], &customeResource); err != nil {
+				log.Fatalf("fail to unmarshal customeResource: %v", err)
+			}
+
+			// get TTL
+			var ttl time.Duration
+			if string(resourceWithTTL["TTL"]) != "null" {
+				tempTTL, err := time.ParseDuration(string(resourceWithTTL["TTL"]))
+				if err != nil {
+					log.Fatalf("fail to parse the TTL duration for individual types.ResourceWithTTL : %v", err)
+				}
+				ttl = tempTTL
+			} else {
+				log.Print("No TTL is set")
+			}
+
+			// construct the Itemes
+			constructedItems[resourceWithTTLName] = types.ResourceWithTTL{
+				TTL:      &ttl,
+				Resource: customeResource,
+			}
+		}
+
+		// construct typedResources
+		constructedResources[resourceType] = cache.Resources{
+			Version: string(typedResources["Version"]),
+			Items:   constructedItems,
+		}
+	}
+	cs.Resources = constructedResources
+
+	return nil
+}
+
+// UnmarshalJSON is custom UnmarshalJSON() for customResource struct
 func (cr *customResource) UnmarshalJSON(data []byte) error {
 	var a anypb.Any
 	if err := protojson.Unmarshal(data, &a); err != nil {
@@ -77,99 +149,49 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 		if err := ptypes.UnmarshalAny(&a, &parsedEndpoint); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
-		cr.Message = &parsedEndpoint
+		cr.Resource = &parsedEndpoint
 	case resource.ClusterType:
 		parsedCluster := cluster.Cluster{}
 		if err := ptypes.UnmarshalAny(&a, &parsedCluster); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
-		cr.Message = &parsedCluster
+		cr.Resource = &parsedCluster
 	case resource.RouteType:
 		parsedRoute := route.RouteConfiguration{}
 		if err := ptypes.UnmarshalAny(&a, &parsedRoute); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
-		cr.Message = &parsedRoute
+		cr.Resource = &parsedRoute
 	case resource.ScopedRouteType:
 		parsedScopedRoute := route.ScopedRouteConfiguration{}
 		if err := ptypes.UnmarshalAny(&a, &parsedScopedRoute); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
-		cr.Message = &parsedScopedRoute
+		cr.Resource = &parsedScopedRoute
 	case resource.ListenerType:
 		parsedListener := listener.Listener{}
 		if err := ptypes.UnmarshalAny(&a, &parsedListener); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
-		cr.Message = &parsedListener
+		cr.Resource = &parsedListener
 	case resource.RuntimeType:
 		parsedRuntime := runtime.RtdsDummy{}
 		if err := ptypes.UnmarshalAny(&a, &parsedRuntime); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
-		cr.Message = &parsedRuntime
+		cr.Resource = &parsedRuntime
 	case resource.SecretType:
 		parsedSecret := secret.SdsDummy{}
 		if err := ptypes.UnmarshalAny(&a, &parsedSecret); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
-		cr.Message = &parsedSecret
+		cr.Resource = &parsedSecret
 	case resource.ExtensionConfigType:
 		parsedExtensionConfig := extension.EcdsDummy{}
 		if err := ptypes.UnmarshalAny(&a, &parsedExtensionConfig); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
-		cr.Message = &parsedExtensionConfig
+		cr.Resource = &parsedExtensionConfig
 	}
 	return nil
-}
-
-func MarshalSnapshot(snap cache.Snapshot) ([]byte, error) {
-	CustomSnapshot := CustomSnapshot{
-		Version:   snap.VersionMap,
-		Resources: map[string]map[string]*customResourceWithTTL{},
-	}
-
-	for _, resourceType := range ResourceTypes {
-		resourceWithTTL := map[string]*customResourceWithTTL{}
-		for resourceName, resource := range snap.GetResourcesAndTTL(resourceType) {
-			resourceWithTTL[resourceName] = &customResourceWithTTL{
-				Resource: customResource{
-					Message: resource.Resource,
-				},
-			}
-			if !reflect.ValueOf(resource.TTL).IsNil() {
-				resourceWithTTL[resourceName].TTL = *resource.TTL
-			}
-
-		}
-		CustomSnapshot.Resources[resourceType] = resourceWithTTL
-	}
-	return json.Marshal(CustomSnapshot)
-}
-
-func UnMarshalSnapshot(data []byte) (cache.Snapshot, error) {
-	customSnapshot := CustomSnapshot{}
-	err := json.Unmarshal(data, &customSnapshot)
-	if err != nil {
-		log.Fatalf("fail to marshal snapshot: %v", err)
-	}
-
-	snap := cache.Snapshot{
-		VersionMap: customSnapshot.Version,
-	}
-
-	for _, resourceType := range ResourceTypes {
-		typedResourceItems := map[string]types.ResourceWithTTL{}
-		for resourceName, resource := range customSnapshot.Resources[resourceType] {
-			typedResourceItems[resourceName] = types.ResourceWithTTL{
-				TTL:      &resource.TTL,
-				Resource: resource.Resource,
-			}
-		}
-		typ := cache.GetResponseType(resourceType)
-		snap.Resources[typ].Items = typedResourceItems
-	}
-
-	return snap, nil
 }
