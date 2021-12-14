@@ -35,7 +35,8 @@ transfer:
         dateField: timeCreated
 ```
 
-`BQ_PROJECT_ID`: The GCP project ID where the BigQuery instance resides.
+`BQ_PROJECT_ID`: The GCP project ID where the BigQuery instance resides. This is
+available on the homepage of every GCP project, in the "Project info" card.
 `PG_USER`: A user of the PostgreSQL database.
 `PG_PASS`: The password associated with the above user. This can be specified as
 an environment variable and will override the configuration file if set.
