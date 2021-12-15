@@ -60,7 +60,46 @@ When the replicator receives a `GET` request for `/run`, it will transfer new
 data since the last time it was run. When a transfer is in progress, it will
 ignore additional requests to `/run` (but still return `200`).
 
-## Limitations
 
-- Configuration only allows for one GCP project at a time.
-- All table names must be unique, even across multiple BigQuery datasets
+## Requirements and limitations
+
+1. The data in the database must be sequentially ordered by time. Specifically,
+   there must be a column of BigQuery datatype TIMESTAMP. This timestamp should
+   strictly increase for new data.
+2. Configuration only allows for one GCP project at a time.
+3. All table names must be unique, even across multiple BigQuery datasets
+
+## How it works
+
+For each table in the configuration, the replicator will search the PostgreSQL
+database to determine if that table exists. If it does not exist, the replicator
+will attempt to recreate the table in Postgres, based on the BigQuery table's
+schema. More on this below.
+
+Once a table in PostgreSQL has been found, the replicator will determine the
+timestamp of the most recent row. It will determine this based on the
+`dateField` column provided in the configuration.
+
+With the latest timestamp, the replicator will query the BigQuery table for rows
+with a newer timestamp. If no timestamp was found (it may be the table was just
+created in Postgres), the replicator will copy all data from the associated
+BigQuery table.
+
+### Automated table creation and type conversion
+
+For non-nested columns, the replicator currently supports
+- FLOAT
+- STRING
+- TIMESTAMP
+
+BigQuery table fields that are of the `RECORD`/`REAPEATED`/`STRUCT`/`ARRAY`
+type are converted to JSON and stored in Postgres as the JSON datatype. To
+retrieve values from the Postgres table, see the [JSON Functions and Operators]
+page.
+
+For example, if your BigQuery table has the FLOAT field `stats.client1.latency`,
+this could then be queried and typecast with the following in Postgres: `SELECT
+CAST(stats->client1->>'latency' AS DOUBLE PRECISION...`
+
+
+[JSON Functions and Operators]: https://www.postgresql.org/docs/12/functions-json.html
