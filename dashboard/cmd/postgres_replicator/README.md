@@ -48,18 +48,17 @@ a column in the BigQuery source table store the approximate time the data was
 created or added to the database. This column must be of the BigQuery
 `TIMESTAMP` datatype and should only increase in value for each new row of data.
 
-By default, the Postgres replicator listens for `GET` requests to `/run` on port
-`8080`. This port number can be overridden via the `PORT` environment variable.
+By default, the replicator listens for `GET` requests to `/run` on port `8080`.
+This port number can be overridden via the `PORT` environment variable.
 
 ## Running
 
-From the test-infra project root, run `make postgres_replicator`, then
-`bin/postgres_replicator -c <config_file>`.
+From the test-infra project root, run `make replicator`, then
+`bin/replicator -c <config_file>`.
 
-When the postgres replicator receives a `GET` request for `/run`, it will
-transfer new data since the last time it was run. When a transfer is in
-progress, it will ignore additional requests to `/run` (but still return `200`).
-
+When the replicator receives a `GET` request for `/run`, it will transfer new
+data since the last time it was run. When a transfer is in progress, it will
+ignore additional requests to `/run` (but still return `200`).
 
 ## Limitations
 

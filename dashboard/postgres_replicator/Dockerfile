@@ -18,15 +18,15 @@ FROM golang:1.16-alpine
 WORKDIR /app
 
 # Copy config
-COPY replicator_config.yaml ./
+COPY config.yaml ./
 COPY test-infra ./test-infra
 
+ENV CGO_ENABLED=0
+RUN apk add make
 RUN cd test-infra \
     && go mod download \
-    && cd dashboard \
-    && make postgres_replicator \
-    && cp bin/postgres_replicator /postgres_replicator
+    && cd dashboard && make replicator REPLICATOR_OUTPUT_DIR=/
 RUN rm -rf test-infra
 
 EXPOSE 8080
-CMD [ "/postgres_replicator", "-c", "replicator_config.yaml" ]
+CMD [ "/replicator", "-c", "config.yaml" ]
