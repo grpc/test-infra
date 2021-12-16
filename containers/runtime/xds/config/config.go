@@ -47,6 +47,7 @@ func (cs CustomSnapshot) MarshalJSON() ([]byte, error) {
 			}
 		}
 		customResources[typeURLNumber].Items = items
+		customResources[typeURLNumber].Version = typedResources.Version
 	}
 	return json.Marshal(&struct {
 		Resources  [types.UnknownType]cache.Resources
@@ -107,27 +108,34 @@ func (cs *CustomSnapshot) UnmarshalJSON(data []byte) error {
 			}
 
 			// get TTL
-			var ttl time.Duration
+			var ttl *time.Duration
 			if string(resourceWithTTL["TTL"]) != "null" {
-				tempTTL, err := time.ParseDuration(string(resourceWithTTL["TTL"]))
+
+				var tmpTTL *time.Duration
+				err := json.Unmarshal(resourceWithTTL["TTL"], &tmpTTL)
 				if err != nil {
-					log.Fatalf("fail to parse the TTL duration for individual types.ResourceWithTTL : %v", err)
+					log.Fatalf("fail to unmarshal TTL: %v", err)
 				}
-				ttl = tempTTL
+
+				ttl = tmpTTL
 			} else {
 				log.Print("No TTL is set")
 			}
 
-			// construct the Itemes
+			// construct the Items
 			constructedItems[resourceWithTTLName] = types.ResourceWithTTL{
-				TTL:      &ttl,
-				Resource: customeResource,
+				TTL:      ttl,
+				Resource: customeResource.Resource,
 			}
 		}
 
 		// construct typedResources
+		var version string
+		if err := json.Unmarshal(typedResources["Version"], &version); err != nil {
+			log.Fatalf("fail to unmarshal version: %v", err)
+		}
 		constructedResources[resourceType] = cache.Resources{
-			Version: string(typedResources["Version"]),
+			Version: version,
 			Items:   constructedItems,
 		}
 	}
@@ -149,47 +157,75 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 		if err := ptypes.UnmarshalAny(&a, &parsedEndpoint); err != nil {
 			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
+		if err := parsedEndpoint.ValidateAll(); err != nil {
+			log.Fatalf("failed to validate the parsed %v: %v", resource.EndpointType, err)
+		}
 		cr.Resource = &parsedEndpoint
 	case resource.ClusterType:
 		parsedCluster := cluster.Cluster{}
 		if err := ptypes.UnmarshalAny(&a, &parsedCluster); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
+			log.Fatalf("fail to unmarshal %v resource: %v", resource.ClusterType, err)
+		}
+		if err := parsedCluster.ValidateAll(); err != nil {
+			log.Fatalf("failed to validate the parsed %v: %v", resource.ClusterType, err)
 		}
 		cr.Resource = &parsedCluster
 	case resource.RouteType:
 		parsedRoute := route.RouteConfiguration{}
 		if err := ptypes.UnmarshalAny(&a, &parsedRoute); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
+			log.Fatalf("fail to unmarshal %v resource: %v", resource.RouteType, err)
+		}
+		if err := parsedRoute.ValidateAll(); err != nil {
+			log.Fatalf("failed to validate the parsed %v: %v", resource.RouteType, err)
 		}
 		cr.Resource = &parsedRoute
 	case resource.ScopedRouteType:
 		parsedScopedRoute := route.ScopedRouteConfiguration{}
 		if err := ptypes.UnmarshalAny(&a, &parsedScopedRoute); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
+			log.Fatalf("fail to unmarshal %v resource: %v", resource.ScopedRouteType, err)
+		}
+		if err := parsedScopedRoute.ValidateAll(); err != nil {
+			log.Fatalf("failed to validate the parsed %v: %v", resource.ScopedRouteType, err)
 		}
 		cr.Resource = &parsedScopedRoute
 	case resource.ListenerType:
 		parsedListener := listener.Listener{}
 		if err := ptypes.UnmarshalAny(&a, &parsedListener); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
+			log.Fatalf("fail to unmarshal %v resource: %v", resource.ListenerType, err)
+		}
+		// once apiserver is set the socket address can no longer be set, but empty address
+		// will fail the validation. TODO: @wanlin31 to figure out a better way
+		if err := parsedListener.ValidateAll(); err != nil {
+			if err.Error() != "invalid Listener.Address: value is required" {
+				log.Fatalf("failed to validate the parsed %v: %v", resource.ListenerType, err)
+			}
 		}
 		cr.Resource = &parsedListener
 	case resource.RuntimeType:
 		parsedRuntime := runtime.RtdsDummy{}
 		if err := ptypes.UnmarshalAny(&a, &parsedRuntime); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
+			log.Fatalf("fail to unmarshal %v resource: %v", resource.RuntimeType, err)
+		}
+		if err := parsedRuntime.ValidateAll(); err != nil {
+			log.Fatalf("failed to validate the parsed %v: %v", resource.RuntimeType, err)
 		}
 		cr.Resource = &parsedRuntime
 	case resource.SecretType:
 		parsedSecret := secret.SdsDummy{}
 		if err := ptypes.UnmarshalAny(&a, &parsedSecret); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
+			log.Fatalf("fail to unmarshal %v resource: %v", resource.SecretType, err)
+		}
+		if err := parsedSecret.ValidateAll(); err != nil {
+			log.Fatalf("failed to validate the parsed %v: %v", resource.SecretType, err)
 		}
 		cr.Resource = &parsedSecret
 	case resource.ExtensionConfigType:
 		parsedExtensionConfig := extension.EcdsDummy{}
 		if err := ptypes.UnmarshalAny(&a, &parsedExtensionConfig); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
+			log.Fatalf("fail to unmarshal %v resource: %v", resource.ExtensionConfigType, err)
+		}
+		if err := parsedExtensionConfig.ValidateAll(); err != nil {
+			log.Fatalf("failed to validate the parsed %v: %v", resource.ExtensionConfigType, err)
 		}
 		cr.Resource = &parsedExtensionConfig
 	}
