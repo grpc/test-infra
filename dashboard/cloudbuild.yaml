@@ -1,13 +1,14 @@
 steps:
-- name: 'ubuntu'
+- name: 'debian:buster'
   entrypoint: /bin/bash
   args:
     - -c
     - |
       apt-get update
-      apt-get install -y gettext-base git
+      apt-get install -y gettext-base make
       pushd $_DASHBOARD_CONFIG_PATH
-      ./configure.sh
+      make configure_grafana
+      make configure_replicator
   env:
   - 'GCP_PROJECT_ID=$_GCP_PROJECT_ID'
   - 'GCP_GRAFANA_SERVICE=$_GCP_GRAFANA_SERVICE'
