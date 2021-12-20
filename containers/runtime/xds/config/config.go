@@ -78,8 +78,10 @@ func (cs *CustomSnapshot) UnmarshalJSON(data []byte) error {
 
 	// unmarshal data to cache.Resources
 	var allResourcesData [types.UnknownType]json.RawMessage
-	if err := json.Unmarshal(values["Resources"], &allResourcesData); err != nil {
-		log.Fatalf("fail to obtain json.RawMessage of the caches.Resources: %v", err)
+	if resourcesContent, ok := values["Resources"]; ok {
+		if err := json.Unmarshal(resourcesContent, &allResourcesData); err != nil {
+			log.Fatalf("fail to obtain json.RawMessage of the caches.Resources: %v", err)
+		}
 	}
 
 	var constructedResources [types.UnknownType]cache.Resources
@@ -90,8 +92,10 @@ func (cs *CustomSnapshot) UnmarshalJSON(data []byte) error {
 		}
 
 		itemsData := make(map[string]json.RawMessage)
-		if err := json.Unmarshal(typedResources["Items"], &itemsData); err != nil {
-			log.Fatalf("fail to obtain json.RawMessage of the list of individual types.Resource : %v", err)
+		if itemsContent, ok := typedResources["Items"]; ok {
+			if err := json.Unmarshal(itemsContent, &itemsData); err != nil {
+				log.Fatalf("fail to obtain json.RawMessage of the list of individual types.Resource : %v", err)
+			}
 		}
 
 		constructedItems := make(map[string]types.ResourceWithTTL)
@@ -100,26 +104,27 @@ func (cs *CustomSnapshot) UnmarshalJSON(data []byte) error {
 			if err := json.Unmarshal(resourceWithTTLData, &resourceWithTTL); err != nil {
 				log.Fatalf("fail to obtain json.RawMessage of the individual types.ResourceWithTTL : %v", err)
 			}
-
 			// get Resource
 			customeResource := customResource{}
-			if err := json.Unmarshal(resourceWithTTL["Resource"], &customeResource); err != nil {
-				log.Fatalf("fail to unmarshal customeResource: %v", err)
+			if resourceContent, ok := resourceWithTTL["Resource"]; ok {
+				if err := json.Unmarshal(resourceContent, &customeResource); err != nil {
+					log.Fatalf("fail to unmarshal customeResource: %v", err)
+				}
 			}
 
 			// get TTL
 			var ttl *time.Duration
-			if string(resourceWithTTL["TTL"]) != "null" {
-
-				var tmpTTL *time.Duration
-				err := json.Unmarshal(resourceWithTTL["TTL"], &tmpTTL)
-				if err != nil {
-					log.Fatalf("fail to unmarshal TTL: %v", err)
+			if ttlContent, ok := resourceWithTTL["TTL"]; ok {
+				if string(ttlContent) != "null" {
+					var tmpTTL *time.Duration
+					err := json.Unmarshal(resourceWithTTL["TTL"], &tmpTTL)
+					if err != nil {
+						log.Fatalf("fail to unmarshal TTL: %v", err)
+					}
+					ttl = tmpTTL
+				} else {
+					log.Print("No TTL is set")
 				}
-
-				ttl = tmpTTL
-			} else {
-				log.Print("No TTL is set")
 			}
 
 			// construct the Items
@@ -131,9 +136,12 @@ func (cs *CustomSnapshot) UnmarshalJSON(data []byte) error {
 
 		// construct typedResources
 		var version string
-		if err := json.Unmarshal(typedResources["Version"], &version); err != nil {
-			log.Fatalf("fail to unmarshal version: %v", err)
+		if versionContent, ok := typedResources["Version"]; ok {
+			if err := json.Unmarshal(versionContent, &version); err != nil {
+				log.Fatalf("fail to unmarshal version: %v", err)
+			}
 		}
+
 		constructedResources[resourceType] = cache.Resources{
 			Version: version,
 			Items:   constructedItems,
@@ -196,9 +204,7 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 		// once apiserver is set the socket address can no longer be set, but empty address
 		// will fail the validation. TODO: @wanlin31 to figure out a better way
 		if err := parsedListener.ValidateAll(); err != nil {
-			if err.Error() != "invalid Listener.Address: value is required" {
-				log.Fatalf("failed to validate the parsed %v: %v", resource.ListenerType, err)
-			}
+			log.Fatalf("failed to validate the parsed %v: %v", resource.ListenerType, err)
 		}
 		cr.Resource = &parsedListener
 	case resource.RuntimeType:

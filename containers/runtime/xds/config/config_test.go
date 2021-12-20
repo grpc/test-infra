@@ -15,16 +15,16 @@ import (
 )
 
 var _ = Describe("config marshal and unmarshal", func() {
-	s := ServerResource{
-		XDSServerClusterName:   "default_xDSServerClusterName",
-		TestServiceClusterName: "default_testServiceClusterName",
-		TestRouteName:          "default_TestRouteName",
-		TestGrpcListenerName:   "default_testGrpcListenerName",
-		TestEnvoyListenerName:  "default_testEnvoyListenerName",
-		TestListenerPort:       1234,
-		TestUpstreamHost:       "default_testUpstreamHost",
-		TestUpstreamPort:       5678,
-		TestEndpointName:       "default_testEndpointName",
+	s := testResource{
+		xDSServerClusterName:   "default_xDSServerClusterName",
+		testServiceClusterName: "default_testServiceClusterName",
+		testRouteName:          "default_TestRouteName",
+		testGrpcListenerName:   "default_testGrpcListenerName",
+		testEnvoyListenerName:  "default_testEnvoyListenerName",
+		testListenerPort:       1234,
+		testUpstreamHost:       "default_testUpstreamHost",
+		testUpstreamPort:       5678,
+		testEndpointName:       "default_testEndpointName",
 	}
 
 	currentVersion := "test_version"
@@ -42,7 +42,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 	It("marshals and unmarshal Endpoint resource correctly", func() {
 		currentResourceType = resource.EndpointType
-		currentResourceName = s.TestEndpointName
+		currentResourceName = s.testEndpointName
 		endpointOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {types.ResourceWithTTL{
 				Resource: s.makeEndpoint(),
@@ -73,7 +73,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 	It("marshals and unmarshal RouteConfiguration resource correctly", func() {
 		currentResourceType = resource.RouteType
-		currentResourceName = s.TestRouteName
+		currentResourceName = s.testRouteName
 		routeConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {types.ResourceWithTTL{
 				Resource: s.makeRoute(),
@@ -104,7 +104,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 	It("marshals and unmarshal Cluster resource correctly", func() {
 		currentResourceType = resource.ClusterType
-		currentResourceName = s.TestServiceClusterName
+		currentResourceName = s.testServiceClusterName
 		clusterConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {types.ResourceWithTTL{
 				Resource: s.makeCluster(),
@@ -161,8 +161,8 @@ var _ = Describe("config marshal and unmarshal", func() {
 		Expect(reflect.DeepEqual(originalConfig.GetVersion(currentResourceType), processedConfig.GetVersion(currentResourceType))).To(BeTrue())
 
 		// gRPC Listeners
-		originalResourceGRPC := originalConfig.GetResourcesAndTTL(currentResourceType)[s.TestGrpcListenerName]
-		processedResourceGRPC := processedConfig.GetResourcesAndTTL(currentResourceType)[s.TestGrpcListenerName]
+		originalResourceGRPC := originalConfig.GetResourcesAndTTL(currentResourceType)[s.testGrpcListenerName]
+		processedResourceGRPC := processedConfig.GetResourcesAndTTL(currentResourceType)[s.testGrpcListenerName]
 
 		// check the resource is processed correctly
 		Expect(proto.Equal(originalResourceGRPC.Resource, processedResourceGRPC.Resource)).To(BeTrue())
@@ -171,8 +171,8 @@ var _ = Describe("config marshal and unmarshal", func() {
 		Expect(reflect.DeepEqual(originalResourceGRPC.TTL, processedResourceGRPC.TTL)).To(BeTrue())
 
 		// Envoy Listeners
-		originalResourceEnvoy := originalConfig.GetResourcesAndTTL(currentResourceType)[s.TestGrpcListenerName]
-		processedResourceEnvoy := processedConfig.GetResourcesAndTTL(currentResourceType)[s.TestGrpcListenerName]
+		originalResourceEnvoy := originalConfig.GetResourcesAndTTL(currentResourceType)[s.testGrpcListenerName]
+		processedResourceEnvoy := processedConfig.GetResourcesAndTTL(currentResourceType)[s.testGrpcListenerName]
 
 		// check the resource is processed correctly
 		Expect(proto.Equal(originalResourceEnvoy.Resource, processedResourceEnvoy.Resource)).To(BeTrue())
@@ -197,7 +197,5 @@ var _ = Describe("config marshal and unmarshal", func() {
 		err = processedConfig.Consistent()
 		Expect(err).ToNot(HaveOccurred())
 	})
-
 	// TODO: Wanlin add test for Secret, Runtime and extension config
-
 })
