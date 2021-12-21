@@ -44,7 +44,7 @@
                      "edsConfig": {
                         "ads": {}
                      },
-                     "serviceName": "default_testEndpointName"
+                     "serviceName": "default_testServiceClusterName"
                   },
                   "connectTimeout": "5s",
                   "http2ProtocolOptions": {}
@@ -97,7 +97,7 @@
                   "address": {
                      "socketAddress": {
                         "address": "0.0.0.0",
-                        "portValue": 1234
+                        "portValue": 10000
                      }
                   },
                   "filterChains": [
@@ -146,7 +146,7 @@
                   "address": {
                      "socketAddress": {
                         "address": "0.0.0.0",
-                        "portValue": 1234
+                        "portValue": 10000
                      }
                   },
                   "filterChains": [

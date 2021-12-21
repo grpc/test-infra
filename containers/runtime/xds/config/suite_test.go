@@ -35,27 +35,13 @@ import (
 	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	v3routerpb "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3"
 	v3httppb "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
-	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
-	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 )
 
-type testResource struct {
-	xDSServerClusterName   string
-	testServiceClusterName string
-	testRouteName          string
-	testGrpcListenerName   string // This field is only used by xDS client
-	testEnvoyListenerName  string
-	testListenerPort       uint // This field is only used by Envoy, socket listener
-	testUpstreamHost       string
-	testUpstreamPort       uint32
-	testEndpointName       string
-}
-
-func (s *testResource) makeCluster() *cluster.Cluster {
+func makeCluster(testServiceClusterName string, testEndpointName string) *cluster.Cluster {
 	return &cluster.Cluster{
-		Name:                 s.testServiceClusterName,
+		Name:                 testServiceClusterName,
 		ConnectTimeout:       durationpb.New(5 * time.Second),
 		ClusterDiscoveryType: &cluster.Cluster_Type{Type: cluster.Cluster_EDS},
 		EdsClusterConfig: &cluster.Cluster_EdsClusterConfig{
@@ -64,16 +50,16 @@ func (s *testResource) makeCluster() *cluster.Cluster {
 					Ads: &core.AggregatedConfigSource{},
 				},
 			},
-			ServiceName: s.testEndpointName,
+			ServiceName: testEndpointName,
 		},
 		LbPolicy:             cluster.Cluster_ROUND_ROBIN,
 		Http2ProtocolOptions: &core.Http2ProtocolOptions{},
 	}
 }
 
-func (s *testResource) makeEndpoint() *endpoint.ClusterLoadAssignment {
+func makeEndpoint(testEndpointName string, testUpstreamHost string, testUpstreamPort uint32) *endpoint.ClusterLoadAssignment {
 	return &endpoint.ClusterLoadAssignment{
-		ClusterName: s.testEndpointName,
+		ClusterName: testEndpointName,
 		Endpoints: []*endpoint.LocalityLbEndpoints{{
 			Locality: &core.Locality{SubZone: "subzone"},
 			LbEndpoints: []*endpoint.LbEndpoint{{
@@ -83,9 +69,9 @@ func (s *testResource) makeEndpoint() *endpoint.ClusterLoadAssignment {
 							Address: &core.Address_SocketAddress{
 								SocketAddress: &core.SocketAddress{
 									Protocol: core.SocketAddress_TCP,
-									Address:  s.testUpstreamHost,
+									Address:  testUpstreamHost,
 									PortSpecifier: &core.SocketAddress_PortValue{
-										PortValue: uint32(s.testUpstreamPort),
+										PortValue: testUpstreamPort,
 									},
 								},
 							},
@@ -99,9 +85,9 @@ func (s *testResource) makeEndpoint() *endpoint.ClusterLoadAssignment {
 	}
 }
 
-func (s *testResource) makeRoute() *route.RouteConfiguration {
+func makeRoute(testRouteName string, testServiceClusterName string) *route.RouteConfiguration {
 	return &route.RouteConfiguration{
-		Name: s.testRouteName,
+		Name: testRouteName,
 		VirtualHosts: []*route.VirtualHost{{
 			Name:    "example_virtual_host",
 			Domains: []string{"*"},
@@ -114,7 +100,7 @@ func (s *testResource) makeRoute() *route.RouteConfiguration {
 				Action: &route.Route_Route{
 					Route: &route.RouteAction{
 						ClusterSpecifier: &route.RouteAction_Cluster{
-							Cluster: s.testServiceClusterName,
+							Cluster: testServiceClusterName,
 						},
 					},
 				},
@@ -123,7 +109,7 @@ func (s *testResource) makeRoute() *route.RouteConfiguration {
 	}
 }
 
-func (s *testResource) makeGrpcHTTPListener() *listener.Listener {
+func makeGrpcHTTPListener(testRouteName string, testGrpcListenerName string, testListenerPort uint32) *listener.Listener {
 	a, _ := anypb.New(&v3routerpb.Router{})
 
 	hcm, _ := anypb.New(&v3httppb.HttpConnectionManager{
@@ -131,7 +117,7 @@ func (s *testResource) makeGrpcHTTPListener() *listener.Listener {
 			ConfigSource: &core.ConfigSource{
 				ConfigSourceSpecifier: &core.ConfigSource_Ads{Ads: &core.AggregatedConfigSource{}},
 			},
-			RouteConfigName: s.testRouteName,
+			RouteConfigName: testRouteName,
 		}},
 		// router fields are unused by grpc
 		HttpFilters: []*v3httppb.HttpFilter{{
@@ -143,7 +129,7 @@ func (s *testResource) makeGrpcHTTPListener() *listener.Listener {
 	},
 	)
 	return &listener.Listener{
-		Name: s.testGrpcListenerName,
+		Name: testGrpcListenerName,
 		// this listener is configured with API listener, add a fake address to pass
 		// validation
 		Address: &core.Address{
@@ -152,7 +138,7 @@ func (s *testResource) makeGrpcHTTPListener() *listener.Listener {
 					Protocol: core.SocketAddress_TCP,
 					Address:  "0.0.0.0",
 					PortSpecifier: &core.SocketAddress_PortValue{
-						PortValue: uint32(s.testListenerPort),
+						PortValue: uint32(testListenerPort),
 					},
 				},
 			},
@@ -168,7 +154,7 @@ func (s *testResource) makeGrpcHTTPListener() *listener.Listener {
 	}
 }
 
-func (s *testResource) makeEnvoyHTTPListener() *listener.Listener {
+func makeEnvoyHTTPListener(testRouteName string, testEnvoyListenerName string, testListenerPort uint32) *listener.Listener {
 	// HTTP filter configuration
 	manager := &v3httppb.HttpConnectionManager{
 		CodecType:  v3httppb.HttpConnectionManager_AUTO,
@@ -189,7 +175,7 @@ func (s *testResource) makeEnvoyHTTPListener() *listener.Listener {
 							}},
 						},
 					}},
-				RouteConfigName: s.testRouteName,
+				RouteConfigName: testRouteName,
 			},
 		},
 		HttpFilters: []*v3httppb.HttpFilter{{
@@ -202,14 +188,14 @@ func (s *testResource) makeEnvoyHTTPListener() *listener.Listener {
 	}
 
 	return &listener.Listener{
-		Name: s.testEnvoyListenerName,
+		Name: testEnvoyListenerName,
 		Address: &core.Address{
 			Address: &core.Address_SocketAddress{
 				SocketAddress: &core.SocketAddress{
 					Protocol: core.SocketAddress_TCP,
 					Address:  "0.0.0.0",
 					PortSpecifier: &core.SocketAddress_PortValue{
-						PortValue: uint32(s.testListenerPort),
+						PortValue: uint32(testListenerPort),
 					},
 				},
 			},
@@ -223,19 +209,6 @@ func (s *testResource) makeEnvoyHTTPListener() *listener.Listener {
 			}},
 		}},
 	}
-}
-
-// GenerateSnapshot generate the snapshot for both gRPC and Envoy to consume
-func (s *testResource) GenerateSnapshot() cache.Snapshot {
-	snap, _ := cache.NewSnapshot("1",
-		map[resource.Type][]types.Resource{
-			resource.ClusterType:  {s.makeCluster()},
-			resource.RouteType:    {s.makeRoute()},
-			resource.ListenerType: {s.makeGrpcHTTPListener(), s.makeEnvoyHTTPListener()},
-			resource.EndpointType: {s.makeEndpoint()},
-		},
-	)
-	return snap
 }
 
 func TestAPIs(t *testing.T) {
