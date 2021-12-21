@@ -116,6 +116,8 @@ func (t *Transfer) transferTable(bigQueryDataset, tableName, dateField string, d
 	done <- true
 }
 
+// convertSchema attempts to convert BigQuery types into Postgres types.
+// Any BigQuery RECORDS or ARRAYS are convertded to the Postgres JSON type.
 func (t *Transfer) convertSchema(bqSchema *BigQuerySchema) (*PostgresSchema, error) {
 	pgSchema := &PostgresSchema{make(map[string]string)}
 	for columnName, dataType := range bqSchema.schema {

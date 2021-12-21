@@ -94,7 +94,7 @@ type PostgresConfig struct {
 	DbName string `yaml:"dbName"`
 }
 
-// TableConfig stores configuartion about which BigQuery datasets and tables
+// TableConfig stores configuration about which BigQuery datasets and tables
 // to transfer to PostgreSQL.
 type TableConfig struct {
 	Datasets []struct {

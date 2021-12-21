@@ -52,6 +52,9 @@ func (bqc *BigQueryClient) ListTables() error {
 }
 
 // GetDataAfterDatetime gets all data after the specified datetime.
+// Golang's client library for BigQuery supports automatic paging, meaning that
+// this function can be called without worrying about how much data is being
+// returned. See https://cloud.google.com/bigquery/docs/paging-results.
 func (bqc *BigQueryClient) GetDataAfterDatetime(dataset, table, dateField, datetime string, bqSchema *BigQuerySchema) (*bigquery.RowIterator, error) {
 	sqlf.SetDialect(sqlf.PostgreSQL)
 	sqlBuilder := sqlf.New("SELECT").From(fmt.Sprintf("%s.%s", dataset, table))

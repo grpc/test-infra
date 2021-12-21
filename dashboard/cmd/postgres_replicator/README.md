@@ -2,12 +2,11 @@
 
 This tool replicates streaming data from BigQuery into PostgreSQL.
 
-
 ## Configuration
 
 It is configured with a YAML file. Here is an example configuration file:
 
-```
+```yaml
 # Source database settings
 bigQuery:
   projectID: ${BQ_PROJECT_ID}
@@ -60,7 +59,6 @@ When the replicator receives a `GET` request for `/run`, it will transfer new
 data since the last time it was run. When a transfer is in progress, it will
 ignore additional requests to `/run` (but still return `200`).
 
-
 ## Requirements and limitations
 
 1. The data in the database must be sequentially ordered by time. Specifically,
@@ -88,6 +86,7 @@ BigQuery table.
 ### Automated table creation and type conversion
 
 For non-nested columns, the replicator currently supports
+
 - FLOAT
 - STRING
 - TIMESTAMP
@@ -100,6 +99,5 @@ page.
 For example, if your BigQuery table has the FLOAT field `stats.client1.latency`,
 this could then be queried and typecast with the following in Postgres: `SELECT
 CAST(stats->client1->>'latency' AS DOUBLE PRECISION...`
-
 
 [JSON Functions and Operators]: https://www.postgresql.org/docs/12/functions-json.html
