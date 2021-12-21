@@ -28,3 +28,6 @@ vet: ## Run go vet against code.
 
 fmt: ## Run go fmt against code.
 	$(GOCMD) fmt ./...
+
+test: fmt vet
+	$(GOCMD) test ./...
