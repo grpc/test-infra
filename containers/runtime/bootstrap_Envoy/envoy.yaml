@@ -21,6 +21,9 @@ dynamic_resources:
   cds_config:
     resource_api_version: V3
     ads: {}
+node:
+  cluster: test_cluster
+  id: test_id    
 static_resources:
   clusters:
   - name: xds_cluster
