@@ -18,10 +18,7 @@ func NewLogger(tableName string) *Logger {
 	return &Logger{prefixedLogger}
 }
 
-// Errorf adds an "[ERROR]" tag to the log.
-func (tl *Logger) Errorf(format string, v ...interface{}) {
-	prefix := tl.Prefix()
-	tl.SetPrefix("[ERROR]" + prefix)
-	tl.Printf(format, v...)
-	tl.SetPrefix(prefix)
+// Errorf adds an "Error: " prefix to the format string
+func (l *Logger) Errorf(format string, v ...interface{}) {
+	l.Printf("Error: " + format)
 }

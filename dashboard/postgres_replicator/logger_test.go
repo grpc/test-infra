@@ -18,13 +18,13 @@ func TestNewLogger(t *testing.T) {
 }
 
 func TestErrorf(t *testing.T) {
-	// Test that prefix is properly set during an error.
+	// Test that "Error: " is prefixed to the format string.
 	var buf bytes.Buffer
 	tableName := "foobar"
 	errorMsg := "Sample error"
-	expectedLog := fmt.Sprintf("[ERROR][%s] %s\n", tableName, errorMsg)
-
+	expectedLog := fmt.Sprintf("[%s] Error: %s\n", tableName, errorMsg)
 	logger := NewLogger(tableName)
+
 	logger.SetOutput(&buf)
 	logger.SetFlags(log.Lmsgprefix)
 	logger.Errorf(errorMsg)
@@ -32,11 +32,5 @@ func TestErrorf(t *testing.T) {
 
 	if logString != expectedLog {
 		t.Errorf(`Expected log "%s". Actual log "%s"`, expectedLog, logString)
-	}
-
-	// Test that prefix is restored after an error message.
-	expectedPrefix := fmt.Sprintf("[%s] ", tableName)
-	if logger.Prefix() != expectedPrefix {
-		t.Errorf(`After an error message, expected log "%s". Actual log "%s"`, expectedLog, logString)
 	}
 }
