@@ -34,8 +34,7 @@ RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 RUN git checkout $GITREF
 
-# TODO(jtattermusch): why is such and old version of bazel used?
-FROM l.gcr.io/google/bazel:0.17.1
+FROM l.gcr.io/google/bazel:3.5.0
 
 COPY --from=0 /src/code /src/code
 RUN mkdir -p /tmp/build_output
