@@ -7,8 +7,8 @@ steps:
       apt-get update
       apt-get install -y gettext-base make
       pushd dashboard
-      make configure_grafana
-      make configure_replicator
+      make configure-grafana
+      make configure-replicator
   env:
   - 'GCP_PROJECT_ID=$_GCP_PROJECT_ID'
   - 'GCP_GRAFANA_SERVICE=$_GCP_GRAFANA_SERVICE'
