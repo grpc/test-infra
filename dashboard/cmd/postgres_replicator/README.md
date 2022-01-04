@@ -91,7 +91,7 @@ For non-nested columns, the replicator currently supports
 - STRING
 - TIMESTAMP
 
-BigQuery table fields that are of the `RECORD`/`REAPEATED`/`STRUCT`/`ARRAY`
+BigQuery table fields that are of the `RECORD`/`REPEATED`/`STRUCT`/`ARRAY`
 type are converted to JSON and stored in Postgres as the JSON datatype. To
 retrieve values from the Postgres table, see the [JSON Functions and Operators]
 page.
