@@ -5,11 +5,13 @@ import (
 	"reflect"
 	"time"
 
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	testres "github.com/envoyproxy/go-control-plane/pkg/test/resource/v3"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -133,7 +135,6 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 		// check the TTL of the resource is processed correctly
 		Expect(reflect.DeepEqual(originalResource.TTL, processedResource.TTL)).To(BeTrue())
-
 	})
 
 	It("marshals and unmarshal Listener resource correctly", func() {
@@ -184,9 +185,142 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 	})
 
-	It("marshals and unmarshal all resources correctly", func() {
+	It("marshals and unmarshal Runtime resource correctly", func() {
+		currentResourceType = resource.RuntimeType
+		runtimeConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
+			currentResourceType: {
+				types.ResourceWithTTL{
+					Resource: testres.MakeRuntime("runtimeName "),
+					TTL:      &testTTL,
+				},
+			}})
+		Expect(err).ToNot(HaveOccurred())
 
-		fullSet, _ := cache.NewSnapshot("1",
+		originalConfig = customSnapshot{runtimeConfigOnly}
+		marshalConfig, err := json.Marshal(originalConfig)
+		Expect(err).ToNot(HaveOccurred())
+
+		processedConfig = customSnapshot{}
+		err = json.Unmarshal(marshalConfig, &processedConfig)
+		Expect(err).ToNot(HaveOccurred())
+
+		// check the version of the resource is processed correctly
+		Expect(reflect.DeepEqual(originalConfig.GetVersion(currentResourceType), processedConfig.GetVersion(currentResourceType))).To(BeTrue())
+
+		originalResource := originalConfig.GetResourcesAndTTL(currentResourceType)[currentResourceName]
+		processedResource := processedConfig.GetResourcesAndTTL(currentResourceType)[currentResourceName]
+
+		// check the resource is processed correctly
+		Expect(proto.Equal(originalResource.Resource, processedResource.Resource)).To(BeTrue())
+
+		// check the TTL of the resource is processed correctly
+		Expect(reflect.DeepEqual(originalResource.TTL, processedResource.TTL)).To(BeTrue())
+	})
+
+	It("marshals and unmarshal Secret resource correctly", func() {
+		currentResourceType = resource.SecretType
+
+		var secrets []types.ResourceWithTTL
+		for _, se := range testres.MakeSecrets("tlsName", "rootName") {
+			secrets = append(secrets, types.ResourceWithTTL{
+				Resource: se,
+				TTL:      &testTTL,
+			})
+		}
+
+		secretConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
+			currentResourceType: secrets,
+		})
+		Expect(err).ToNot(HaveOccurred())
+
+		originalConfig = customSnapshot{secretConfigOnly}
+		marshalConfig, err := json.Marshal(originalConfig)
+		Expect(err).ToNot(HaveOccurred())
+
+		processedConfig = customSnapshot{}
+		err = json.Unmarshal(marshalConfig, &processedConfig)
+		Expect(err).ToNot(HaveOccurred())
+
+		// check the version of the resource is processed correctly
+		Expect(reflect.DeepEqual(originalConfig.GetVersion(currentResourceType), processedConfig.GetVersion(currentResourceType))).To(BeTrue())
+
+		originalResource := originalConfig.GetResourcesAndTTL(currentResourceType)[currentResourceName]
+		processedResource := processedConfig.GetResourcesAndTTL(currentResourceType)[currentResourceName]
+
+		// check the resource is processed correctly
+		Expect(proto.Equal(originalResource.Resource, processedResource.Resource)).To(BeTrue())
+
+		// check the TTL of the resource is processed correctly
+		Expect(reflect.DeepEqual(originalResource.TTL, processedResource.TTL)).To(BeTrue())
+	})
+
+	It("marshals and unmarshal ExtensionConfig resource correctly", func() {
+		currentResourceType = resource.ExtensionConfigType
+		extensionConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
+			currentResourceType: {
+				types.ResourceWithTTL{
+					Resource: testres.MakeExtensionConfig("ads", "extensionConfigName", s.TestRouteName),
+					TTL:      &testTTL,
+				},
+			}})
+		Expect(err).ToNot(HaveOccurred())
+
+		originalConfig = customSnapshot{extensionConfigOnly}
+		marshalConfig, err := json.Marshal(originalConfig)
+		Expect(err).ToNot(HaveOccurred())
+
+		processedConfig = customSnapshot{}
+		err = json.Unmarshal(marshalConfig, &processedConfig)
+		Expect(err).ToNot(HaveOccurred())
+
+		// check the version of the resource is processed correctly
+		Expect(reflect.DeepEqual(originalConfig.GetVersion(currentResourceType), processedConfig.GetVersion(currentResourceType))).To(BeTrue())
+
+		originalResource := originalConfig.GetResourcesAndTTL(currentResourceType)[currentResourceName]
+		processedResource := processedConfig.GetResourcesAndTTL(currentResourceType)[currentResourceName]
+
+		// check the resource is processed correctly
+		Expect(proto.Equal(originalResource.Resource, processedResource.Resource)).To(BeTrue())
+
+		// check the TTL of the resource is processed correctly
+		Expect(reflect.DeepEqual(originalResource.TTL, processedResource.TTL)).To(BeTrue())
+	})
+
+	It("marshals and unmarshal ScopedRoute resource correctly", func() {
+		currentResourceType = resource.ScopedRouteType
+		scopedRouteConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
+			currentResourceType: {
+				types.ResourceWithTTL{
+					Resource: testres.MakeScopedRoute("scopedRouteName", s.TestRouteName, []string{"1.2.3.4"}),
+					TTL:      &testTTL,
+				},
+			}})
+		Expect(err).ToNot(HaveOccurred())
+
+		originalConfig = customSnapshot{scopedRouteConfigOnly}
+		marshalConfig, err := json.Marshal(originalConfig)
+		Expect(err).ToNot(HaveOccurred())
+
+		processedConfig = customSnapshot{}
+		err = json.Unmarshal(marshalConfig, &processedConfig)
+		Expect(err).ToNot(HaveOccurred())
+
+		// check the version of the resource is processed correctly
+		Expect(reflect.DeepEqual(originalConfig.GetVersion(currentResourceType), processedConfig.GetVersion(currentResourceType))).To(BeTrue())
+
+		originalResource := originalConfig.GetResourcesAndTTL(currentResourceType)[currentResourceName]
+		processedResource := processedConfig.GetResourcesAndTTL(currentResourceType)[currentResourceName]
+
+		// check the resource is processed correctly
+		Expect(proto.Equal(originalResource.Resource, processedResource.Resource)).To(BeTrue())
+
+		// check the TTL of the resource is processed correctly
+		Expect(reflect.DeepEqual(originalResource.TTL, processedResource.TTL)).To(BeTrue())
+	})
+
+	It("marshals and unmarshal multiple resources correctly", func() {
+
+		fullSet, _ := cache.NewSnapshot(currentVersion,
 			map[resource.Type][]types.Resource{
 				resource.ClusterType:  {makeCluster(s.TestServiceClusterName, s.TestEndpointName)},
 				resource.RouteType:    {makeRoute(s.TestRouteName, s.TestServiceClusterName)},
@@ -206,5 +340,4 @@ var _ = Describe("config marshal and unmarshal", func() {
 		err = processedConfig.Consistent()
 		Expect(err).ToNot(HaveOccurred())
 	})
-	// TODO: Wanlin add test for Secret, Runtime and extension config
 })

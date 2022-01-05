@@ -12,9 +12,8 @@ import (
 	endpoint "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	listener "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
 	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
-	extension "github.com/envoyproxy/go-control-plane/envoy/service/extension/v3"
+	secret "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	runtime "github.com/envoyproxy/go-control-plane/envoy/service/runtime/v3"
-	secret "github.com/envoyproxy/go-control-plane/envoy/service/secret/v3"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
@@ -75,7 +74,7 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 	// unmarshal VersionMap
 	versionMap := make(map[string]map[string]string)
 	if err := json.Unmarshal(values["VersionMap"], &versionMap); err != nil {
-		log.Fatalf("TODO: error message %v", err)
+		log.Fatalf("failed to unmarshal VersionMap: %v", err)
 	}
 	cs.VersionMap = versionMap
 
@@ -83,7 +82,7 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 	var allResourcesData [types.UnknownType]json.RawMessage
 	if resourcesContent, ok := values["Resources"]; ok {
 		if err := json.Unmarshal(resourcesContent, &allResourcesData); err != nil {
-			log.Fatalf("fail to obtain json.RawMessage of the caches.Resources: %v", err)
+			log.Fatalf("failed to obtain json.RawMessage of the caches.Resources: %v", err)
 		}
 	}
 
@@ -91,13 +90,13 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 	for resourceType, typedResourceData := range allResourcesData {
 		var typedResources map[string]json.RawMessage
 		if err := json.Unmarshal(typedResourceData, &typedResources); err != nil {
-			log.Fatalf("fail to obtain json.RawMessage of the caches.Resource: %v", err)
+			log.Fatalf("failed to obtain json.RawMessage of the caches.Resource: %v", err)
 		}
 
 		itemsData := make(map[string]json.RawMessage)
 		if itemsContent, ok := typedResources["Items"]; ok {
 			if err := json.Unmarshal(itemsContent, &itemsData); err != nil {
-				log.Fatalf("fail to obtain json.RawMessage of the list of individual types.Resource : %v", err)
+				log.Fatalf("failed to obtain json.RawMessage of the list of individual types.Resource : %v", err)
 			}
 		}
 
@@ -105,13 +104,13 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 		for resourceWithTTLName, resourceWithTTLData := range itemsData {
 			var resourceWithTTL map[string]json.RawMessage
 			if err := json.Unmarshal(resourceWithTTLData, &resourceWithTTL); err != nil {
-				log.Fatalf("fail to obtain json.RawMessage of the individual types.ResourceWithTTL : %v", err)
+				log.Fatalf("failed to obtain json.RawMessage of the individual types.ResourceWithTTL : %v", err)
 			}
 			// get Resource
 			customeResource := customResource{}
 			if resourceContent, ok := resourceWithTTL["Resource"]; ok {
 				if err := json.Unmarshal(resourceContent, &customeResource); err != nil {
-					log.Fatalf("fail to unmarshal customeResource: %v", err)
+					log.Fatalf("failed to unmarshal customeResource: %v", err)
 				}
 			}
 
@@ -122,7 +121,7 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 					var tmpTTL *time.Duration
 					err := json.Unmarshal(resourceWithTTL["TTL"], &tmpTTL)
 					if err != nil {
-						log.Fatalf("fail to unmarshal TTL: %v", err)
+						log.Fatalf("failed to unmarshal TTL: %v", err)
 					}
 					ttl = tmpTTL
 				} else {
@@ -141,7 +140,7 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 		var version string
 		if versionContent, ok := typedResources["Version"]; ok {
 			if err := json.Unmarshal(versionContent, &version); err != nil {
-				log.Fatalf("fail to unmarshal version: %v", err)
+				log.Fatalf("failed to unmarshal version: %v", err)
 			}
 		}
 
@@ -159,14 +158,14 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 func (cr *customResource) UnmarshalJSON(data []byte) error {
 	var a anypb.Any
 	if err := protojson.Unmarshal(data, &a); err != nil {
-		log.Fatalf("fail to unmarshal proto.any message: %v", err)
+		log.Fatalf("failed to unmarshal proto.any message: %v", err)
 	}
 
 	switch a.TypeUrl {
 	case resource.EndpointType:
 		parsedEndpoint := endpoint.ClusterLoadAssignment{}
 		if err := anypb.UnmarshalTo(&a, &parsedEndpoint, proto.UnmarshalOptions{}); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.EndpointType, err)
+			log.Fatalf("failed to unmarshal %v resource: %v", resource.EndpointType, err)
 		}
 		if err := parsedEndpoint.ValidateAll(); err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.EndpointType, err)
@@ -175,7 +174,7 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 	case resource.ClusterType:
 		parsedCluster := cluster.Cluster{}
 		if err := anypb.UnmarshalTo(&a, &parsedCluster, proto.UnmarshalOptions{}); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.ClusterType, err)
+			log.Fatalf("failed to unmarshal %v resource: %v", resource.ClusterType, err)
 		}
 		if err := parsedCluster.ValidateAll(); err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.ClusterType, err)
@@ -184,7 +183,7 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 	case resource.RouteType:
 		parsedRoute := route.RouteConfiguration{}
 		if err := anypb.UnmarshalTo(&a, &parsedRoute, proto.UnmarshalOptions{}); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.RouteType, err)
+			log.Fatalf("failed to unmarshal %v resource: %v", resource.RouteType, err)
 		}
 		if err := parsedRoute.ValidateAll(); err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.RouteType, err)
@@ -193,7 +192,7 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 	case resource.ScopedRouteType:
 		parsedScopedRoute := route.ScopedRouteConfiguration{}
 		if err := anypb.UnmarshalTo(&a, &parsedScopedRoute, proto.UnmarshalOptions{}); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.ScopedRouteType, err)
+			log.Fatalf("failed to unmarshal %v resource: %v", resource.ScopedRouteType, err)
 		}
 		if err := parsedScopedRoute.ValidateAll(); err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.ScopedRouteType, err)
@@ -202,7 +201,7 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 	case resource.ListenerType:
 		parsedListener := listener.Listener{}
 		if err := anypb.UnmarshalTo(&a, &parsedListener, proto.UnmarshalOptions{}); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.ListenerType, err)
+			log.Fatalf("failed to unmarshal %v resource: %v", resource.ListenerType, err)
 		}
 		// once apiserver is set the socket address can no longer be set, but empty address
 		// will fail the validation. TODO: @wanlin31 to figure out a better way
@@ -211,27 +210,27 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 		}
 		cr.Resource = &parsedListener
 	case resource.RuntimeType:
-		parsedRuntime := runtime.RtdsDummy{}
+		parsedRuntime := runtime.Runtime{}
 		if err := anypb.UnmarshalTo(&a, &parsedRuntime, proto.UnmarshalOptions{}); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.RuntimeType, err)
+			log.Fatalf("failed to unmarshal %v resource: %v", resource.RuntimeType, err)
 		}
 		if err := parsedRuntime.ValidateAll(); err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.RuntimeType, err)
 		}
 		cr.Resource = &parsedRuntime
 	case resource.SecretType:
-		parsedSecret := secret.SdsDummy{}
+		parsedSecret := secret.Secret{}
 		if err := anypb.UnmarshalTo(&a, &parsedSecret, proto.UnmarshalOptions{}); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.SecretType, err)
+			log.Fatalf("failed to unmarshal %v resource: %v", resource.SecretType, err)
 		}
 		if err := parsedSecret.ValidateAll(); err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.SecretType, err)
 		}
 		cr.Resource = &parsedSecret
 	case resource.ExtensionConfigType:
-		parsedExtensionConfig := extension.EcdsDummy{}
+		parsedExtensionConfig := core.TypedExtensionConfig{}
 		if err := anypb.UnmarshalTo(&a, &parsedExtensionConfig, proto.UnmarshalOptions{}); err != nil {
-			log.Fatalf("fail to unmarshal %v resource: %v", resource.ExtensionConfigType, err)
+			log.Fatalf("failed to unmarshal %v resource: %v", resource.ExtensionConfigType, err)
 		}
 		if err := parsedExtensionConfig.ValidateAll(); err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.ExtensionConfigType, err)
@@ -284,21 +283,19 @@ func (t *TestResource) validateResource(snap cache.Snapshot) error {
 	}
 
 	// Envoy listener's port value is used by routing traffic to Envoy sidecar
-	for listenerName, listenerWithTTL := range snap.Resources[listenerType].Items {
-		// listener port is not required for gRPC listener.
-		if listenerName != t.TestGrpcListenerName {
-			forValidation := listener.Listener{}
-			listenerData, err := protojson.Marshal(listenerWithTTL.Resource)
-			if err != nil {
-				log.Fatalf("fail to validate Envoy listener's port value: %v \n", err)
-			}
-			if err = protojson.Unmarshal(listenerData, &forValidation); err != nil {
-				log.Fatalf("fail to validate Envoy listener's port value: %v \n", err)
-			}
-			if forValidation.Address.GetSocketAddress().GetPortValue() != t.TestListenerPort {
-				log.Fatalf("fail to validate Envoy listener's port value: Envoy listener's port value: %v does not match the port that the client target port %v, \n", forValidation.Address.GetSocketAddress().GetPortValue(), t.TestListenerPort)
-			}
+	for _, listenerWithTTL := range snap.Resources[listenerType].Items {
+		forValidation := listener.Listener{}
+		listenerData, err := protojson.Marshal(listenerWithTTL.Resource)
+		if err != nil {
+			log.Fatalf("failed to validate Envoy listener's port value: %v \n", err)
 		}
+		if err = protojson.Unmarshal(listenerData, &forValidation); err != nil {
+			log.Fatalf("failed to validate Envoy listener's port value: %v \n", err)
+		}
+		if forValidation.ApiListener != nil && forValidation.Address.GetSocketAddress().GetPortValue() != t.TestListenerPort {
+			log.Fatalf("failed to validate Envoy listener's port value: Envoy listener's port value: %v does not match the port that the client target port %v, \n", forValidation.Address.GetSocketAddress().GetPortValue(), t.TestListenerPort)
+		}
+
 	}
 
 	// Envoy's dynamic bootstrap file service cluster listed to configure Envoy obtaining configuration from xds server, this cluster name should be listed as the config resource
@@ -317,12 +314,12 @@ func (t *TestResource) GenerateSnapshotFromConfigFiles(defaultConfigPath string,
 	// read and unmarshal default configuration
 	defaultConfigData, err := os.ReadFile(defaultConfigPath)
 	if err != nil {
-		log.Fatalf("fail to read the default configuration from path (%v): %v", defaultConfigPath, err)
+		log.Fatalf("failed to read the default configuration from path (%v): %v", defaultConfigPath, err)
 	}
 
 	defaultSnapshot := customSnapshot{}
 	if err := json.Unmarshal(defaultConfigData, &defaultSnapshot); err != nil {
-		log.Fatalf("fail to unmarshal the default configuration from path (%v): %v \n", defaultConfigPath, err)
+		log.Fatalf("failed to unmarshal the default configuration from path (%v): %v \n", defaultConfigPath, err)
 	}
 
 	// if not user supplied config, default resource is used
@@ -337,12 +334,12 @@ func (t *TestResource) GenerateSnapshotFromConfigFiles(defaultConfigPath string,
 	// read and unmarshal user supplied configuration
 	userSuppliedConfigPathData, err := os.ReadFile(userSuppliedConfigPath)
 	if err != nil {
-		log.Fatalf("fail to read the user supplied configuration from path (%v): %v \n", userSuppliedConfigPath, err)
+		log.Fatalf("failed to read the user supplied configuration from path (%v): %v \n", userSuppliedConfigPath, err)
 	}
 
 	userSuppliedSnapshot := customSnapshot{}
 	if err := json.Unmarshal(userSuppliedConfigPathData, &userSuppliedSnapshot); err != nil {
-		log.Fatalf("fail to unmarshal the user supplied configuration from path (%v): %v", userSuppliedConfigPath, err)
+		log.Fatalf("failed to unmarshal the user supplied configuration from path (%v): %v", userSuppliedConfigPath, err)
 	}
 
 	// compare default config and user supplied config, if user have supplied
@@ -390,16 +387,16 @@ func (t *TestResource) GenerateSnapshotFromConfigFiles(defaultConfigPath string,
 }
 
 // UpdateEndpoint takes a list of endpoints to updated the Endpoint resources in the snapshot
-func (t *TestResource) UpdateEndpoint(snap cache.Snapshot, testEndpoints []TestEndpoint) error {
+func (t *TestResource) UpdateEndpoint(snap cache.Snapshot, testEndpoints []*TestEndpoint) error {
 	// check endpoint number is correct
 	endpointResource := snap.Resources[int(cache.GetResponseType(resource.EndpointType))].Items[t.TestEndpointName].Resource
 	data, err := protojson.Marshal(endpointResource)
 	if err != nil {
-		log.Fatalf("fail to to validate number of the endpoint: %v \n", err)
+		log.Fatalf("failed to to validate number of the endpoint: %v \n", err)
 	}
 	endpointService := endpoint.ClusterLoadAssignment{}
 	if err := protojson.Unmarshal(data, &endpointService); err != nil {
-		log.Fatalf("fail to to validate number of the endpoint: %v \n", err)
+		log.Fatalf("failed to to validate number of the endpoint: %v \n", err)
 	}
 
 	allConfiguredBackends := 0
