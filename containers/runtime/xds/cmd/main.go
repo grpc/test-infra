@@ -19,10 +19,7 @@ import (
 
 func main() {
 
-	resource := config.TestResource{
-		TestServiceClusterName: "test_cluster",
-		TestRouteName:          "test_route",
-	}
+	resource := config.TestResource{}
 
 	var nodeID string
 	var xdsServerPort uint
@@ -34,8 +31,8 @@ func main() {
 	// The port that this xDS server listens on
 	flag.UintVar(&xdsServerPort, "xdsServerPort", 18000, "xDS management server port, this is where Envoy gets update")
 
-	// Tell Envoy/xDS client to use this Node ID
-	flag.StringVar(&nodeID, "nodeID", "test-id", "Node ID")
+	// Tell Envoy/xDS client to use this Node ID, it is important to match what provided in the bootstrap files
+	flag.StringVar(&nodeID, "nodeID", "test_id", "Node ID")
 
 	// Default configuration path
 	flag.StringVar(&defaultConfigPath, "DefaultConfigPath", "../config/default_config.json", "The path of default configuration file")
@@ -48,9 +45,6 @@ func main() {
 
 	// This sets the gRPC test listener name.
 	flag.StringVar(&resource.TestGrpcListenerName, "TestGrpcListenerName", "default_testGrpcListenerName", "This is the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
-
-	// This sets the Envoy test listener name.
-	flag.StringVar(&resource.TestEnvoyListenerName, "TestEnvoyListenerName", "envoyListener", "This is the Envoy listener's name")
 
 	// This sets the port that the Envoy listener listens to, this is the port to send traffic if we wish the traffic to go through sidecar
 	flag.UintVar(&testListenerPort, "TestListenerPort", 10000, "This sets the port that the test listener listens to")
@@ -90,11 +84,15 @@ func main() {
 		}
 	}
 
-	// Create the snapshot to server
+	// Create the snapshot for server
 	snapshot, err := resource.GenerateSnapshotFromConfigFiles(defaultConfigPath, userSuppliedConfigPath)
-
 	if err != nil {
 		log.Fatalf("fail to create snapshot for xDS server: %v", err)
+	}
+
+	// Update endpoint for the snapshot resource
+	if err := resource.UpdateEndpoint(snapshot, resource.TestEndpoints); err != nil {
+		log.Fatalf("fail to update endpoint for xDS server: %v", err)
 	}
 
 	l.Printf("will serve snapshot %+v", snapshot)
