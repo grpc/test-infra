@@ -139,12 +139,6 @@
                "Resource": {
                   "@type": "type.googleapis.com/envoy.config.listener.v3.Listener",
                   "name": "default_testGrpcListenerName",
-                  "address": {
-                     "socketAddress": {
-                        "address": "0.0.0.0",
-                        "portValue": 10000
-                     }
-                  },
                   "filterChains": [
                      {
                         "filters": [

@@ -228,7 +228,7 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 		}
 		// once apiserver is set the socket address can no longer be set, but empty address
 		// will fail the validation. TODO: @wanlin31 to figure out a better way
-		if err := parsedListener.ValidateAll(); err != nil {
+		if err := parsedListener.ValidateAll(); parsedListener.ApiListener == nil && err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.ListenerType, err)
 		}
 		cr.Resource = &parsedListener
@@ -304,7 +304,7 @@ func (t *TestResource) validateResource(snap cache.Snapshot) error {
 		if err = protojson.Unmarshal(listenerData, &forValidation); err != nil {
 			log.Fatalf("failed to validate Envoy listener's port value: %v \n", err)
 		}
-		if forValidation.ApiListener != nil && forValidation.Address.GetSocketAddress().GetPortValue() != t.TestListenerPort {
+		if forValidation.ApiListener == nil && forValidation.Address.GetSocketAddress().GetPortValue() != t.TestListenerPort {
 			log.Fatalf("failed to validate Envoy listener's port value: Envoy listener's port value: %v does not match the port that the client target port %v, \n", forValidation.Address.GetSocketAddress().GetPortValue(), t.TestListenerPort)
 		}
 
