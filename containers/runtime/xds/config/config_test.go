@@ -18,20 +18,22 @@ import (
 
 var _ = Describe("config marshal and unmarshal", func() {
 	s := TestResource{
-		XDSServerClusterName:   "default_xDSServerClusterName",
-		TestServiceClusterName: "default_testServiceClusterName",
-		TestRouteName:          "default_TestRouteName",
-		TestGrpcListenerName:   "default_testGrpcListenerName",
-		TestEnvoyListenerName:  "default_testEnvoyListenerName",
-		TestListenerPort:       1234,
+		XDSServerClusterName: "default_xDSServerClusterName",
+
+		TestGrpcListenerName: "default_testGrpcListenerName",
+
+		TestListenerPort: 1234,
 		TestEndpoints: []*TestEndpoint{{
 			TestUpstreamHost: "default_testUpstreamHost",
 			TestUpstreamPort: 5678,
 		}},
-		TestEndpointName: "default_testEndpointName",
 	}
 
 	currentVersion := "test_version"
+	testServiceClusterName := "default_testServiceClusterName"
+	testEnvoyListenerName := "default_testEnvoyListenerName"
+	testRouteName := "default_TestRouteName"
+	testEndpointName := "default_testEndpointName"
 	var testTTL time.Duration
 	var originalConfig customSnapshot
 	var processedConfig customSnapshot
@@ -46,10 +48,10 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 	It("marshals and unmarshal Endpoint resource correctly", func() {
 		currentResourceType = resource.EndpointType
-		currentResourceName = s.TestEndpointName
+		currentResourceName = testEndpointName
 		endpointOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {types.ResourceWithTTL{
-				Resource: makeEndpoint(s.TestEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort),
+				Resource: makeEndpoint(testEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort),
 				TTL:      &testTTL},
 			}})
 		Expect(err).ToNot(HaveOccurred())
@@ -77,10 +79,10 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 	It("marshals and unmarshal RouteConfiguration resource correctly", func() {
 		currentResourceType = resource.RouteType
-		currentResourceName = s.TestRouteName
+		currentResourceName = testRouteName
 		routeConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {types.ResourceWithTTL{
-				Resource: makeRoute(s.TestRouteName, s.TestServiceClusterName),
+				Resource: makeRoute(testRouteName, testServiceClusterName),
 				TTL:      &testTTL},
 			}})
 		Expect(err).ToNot(HaveOccurred())
@@ -108,10 +110,10 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 	It("marshals and unmarshal Cluster resource correctly", func() {
 		currentResourceType = resource.ClusterType
-		currentResourceName = s.TestServiceClusterName
+		currentResourceName = testServiceClusterName
 		clusterConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {types.ResourceWithTTL{
-				Resource: makeCluster(s.TestServiceClusterName, s.TestEndpointName),
+				Resource: makeCluster(testServiceClusterName, testEndpointName),
 				TTL:      &testTTL},
 			}})
 		Expect(err).ToNot(HaveOccurred())
@@ -142,11 +144,11 @@ var _ = Describe("config marshal and unmarshal", func() {
 		listenerOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {
 				types.ResourceWithTTL{
-					Resource: makeEnvoyHTTPListener(s.TestRouteName, s.TestEnvoyListenerName, uint32(s.TestListenerPort)),
+					Resource: makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(s.TestListenerPort)),
 					TTL:      &testTTL,
 				},
 				types.ResourceWithTTL{
-					Resource: makeGrpcHTTPListener(s.TestRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort)),
+					Resource: makeGrpcHTTPListener(testRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort)),
 					TTL:      &testTTL,
 				},
 			}})
@@ -259,7 +261,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 		extensionConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {
 				types.ResourceWithTTL{
-					Resource: testres.MakeExtensionConfig("ads", "extensionConfigName", s.TestRouteName),
+					Resource: testres.MakeExtensionConfig("ads", "extensionConfigName", testRouteName),
 					TTL:      &testTTL,
 				},
 			}})
@@ -291,7 +293,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 		scopedRouteConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {
 				types.ResourceWithTTL{
-					Resource: testres.MakeScopedRoute("scopedRouteName", s.TestRouteName, []string{"1.2.3.4"}),
+					Resource: testres.MakeScopedRoute("scopedRouteName", testRouteName, []string{"1.2.3.4"}),
 					TTL:      &testTTL,
 				},
 			}})
@@ -322,10 +324,10 @@ var _ = Describe("config marshal and unmarshal", func() {
 
 		fullSet, _ := cache.NewSnapshot(currentVersion,
 			map[resource.Type][]types.Resource{
-				resource.ClusterType:  {makeCluster(s.TestServiceClusterName, s.TestEndpointName)},
-				resource.RouteType:    {makeRoute(s.TestRouteName, s.TestServiceClusterName)},
-				resource.ListenerType: {makeEnvoyHTTPListener(s.TestRouteName, s.TestEnvoyListenerName, uint32(s.TestListenerPort)), makeGrpcHTTPListener(s.TestRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort))},
-				resource.EndpointType: {makeEndpoint(s.TestEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort)},
+				resource.ClusterType:  {makeCluster(testServiceClusterName, testEndpointName)},
+				resource.RouteType:    {makeRoute(testRouteName, testServiceClusterName)},
+				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(s.TestListenerPort)), makeGrpcHTTPListener(testRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort))},
+				resource.EndpointType: {makeEndpoint(testEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort)},
 			})
 
 		originalConfig = customSnapshot{fullSet}

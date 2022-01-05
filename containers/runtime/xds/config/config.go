@@ -246,23 +246,12 @@ type TestResource struct {
 	// This field is needed if the RouteConfig or EdsConfig are fetched from the
 	// xDS server separately.
 	XDSServerClusterName string
-	// testServiceClusterName is the name of the upstream clsuter,
-	// consisted by the test servers.
-	TestServiceClusterName string
-	// testRouteName is the route name returned by the test listeners.
-	TestRouteName string
 	// testGrpcListenerName is only used by gRPC xDS client, must be used as xds:///<listener_name>,
 	// API listener is required.
 	TestGrpcListenerName string
-	// testEnvoyListenerName is only used by Envoy proxy.
-	TestEnvoyListenerName string
 	// testListenerPort is only used by Envoy, socket listener, traffic will be directly direct to
 	// this port.
 	TestListenerPort uint32
-	// testEndpointName is the name of the cluster. This will be the `service_name
-	// in <envoy_v3_api_field_config.cluster.v3.Cluster.EdsClusterConfig.service_name>` value if specified
-	// in the cluster.
-	TestEndpointName string
 	// List of endpoints to load balance to, these will all goes into the same Endpoint resource.
 	TestEndpoints []*TestEndpoint
 }
@@ -297,8 +286,6 @@ func (t *TestResource) validateResource(snap cache.Snapshot) error {
 		}
 
 	}
-
-	// Envoy's dynamic bootstrap file service cluster listed to configure Envoy obtaining configuration from xds server, this cluster name should be listed as the config resource
 
 	// check consistency
 	if err := snap.Consistent(); err != nil {
@@ -388,46 +375,64 @@ func (t *TestResource) GenerateSnapshotFromConfigFiles(defaultConfigPath string,
 
 // UpdateEndpoint takes a list of endpoints to updated the Endpoint resources in the snapshot
 func (t *TestResource) UpdateEndpoint(snap cache.Snapshot, testEndpoints []*TestEndpoint) error {
-	// check endpoint number is correct
-	endpointResource := snap.Resources[int(cache.GetResponseType(resource.EndpointType))].Items[t.TestEndpointName].Resource
-	data, err := protojson.Marshal(endpointResource)
-	if err != nil {
-		log.Fatalf("failed to to validate number of the endpoint: %v \n", err)
-	}
-	endpointService := endpoint.ClusterLoadAssignment{}
-	if err := protojson.Unmarshal(data, &endpointService); err != nil {
-		log.Fatalf("failed to to validate number of the endpoint: %v \n", err)
-	}
+	// currently we only support one cluster, get the endpointName from the cluster resource
+	// break after the d first cluster
+	for _, clusterResource := range snap.Resources[int(cache.GetResponseType(resource.ClusterType))].Items {
+		// get the cluster resource to obtain the endpoint name associated with the cluster
+		clusterData, err := protojson.Marshal(clusterResource.Resource)
+		if err != nil {
+			log.Fatalf("failed to to validate number of the endpoint: %v \n", err)
+		}
+		curCluster := cluster.Cluster{}
+		if err := protojson.Unmarshal(clusterData, &curCluster); err != nil {
+			log.Fatalf("failed to to validate number of the endpoint: %v \n", err)
+		}
 
-	allConfiguredBackends := 0
-	for _, localityLbEndpoints := range endpointService.GetEndpoints() {
-		allConfiguredBackends += len(localityLbEndpoints.LbEndpoints)
-	}
+		// check if endpoint number is correct
+		endpointResource := snap.Resources[int(cache.GetResponseType(resource.EndpointType))].Items[curCluster.GetEdsClusterConfig().ServiceName].Resource
+		endpointData, err := protojson.Marshal(endpointResource)
+		if err != nil {
+			log.Fatalf("failed to to validate number of the endpoint: %v \n", err)
+		}
+		endpointService := endpoint.ClusterLoadAssignment{}
+		if err := protojson.Unmarshal(endpointData, &endpointService); err != nil {
+			log.Fatalf("failed to to validate number of the endpoint: %v \n", err)
+		}
 
-	if len(testEndpoints) != allConfiguredBackends {
-		log.Fatalf("number of endpoint supplied from config : %v is different from the actual number of backends: %v \n", allConfiguredBackends, len(testEndpoints))
-	}
+		allConfiguredBackends := 0
+		for _, localityLbEndpoints := range endpointService.GetEndpoints() {
+			allConfiguredBackends += len(localityLbEndpoints.LbEndpoints)
+		}
 
-	// update the endpoints, so far all actual backends are supplied to the same locality group
-	for _, eachBackend := range testEndpoints {
-		curEndpoint := endpoint.LbEndpoint{
-			HostIdentifier: &endpoint.LbEndpoint_Endpoint{
-				Endpoint: &endpoint.Endpoint{
-					Address: &core.Address{
-						Address: &core.Address_SocketAddress{
-							SocketAddress: &core.SocketAddress{
-								Protocol: core.SocketAddress_TCP,
-								Address:  eachBackend.TestUpstreamHost,
-								PortSpecifier: &core.SocketAddress_PortValue{
-									PortValue: eachBackend.TestUpstreamPort,
+		if len(testEndpoints) != allConfiguredBackends {
+			log.Fatalf("number of endpoint supplied from config : %v is different from the actual number of backends: %v \n", allConfiguredBackends, len(testEndpoints))
+		}
+
+		// update the endpoints, so far all actual backends are supplied to the same locality group
+		updatedEndpoints := []*endpoint.LbEndpoint{}
+		for _, eachBackend := range testEndpoints {
+			curEndpoint := endpoint.LbEndpoint{
+				HostIdentifier: &endpoint.LbEndpoint_Endpoint{
+					Endpoint: &endpoint.Endpoint{
+						Address: &core.Address{
+							Address: &core.Address_SocketAddress{
+								SocketAddress: &core.SocketAddress{
+									Protocol: core.SocketAddress_TCP,
+									Address:  eachBackend.TestUpstreamHost,
+									PortSpecifier: &core.SocketAddress_PortValue{
+										PortValue: eachBackend.TestUpstreamPort,
+									},
 								},
 							},
 						},
 					},
 				},
-			},
+			}
+			updatedEndpoints = append(updatedEndpoints, &curEndpoint)
 		}
-		endpointService.GetEndpoints()[0].LbEndpoints = append(endpointService.GetEndpoints()[0].LbEndpoints, &curEndpoint)
+		endpointService.GetEndpoints()[0].LbEndpoints = updatedEndpoints
+		snap.Resources[int(cache.GetResponseType(resource.EndpointType))].Items[curCluster.GetEdsClusterConfig().ServiceName] = types.ResourceWithTTL{Resource: &endpointService}
+		break
 	}
 	return nil
 }
