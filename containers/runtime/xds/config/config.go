@@ -87,10 +87,17 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 	}
 
 	var constructedResources [types.UnknownType]cache.Resources
-	for resourceType, typedResourceData := range allResourcesData {
+
+	for _, typedResourceData := range allResourcesData {
+		var resourceType types.ResponseType
 		var typedResources map[string]json.RawMessage
+
+		if typedResourceData == nil {
+			continue
+		}
+
 		if err := json.Unmarshal(typedResourceData, &typedResources); err != nil {
-			log.Fatalf("failed to obtain json.RawMessage of the caches.Resource: %v", err)
+			log.Fatalf("failed to obtain json.RawMessage of the types.Resource: %v", err)
 		}
 
 		itemsData := make(map[string]json.RawMessage)
@@ -101,14 +108,25 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 		}
 
 		constructedItems := make(map[string]types.ResourceWithTTL)
+		i := 0
 		for resourceWithTTLName, resourceWithTTLData := range itemsData {
 			var resourceWithTTL map[string]json.RawMessage
 			if err := json.Unmarshal(resourceWithTTLData, &resourceWithTTL); err != nil {
 				log.Fatalf("failed to obtain json.RawMessage of the individual types.ResourceWithTTL : %v", err)
 			}
+
 			// get Resource
 			customeResource := customResource{}
 			if resourceContent, ok := resourceWithTTL["Resource"]; ok {
+				if i == 0 {
+					// check the actual type of the current resource regardles of the order
+					var rt anypb.Any
+					if err := protojson.Unmarshal(resourceContent, &rt); err != nil {
+						log.Fatalf("failed to unmarshal proto.any message to determine the resource type: %v", err)
+					}
+					resourceType = cache.GetResponseType(rt.TypeUrl)
+				}
+
 				if err := json.Unmarshal(resourceContent, &customeResource); err != nil {
 					log.Fatalf("failed to unmarshal customeResource: %v", err)
 				}
@@ -134,6 +152,12 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 				TTL:      ttl,
 				Resource: customeResource.Resource,
 			}
+			i++
+		}
+
+		// skip placeholders
+		if len(constructedItems) == 0 {
+			continue
 		}
 
 		// construct typedResources
@@ -143,7 +167,6 @@ func (cs *customSnapshot) UnmarshalJSON(data []byte) error {
 				log.Fatalf("failed to unmarshal version: %v", err)
 			}
 		}
-
 		constructedResources[resourceType] = cache.Resources{
 			Version: version,
 			Items:   constructedItems,

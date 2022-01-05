@@ -84,10 +84,6 @@
          }
       },
       {
-         "Version": "",
-         "Items": {}
-      },
-      {
          "Version": "1",
          "Items": {
             "default_testEnvoyListenerName": {
@@ -199,18 +195,6 @@
                "TTL": null
             }
          }
-      },
-      {
-         "Version": "",
-         "Items": {}
-      },
-      {
-         "Version": "",
-         "Items": {}
-      },
-      {
-         "Version": "",
-         "Items": {}
       }
    ],
    "VersionMap": null
