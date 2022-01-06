@@ -34,23 +34,23 @@ func main() {
 	// Tell Envoy/xDS client to use this Node ID, it is important to match what provided in the bootstrap files
 	flag.StringVar(&nodeID, "nodeID", "test_id", "Node ID")
 
-	// Default configuration path
-	flag.StringVar(&defaultConfigPath, "DefaultConfigPath", "../config/default_config.json", "The path of default configuration file")
+	// Default configuration path, the path is relative path using ./containers/runtime/xds
+	flag.StringVar(&defaultConfigPath, "d", "config/default_config.json", "The path of default configuration file, the path is relative path using ./containers/runtime/xds")
 
-	// User supplied configuration path
-	flag.StringVar(&userSuppliedConfigPath, "UserSuppliedConfigPath", "", "The path of user supplied configuration file")
+	// User supplied configuration path, the path is relative path using ./containers/runtime/xds
+	flag.StringVar(&userSuppliedConfigPath, "u", "", "The path of user supplied configuration file, the path is relative path using ./containers/runtime/xds")
 
 	// Tne cluster name for Envoy obtain configuration from, should match the cluster name in the bootstrap file.
-	flag.StringVar(&resource.XDSServerClusterName, "xDSServerClusterName", "xds_cluster", "Tne cluster name for Envoy to obtain configuration, should match the cluster name in the bootstrap file")
+	flag.StringVar(&resource.XDSServerClusterName, "c", "xds_cluster", "Tne cluster name for Envoy to obtain configuration, should match the cluster name in the bootstrap file")
 
 	// This sets the gRPC test listener name.
-	flag.StringVar(&resource.TestGrpcListenerName, "TestGrpcListenerName", "default_testGrpcListenerName", "This is the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
+	flag.StringVar(&resource.TestGrpcListenerName, "g", "default_testGrpcListenerName", "This is the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
 
 	// This sets the port that the Envoy listener listens to, this is the port to send traffic if we wish the traffic to go through sidecar
-	flag.UintVar(&testListenerPort, "TestListenerPort", 10000, "This sets the port that the test listener listens to")
+	flag.UintVar(&testListenerPort, "p", 10000, "This sets the port that the test listener listens to")
 
 	// This set the number of the intended backends, the update server will shut down once enough backends are updated
-	flag.UintVar(&allBackends, "BackendNumber", 1, "This set the number of the intended backends, the update server will shut down once enough backends are updated")
+	flag.UintVar(&allBackends, "b", 1, "This set the number of the intended backends, the update server will shut down once enough backends are updated")
 
 	flag.Parse()
 
