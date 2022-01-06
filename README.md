@@ -11,7 +11,7 @@ released or deployed separately from the core [grpc/grpc] codebase.
 gRPC OSS benchmarks are a collection of libraries and executables to schedule,
 run and monitor [gRPC performance benchmarking] tests on a Kubernetes cluster.
 
-The main executable is a custom controller that manages resources of kind
+The main executable is a [custom controller] that manages resources of kind
 [LoadTest]. This controller must be deployed to the cluster before load tests
 can be run on it. The controller is implemented with [kubebuilder].
 
@@ -23,6 +23,7 @@ performance benchmarking] page. For more information, see
 [Examples](config/samples/README.md) of load test configurations in the
 supported languages are also provided.
 
+[custom controller]: cmd/controller/main.go
 [grpc performance benchmarking]: https://grpc.io/docs/guides/benchmarking/
 [kubebuilder]: https://kubebuilder.io
 [loadtest]: config/crd/bases/e2etest.grpc.io_loadtests.yaml
