@@ -11,7 +11,8 @@ To see all available options for the scenariosJSON embedded in the test, please
 visit the definition in [control.proto], in the repository [grpc/grpc-proto].
 
 The examples in this folder are basic examples that build and run the test
-components when the test is applied, and do not save data to BigQuery.
+components when the test is applied, and do not save data to BigQuery. These
+can be run by applying them to the cluster with `kubectl apply -f`.
 
 The examples in the [templates](./templates) folder are templates that use
 prebuilt images and require parameter substitution before running.

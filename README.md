@@ -1,25 +1,35 @@
-# test-infra
+# test-infra - gRPC test infrastructure
 
-(Soon-to-become-official) Repo for gRPC testing infrastructure support code
+This repository contains code for systems that test [gRPC] which are versioned,
+released or deployed separately from the core [grpc/grpc] codebase.
 
-The test-infra repository contains code for systems that test gRPC which are
-versioned, released or deployed separately from the [grpc/grpc] codebase.
-
+[grpc]: https://grpc.io
 [grpc/grpc]: https://github.com/grpc/grpc
 
-## Benchmarks
+## gRPC OSS benchmarks
 
-gRPC OSS Benchmarks is a collection of libraries and executables to schedule,
-run and monitor gRPC benchmarks on a Kubernetes cluster.
+gRPC OSS benchmarks are a collection of libraries and executables to schedule,
+run and monitor [gRPC performance benchmarking] tests on a Kubernetes cluster.
 
-See also:
+The main executable is a custom controller that manages resources of kind
+[LoadTest]. This controller must be deployed to the cluster before load tests
+can be run on it. The controller is implemented with [kubebuilder].
 
-- [tools](tools/README.md)
+There is also a set of tools used to prepare prebuilt images and run batches of
+tests. These tools are used to generate the dashboard linked from the [gRPC
+performance benchmarking] page. For more information, see
+[tools](tools/README.md).
 
-## Contribute
+[Examples](config/samples/README.md) of load test configurations in the
+supported languages are also provided.
 
-Welcome! Please read and follow the steps in the
-[CONTRIBUTING.md](CONTRIBUTING.md) file.
+[grpc performance benchmarking]: https://grpc.io/docs/guides/benchmarking/
+[kubebuilder]: https://kubebuilder.io
+[loadtest]: config/crd/bases/e2etest.grpc.io_loadtests.yaml
+
+## Contributing
+
+Welcome! Please read [how to contribute](CONTRIBUTING.md) before proceeding.
 
 This project includes third party dependencies as git submodules. Be sure to
 initialize and update them when setting up a development environment:
