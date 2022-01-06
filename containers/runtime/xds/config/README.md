@@ -1,6 +1,6 @@
 # Configuration for xDS server
 
-Configuration JSON files are used to generate the resource snapshot for xDS server. The xDS server consumes these configuration and server these configuration to xDS client or Envoy sidecar.
+Configuration JSON files are used to generate the xDS configuration for xDS server. The xDS server consumes these configuration and server these configuration to xDS client or Envoy sidecar.
 
 The configuration JSON files are directly unmarshalled to [Snapshot](https://pkg.go.dev/github.com/envoyproxy/go-control-plane@v0.10.0/pkg/cache/v3#Snapshot) struct.
 
@@ -30,4 +30,8 @@ The daufult_config.json file contains a piece of configuration that have two lis
 
 ## User supplied configuration JSON file
 
-If user wish to alter the default configuration, a user defined configuration can be created and once the path of the user supplied configuration file is provided, the xDS server then server the user defined configuration. User supplied configurations are updated on top of the default configuration, so U=user only need to supply the part that wish to alter. If the user did not supply any configuration, the default configuration will be used for xDS server.
+If user wish to alter the default configuration, a user defined configuration can be used instead of the default configuration. User can create a configuration json file just like the default_config.json in the same directory with default_config.json. User supplied configurations are updated on top of the default configuration, so user only need to supply the part that they wish to alter, but the user defined the configuration has to follow the same structure with default_config.json.
+
+If the user did not supply any configuration, the default configuration will be used for xDS server.
+
+The user defined configuration can be supplied at the time starting the xDS server, using flag  `-u config/name-of-user-supplied-config.json`.
