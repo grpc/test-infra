@@ -397,7 +397,7 @@ func (t *TestResource) GenerateSnapshotFromConfigFiles(defaultConfigPath string,
 }
 
 // UpdateEndpoint takes a list of endpoints to updated the Endpoint resources in the snapshot
-func (t *TestResource) UpdateEndpoint(snap cache.Snapshot, testEndpoints []*TestEndpoint) error {
+func (t *TestResource) UpdateEndpoint(snap cache.Snapshot) error {
 	// currently we only support one cluster, get the endpointName from the cluster resource
 	// break after the d first cluster
 	for _, clusterResource := range snap.Resources[int(cache.GetResponseType(resource.ClusterType))].Items {
@@ -427,13 +427,13 @@ func (t *TestResource) UpdateEndpoint(snap cache.Snapshot, testEndpoints []*Test
 			allConfiguredBackends += len(localityLbEndpoints.LbEndpoints)
 		}
 
-		if len(testEndpoints) != allConfiguredBackends {
-			log.Fatalf("number of endpoint supplied from config : %v is different from the actual number of backends: %v \n", allConfiguredBackends, len(testEndpoints))
+		if len(t.TestEndpoints) != allConfiguredBackends {
+			log.Fatalf("number of endpoint supplied from config : %v is different from the actual number of backends: %v \n", allConfiguredBackends, len(t.TestEndpoints))
 		}
 
 		// update the endpoints, so far all actual backends are supplied to the same locality group
 		updatedEndpoints := []*endpoint.LbEndpoint{}
-		for _, eachBackend := range testEndpoints {
+		for _, eachBackend := range t.TestEndpoints {
 			curEndpoint := endpoint.LbEndpoint{
 				HostIdentifier: &endpoint.LbEndpoint_Endpoint{
 					Endpoint: &endpoint.Endpoint{
