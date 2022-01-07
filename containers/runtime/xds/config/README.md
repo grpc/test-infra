@@ -30,7 +30,7 @@ The daufult_config.json file contains a piece of configuration that have two lis
 
 ## User supplied configuration JSON file
 
-If user wish to alter the default configuration, a user defined configuration can be used instead of the default configuration. User can create a configuration json file just like the default_config.json in the same directory with default_config.json. User supplied configurations are updated on top of the default configuration, so user only need to supply the part that they wish to alter, but the user defined the configuration has to follow the same structure with default_config.json.
+If user wish to alter the default configuration, a user defined configuration can be used instead of the default configuration. User can create a configuration json file just like the default_config.json in the same directory with default_config.json, which is `containers/runtime/xds/config` within the test-infra repo. User supplied configurations are updated on top of the default configuration, so user only need to supply the part that they wish to alter, but the user defined the configuration has to follow the same structure with default_config.json.
 
 If the user did not supply any configuration, the default configuration will be used for xDS server.
 
