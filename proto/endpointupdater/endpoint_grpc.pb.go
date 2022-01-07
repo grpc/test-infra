@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type EndpointUpdaterClient interface {
 	// Sends an update
 	UpdateEndpoint(ctx context.Context, in *EndpointUpdaterRequest, opts ...grpc.CallOption) (*EndpointUpdaterReply, error)
+	QuitWorker(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Void, error)
 }
 
 type endpointUpdaterClient struct {
@@ -43,12 +44,22 @@ func (c *endpointUpdaterClient) UpdateEndpoint(ctx context.Context, in *Endpoint
 	return out, nil
 }
 
+func (c *endpointUpdaterClient) QuitWorker(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Void, error) {
+	out := new(Void)
+	err := c.cc.Invoke(ctx, "/endpointupdater.EndpointUpdater/QuitWorker", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // EndpointUpdaterServer is the server API for EndpointUpdater service.
 // All implementations must embed UnimplementedEndpointUpdaterServer
 // for forward compatibility
 type EndpointUpdaterServer interface {
 	// Sends an update
 	UpdateEndpoint(context.Context, *EndpointUpdaterRequest) (*EndpointUpdaterReply, error)
+	QuitWorker(context.Context, *Void) (*Void, error)
 	mustEmbedUnimplementedEndpointUpdaterServer()
 }
 
@@ -58,6 +69,9 @@ type UnimplementedEndpointUpdaterServer struct {
 
 func (UnimplementedEndpointUpdaterServer) UpdateEndpoint(context.Context, *EndpointUpdaterRequest) (*EndpointUpdaterReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEndpoint not implemented")
+}
+func (UnimplementedEndpointUpdaterServer) QuitWorker(context.Context, *Void) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QuitWorker not implemented")
 }
 func (UnimplementedEndpointUpdaterServer) mustEmbedUnimplementedEndpointUpdaterServer() {}
 
@@ -90,6 +104,24 @@ func _EndpointUpdater_UpdateEndpoint_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EndpointUpdater_QuitWorker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Void)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EndpointUpdaterServer).QuitWorker(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/endpointupdater.EndpointUpdater/QuitWorker",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EndpointUpdaterServer).QuitWorker(ctx, req.(*Void))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // EndpointUpdater_ServiceDesc is the grpc.ServiceDesc for EndpointUpdater service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -100,6 +132,10 @@ var EndpointUpdater_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateEndpoint",
 			Handler:    _EndpointUpdater_UpdateEndpoint_Handler,
+		},
+		{
+			MethodName: "QuitWorker",
+			Handler:    _EndpointUpdater_QuitWorker_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
