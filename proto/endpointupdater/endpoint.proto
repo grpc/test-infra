@@ -21,9 +21,18 @@ package endpointupdater;
 service EndpointUpdater {
   // Sends an update
   rpc UpdateEndpoint (EndpointUpdaterRequest) returns (EndpointUpdaterReply) {}
+
+  rpc QuitWorker(Void) returns (Void);
+}
+
+message Void {
 }
 
 message EndpointUpdaterRequest {
+  repeated ServerTarget endpoints = 1;
+}
+
+message ServerTarget{
   string ip_address = 1;
   uint32 port = 2;
 }
