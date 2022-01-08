@@ -3,14 +3,16 @@ kind: ClusterRole
 metadata:
   name: pod-viewer-role
 rules:
-- apiGroups: [""]
+- apiGroups:
+  - ''
   resources:
   - pods
   verbs:
   - get
   - list
   - watch
-- apiGroups: [""]
+- apiGroups:
+  - ''
   resources:
   - pods/status
   verbs:

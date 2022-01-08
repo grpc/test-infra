@@ -19,27 +19,27 @@ postgres:
   dbPass: ${PG_PASS}
   dbName: ${PG_DATABASE}
 
-# Tables to tranfer from BigQuery to PostgreSQL
+# Tables to transfer from BigQuery to PostgreSQL
 transfer:
   datasets:
   - name: datasetExampleName1
     tables:
-      - name: tableExample1
-        dateField: timeCreated
-      - name: tableExample2
-        dateField: timeCreated
-  - name: datasetExampleName2
-    tables:
+    - name: tableExample1
+      dateField: timeCreated
+    - name: tableExample2
+      dateField: timeCreated
+    - name: datasetExampleName2
+      tables:
       - name: tableExample3
         dateField: timeCreated
 ```
 
 `BQ_PROJECT_ID`: The GCP project ID where the BigQuery instance resides. This is
 available on the homepage of every GCP project, in the "Project info" card.
-`PG_USER`: A user of the PostgreSQL database.
-`PG_PASS`: The password associated with the above user. This can be specified as
-an environment variable and will override the configuration file if set.
-`PG_DATABASE`: The replication destination database.
+`PG_USER`: A user of the PostgreSQL database. `PG_PASS`: The password associated
+with the above user. This can be specified as an environment variable and will
+override the configuration file if set. `PG_DATABASE`: The replication
+destination database.
 
 The transfer section of the configuration file details which tables to replicate
 from BigQuery. To replicate streaming data efficiently, this tool requires that
@@ -91,13 +91,13 @@ For non-nested columns, the replicator currently supports
 - STRING
 - TIMESTAMP
 
-BigQuery table fields that are of the `RECORD`/`REPEATED`/`STRUCT`/`ARRAY`
-type are converted to JSON and stored in Postgres as the JSON datatype. To
-retrieve values from the Postgres table, see the [JSON Functions and Operators]
-page.
+BigQuery table fields that are of the `RECORD`/`REPEATED`/`STRUCT`/`ARRAY` type
+are converted to JSON and stored in Postgres as the JSON datatype. To retrieve
+values from the Postgres table, see the [JSON Functions and Operators] page.
 
 For example, if your BigQuery table has the FLOAT field `stats.client1.latency`,
-this could then be queried and typecast with the following in Postgres: `SELECT
-CAST(stats->client1->>'latency' AS DOUBLE PRECISION...`
+this could then be queried and typecast with the following in Postgres:
+`SELECT CAST(stats->client1->>'latency' AS DOUBLE PRECISION...`
 
-[JSON Functions and Operators]: https://www.postgresql.org/docs/12/functions-json.html
+[json functions and operators]:
+  https://www.postgresql.org/docs/12/functions-json.html

@@ -4,6 +4,6 @@ metadata:
   name: metrics-reader
 rules:
 - nonResourceURLs:
-  - "/metrics"
+  - /metrics
   verbs:
   - get
