@@ -1,5 +1,7 @@
 {
-  "scenarios": [{
-    "name": "example"
-  }]
+  "scenarios": [
+    {
+      "name": "example"
+    }
+  ]
 }
