@@ -1,1 +1,3 @@
-{"assets" : "test/**/*"}
+{
+  "assets": "test/**/*"
+}
