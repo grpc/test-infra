@@ -14,23 +14,32 @@ const (
 	updatePort = ":18005"
 )
 
-var srv *grpc.Server
-
 // UpdateServer is used to implement endpointupdater.EndpointUpdater.
 type UpdateServer struct {
 	pb.UnimplementedEndpointUpdaterServer
 	EndpointsChannel chan []*config.TestEndpoint
+	srv              *grpc.Server
 }
 
 // UpdateEndpoint implements endpointupdater.EndpointUpdater
 func (us *UpdateServer) UpdateEndpoint(ctx context.Context, in *pb.EndpointUpdaterRequest) (*pb.EndpointUpdaterReply, error) {
-	var testEnpoints []*config.TestEndpoint
+	var testEndpoints []*config.TestEndpoint
 	for _, c := range in.GetEndpoints() {
-		testEnpoints = append(testEnpoints, &config.TestEndpoint{TestUpstreamHost: c.IpAddress, TestUpstreamPort: c.Port})
+		testEndpoints = append(testEndpoints, &config.TestEndpoint{TestUpstreamHost: c.IpAddress, TestUpstreamPort: c.Port})
 		log.Printf("Received endpoint: %v:%v", c.IpAddress, c.Port)
 	}
-	us.EndpointsChannel <- testEnpoints
+	us.EndpointsChannel <- testEndpoints
 	return &pb.EndpointUpdaterReply{}, nil
+}
+
+// QuitEndpointUpdateServer stop the EndpointUpdateServer.
+func (us *UpdateServer) QuitEndpointUpdateServer(context.Context, *pb.Void) (*pb.Void, error) {
+	log.Printf("Shutting down the endpoint update server listening on %v", updatePort)
+	go func() {
+		us.srv.GracefulStop()
+	}()
+
+	return &pb.Void{}, nil
 }
 
 // RunUpdateServer start a gRPC server listening to test server address and port
@@ -39,16 +48,13 @@ func RunUpdateServer(endpointChannel chan []*config.TestEndpoint) {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	srv = grpc.NewServer()
-	pb.RegisterEndpointUpdaterServer(srv, &UpdateServer{EndpointsChannel: endpointChannel})
+	srv := grpc.NewServer()
+
+	pb.RegisterEndpointUpdaterServer(srv, &UpdateServer{EndpointsChannel: endpointChannel, srv: srv})
 	log.Printf("Endpoint update server listening at %v", lis.Addr())
 	if err := srv.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
-}
 
-// StopUpdateServer stops the endpoint update server
-func StopUpdateServer() {
-	log.Printf("Endpoint updated, shutting down the endpoint update server listening on %v", updatePort)
-	srv.Stop()
+	log.Print("listener aborted")
 }
