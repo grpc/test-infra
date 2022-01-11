@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type EndpointUpdaterClient interface {
 	// Sends an update
 	UpdateEndpoint(ctx context.Context, in *EndpointUpdaterRequest, opts ...grpc.CallOption) (*EndpointUpdaterReply, error)
-	QuitWorker(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Void, error)
+	QuitEndpointUpdateServer(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Void, error)
 }
 
 type endpointUpdaterClient struct {
@@ -40,9 +40,9 @@ func (c *endpointUpdaterClient) UpdateEndpoint(ctx context.Context, in *Endpoint
 	return out, nil
 }
 
-func (c *endpointUpdaterClient) QuitWorker(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Void, error) {
+func (c *endpointUpdaterClient) QuitEndpointUpdateServer(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Void, error) {
 	out := new(Void)
-	err := c.cc.Invoke(ctx, "/endpointupdater.EndpointUpdater/QuitWorker", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/endpointupdater.EndpointUpdater/QuitEndpointUpdateServer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *endpointUpdaterClient) QuitWorker(ctx context.Context, in *Void, opts .
 type EndpointUpdaterServer interface {
 	// Sends an update
 	UpdateEndpoint(context.Context, *EndpointUpdaterRequest) (*EndpointUpdaterReply, error)
-	QuitWorker(context.Context, *Void) (*Void, error)
+	QuitEndpointUpdateServer(context.Context, *Void) (*Void, error)
 	mustEmbedUnimplementedEndpointUpdaterServer()
 }
 
@@ -66,8 +66,8 @@ type UnimplementedEndpointUpdaterServer struct {
 func (UnimplementedEndpointUpdaterServer) UpdateEndpoint(context.Context, *EndpointUpdaterRequest) (*EndpointUpdaterReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEndpoint not implemented")
 }
-func (UnimplementedEndpointUpdaterServer) QuitWorker(context.Context, *Void) (*Void, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method QuitWorker not implemented")
+func (UnimplementedEndpointUpdaterServer) QuitEndpointUpdateServer(context.Context, *Void) (*Void, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QuitEndpointUpdateServer not implemented")
 }
 func (UnimplementedEndpointUpdaterServer) mustEmbedUnimplementedEndpointUpdaterServer() {}
 
@@ -100,20 +100,20 @@ func _EndpointUpdater_UpdateEndpoint_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EndpointUpdater_QuitWorker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EndpointUpdater_QuitEndpointUpdateServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Void)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EndpointUpdaterServer).QuitWorker(ctx, in)
+		return srv.(EndpointUpdaterServer).QuitEndpointUpdateServer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/endpointupdater.EndpointUpdater/QuitWorker",
+		FullMethod: "/endpointupdater.EndpointUpdater/QuitEndpointUpdateServer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EndpointUpdaterServer).QuitWorker(ctx, req.(*Void))
+		return srv.(EndpointUpdaterServer).QuitEndpointUpdateServer(ctx, req.(*Void))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -130,8 +130,8 @@ var EndpointUpdater_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EndpointUpdater_UpdateEndpoint_Handler,
 		},
 		{
-			MethodName: "QuitWorker",
-			Handler:    _EndpointUpdater_QuitWorker_Handler,
+			MethodName: "QuitEndpointUpdateServer",
+			Handler:    _EndpointUpdater_QuitEndpointUpdateServer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
