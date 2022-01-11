@@ -22,7 +22,7 @@ service EndpointUpdater {
   // Sends an update
   rpc UpdateEndpoint (EndpointUpdaterRequest) returns (EndpointUpdaterReply) {}
 
-  rpc QuitWorker(Void) returns (Void);
+  rpc QuitEndpointUpdateServer(Void) returns (Void);
 }
 
 message Void {
@@ -38,3 +38,5 @@ message ServerTarget{
 }
 
 message EndpointUpdaterReply {}
+
+
