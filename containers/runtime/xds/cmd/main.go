@@ -35,10 +35,10 @@ func main() {
 	flag.StringVar(&nodeID, "nodeID", "test_id", "Node ID")
 
 	// Default configuration path, the path is relative path using ./containers/runtime/xds
-	flag.StringVar(&defaultConfigPath, "d", "config/default_config.json", "The path of default configuration file, the path is relative path using ./containers/runtime/xds")
+	flag.StringVar(&defaultConfigPath, "d", "containers/runtime/xds/config/default_config.json", "The path of default configuration file, the path is relative path the root of test-infra repo")
 
 	// User supplied configuration path, the path is relative path using ./containers/runtime/xds
-	flag.StringVar(&userSuppliedConfigPath, "u", "", "The path of user supplied configuration file, the path is relative path using ./containers/runtime/xds")
+	flag.StringVar(&userSuppliedConfigPath, "u", "", "The path of user supplied configuration file, the path is relative path the root of test-infra repo")
 
 	// Tne cluster name for Envoy obtain configuration from, should match the cluster name in the bootstrap file.
 	flag.StringVar(&resource.XDSServerClusterName, "c", "xds_cluster", "Tne cluster name for Envoy to obtain configuration, should match the cluster name in the bootstrap file")
@@ -52,6 +52,14 @@ func main() {
 	flag.Parse()
 
 	resource.TestListenerPort = uint32(testListenerPort)
+
+	// Create and validate the configuration of the xDS server first
+	snapshot, err := resource.GenerateSnapshotFromConfigFiles(defaultConfigPath, userSuppliedConfigPath)
+	if err != nil {
+		log.Fatalf("fail to create snapshot for xDS server: %v", err)
+	}
+	log.Println("xDS server resource snapshot is generated successfully")
+
 	// Create a cache
 	l := logrus.New()
 	cache := cache.NewSnapshotCache(false, cache.IDHash{}, l)
@@ -65,12 +73,6 @@ func main() {
 
 	resource.TestEndpoints = <-endpointChannel
 	if resource.TestEndpoints != nil {
-		// Create the snapshot for server
-		snapshot, err := resource.GenerateSnapshotFromConfigFiles(defaultConfigPath, userSuppliedConfigPath)
-		if err != nil {
-			log.Fatalf("fail to create snapshot for xDS server: %v", err)
-		}
-
 		// Update endpoint for the snapshot resource
 		if err := resource.UpdateEndpoint(snapshot); err != nil {
 			log.Fatalf("fail to update endpoint for xDS server: %v", err)
