@@ -28,10 +28,10 @@ transfer:
       dateField: timeCreated
     - name: tableExample2
       dateField: timeCreated
-    - name: datasetExampleName2
-      tables:
-      - name: tableExample3
-        dateField: timeCreated
+  - name: datasetExampleName2
+    tables:
+    - name: tableExample3
+      dateField: timeCreated
 ```
 
 `BQ_PROJECT_ID`: The GCP project ID where the BigQuery instance resides. This is
