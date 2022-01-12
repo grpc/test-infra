@@ -13,16 +13,16 @@ postgres:
   dbPass: ${PG_PASS}
   dbName: ${PG_DATABASE}
 
-# Tables to transfer from BigQuery to PostgreSQL
+# Tables to tranfer from BigQuery to PostgreSQL
 transfer:
   datasets:
   - name: datasetExampleName1
     tables:
-    - name: tableExample1
-      dateField: timeCreated
-    - name: tableExample2
-      dateField: timeCreated
+      - name: tableExample1
+        dateField: timeCreated
+      - name: tableExample2
+        dateField: timeCreated
   - name: datasetExampleName2
     tables:
-    - name: tableExample3
-      dateField: timeCreated
+      - name: tableExample3
+        dateField: timeCreated

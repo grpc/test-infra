@@ -10,8 +10,8 @@ resources:
 beta_settings:
   cloud_sql_instances: ${CLOUD_SQL_INSTANCE}=tcp:5432
 liveness_check:
-  path: /
+  path: "/"
 readiness_check:
-  path: /
+  path: "/"
 env_variables:
   PG_PASS: ${PG_PASS}
