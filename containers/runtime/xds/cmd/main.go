@@ -29,7 +29,7 @@ func main() {
 	var userSuppliedConfigPath string
 
 	// The port that this xDS server listens on
-	flag.UintVar(&xdsServerPort, "xdsServerPort", 18000, "xDS management server port, this is where Envoy gets update")
+	flag.UintVar(&xdsServerPort, "xdsServerPort", 18000, "xDS management server port, this is where Envoy/gRPC client gets update")
 
 	// Tell Envoy/xDS client to use this Node ID, it is important to match what provided in the bootstrap files
 	flag.StringVar(&nodeID, "nodeID", "test_id", "Node ID")
