@@ -140,11 +140,6 @@ ruby-build-image: ## Build the Ruby build-time container image.
 ruby-image: ## Build the Ruby test runtime container image.
 	docker build -t $(RUN_IMAGE_PREFIX)ruby:$(TEST_INFRA_VERSION) containers/runtime/ruby
 
-
-##@ Build PSM related container images
-xds-image: ## Build the xds-server runtime container image.
-    docker build -t ${IMAGE_PREFIX}xds:${TEST_INFRA_VERSION} -f containers/runtime/xds/Dockerfile .
-
 ##@ Publish container images
 
 push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-driver-image push-go-image push-java-image push-node-build-image push-node-image push-php7-build-image push-php7-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
