@@ -17,9 +17,9 @@ steps:
   - 'PG_USER=$_PG_USER'
   - 'PG_DATABASE=$_PG_DATABASE'
   - 'CLOUD_SQL_INSTANCE=$_CLOUD_SQL_INSTANCE'
-secretEnv:
-- GRAFANA_ADMIN_PASS
-- PG_PASS
+  secretEnv:
+  - GRAFANA_ADMIN_PASS
+  - PG_PASS
 
 # Deploy to App Engine
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
