@@ -27,9 +27,13 @@ func main() {
 	var testListenerPort uint
 	var defaultConfigPath string
 	var userSuppliedConfigPath string
+	var endpointUpdaterPort uint
 
 	// The port that this xDS server listens on
 	flag.UintVar(&xdsServerPort, "xdsServerPort", 18000, "xDS management server port, this is where Envoy/gRPC client gets update")
+
+	// The port that endpoint updater server listens on
+	flag.UintVar(&endpointUpdaterPort, "endpointUpdaterPort", 18005, "endpointUpdater server port, this is where endpoint updater gets the IP and port for test servers")
 
 	// Tell Envoy/xDS client to use this Node ID, it is important to match what provided in the bootstrap files
 	flag.StringVar(&nodeID, "nodeID", "test_id", "Node ID")
@@ -68,7 +72,7 @@ func main() {
 	endpointChannel := make(chan []*config.TestEndpoint)
 
 	go func() {
-		xds.RunUpdateServer(endpointChannel)
+		xds.RunUpdateServer(endpointChannel, endpointUpdaterPort)
 	}()
 
 	resource.TestEndpoints = <-endpointChannel
@@ -90,5 +94,4 @@ func main() {
 		srv := server.NewServer(ctx, cache, cb)
 		xds.RunxDSServer(ctx, srv, xdsServerPort)
 	}
-
 }

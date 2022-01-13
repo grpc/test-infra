@@ -2,16 +2,13 @@ package xds
 
 import (
 	context "context"
+	"fmt"
 	"log"
 	"net"
 
 	config "github.com/grpc/test-infra/containers/runtime/xds/config"
 	pb "github.com/grpc/test-infra/proto/endpointupdater"
 	grpc "google.golang.org/grpc"
-)
-
-const (
-	updatePort = ":18005"
 )
 
 // UpdateServer is used to implement endpointupdater.EndpointUpdater.
@@ -34,7 +31,7 @@ func (us *UpdateServer) UpdateEndpoint(ctx context.Context, in *pb.EndpointUpdat
 
 // QuitEndpointUpdateServer stop the EndpointUpdateServer.
 func (us *UpdateServer) QuitEndpointUpdateServer(context.Context, *pb.Void) (*pb.Void, error) {
-	log.Printf("Shutting down the endpoint update server listening on %v", updatePort)
+	log.Printf("Shutting down the endpoint update server")
 	go func() {
 		us.srv.GracefulStop()
 	}()
@@ -43,8 +40,8 @@ func (us *UpdateServer) QuitEndpointUpdateServer(context.Context, *pb.Void) (*pb
 }
 
 // RunUpdateServer start a gRPC server listening to test server address and port
-func RunUpdateServer(endpointChannel chan []*config.TestEndpoint) {
-	lis, err := net.Listen("tcp", updatePort)
+func RunUpdateServer(endpointChannel chan []*config.TestEndpoint, updatePort uint) {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", updatePort))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
