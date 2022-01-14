@@ -143,12 +143,15 @@ func (t *Transfer) convertSchema(bqSchema *BigQuerySchema) (*PostgresSchema, err
 }
 
 func (t *Transfer) prepareTable(tableName string, pgSchema *PostgresSchema) error {
-	tableExists := t.pg.TableExists(tableName)
+	tableExists, err := t.pg.TableExists(tableName)
+	if err != nil {
+		return err
+	}
 	if tableExists {
 		return nil
 	}
 
-	err := t.pg.CreateTableFromSchema(tableName, pgSchema)
+	err = t.pg.CreateTableFromSchema(tableName, pgSchema)
 	if err != nil {
 		return err
 	}
