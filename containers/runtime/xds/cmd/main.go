@@ -71,9 +71,7 @@ func main() {
 	// Start the endpoint update server
 	endpointChannel := make(chan []*config.TestEndpoint)
 
-	go func() {
-		xds.RunUpdateServer(endpointChannel, endpointUpdaterPort)
-	}()
+	go xds.RunUpdateServer(endpointChannel, endpointUpdaterPort)
 
 	resource.TestEndpoints = <-endpointChannel
 	if resource.TestEndpoints != nil {
