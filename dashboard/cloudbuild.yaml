@@ -30,7 +30,8 @@ steps:
     pushd dashboard/containers/$_DEPLOY_TARGET
     gcloud config set app/cloud_build_timeout 1600 && gcloud app deploy
   timeout: 1600s
-
+options:
+  logging: CLOUD_LOGGING_ONLY
 availableSecrets:
   secretManager:
   - versionName: projects/$PROJECT_ID/secrets/GRAFANA_ADMIN_PASS/versions/latest
