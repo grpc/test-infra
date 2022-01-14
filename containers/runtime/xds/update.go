@@ -32,9 +32,7 @@ func (us *UpdateServer) UpdateEndpoint(ctx context.Context, in *pb.EndpointUpdat
 // QuitEndpointUpdateServer stop the EndpointUpdateServer.
 func (us *UpdateServer) QuitEndpointUpdateServer(context.Context, *pb.Void) (*pb.Void, error) {
 	log.Printf("Shutting down the endpoint update server")
-	go func() {
-		us.srv.GracefulStop()
-	}()
+	go us.srv.GracefulStop()
 
 	return &pb.Void{}, nil
 }
