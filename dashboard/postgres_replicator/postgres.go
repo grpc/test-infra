@@ -14,7 +14,6 @@ import (
 type PostgresClient struct {
 	ctx context.Context
 	*pgxpool.Pool
-	tables []string
 }
 
 // PostgresSchema is a map of column names to Postgres datatypes.
@@ -46,19 +45,11 @@ func NewPostgresClient(config PostgresConfig) (*PostgresClient, error) {
 		return nil, fmt.Errorf("sql.Open: %v", err)
 	}
 
-	pc := &PostgresClient{ctx, dbPool, nil}
-
+	pc := &PostgresClient{ctx, dbPool}
 	err = pc.testConnection()
 	if err != nil {
 		return nil, fmt.Errorf("error testing connection: %v", err)
 	}
-
-	tables, err := pc.GetExistingTableNames()
-	if err != nil {
-		return nil, fmt.Errorf("error getting table names: %v", err)
-	}
-	pc.tables = tables
-
 	return pc, nil
 }
 
@@ -68,13 +59,17 @@ func (pc *PostgresClient) testConnection() error {
 
 // TableExists returns whether a table with the given name exists.
 // Table names are cached when the PostgresClient is initialized.
-func (pc *PostgresClient) TableExists(searchTable string) bool {
-	for _, table := range pc.tables {
+func (pc *PostgresClient) TableExists(searchTable string) (bool, error) {
+	tables, err := pc.GetExistingTableNames()
+	if err != nil {
+		return true, err
+	}
+	for _, table := range tables {
 		if table == searchTable {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 // CreateTableFromSchema creates a new table from a PostgresSchema.
