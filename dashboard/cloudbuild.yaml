@@ -17,9 +17,9 @@ steps:
   - 'PG_USER=$_PG_USER'
   - 'PG_DATABASE=$_PG_DATABASE'
   - 'CLOUD_SQL_INSTANCE=$_CLOUD_SQL_INSTANCE'
-secretEnv:
-- GRAFANA_ADMIN_PASS
-- PG_PASS
+  secretEnv:
+  - GRAFANA_ADMIN_PASS
+  - PG_PASS
 
 # Deploy to App Engine
 - name: gcr.io/google.com/cloudsdktool/cloud-sdk
@@ -30,7 +30,8 @@ secretEnv:
     pushd dashboard/containers/$_DEPLOY_TARGET
     gcloud config set app/cloud_build_timeout 1600 && gcloud app deploy
   timeout: 1600s
-
+options:
+  logging: CLOUD_LOGGING_ONLY
 availableSecrets:
   secretManager:
   - versionName: projects/$PROJECT_ID/secrets/GRAFANA_ADMIN_PASS/versions/latest
