@@ -13,6 +13,14 @@ driverImage: "{{ .ImagePrefix }}driver:{{ .Version }}"
 
 killAfter: {{ .KillAfter }}
 
+psmTestServerPort: {{ .PSMTestServerPort }}
+
+xdsEndpointUpdatePort: {{ .XDSEndpointUpdatePort }}
+
+nonProxiedTargetString: {{ .NonProxiedTargetString }}
+
+sidecarListenerPort: {{ .SidecarListenerPort }}
+
 languages:
 - language: csharp
   buildImage: "{{ .BuildImagePrefix }}csharp:{{ .Version }}"

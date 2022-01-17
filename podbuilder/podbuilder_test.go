@@ -17,6 +17,7 @@ limitations under the License.
 package podbuilder
 
 import (
+	"fmt"
 	"reflect"
 
 	. "github.com/onsi/ginkgo"
@@ -74,7 +75,7 @@ var _ = Describe("PodBuilder", func() {
 	var builder *PodBuilder
 
 	BeforeEach(func() {
-		test = newLoadTest()
+		test = newRegularLoadTest()
 		testSpec = &test.Spec
 		defaults = newDefaults()
 		builder = New(defaults, test)
@@ -326,6 +327,317 @@ var _ = Describe("PodBuilder", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(pod.Spec.Affinity).ToNot(BeNil())
 			Expect(pod.Spec.Affinity.PodAntiAffinity).ToNot((BeNil()))
+		})
+	})
+	Describe("PSM test", func() {
+		var test *grpcv1.LoadTest
+		var client *grpcv1.Client
+		var driver *grpcv1.Driver
+		var defaults *config.Defaults
+		var builder *PodBuilder
+
+		BeforeEach(func() {
+			defaults = newDefaults()
+		})
+
+		Context("driver's ready container", func() {
+			It("sets an environment variable with the test server port for PSM test", func() {
+				test = newRegularLoadTest()
+				builder = New(defaults, test)
+				driver = test.Spec.Driver
+
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
+
+				readyContainer := kubehelpers.ContainerForName(config.ReadyInitContainerName, pod.Spec.InitContainers)
+
+				var psmTestServerPortEnv *corev1.EnvVar
+				for i := range readyContainer.Env {
+					env := &readyContainer.Env[i]
+
+					if env.Name == config.PSMTestServerPortEnv {
+						psmTestServerPortEnv = env
+					}
+				}
+				Expect(psmTestServerPortEnv.Value).To(Equal(builder.defaults.PSMTestServerPort))
+
+			})
+			It("sets an environment variable with the endpoint update port for xds server", func() {
+				test = newRegularLoadTest()
+				builder = New(defaults, test)
+				driver = test.Spec.Driver
+
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
+
+				readyContainer := kubehelpers.ContainerForName(config.ReadyInitContainerName, pod.Spec.InitContainers)
+
+				var xdsEndpointUpdatePortEnv *corev1.EnvVar
+				for i := range readyContainer.Env {
+					env := &readyContainer.Env[i]
+
+					if env.Name == config.XDSEndpointUpdatePortEnv {
+						xdsEndpointUpdatePortEnv = env
+					}
+				}
+				Expect(xdsEndpointUpdatePortEnv.Value).To(Equal(builder.defaults.XDSEndpointUpdatePort))
+			})
+		})
+
+		Context("driver's run container", func() {
+			It("sets an environment variable with the server target string for non-proxied test", func() {
+				test = newLoadTestWithPSM()
+				builder = New(defaults, test)
+				driver = test.Spec.Driver
+
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+
+				var targetStringOverriteEnv *corev1.EnvVar
+				for i := range runContainer.Env {
+					env := &runContainer.Env[i]
+					if env.Name == config.TargetStringOverrideEnv {
+						targetStringOverriteEnv = env
+					}
+				}
+				Expect(targetStringOverriteEnv.Value).To(Equal(builder.defaults.NonProxiedTargetString))
+			})
+
+			It("sets an environment variable with the listener port for Envoy test", func() {
+				test = newLoadTestWithSidecar()
+				builder = New(defaults, test)
+				driver = test.Spec.Driver
+
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+
+				var targetStringOverriteEnv *corev1.EnvVar
+				for i := range runContainer.Env {
+					env := &runContainer.Env[i]
+					if env.Name == config.TargetStringOverrideEnv {
+						targetStringOverriteEnv = env
+					}
+				}
+				Expect(targetStringOverriteEnv.Value).To(Equal(fmt.Sprintf("localhost:%v", builder.defaults.SidecarListenerPort)))
+			})
+
+			It("doesn't set an environment variable with the server target string for regular test", func() {
+				test = newRegularLoadTest()
+				builder = New(defaults, test)
+				driver = test.Spec.Driver
+
+				pod, err := builder.PodForDriver(driver)
+				Expect(err).ToNot(HaveOccurred())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				var targetStringOverriteEnv *corev1.EnvVar
+				for i := range runContainer.Env {
+					env := &runContainer.Env[i]
+					if env.Name == config.TargetStringOverrideEnv {
+						targetStringOverriteEnv = env
+					}
+				}
+				Expect(targetStringOverriteEnv.Value).To(Equal(""))
+			})
+
+		})
+
+		Context("client's run container", func() {
+			It("sets GRPC_XDS_BOOTSTRAP env for client's run container for PSM test", func() {
+				test = newLoadTestWithPSM()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+
+				var bootstrapEnv *corev1.EnvVar
+				for i := range runContainer.Env {
+					env := &runContainer.Env[i]
+
+					if env.Name == "GRPC_XDS_BOOTSTRAP" {
+						bootstrapEnv = env
+					}
+				}
+				Expect(bootstrapEnv).ToNot(BeNil())
+				Expect(bootstrapEnv.Value).To(Equal(config.NonProxiedBootstrapMountPath + "/bootstrap.json"))
+			})
+
+			It("doesn't set GRPC_XDS_BOOTSTRAP env for client's run container for regular test", func() {
+				test = newRegularLoadTest()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+
+				var bootstrapEnv *corev1.EnvVar
+				for i := range runContainer.Env {
+					env := &runContainer.Env[i]
+
+					if env.Name == "GRPC_XDS_BOOTSTRAP" {
+						bootstrapEnv = env
+					}
+				}
+				Expect(bootstrapEnv).To(BeNil())
+			})
+
+			It("create volume mount for bootstrap on run container for a PSM test", func() {
+				test = newLoadTestWithPSM()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
+				Expect(runContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
+					Name:      config.NonProxiedBootstrapVolumeName,
+					MountPath: config.NonProxiedBootstrapMountPath,
+				}))
+			})
+			It("doesn't create volume mount for bootstrap on run container for regular test", func() {
+				test = newRegularLoadTest()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
+				Expect(runContainer.VolumeMounts).ToNot(ContainElement(corev1.VolumeMount{
+					Name:      config.NonProxiedBootstrapVolumeName,
+					MountPath: config.NonProxiedBootstrapMountPath,
+				}))
+			})
+		})
+
+		Context("client's xdsServer container", func() {
+			It("create xds container for PSM test", func() {
+				test = newLoadTestWithPSM()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				xdsContainer := kubehelpers.ContainerForName(config.XDSServerContainerName, pod.Spec.Containers)
+				Expect(xdsContainer).ToNot(BeNil())
+			})
+			It("doesn't create xds container for regular test", func() {
+				test = newRegularLoadTest()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				xdsContainer := kubehelpers.ContainerForName(config.XDSServerContainerName, pod.Spec.Containers)
+				Expect(xdsContainer).To(BeNil())
+			})
+
+			It("create volume mount for bootstrap on xds container for PSM test", func() {
+				test = newLoadTestWithPSM()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				xdsContainer := kubehelpers.ContainerForName(config.XDSServerContainerName, pod.Spec.Containers)
+				Expect(xdsContainer.VolumeMounts).ToNot(BeEmpty())
+				Expect(xdsContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
+					Name:      config.NonProxiedBootstrapVolumeName,
+					MountPath: config.NonProxiedBootstrapMountPath,
+				}))
+			})
+
+			It("sets an environment variable with the non-proxied server target string", func() {
+				test = newLoadTestWithPSM()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+
+				xdsContainer := kubehelpers.ContainerForName(config.XDSServerContainerName, pod.Spec.Containers)
+				var nonProxiedServerTargetEnv *corev1.EnvVar
+				for i := range xdsContainer.Env {
+					env := &xdsContainer.Env[i]
+
+					if env.Name == config.NonProxiedTargetStringEnv {
+						nonProxiedServerTargetEnv = env
+					}
+				}
+				Expect(nonProxiedServerTargetEnv).ToNot(BeNil())
+				Expect(nonProxiedServerTargetEnv.Value).To(Equal(builder.defaults.NonProxiedTargetString))
+
+			})
+
+			It("sets an environment variable with the sidecar listener port", func() {
+				test = newLoadTestWithPSM()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+
+				xdsContainer := kubehelpers.ContainerForName(config.XDSServerContainerName, pod.Spec.Containers)
+				var sidecarListenerPortEnv *corev1.EnvVar
+				for i := range xdsContainer.Env {
+					env := &xdsContainer.Env[i]
+
+					if env.Name == config.SidecarListenerPortEnv {
+						sidecarListenerPortEnv = env
+					}
+				}
+				Expect(sidecarListenerPortEnv).ToNot(BeNil())
+				Expect(sidecarListenerPortEnv.Value).To(Equal(builder.defaults.SidecarListenerPort))
+			})
+
+			It("sets working directory to workspace", func() {
+				test = newLoadTestWithPSM()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				xdsContainer := kubehelpers.ContainerForName(config.XDSServerContainerName, pod.Spec.Containers)
+				Expect(xdsContainer.WorkingDir).To(Equal(config.WorkspaceMountPath))
+			})
+
+		})
+
+		Context("client's sidecar container", func() {
+			It("create sidecar container", func() {
+				test = newLoadTestWithSidecar()
+				builder = New(defaults, test)
+				client = &test.Spec.Clients[0]
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				sidecarContainer := kubehelpers.ContainerForName(config.SidecarContainerName, pod.Spec.Containers)
+				Expect(sidecarContainer).ToNot(BeNil())
+			})
 		})
 	})
 

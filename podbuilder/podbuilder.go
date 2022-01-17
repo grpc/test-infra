@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"log"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
@@ -31,6 +32,10 @@ import (
 // errNoPool is the base error when a PodBuilder cannot determine the pool for
 // a pod.
 var errNoPool = errors.New("pool is missing")
+
+// errTestType is the vase error when a PodBuilder cannot determine the type of
+// the test.
+var errTestType = errors.New("failed to determine the test type")
 
 // addReadyInitContainer configures a ready init container. This container is
 // meant to wait for workers to become ready, writing the IP address and port of
@@ -94,6 +99,14 @@ func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Cont
 			{
 				Name:  "NODE_INFO_OUTPUT_FILE",
 				Value: config.ReadyNodeInfoOutputFile,
+			},
+			{
+				Name:  config.PSMTestServerPortEnv,
+				Value: defs.PSMTestServerPort,
+			},
+			{
+				Name:  config.XDSEndpointUpdatePortEnv,
+				Value: defs.XDSEndpointUpdatePort,
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
@@ -159,6 +172,68 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 		ContainerPort: config.DriverPort,
 	})
 
+	if client.XDS != nil {
+		pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+			Name: config.NonProxiedBootstrapVolumeName,
+		})
+
+		runContainer.Env = append(runContainer.Env, corev1.EnvVar{
+			Name:  "GRPC_XDS_BOOTSTRAP",
+			Value: config.NonProxiedBootstrapMountPath + "/bootstrap.json"})
+		runContainer.VolumeMounts = append(runContainer.VolumeMounts,
+			corev1.VolumeMount{
+				Name:      config.NonProxiedBootstrapVolumeName,
+				MountPath: config.NonProxiedBootstrapMountPath,
+				ReadOnly:  false})
+
+		pod.Spec.Containers = append(pod.Spec.Containers, corev1.Container{
+			Name:    config.XDSServerContainerName,
+			Image:   safeStrUnwrap(client.XDS.Image),
+			Command: client.XDS.Command,
+			Args:    client.XDS.Args,
+			Env: []corev1.EnvVar{
+				{
+					Name:  config.KillAfterEnv,
+					Value: fmt.Sprintf("%f", pb.defaults.KillAfter),
+				},
+				{
+					Name:  config.PodTimeoutEnv,
+					Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds),
+				},
+				{
+					Name:  config.NonProxiedTargetStringEnv,
+					Value: pb.defaults.NonProxiedTargetString,
+				},
+				{
+					Name:  config.SidecarListenerPortEnv,
+					Value: pb.defaults.SidecarListenerPort,
+				},
+			},
+			WorkingDir: config.WorkspaceMountPath,
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      config.NonProxiedBootstrapVolumeName,
+					MountPath: config.NonProxiedBootstrapMountPath,
+					ReadOnly:  false,
+				},
+			},
+		})
+
+		if client.Sidecar != nil {
+			log.Print("running test with sidecar")
+			pod.Spec.Containers = append(pod.Spec.Containers, corev1.Container{
+				Name:    config.SidecarContainerName,
+				Image:   safeStrUnwrap(client.Sidecar.Image),
+				Command: client.Sidecar.Command,
+				Args:    client.Sidecar.Args,
+			})
+		} else {
+			log.Print("running gRPC proxyless service mesh test")
+		}
+	} else {
+		log.Print("No sidecar or xDS server images provided, running regular load test")
+	}
+
 	return pod, nil
 }
 
@@ -212,6 +287,30 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 		corev1.EnvVar{
 			Name:  "NODE_INFO_OUTPUT_FILE",
 			Value: config.ReadyNodeInfoOutputFile,
+		})
+
+	isPSMTest, err := kubehelpers.IsPSMTest(&pb.test.Spec.Clients)
+	if err != nil {
+		return nil, errors.Wrapf(errTestType, "could not determine test type for test %q: %v", pb.test.Name, err)
+	}
+	isProxiedTest, err := kubehelpers.IsProxiedTest(&pb.test.Spec.Clients)
+	if err != nil {
+		return nil, errors.Wrapf(errTestType, "could not determine test type for test %q: %v", pb.test.Name, err)
+	}
+
+	serverTargetStringOverride := ""
+
+	if isPSMTest {
+		if isProxiedTest {
+			serverTargetStringOverride = fmt.Sprintf("localhost:%v", pb.defaults.SidecarListenerPort)
+		} else {
+			serverTargetStringOverride = pb.defaults.NonProxiedTargetString
+		}
+	}
+	runContainer.Env = append(runContainer.Env,
+		corev1.EnvVar{
+			Name:  config.TargetStringOverrideEnv,
+			Value: serverTargetStringOverride,
 		})
 
 	if results := pb.test.Spec.Results; results != nil {

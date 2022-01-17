@@ -189,6 +189,26 @@ push-ruby-build-image: ## Push the Ruby build-time container image to a registry
 push-ruby-image: ## Push the Ruby test runtime container image to a registry.
 	docker push ${IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION}
 
+##@ Build PSM related container images
+
+all-psm-images: envoy-image xds-image ## Build all psm related container images to a registry.
+
+envoy-image: ## Build the envoy runtime container image.
+	docker build --no-cache -t ${IMAGE_PREFIX}sidecar:${TEST_INFRA_VERSION} containers/runtime/envoy/
+
+xds-image: ## Build the xds server runtime container image.
+	docker build --no-cache -t ${IMAGE_PREFIX}xds:${TEST_INFRA_VERSION} -f containers/runtime/xds/Dockerfile .
+
+##@ Publish PSM related container images
+
+push-all-psm-images: push-envoy-image push-xds-image ## Push all psm related container images to a registry.
+
+push-envoy-image: ## Push the envoy image to container registry.
+	docker push ${IMAGE_PREFIX}sidecar:${TEST_INFRA_VERSION}
+
+push-xds-image: ## Push the xds-server image to container registry.
+	docker push ${IMAGE_PREFIX}xds:${TEST_INFRA_VERSION}
+
 ##@ Deployment
 
 install: install-crd install-rbac ## Install both CRDs and RBACs

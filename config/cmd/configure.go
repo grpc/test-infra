@@ -38,11 +38,15 @@ import (
 // DefaultsData contains the values for fields that are accessible by the
 // defaults template file.
 type DefaultsData struct {
-	Version          string
-	InitImagePrefix  string
-	ImagePrefix      string
-	BuildImagePrefix string
-	KillAfter        float64
+	Version                string
+	InitImagePrefix        string
+	ImagePrefix            string
+	BuildImagePrefix       string
+	KillAfter              float64
+	PSMTestServerPort      string
+	XDSEndpointUpdatePort  string
+	NonProxiedTargetString string
+	SidecarListenerPort    string
 }
 
 func init() {
@@ -92,6 +96,14 @@ container images that are not used as init containers.`)
 	flag.BoolVar(&validate, "validate", true, "validate the output configuration for correctness")
 
 	flag.Float64Var(&data.KillAfter, "kill-after", math.NaN(), "time allowed for pod to respond after timeout, the value should be in seconds")
+
+	flag.StringVar(&data.NonProxiedTargetString, "non-proxied-target-string", "", `target_string in xds:///target_string for test client to know where to send the test traffic in PSM tests`)
+
+	flag.StringVar(&data.PSMTestServerPort, "psm-test-server-port", "", `port of test server in PSM test`)
+
+	flag.StringVar(&data.SidecarListenerPort, "sidecar-listener-port", "", `listener port of the listener serving proxy`)
+
+	flag.StringVar(&data.XDSEndpointUpdatePort, "xds-endpoint-update-port", "server port that the xds server listeners on for endpoint update ", ``)
 
 	flag.Parse()
 

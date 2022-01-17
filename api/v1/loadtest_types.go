@@ -112,6 +112,60 @@ type Run struct {
 	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
 }
 
+// Sidecar defines expectations regarding the environment of the sidecar
+// proxy for the test.
+type Sidecar struct {
+	// Image is the name of the container image that provides the
+	// runtime for the test component.git
+	Image *string `json:"image,omitempty"`
+
+	// Command is the path to the executable that will run the component
+	// of the test. When unset, the entrypoint of the container image
+	// will be used.
+	// +optional
+	Command []string `json:"command,omitempty"`
+
+	// Args provide command line arguments to the command.
+	// +optional
+	Args []string `json:"args,omitempty"`
+
+	// Env are environment variables that should be set within the
+	// running container.
+	// +optional
+	Env []corev1.EnvVar `json:"env,omitempty"`
+
+	// VolumeMounts permit sharing directories across containers.
+	// +optional
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+}
+
+// XDSServer defines expectations regarding the environment of the xds
+// server for the test.
+type XDSServer struct {
+	// Image is the name of the container image that provides the
+	// runtime for the test component.
+	Image *string `json:"image,omitempty"`
+
+	// Command is the path to the executable that will run the component
+	// of the test. When unset, the entrypoint of the container image
+	// will be used.
+	// +optional
+	Command []string `json:"command,omitempty"`
+
+	// Args provide command line arguments to the command.
+	// +optional
+	Args []string `json:"args,omitempty"`
+
+	// Env are environment variables that should be set within the
+	// running container.
+	// +optional
+	Env []corev1.EnvVar `json:"env,omitempty"`
+
+	// VolumeMounts permit sharing directories across containers.
+	// +optional
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+}
+
 // Driver defines a component that orchestrates the server and clients in the
 // test.
 type Driver struct {
@@ -264,6 +318,14 @@ type Client struct {
 	// run container to access it.
 	// +optional
 	Build *Build `json:"build,omitempty"`
+
+	// Sidecar describes the Sidecar container, which is the runtime of
+	// the proxy for the test associated with a proxy.
+	Sidecar *Sidecar `json:"sidecar,omitempty"`
+
+	// XDS describes the XDS container, which is the runtime of
+	// the XDS Server of the test.
+	XDS *XDSServer `json:"xds,omitempty"`
 
 	// Run describes the run container, which is the runtime of the client for
 	// the actual test.

@@ -24,14 +24,19 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	grpcclientset "github.com/grpc/test-infra/clientset"
-	"github.com/grpc/test-infra/config"
+	grpcconfig "github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
+	pb "github.com/grpc/test-infra/proto/endpointupdater"
 	"github.com/grpc/test-infra/status"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	grpcstatus "google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -203,7 +208,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 		}
 		ownedPods := status.PodsForLoadTest(loadtest, podList.Items)
 		for _, pod := range ownedPods {
-			if pod.Labels[config.RoleLabel] == config.DriverRole {
+			if pod.Labels[grpcconfig.RoleLabel] == grpcconfig.DriverRole {
 				if !driverMatched && pod.Status.PodIP != "" {
 					nodesInfo.Driver = NodeInfo{
 						Name:     pod.Name,
@@ -223,7 +228,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 			matchingPods[pod.Name] = true
 			ip := pod.Status.PodIP
 			driverPort := findDriverPort(pod)
-			if pod.Labels[config.RoleLabel] == config.ServerRole {
+			if pod.Labels[grpcconfig.RoleLabel] == grpcconfig.ServerRole {
 				serverPodAddresses[serverMatchCount] = net.JoinHostPort(ip, fmt.Sprint(driverPort))
 				nodesInfo.Servers = append(nodesInfo.Servers, NodeInfo{
 					Name:     pod.Name,
@@ -250,6 +255,50 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 	}
 	podAddresses := append(serverPodAddresses, clientPodAddresses...)
 	return podAddresses, &nodesInfo, nil
+}
+
+func passTarget(quitServer bool, clientIP string, targets []*pb.ServerTarget) error {
+	xdsEndpointUpdatePort := os.Getenv(grpcconfig.XDSEndpointUpdatePortEnv)
+	if xdsEndpointUpdatePort == "" {
+		log.Fatalf("failed to obtain the xds endpoint update server port for PSM test")
+	}
+	dialTarget := net.JoinHostPort(clientIP, xdsEndpointUpdatePort)
+	conn, err := grpc.Dial(dialTarget, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewEndpointUpdaterClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	if _, err := c.UpdateEndpoint(ctx, &pb.EndpointUpdaterRequest{Endpoints: targets}); err != nil {
+		log.Fatalf("could not greet: %v", err)
+		statusCode, _ := grpcstatus.FromError(err)
+		log.Print(statusCode.Details()...)
+	}
+	// Used separate goroutines to stop server, non-blocking
+	if quitServer {
+		go func() {
+			fmt.Println("stopping endpoint update server")
+			if _, err := c.QuitEndpointUpdateServer(ctx, &pb.Void{}); err != nil {
+				statusCode, _ := grpcstatus.FromError(err)
+				log.Print(statusCode.Details()...)
+			}
+		}()
+	}
+	log.Printf("all backend targets  has been communicated to client %v", clientIP)
+	return nil
+}
+
+func buildTargets(serverNodes []NodeInfo, psmTestServerPort uint32) []*pb.ServerTarget {
+	var targets []*pb.ServerTarget
+	for _, serverNode := range serverNodes {
+		targets = append(targets, &pb.ServerTarget{
+			IpAddress: serverNode.PodIP,
+			Port:      psmTestServerPort,
+		})
+	}
+	return targets
 }
 
 func main() {
@@ -324,13 +373,35 @@ func main() {
 		log.Fatalf("failed to wait for ready pods: %v", err)
 	}
 
-	log.Printf("all pods ready, exiting successfully")
+	log.Printf("all pods ready")
 	workerFileBody := strings.Join(podIPs, ",")
 	ioutil.WriteFile(outputFile, []byte(workerFileBody), 0777)
 
 	test, err := grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault).Get(ctx, os.Args[1], metav1.GetOptions{})
 	if err != nil {
-		log.Fatalf("failed to fetch loadtest for obtaining metadata: %v", err)
+		log.Fatalf("failed to fetch loadtest: %v", err)
+	}
+
+	isPSMTest, err := kubehelpers.IsPSMTest(&test.Spec.Clients)
+	if err != nil {
+		log.Fatalf("failed to check if the current load test is a PSM test: %v", err)
+	}
+
+	if isPSMTest {
+		psmTestServerPort := os.Getenv(grpcconfig.PSMTestServerPortEnv)
+		if psmTestServerPort == "" {
+			log.Fatalf("failed to obtain the test server port for PSM test, no test server port has been set")
+		}
+		psmTestServerPortUint, err := strconv.ParseUint(psmTestServerPort, 10, 32)
+		if err != nil {
+			log.Fatalf("failed to parse PSM test server port:%v", err)
+		}
+		targets := buildTargets(nodesInfo.Servers, uint32(psmTestServerPortUint))
+		for _, clientNode := range nodesInfo.Clients {
+			if err := passTarget(true, clientNode.PodIP, targets); err != nil {
+				log.Fatalf("failed to communicate backend targets to client %v: %v", clientNode.Name, err)
+			}
+		}
 	}
 
 	outputMetadataFile := DefaultMetadataOutputFile

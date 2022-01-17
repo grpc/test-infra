@@ -19,8 +19,10 @@ if [ -n "${QPS_WORKERS_FILE}" ]; then
   export QPS_WORKERS=$(cat "${QPS_WORKERS_FILE}")
 fi
 
+# Override QPS server target to configure in client configs.Only applicable if there 
+# is a single benchmark server.
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --scenarios_file="${SCENARIOS_FILE}" \
-  --scenario_result_file=scenario_result.json
+  --scenario_result_file=scenario_result.json --qps_server_target_override="${TARGET_STRING_OVERRIDE}"
 
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --quit=true
 

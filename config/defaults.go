@@ -54,6 +54,22 @@ type Defaults struct {
 
 	// KillAfter is the duration allowed for pods to respond after timeout.
 	KillAfter float64 `json:"killAfter"`
+
+	// PSMTestServerPort is the port that the PSM test servers are listening
+	// on.
+	PSMTestServerPort string `json:"psmTestServerPort"`
+
+	// XDSEndpointUpdatePort holds the port that the xDS server is listening
+	// on to update endpoints
+	XDSEndpointUpdatePort string `json:"xdsEndpointUpdatePort"`
+
+	// SidecarListenerPort holds the port the listener port serving for proxy
+	SidecarListenerPort string `json:"sidecarListenerPort"`
+
+	// NonProxiedTargetString is passed to the client as test target, for OSS
+	// benchmark this value is a slice of the server Pod IP and the port
+	// for PSM test, it is the target_string in xds:///target_string.
+	NonProxiedTargetString string `json:"nonProxiedTargetString"`
 }
 
 // Validate ensures that the required fields are present and an acceptable
@@ -90,6 +106,22 @@ func (d *Defaults) Validate() error {
 		return errors.Errorf("killAfter must not be negative")
 	}
 
+	if d.PSMTestServerPort == "" {
+		return errors.Errorf("missing default test server port for PSM tests")
+	}
+
+	if d.XDSEndpointUpdatePort == "" {
+		return errors.Errorf("missing default xds endpoint update server port for PSM tests")
+	}
+
+	if d.NonProxiedTargetString == "" {
+		return errors.Errorf("missing default PSM server target string in PSM tests")
+	}
+
+	if d.SidecarListenerPort == "" {
+		return errors.Errorf("missing sidcar listner poit in PSM tests")
+	}
+
 	return nil
 }
 
@@ -100,6 +132,7 @@ func (d *Defaults) Validate() error {
 // system cannot infer a run image for "fortran" if a build image was not
 // declared for this language in the Defaults object.
 func (d *Defaults) SetLoadTestDefaults(test *grpcv1.LoadTest) error {
+
 	testSpec := &test.Spec
 	im := newImageMap(d.Languages)
 

@@ -85,9 +85,13 @@ func newDefaults() *config.Defaults {
 			Driver: "default-driver-pool",
 			Server: "default-server-pool",
 		},
-		CloneImage:  "gcr.io/grpc-fake-project/test-infra/clone",
-		ReadyImage:  "gcr.io/grpc-fake-project/test-infra/ready",
-		DriverImage: "gcr.io/grpc-fake-project/test-infra/driver",
+		CloneImage:             "gcr.io/grpc-fake-project/test-infra/clone",
+		ReadyImage:             "gcr.io/grpc-fake-project/test-infra/ready",
+		DriverImage:            "gcr.io/grpc-fake-project/test-infra/driver",
+		PSMTestServerPort:      "10010",
+		XDSEndpointUpdatePort:  "18005",
+		SidecarListenerPort:    "10000",
+		NonProxiedTargetString: "target-string",
 		Languages: []config.LanguageDefault{
 			{
 				Language:   "cxx",
@@ -108,7 +112,7 @@ func newDefaults() *config.Defaults {
 	}
 }
 
-func newLoadTest() *grpcv1.LoadTest {
+func newLoadTestWithoutClients() *grpcv1.LoadTest {
 	cloneImage := "docker.pkg.github.com/grpc/test-infra/clone"
 	cloneRepo := "https://github.com/grpc/grpc.git"
 	cloneGitRef := "master"
@@ -129,7 +133,6 @@ func newLoadTest() *grpcv1.LoadTest {
 	driverPool := "drivers"
 	workerPool := "workers-8core"
 
-	clientComponentName := "client-1"
 	serverComponentName := "server-1"
 	driverComponentName := "driver-1"
 
@@ -172,29 +175,6 @@ func newLoadTest() *grpcv1.LoadTest {
 				},
 			},
 
-			Clients: []grpcv1.Client{
-				{
-					Name:     &clientComponentName,
-					Language: "cxx",
-					Pool:     &workerPool,
-					Clone: &grpcv1.Clone{
-						Image:  &cloneImage,
-						Repo:   &cloneRepo,
-						GitRef: &cloneGitRef,
-					},
-					Build: &grpcv1.Build{
-						Image:   &buildImage,
-						Command: buildCommand,
-						Args:    buildArgs,
-					},
-					Run: grpcv1.Run{
-						Image:   &runImage,
-						Command: runCommand,
-						Args:    clientRunArgs,
-					},
-				},
-			},
-
 			Results: &grpcv1.Results{
 				BigQueryTable: &bigQueryTable,
 			},
@@ -202,4 +182,88 @@ func newLoadTest() *grpcv1.LoadTest {
 			ScenariosJSON: "{\"scenarios\": []}",
 		},
 	}
+}
+
+func newRegularClient() grpcv1.Client {
+	clientComponentName := "client-1"
+	workerPool := "workers-8core"
+
+	cloneImage := "docker.pkg.github.com/grpc/test-infra/clone"
+	cloneRepo := "https://github.com/grpc/grpc.git"
+	cloneGitRef := "master"
+
+	buildImage := "l.gcr.io/google/bazel:latest"
+	buildCommand := []string{"bazel"}
+	buildArgs := []string{"build", "//test/cpp/qps:qps_worker"}
+
+	runImage := "docker.pkg.github.com/grpc/test-infra/cxx"
+	runCommand := []string{"bazel-bin/test/cpp/qps/qps_worker"}
+	clientRunArgs := []string{"--driver_port=10000"}
+
+	return grpcv1.Client{
+		Name:     &clientComponentName,
+		Language: "cxx",
+		Pool:     &workerPool,
+		Clone: &grpcv1.Clone{
+			Image:  &cloneImage,
+			Repo:   &cloneRepo,
+			GitRef: &cloneGitRef},
+		Build: &grpcv1.Build{
+			Image:   &buildImage,
+			Command: buildCommand,
+			Args:    buildArgs},
+		Run: grpcv1.Run{
+			Image:   &runImage,
+			Command: runCommand,
+			Args:    clientRunArgs},
+	}
+}
+
+func newRegularLoadTest() *grpcv1.LoadTest {
+	test := newLoadTestWithoutClients()
+	test.Spec.Clients = []grpcv1.Client{newRegularClient()}
+	return test
+}
+
+func newLoadTestWithPSM() *grpcv1.LoadTest {
+	xdsImage := "l.gcr.io/google/bazel:latest"
+	xdsCommand := []string{"main"}
+	xdsArgs := []string{"-d", "//test/cpp/qps:qps_worker"}
+
+	test := newLoadTestWithoutClients()
+	client := newRegularClient()
+	client.XDS = &grpcv1.XDSServer{
+		Image:   &xdsImage,
+		Command: xdsCommand,
+		Args:    xdsArgs}
+	test.Spec.Clients = []grpcv1.Client{client}
+	return test
+}
+
+func newLoadTestWithSidecar() *grpcv1.LoadTest {
+
+	xdsImage := "l.gcr.io/google/bazel:latest"
+	xdsCommand := []string{"main"}
+	xdsArgs := []string{"-d", "//test/cpp/qps:qps_worker"}
+
+	sidecarImage := "l.gcr.io/google/bazel:latest"
+	sidecarCommand := []string{"envoy"}
+	sidecarArgs := []string{"-d", "//test/cpp/qps:qps_worker"}
+
+	test := newLoadTestWithoutClients()
+	client := newRegularClient()
+	client.XDS = &grpcv1.XDSServer{
+		Image:   &xdsImage,
+		Command: xdsCommand,
+		Args:    xdsArgs}
+
+	client.Sidecar = &grpcv1.Sidecar{
+		Image:   &sidecarImage,
+		Command: sidecarCommand,
+		Args:    sidecarArgs}
+
+	test.Spec.Clients = []grpcv1.Client{client}
+
+	return test
+
 }

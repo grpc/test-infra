@@ -66,12 +66,42 @@ const (
 	// DriverPortEnv specifies the name of the env variable that contains driver port.
 	DriverPortEnv = "DRIVER_PORT"
 
+	// KillAfterEnv specifies the name of the env variable that sets the allowed
+	// response time for a pod after timeout.
+	KillAfterEnv = "KILL_AFTER"
+
+	// NonProxiedTargetStringEnv specifies the target string that PSM test client send
+	// traffic to.
+	NonProxiedTargetStringEnv = "NON_PROXIED_TARGET_STRING"
+
+	// NonProxiedBootstrapVolumeName holds the name of the volume which allows client to
+	// have access to bootstrap.json file for gRPC non-proxied client.
+	NonProxiedBootstrapVolumeName = "non-proxied-bootstrap"
+
+	// NonProxiedBootstrapMountPath stores the directory where the bootstrap.json file
+	// resides. This file is required by gRPC proxyless client.
+	NonProxiedBootstrapMountPath = "/bootstrap"
+
+	// NonProxied holds the non-proxied type of the PSM test.
+	NonProxied = "non-proxied"
+
 	// PoolLabel is the key for a label which will have the name of a pool as
 	// the value.
 	PoolLabel = "pool"
 
 	// ProxiedType holds the proxied type of the PSM test.
 	ProxiedType = "proxied"
+
+	// PodTimeoutEnv specifies the name of the env variable that sets the timeout for
+	// a pod.
+	PodTimeoutEnv = "POD_TIMEOUT"
+
+	// PSMTestServerPortEnv specifies the name of the env variable that sets the server
+	// port for all PSM tests
+	PSMTestServerPortEnv = "PSM_SERVER_PORT"
+
+	// ProxylessType holds the proxyless type of the PSM test.
+	ProxylessType = "proxyless"
 
 	// ReadyInitContainerName holds the name of the init container that blocks a
 	// driver from running until all worker pods are ready.
@@ -121,6 +151,18 @@ const (
 	// on a server component.
 	ServerRole = "server"
 
+	// SidecarContainerName holds the name of the sidecar container which contains
+	// a proxy for routing traffic
+	SidecarContainerName = "sidecar"
+
+	// SidecarListenerPortEnv specifies the name of the env variable that sets the
+	// listener port for Envoy
+	SidecarListenerPortEnv = "SIDECAR_LISTENER_PORT"
+
+	// TargetStringOverrideEnv specifies the target string that PSM/Sidecar test client send
+	// traffic to.
+	TargetStringOverrideEnv = "TARGET_STRING_OVERRIDE"
+
 	// WorkspaceMountPath contains the path to mount the volume identified by
 	// `workspaceVolume`.
 	WorkspaceMountPath = "/src/workspace"
@@ -129,12 +171,7 @@ const (
 	// the init containers and containers for a driver or worker pod.
 	WorkspaceVolumeName = "workspace"
 
-	// KillAfterEnv specifies the name of the env variable that sets the allowed response time for a pod after timeout.
-	KillAfterEnv = "KILL_AFTER"
-
-	// PodTimeoutEnv specifies the name of the env variable that sets the timeout for a pod.
-	PodTimeoutEnv = "POD_TIMEOUT"
-
-	// ProxylessType holds the proxyless type of the PSM test.
-	ProxylessType = "proxyless"
+	// XDSServerContainerName holds the name of the xds server container which is a
+	// fake controller for Envoy and proxless gRPC client
+	XDSServerContainerName = "xds"
 )
