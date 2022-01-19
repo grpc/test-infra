@@ -3,12 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+
 	"os"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/log"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
 
@@ -57,15 +56,16 @@ func main() {
 
 	resource.TestListenerPort = uint32(testListenerPort)
 
+	l := log.NewDefaultLogger()
+
 	// Create and validate the configuration of the xDS server first
 	snapshot, err := resource.GenerateSnapshotFromConfigFiles(defaultConfigPath, userSuppliedConfigPath)
 	if err != nil {
-		log.Fatalf("fail to create snapshot for xDS server: %v", err)
+		l.Errorf("fail to create snapshot for xDS server: %v", err)
 	}
-	log.Println("xDS server resource snapshot is generated successfully")
+	l.Infof("xDS server resource snapshot is generated successfully")
 
 	// Create a cache
-	l := logrus.New()
 	cache := cache.NewSnapshotCache(false, cache.IDHash{}, l)
 
 	// Start the endpoint update server
@@ -77,10 +77,10 @@ func main() {
 	if resource.TestEndpoints != nil {
 		// Update endpoint for the snapshot resource
 		if err := resource.UpdateEndpoint(snapshot); err != nil {
-			log.Fatalf("fail to update endpoint for xDS server: %v", err)
+			l.Errorf("fail to update endpoint for xDS server: %v", err)
 		}
 
-		l.Printf("will serve snapshot %+v", snapshot)
+		l.Infof("will serve snapshot %+v", snapshot)
 
 		// Add the snapshot to the cache
 		if err := cache.SetSnapshot(context.Background(), nodeID, snapshot); err != nil {
