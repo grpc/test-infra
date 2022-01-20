@@ -106,19 +106,7 @@
                       "statPrefix": "http",
                       "rds": {
                         "configSource": {
-                          "apiConfigSource": {
-                            "apiType": "GRPC",
-                            "transportApiVersion": "V3",
-                            "grpcServices": [
-                              {
-                                "envoyGrpc": {
-                                  "clusterName": "xds_cluster"
-                                }
-                              }
-                            ],
-                            "setNodeOnFirstMessageOnly": true
-                          },
-                          "resourceApiVersion": "V3"
+                          "ads": {}
                         },
                         "routeConfigName": "default_TestRouteName"
                       },
