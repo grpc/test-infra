@@ -10,24 +10,19 @@ dynamic_resources:
     - envoy_grpc:
         cluster_name: xds_cluster
     set_node_on_first_message_only: true
-  lds_config:
-    resource_api_version: V3
-    api_config_source:
-      api_type: GRPC
-      transport_api_version: V3
-      grpc_services:
-        - envoy_grpc:
-            cluster_name: xds_cluster
   cds_config:
+    resource_api_version: V3
+    ads: {}
+  lds_config:
     resource_api_version: V3
     ads: {}
 node:
   cluster: test_cluster
-  id: test_id    
+  id: test_id
 static_resources:
   clusters:
   - name: xds_cluster
-    connect_timeout: 0.25s
+    connect_timeout: 1s
     type: STATIC
     lb_policy: ROUND_ROBIN
     typed_extension_protocol_options:
@@ -47,9 +42,5 @@ static_resources:
         - endpoint:
             address:
               socket_address:
-                # this endpoint provide Envoy with the source of the configuration. Since
-                # the xDS server is on the same pod of the client, the address is 
-                # localhost, and the port_value is fixed at 18000, this should match the 
-                # port that the xDS server is listening on.
                 address: 127.0.0.1
                 port_value: 18000
