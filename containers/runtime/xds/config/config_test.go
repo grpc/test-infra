@@ -18,11 +18,8 @@ import (
 
 var _ = Describe("config marshal and unmarshal", func() {
 	s := TestResource{
-		XDSServerClusterName: "default_xDSServerClusterName",
-
 		TestGrpcListenerName: "default_testGrpcListenerName",
-
-		TestListenerPort: 1234,
+		TestListenerPort:     1234,
 		TestEndpoints: []*TestEndpoint{{
 			TestUpstreamHost: "default_testUpstreamHost",
 			TestUpstreamPort: 5678,
