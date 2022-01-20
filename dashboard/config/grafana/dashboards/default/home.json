@@ -482,7 +482,7 @@
     },
     {
       "datasource": "Postgres",
-      "description": "Language comparison of streaming ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone) when running language-specific clients against a C++ server. Secure connection is used.",
+      "description": "Language comparison of streaming ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone). Secure connection is used.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4064,5 +4064,5 @@
   "timezone": "browser",
   "title": "gRPC Performance Multi-language on GKE (@upstream/master)",
   "uid": "18sWlbd7z",
-  "version": 3
+  "version": 7
 }
