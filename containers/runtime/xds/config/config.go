@@ -265,10 +265,6 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 
 // TestResource provides the names of the resources.
 type TestResource struct {
-	// xDSServerClusterName is the xDS server's name supplied to Envoy bootstrap file.
-	// This field is needed if the RouteConfig or EdsConfig are fetched from the
-	// xDS server separately.
-	XDSServerClusterName string
 	// testGrpcListenerName is only used by gRPC xDS client, must be used as xds:///<listener_name>,
 	// API listener is required.
 	TestGrpcListenerName string

@@ -43,9 +43,6 @@ func main() {
 	// User supplied configuration path, the path is relative path using ./containers/runtime/xds
 	flag.StringVar(&userSuppliedConfigPath, "u", "", "The path of user supplied configuration file, the path is relative path the root of test-infra repo")
 
-	// Tne cluster name for Envoy obtain configuration from, should match the cluster name in the bootstrap file.
-	flag.StringVar(&resource.XDSServerClusterName, "c", "xds_cluster", "Tne cluster name for Envoy to obtain configuration, should match the cluster name in the bootstrap file")
-
 	// This sets the gRPC test listener name.
 	flag.StringVar(&resource.TestGrpcListenerName, "g", "default_testGrpcListenerName", "This is the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
 
