@@ -226,9 +226,7 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 		if err := anypb.UnmarshalTo(&a, &parsedListener, proto.UnmarshalOptions{}); err != nil {
 			log.Fatalf("failed to unmarshal %v resource: %v", resource.ListenerType, err)
 		}
-		// once apiserver is set the socket address can no longer be set, but empty address
-		// will fail the validation. TODO: @wanlin31 to figure out a better way
-		if err := parsedListener.ValidateAll(); parsedListener.ApiListener == nil && err != nil {
+		if err := parsedListener.ValidateAll(); err != nil {
 			log.Fatalf("failed to validate the parsed %v: %v", resource.ListenerType, err)
 		}
 		cr.Resource = &parsedListener
