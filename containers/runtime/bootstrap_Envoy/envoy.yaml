@@ -1,0 +1,46 @@
+admin:
+  address:
+    socket_address: { address: 127.0.0.1, port_value: 9901 }
+
+dynamic_resources:
+  ads_config:
+    api_type: GRPC
+    transport_api_version: V3
+    grpc_services:
+    - envoy_grpc:
+        cluster_name: xds_cluster
+    set_node_on_first_message_only: true
+  cds_config:
+    resource_api_version: V3
+    ads: {}
+  lds_config:
+    resource_api_version: V3
+    ads: {}
+node:
+  cluster: test_cluster
+  id: test_id
+static_resources:
+  clusters:
+  - name: xds_cluster
+    connect_timeout: 1s
+    type: STATIC
+    lb_policy: ROUND_ROBIN
+    typed_extension_protocol_options:
+      envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+        "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+        explicit_http_config:
+          http2_protocol_options:
+            # Configure an HTTP/2 keep-alive to detect connection issues and reconnect
+            # to the admin server if the connection is no longer responsive.
+            connection_keepalive:
+              interval: 30s
+              timeout: 5s
+    load_assignment:
+      cluster_name: xds_cluster
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: 127.0.0.1
+                port_value: 18000
