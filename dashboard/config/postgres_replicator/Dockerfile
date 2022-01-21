@@ -21,8 +21,8 @@ ARG REPOSITORY=grpc/test-infra
 ARG GITREF=master
 
 RUN git clone https://github.com/$REPOSITORY.git src \
- && cd src/dashboard && git checkout $GITREF \
- && make replicator REPLICATOR_OUTPUT_DIR=/
+    && cd src/dashboard && git checkout $GITREF \
+    && make replicator REPLICATOR_OUTPUT_DIR=/
 
 # Copy replicator binary and run it
 FROM golang:1.16
