@@ -301,7 +301,7 @@ func (t *TestResource) validateResource(snap cache.Snapshot) error {
 			log.Fatalf("failed to validate Envoy listener's port value: %v \n", err)
 		}
 		if forValidation.ApiListener == nil && forValidation.Address.GetSocketAddress().GetPortValue() != t.TestListenerPort {
-			log.Fatalf("failed to validate Envoy listener's port value: Envoy listener's port value: %v does not match the port that the client target port %v, \n", forValidation.Address.GetSocketAddress().GetPortValue(), t.TestListenerPort)
+			log.Fatalf("failed to validate Envoy listener's port value: Envoy listener's port value %v does not match the port that the client target port %v, \n", forValidation.Address.GetSocketAddress().GetPortValue(), t.TestListenerPort)
 		}
 
 	}

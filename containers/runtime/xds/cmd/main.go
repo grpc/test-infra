@@ -23,44 +23,52 @@ func main() {
 
 	var nodeID string
 	var xdsServerPort uint
-	var testListenerPort uint
+	var sidecarListenerPort uint
 	var defaultConfigPath string
-	var userSuppliedConfigPath string
+	var customConfigPath string
 	var endpointUpdaterPort uint
+	var validationOnly bool
 
 	// The port that this xDS server listens on
-	flag.UintVar(&xdsServerPort, "xdsServerPort", 18000, "xDS management server port, this is where Envoy/gRPC client gets update")
+	flag.UintVar(&xdsServerPort, "xds-server-port", 18000, "xDS management server port, this is where Envoy/gRPC client gets update")
 
 	// The port that endpoint updater server listens on
-	flag.UintVar(&endpointUpdaterPort, "endpointUpdaterPort", 18005, "endpointUpdater server port, this is where endpoint updater gets the IP and port for test servers")
+	flag.UintVar(&endpointUpdaterPort, "endpoint-update-port", 18005, "endpointUpdater server port, this is where endpoint updater gets the IP and port for test servers")
 
 	// Tell Envoy/xDS client to use this Node ID, it is important to match what provided in the bootstrap files
-	flag.StringVar(&nodeID, "nodeID", "test_id", "Node ID")
+	flag.StringVar(&nodeID, "node-ID", "test_id", "Node ID")
 
 	// Default configuration path, the path is relative path using ./containers/runtime/xds
-	flag.StringVar(&defaultConfigPath, "d", "containers/runtime/xds/config/default_config.json", "The path of default configuration file, the path is relative path the root of test-infra repo")
+	flag.StringVar(&defaultConfigPath, "default-config-path", "containers/runtime/xds/config/default_config.json", "The path of default configuration file, the path is relative path the root of test-infra repo")
 
 	// User supplied configuration path, the path is relative path using ./containers/runtime/xds
-	flag.StringVar(&userSuppliedConfigPath, "u", "", "The path of user supplied configuration file, the path is relative path the root of test-infra repo")
+	flag.StringVar(&customConfigPath, "custom-config-path", "custom-config-path", "The path of user supplied configuration file, the path is relative path the root of test-infra repo")
 
 	// This sets the gRPC test listener name.
-	flag.StringVar(&resource.TestGrpcListenerName, "g", "default_testGrpcListenerName", "This is the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
+	flag.StringVar(&resource.TestGrpcListenerName, "psm-target-string", "default_testGrpcListenerName", "This field is for validation only, the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
 
 	// This sets the port that the Envoy listener listens to, this is the port to send traffic if we wish the traffic to go through sidecar
-	flag.UintVar(&testListenerPort, "p", 10000, "This sets the port that the test listener listens to")
+	flag.UintVar(&sidecarListenerPort, "sidecar-listener-port", 10000, "This field is for validation only, this is port that the sidecar test listener listens to")
+
+	// This sets if running validation only
+	flag.BoolVar(&validationOnly, "validation-only", false, "This sets if we are running for the validation only")
 
 	flag.Parse()
 
-	resource.TestListenerPort = uint32(testListenerPort)
+	resource.TestListenerPort = uint32(sidecarListenerPort)
 
 	l := log.NewDefaultLogger()
 
 	// Create and validate the configuration of the xDS server first
-	snapshot, err := resource.GenerateSnapshotFromConfigFiles(defaultConfigPath, userSuppliedConfigPath)
+	snapshot, err := resource.GenerateSnapshotFromConfigFiles(defaultConfigPath, customConfigPath)
 	if err != nil {
 		l.Errorf("fail to create snapshot for xDS server: %v", err)
 	}
 	l.Infof("xDS server resource snapshot is generated successfully")
+
+	if validationOnly {
+		return
+	}
 
 	// Create a cache
 	cache := cache.NewSnapshotCache(false, cache.IDHash{}, l)
