@@ -1,6 +1,6 @@
 FROM golang:1.16
 
-RUN mkdir -p /bootstrap
+RUN mkdir /bootstrap
 WORKDIR /src/workspace
 
 COPY . .
