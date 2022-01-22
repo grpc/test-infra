@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
   build-essential \
   lcov \
   make \
-  gnugp2 && \
+  gnupg2 && \
   apt-get clean
 
 # Install rvm

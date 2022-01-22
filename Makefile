@@ -22,18 +22,14 @@ CONTROLLER_IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-
 # Golang command for build
 GOCMD ?= go
 
 # Golang build arguments
 GOARGS = -trimpath
+
+# Project directory.
+PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -75,7 +71,7 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	$(GOCMD) vet ./...
 
-ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+ENVTEST_ASSETS_DIR = $(PROJECT_DIR)/testbin
 test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
@@ -84,16 +80,16 @@ test: manifests generate fmt vet ## Run tests.
 ##@ Build executables
 
 controller: generate fmt vet ## Build load test controller binary.
-	$(GOCMD) build $(GOARGS) -o bin/controller cmd/controller/main.go
+	$(GOCMD) build $(GOARGS) -o $(PROJECT_DIR)/bin/controller cmd/controller/main.go
 
 runner: fmt vet ## Build the runner tool binary.
-	$(GOCMD) build $(GOARGS) -o bin/runner tools/cmd/runner/main.go
+	$(GOCMD) build $(GOARGS) -o $(PROJECT_DIR)/bin/runner tools/cmd/runner/main.go
 
 prepare_prebuilt_workers: fmt vet ## Build the prepare_prebuilt_workers tool binary.
-	$(GOCMD) build $(GOARGS) -o bin/prepare_prebuilt_workers tools/cmd/prepare_prebuilt_workers/main.go
+	$(GOCMD) build $(GOARGS) -o $(PROJECT_DIR)/bin/prepare_prebuilt_workers tools/cmd/prepare_prebuilt_workers/main.go
 
 delete_prebuilt_workers: fmt vet ## Build the delete_prebuilt_workers tool binary.
-	$(GOCMD) build $(GOARGS) -o bin/delete_prebuilt_workers tools/cmd/delete_prebuilt_workers/main.go
+	$(GOCMD) build $(GOARGS) -o $(PROJECT_DIR)/bin/delete_prebuilt_workers tools/cmd/delete_prebuilt_workers/main.go
 
 ##@ Build container images
 
@@ -218,25 +214,29 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
-
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+CONTROLLER_GEN = $(PROJECT_DIR)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
-KUSTOMIZE = $(shell pwd)/bin/kustomize
-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+# Downloading kustomize with go get is deprecated, and go install is currently
+# failing. The definition below can be uncommented once this issue is fixed:
+# https://github.com/kubernetes-sigs/kustomize/issues/3618
+# KUSTOMIZE = $(PROJECT_DIR)/bin/kustomize
+# kustomize: ## Download kustomize locally if necessary.
+# 	$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+KUSTOMIZE = kustomize
+kustomize:
+	@[ -f "$(shell which $@)" ] || (echo "tool not found: $@"; exit 1)
 
-# go-get-tool will 'go get' any package $2 and install it to $1.
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-define go-get-tool
+# go-install-tool will 'go install' any package $2 and install it to $1.
+define go-install-tool
 @[ -f $(1) ] || { \
 set -e ;\
 TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(PROJECT_DIR)/bin $(GOCMD) install $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
