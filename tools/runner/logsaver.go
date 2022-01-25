@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/status"
@@ -31,19 +32,19 @@ func NewLogSaver(podsGetter corev1types.PodsGetter) *LogSaver {
 // SavePodLogs saves pod logs to files with same name as pod.
 // This function returns a map where pods are keys and values are the filepath
 // of the saved log.
-func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) (map[*corev1.Pod]string, error) {
-	podToLogPath := make(map[*corev1.Pod]string)
+func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) (*SavedLogs, error) {
+	savedLogs := NewSavedLogs()
 
 	// Get pods for this test
 	pods, err := ls.getTestPods(ctx, loadTest)
 	if err != nil {
-		return podToLogPath, err
+		return savedLogs, err
 	}
 
 	// Attempt to create directory. Will not error if directory already exists
 	err = os.MkdirAll(podLogDir, os.ModePerm)
 	if err != nil {
-		return podToLogPath, fmt.Errorf("Failed to create pod log output directory %s: %v", podLogDir, err)
+		return savedLogs, fmt.Errorf("Failed to create pod log output directory %s: %v", podLogDir, err)
 	}
 
 	// Write logs to files
@@ -51,15 +52,15 @@ func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, 
 		logFilePath := filepath.Join(podLogDir, pod.Name+".log")
 		buffer, err := ls.getPodLogBuffer(ctx, pod)
 		if err != nil {
-			return podToLogPath, fmt.Errorf("could not get log from pod: %s", err)
+			return savedLogs, fmt.Errorf("could not get log from pod: %s", err)
 		}
 		err = ls.writeBufferToFile(buffer, logFilePath)
 		if err != nil {
-			return podToLogPath, fmt.Errorf("could not write pod log buffer to file: %s", err)
+			return savedLogs, fmt.Errorf("could not write pod log buffer to file: %s", err)
 		}
-		podToLogPath[pod] = logFilePath
+		savedLogs.podToPathMap[pod] = logFilePath
 	}
-	return podToLogPath, nil
+	return savedLogs, nil
 }
 
 // getTestPods retrieves the pods associated with a LoadTest.
@@ -112,4 +113,33 @@ func (ls *LogSaver) writeBufferToFile(buffer *bytes.Buffer, filePath string) err
 	}
 
 	return nil
+}
+
+// SavedLogs adds functions to get information about saved pod logs.
+type SavedLogs struct {
+	podToPathMap map[*corev1.Pod]string
+}
+
+// NewSavedLogs creates a new SavedLogs object.
+func NewSavedLogs() *SavedLogs {
+	return &SavedLogs{
+		podToPathMap: make(map[*corev1.Pod]string),
+	}
+}
+
+// GenerateProperties creates pod-log related properties.
+func (sl *SavedLogs) GenerateProperties(loadTest *grpcv1.LoadTest) map[string]string {
+	properties := make(map[string]string)
+	for pod := range sl.podToPathMap {
+		name := sl.podToPropertyName(pod.Name, loadTest.Name, "name")
+		properties[name] = pod.Name
+	}
+	return properties
+}
+
+func (sl *SavedLogs) podToPropertyName(podName, loadTestName, elementName string) string {
+	prefix := fmt.Sprintf("%s-", loadTestName)
+	podNameSuffix := strings.TrimPrefix(podName, prefix)
+	propertyName := fmt.Sprintf("pod.%s.%s", podNameSuffix, elementName)
+	return propertyName
 }
