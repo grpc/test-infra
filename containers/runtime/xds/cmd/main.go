@@ -11,6 +11,7 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
 
+	testconfig "github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/containers/runtime/xds"
 	config "github.com/grpc/test-infra/containers/runtime/xds/config"
 
@@ -94,7 +95,7 @@ func main() {
 		}
 
 		// Check the type of the test
-		if testInfo.TestType == "envoy" {
+		if testInfo.TestType == testconfig.Proxied {
 			if err := config.SocketListenerOnly(&snapshot); err != nil {
 				l.Errorf("fail to filter listener based on test type: %v", err)
 			}
