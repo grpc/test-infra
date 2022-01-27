@@ -28,6 +28,9 @@ type TestInfo struct {
 // UpdateTest implements testupdater.UpdateTest
 func (us *UpdateServer) UpdateTest(ctx context.Context, in *pb.TestUpdateRequest) (*pb.TestUpdateReply, error) {
 	var testEndpoints []*config.TestEndpoint
+
+	log.Printf("Received test type: %v", in.TestType)
+
 	for _, c := range in.GetEndpoints() {
 		testEndpoints = append(testEndpoints, &config.TestEndpoint{TestUpstreamHost: c.IpAddress, TestUpstreamPort: c.Port})
 		log.Printf("Received endpoint: %v:%v", c.IpAddress, c.Port)
