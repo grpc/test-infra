@@ -286,7 +286,7 @@ func passTarget(quitServer bool, clientIP string, targets []*pb.Endpoint, testTy
 			}
 		}()
 	}
-	log.Printf("all backend targets  has been communicated to client %v", clientIP)
+	log.Printf("all backend targets has been communicated to client %v", clientIP)
 	return nil
 }
 
@@ -388,6 +388,8 @@ func main() {
 	}
 
 	if isPSMTest {
+		log.Printf("running PSM test, prepare to send backends information and test type to xds server")
+
 		psmTestServerPort := os.Getenv(testconfig.PSMTestServerPortEnv)
 		if psmTestServerPort == "" {
 			log.Fatalf("failed to obtain the test server port for PSM test, no test server port has been set")
@@ -404,8 +406,10 @@ func main() {
 				log.Fatalf("failed to check if the current load test is a proxied test: %v", err)
 			}
 			if isProxiedTest {
+				log.Printf("running proxied test")
 				testType = testconfig.Proxied
 			} else {
+				log.Printf("running non-proxied test")
 				testType = testconfig.NonProxied
 			}
 			if err := passTarget(true, clientNode.PodIP, targets, testType); err != nil {
@@ -414,6 +418,7 @@ func main() {
 		}
 	}
 
+	log.Printf("prepare metadata and node information")
 	outputMetadataFile := DefaultMetadataOutputFile
 	outputMetadataFileOverride, ok := os.LookupEnv(OutputMetadataEnv)
 	if ok {
