@@ -26,14 +26,14 @@ func main() {
 	var sidecarListenerPort uint
 	var defaultConfigPath string
 	var customConfigPath string
-	var endpointUpdaterPort uint
+	var testUpdatePort uint
 	var validationOnly bool
 
 	// The port that this xDS server listens on
 	flag.UintVar(&xdsServerPort, "xds-server-port", 18000, "xDS management server port, this is where Envoy/gRPC client gets update")
 
 	// The port that endpoint updater server listens on
-	flag.UintVar(&endpointUpdaterPort, "endpoint-update-port", 18005, "endpointUpdater server port, this is where endpoint updater gets the IP and port for test servers")
+	flag.UintVar(&testUpdatePort, "test-update-port", 18005, "test update server port, this is where test updater pass the endpoints and test type to xds server")
 
 	// Tell Envoy/xDS client to use this Node ID, it is important to match what provided in the bootstrap files
 	flag.StringVar(&nodeID, "node-ID", "test_id", "Node ID")
@@ -60,10 +60,16 @@ func main() {
 	l := log.NewDefaultLogger()
 
 	// Create and validate the configuration of the xDS server first
-	snapshot, err := resource.GenerateSnapshotFromConfigFiles(defaultConfigPath, customConfigPath)
+	snapshot, err := config.GenerateSnapshotFromConfigFiles(defaultConfigPath, customConfigPath)
 	if err != nil {
-		l.Errorf("fail to create snapshot for xDS server: %v", err)
+		l.Errorf("fail to generate resource snapshot from configuration json file for xDS server: %v", err)
 	}
+
+	// validate the snapshot
+	if err := resource.ValidateResource(snapshot); err != nil {
+		l.Errorf("fail to validate the generated snapshot for xDS server: %v", err)
+	}
+
 	l.Infof("xDS server resource snapshot is generated successfully")
 
 	if validationOnly {
@@ -74,15 +80,24 @@ func main() {
 	cache := cache.NewSnapshotCache(false, cache.IDHash{}, l)
 
 	// Start the endpoint update server
-	endpointChannel := make(chan []*config.TestEndpoint)
+	testChannel := make(chan xds.TestInfo)
 
-	go xds.RunUpdateServer(endpointChannel, endpointUpdaterPort)
+	go xds.RunUpdateServer(testChannel, testUpdatePort)
 
-	resource.TestEndpoints = <-endpointChannel
-	if resource.TestEndpoints != nil {
-		// Update endpoint for the snapshot resource
-		if err := resource.UpdateEndpoint(snapshot); err != nil {
+	var testInfo xds.TestInfo
+	testInfo, ok := <-testChannel
+	if ok {
+		// Update test endpoint and type for the snapshot resource
+		resource.TestEndpoints = testInfo.Endpoints
+		if err := resource.UpdateEndpoint(&snapshot); err != nil {
 			l.Errorf("fail to update endpoint for xDS server: %v", err)
+		}
+
+		// Check the type of the test
+		if testInfo.TestType == "envoy" {
+			if err := config.SocketListenerOnly(&snapshot); err != nil {
+				l.Errorf("fail to filter listener based on test type: %v", err)
+			}
 		}
 
 		l.Infof("will serve snapshot %+v", snapshot)
