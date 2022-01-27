@@ -70,6 +70,9 @@ const (
 	// the value.
 	PoolLabel = "pool"
 
+	// Proxied holds the proxied type of the PSM test.
+	Proxied = "proxied"
+
 	// ReadyInitContainerName holds the name of the init container that blocks a
 	// driver from running until all worker pods are ready.
 	ReadyInitContainerName = "ready"
@@ -128,4 +131,7 @@ const (
 
 	// PodTimeoutEnv specifies the name of the env variable that sets the timeout for a pod.
 	PodTimeoutEnv = "POD_TIMEOUT"
+
+	// NonProxied holds the non-proxied type of the PSM test.
+	NonProxied = "non-proxied"
 )
