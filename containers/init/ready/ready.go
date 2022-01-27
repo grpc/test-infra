@@ -30,9 +30,9 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	grpcclientset "github.com/grpc/test-infra/clientset"
-	grpcconfig "github.com/grpc/test-infra/config"
+	testconfig "github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/kubehelpers"
-	pb "github.com/grpc/test-infra/proto/endpointupdater"
+	pb "github.com/grpc/test-infra/proto/testupdater"
 	"github.com/grpc/test-infra/status"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -208,7 +208,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 		}
 		ownedPods := status.PodsForLoadTest(loadtest, podList.Items)
 		for _, pod := range ownedPods {
-			if pod.Labels[grpcconfig.RoleLabel] == grpcconfig.DriverRole {
+			if pod.Labels[testconfig.RoleLabel] == testconfig.DriverRole {
 				if !driverMatched && pod.Status.PodIP != "" {
 					nodesInfo.Driver = NodeInfo{
 						Name:     pod.Name,
@@ -228,7 +228,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 			matchingPods[pod.Name] = true
 			ip := pod.Status.PodIP
 			driverPort := findDriverPort(pod)
-			if pod.Labels[grpcconfig.RoleLabel] == grpcconfig.ServerRole {
+			if pod.Labels[testconfig.RoleLabel] == testconfig.ServerRole {
 				serverPodAddresses[serverMatchCount] = net.JoinHostPort(ip, fmt.Sprint(driverPort))
 				nodesInfo.Servers = append(nodesInfo.Servers, NodeInfo{
 					Name:     pod.Name,
@@ -257,8 +257,8 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 	return podAddresses, &nodesInfo, nil
 }
 
-func passTarget(quitServer bool, clientIP string, targets []*pb.ServerTarget) error {
-	xdsEndpointUpdatePort := os.Getenv(grpcconfig.XDSEndpointUpdatePortEnv)
+func passTarget(quitServer bool, clientIP string, targets []*pb.Endpoint, testType string) error {
+	xdsEndpointUpdatePort := os.Getenv(testconfig.XDSEndpointUpdatePortEnv)
 	if xdsEndpointUpdatePort == "" {
 		log.Fatalf("failed to obtain the xds endpoint update server port for PSM test")
 	}
@@ -268,10 +268,10 @@ func passTarget(quitServer bool, clientIP string, targets []*pb.ServerTarget) er
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewEndpointUpdaterClient(conn)
+	c := pb.NewTestUpdaterClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	if _, err := c.UpdateEndpoint(ctx, &pb.EndpointUpdaterRequest{Endpoints: targets}); err != nil {
+	if _, err := c.UpdateTest(ctx, &pb.TestUpdateRequest{Endpoints: targets, TestType: testType}); err != nil {
 		log.Fatalf("could not greet: %v", err)
 		statusCode, _ := grpcstatus.FromError(err)
 		log.Print(statusCode.Details()...)
@@ -280,7 +280,7 @@ func passTarget(quitServer bool, clientIP string, targets []*pb.ServerTarget) er
 	if quitServer {
 		go func() {
 			fmt.Println("stopping endpoint update server")
-			if _, err := c.QuitEndpointUpdateServer(ctx, &pb.Void{}); err != nil {
+			if _, err := c.QuitTestUpdateServer(ctx, &pb.Void{}); err != nil {
 				statusCode, _ := grpcstatus.FromError(err)
 				log.Print(statusCode.Details()...)
 			}
@@ -290,10 +290,10 @@ func passTarget(quitServer bool, clientIP string, targets []*pb.ServerTarget) er
 	return nil
 }
 
-func buildTargets(serverNodes []NodeInfo, psmTestServerPort uint32) []*pb.ServerTarget {
-	var targets []*pb.ServerTarget
+func buildTargets(serverNodes []NodeInfo, psmTestServerPort uint32) []*pb.Endpoint {
+	var targets []*pb.Endpoint
 	for _, serverNode := range serverNodes {
-		targets = append(targets, &pb.ServerTarget{
+		targets = append(targets, &pb.Endpoint{
 			IpAddress: serverNode.PodIP,
 			Port:      psmTestServerPort,
 		})
@@ -388,7 +388,7 @@ func main() {
 	}
 
 	if isPSMTest {
-		psmTestServerPort := os.Getenv(grpcconfig.PSMTestServerPortEnv)
+		psmTestServerPort := os.Getenv(testconfig.PSMTestServerPortEnv)
 		if psmTestServerPort == "" {
 			log.Fatalf("failed to obtain the test server port for PSM test, no test server port has been set")
 		}
@@ -398,7 +398,17 @@ func main() {
 		}
 		targets := buildTargets(nodesInfo.Servers, uint32(psmTestServerPortUint))
 		for _, clientNode := range nodesInfo.Clients {
-			if err := passTarget(true, clientNode.PodIP, targets); err != nil {
+			var testType string
+			isProxiedTest, err := kubehelpers.IsProxiedTest(&test.Spec.Clients)
+			if err != nil {
+				log.Fatalf("failed to check if the current load test is a proxied test: %v", err)
+			}
+			if isProxiedTest {
+				testType = testconfig.Proxied
+			} else {
+				testType = testconfig.NonProxied
+			}
+			if err := passTarget(true, clientNode.PodIP, targets, testType); err != nil {
 				log.Fatalf("failed to communicate backend targets to client %v: %v", clientNode.Name, err)
 			}
 		}
