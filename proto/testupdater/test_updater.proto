@@ -16,27 +16,28 @@ syntax = "proto3";
 
 option go_package = "github.com/grpc/test-infra/proto/endpointupdater";
 
-package endpointupdater;
+package testupdater;
 
-service EndpointUpdater {
+service TestUpdater {
   // Sends an update
-  rpc UpdateEndpoint (EndpointUpdaterRequest) returns (EndpointUpdaterReply) {}
+  rpc UpdateTest (TestUpdateRequest) returns (TestUpdateReply) {}
 
-  rpc QuitEndpointUpdateServer(Void) returns (Void);
+  rpc QuitTestUpdateServer(Void) returns (Void);
 }
 
 message Void {
 }
 
-message EndpointUpdaterRequest {
-  repeated ServerTarget endpoints = 1;
+message TestUpdateRequest {
+  repeated Endpoint endpoints = 1;
+  string test_type = 2;
 }
 
-message ServerTarget{
+message Endpoint{
   string ip_address = 1;
   uint32 port = 2;
 }
 
-message EndpointUpdaterReply {}
+message TestUpdateReply {}
 
 

@@ -8,11 +8,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	endpoint "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
 	testres "github.com/envoyproxy/go-control-plane/pkg/test/resource/v3"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -339,4 +341,103 @@ var _ = Describe("config marshal and unmarshal", func() {
 		err = processedConfig.Consistent()
 		Expect(err).ToNot(HaveOccurred())
 	})
+})
+var _ = Describe("Update Endpoint", func() {
+
+	var snap cache.Snapshot
+
+	currentVersion := "test_version"
+	testServiceClusterName := "default_testServiceClusterName"
+	testEnvoyListenerName := "default_testEnvoyListenerName"
+	testRouteName := "default_TestRouteName"
+	testEndpointName := "default_testEndpointName"
+	s := TestResource{
+		TestGrpcListenerName: "default_testGrpcListenerName",
+		TestListenerPort:     1234,
+		TestEndpoints: []*TestEndpoint{{
+			TestUpstreamHost: "default_testUpstreamHost",
+			TestUpstreamPort: 5678,
+		}},
+	}
+
+	BeforeEach(func() {
+		snap, _ = cache.NewSnapshot(currentVersion,
+			map[resource.Type][]types.Resource{
+				resource.ClusterType:  {makeCluster(testServiceClusterName, testEndpointName)},
+				resource.RouteType:    {makeRoute(testRouteName, testServiceClusterName)},
+				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(s.TestListenerPort)), makeGrpcHTTPListener(testRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort))},
+				resource.EndpointType: {makeEndpoint(testEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort)},
+			})
+	})
+	It("returns err when the number of endpoints doesn't match", func() {
+		s.TestEndpoints = []*TestEndpoint{{
+			TestUpstreamHost: "test-host-1",
+			TestUpstreamPort: 1,
+		}, {
+			TestUpstreamHost: "test-host-2",
+			TestUpstreamPort: 2,
+		}}
+
+		err := s.UpdateEndpoint(&snap)
+
+		Expect(err).To(HaveOccurred())
+	})
+	It("update the endpoints", func() {
+		s.TestEndpoints = []*TestEndpoint{{
+			TestUpstreamHost: "test-host-1",
+			TestUpstreamPort: uint32(1),
+		}}
+
+		err := s.UpdateEndpoint(&snap)
+
+		endpointResource := snap.Resources[int(cache.GetResponseType(resource.EndpointType))].Items[testEndpointName].Resource
+		endpointData, err := protojson.Marshal(endpointResource)
+
+		endpointService := endpoint.ClusterLoadAssignment{}
+		err = protojson.Unmarshal(endpointData, &endpointService)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(endpointService.Endpoints[0].LbEndpoints[0].GetEndpoint().Address.GetSocketAddress().Address).To(Equal("test-host-1"))
+		Expect(endpointService.Endpoints[0].LbEndpoints[0].GetEndpoint().Address.GetSocketAddress().GetPortValue()).To(Equal(uint32(1)))
+	})
+
+})
+
+var _ = Describe("SocketListenerOnly", func() {
+	var snap cache.Snapshot
+
+	currentVersion := "test_version"
+	testServiceClusterName := "default_testServiceClusterName"
+	testEnvoyListenerName := "default_testEnvoyListenerName"
+	testRouteName := "default_TestRouteName"
+	testEndpointName := "default_testEndpointName"
+	s := TestResource{
+		TestGrpcListenerName: "default_testGrpcListenerName",
+		TestListenerPort:     1234,
+		TestEndpoints: []*TestEndpoint{{
+			TestUpstreamHost: "default_testUpstreamHost",
+			TestUpstreamPort: 5678,
+		}},
+	}
+
+	BeforeEach(func() {
+		snap, _ = cache.NewSnapshot(currentVersion,
+			map[resource.Type][]types.Resource{
+				resource.ClusterType:  {makeCluster(testServiceClusterName, testEndpointName)},
+				resource.RouteType:    {makeRoute(testRouteName, testServiceClusterName)},
+				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(s.TestListenerPort)), makeGrpcHTTPListener(testRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort))},
+				resource.EndpointType: {makeEndpoint(testEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort)},
+			})
+	})
+	It("leaves only the socket listeners", func() {
+		err := SocketListenerOnly(&snap)
+		Expect(err).ToNot(HaveOccurred())
+
+		_, grpcListenerExist := snap.Resources[int(cache.GetResponseType(resource.ListenerType))].Items[s.TestGrpcListenerName]
+		Expect(grpcListenerExist).To(BeFalse())
+
+		_, envoyListenerExist := snap.Resources[int(cache.GetResponseType(resource.ListenerType))].Items[testEnvoyListenerName]
+		Expect(envoyListenerExist).To(BeTrue())
+	})
+
 })
