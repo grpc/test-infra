@@ -14,6 +14,10 @@ update server listens on test backends' the podIP and test port. On receiving
 the backend servers' podIP and test port, the resource of the xDS server will be
 updated accordingly.
 
+Another piece of information communicated from the Driver's ready container is
+the type of the test. For "proxied" test, the xds server will remove all
+api_listneners and only serves the socket listener for validation purpose.
+
 After filling in the actual backend services, the xDS server starts listening on
 request and server the configuration created through above steps.
 
