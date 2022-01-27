@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
-	"github.com/envoyproxy/go-control-plane/pkg/log"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
 
@@ -58,7 +57,7 @@ func main() {
 
 	resource.TestListenerPort = uint32(sidecarListenerPort)
 
-	l := log.NewDefaultLogger()
+	l := xds.Logger{}
 
 	// Create and validate the configuration of the xDS server first
 	snapshot, err := config.GenerateSnapshotFromConfigFiles(defaultConfigPath, customConfigPath)
@@ -98,6 +97,9 @@ func main() {
 		if testInfo.TestType == testconfig.Proxied {
 			if err := config.SocketListenerOnly(&snapshot); err != nil {
 				l.Errorf("fail to filter listener based on test type: %v", err)
+			}
+			if err := snapshot.Consistent(); err != nil {
+				l.Errorf("fail to validate snapshot after leave only socket listeners: %v", err)
 			}
 		}
 

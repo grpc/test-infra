@@ -61,5 +61,5 @@ func RunUpdateServer(testUpdateChannel chan TestInfo, updatePort uint) {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
-	log.Print("test listener stopped")
+	log.Print("test update server stopped")
 }
