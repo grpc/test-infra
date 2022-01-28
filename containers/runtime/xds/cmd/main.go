@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-
-	"os"
+	"fmt"
+	"io/ioutil"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
@@ -28,6 +28,7 @@ func main() {
 	var customConfigPath string
 	var testUpdatePort uint
 	var validationOnly bool
+	var pathToBootstrap string
 
 	// The port that this xDS server listens on
 	flag.UintVar(&xdsServerPort, "xds-server-port", 18000, "xDS management server port, this is where Envoy/gRPC client gets update")
@@ -53,6 +54,9 @@ func main() {
 	// This sets if running validation only
 	flag.BoolVar(&validationOnly, "validation-only", false, "This sets if we are running for the validation only")
 
+	// This set the bootstrap path, if not set the bootstrap will not be moved
+	flag.StringVar(&pathToBootstrap, "path-to-bootstrap", "", "This sets the path to bootstrap")
+
 	flag.Parse()
 
 	resource.TestListenerPort = uint32(sidecarListenerPort)
@@ -74,6 +78,18 @@ func main() {
 
 	if validationOnly {
 		return
+	}
+	// Move the bootstrap file
+	if pathToBootstrap != "" {
+		bootstrapBytes, err := ioutil.ReadFile(pathToBootstrap)
+		if err != nil {
+			l.Errorf("fail to read bootstrap: %v", err)
+		}
+		//Copy all the contents to the desitination file
+		err = ioutil.WriteFile(fmt.Sprintf("%v/bootstrap.json", testconfig.NonProxiedBootstrapMountPath), bootstrapBytes, 0755)
+		if err != nil {
+			l.Errorf("fail to output bootstrap.json to /bootstrap: %v", err)
+		}
 	}
 
 	// Create a cache
@@ -108,7 +124,6 @@ func main() {
 		// Add the snapshot to the cache
 		if err := cache.SetSnapshot(context.Background(), nodeID, snapshot); err != nil {
 			l.Errorf("snapshot error %q for %+v", err, snapshot)
-			os.Exit(1)
 		}
 		ctx := context.Background()
 		cb := &test.Callbacks{Debug: true}
