@@ -45,7 +45,7 @@ var _ = Describe("Defaults", func() {
 				},
 				{
 					Language:   "go",
-					BuildImage: "golang:1.14",
+					BuildImage: "golang:1.16",
 					RunImage:   "gcr.io/grpc-fake-project/test-infra/go",
 				},
 				{
