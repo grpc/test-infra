@@ -402,7 +402,7 @@ var _ = Describe("PodBuilder", func() {
 						targetStringOverriteEnv = env
 					}
 				}
-				Expect(targetStringOverriteEnv.Value).To(Equal(builder.defaults.NonProxiedTargetString))
+				Expect(targetStringOverriteEnv.Value).To(Equal(fmt.Sprintf("xds:///%v", builder.defaults.NonProxiedTargetString)))
 			})
 
 			It("sets an environment variable with the listener port for Envoy test", func() {

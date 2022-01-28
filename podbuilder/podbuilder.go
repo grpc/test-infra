@@ -304,7 +304,7 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 		if isProxiedTest {
 			serverTargetStringOverride = fmt.Sprintf("localhost:%v", pb.defaults.SidecarListenerPort)
 		} else {
-			serverTargetStringOverride = pb.defaults.NonProxiedTargetString
+			serverTargetStringOverride = fmt.Sprintf("xds:///%v", pb.defaults.NonProxiedTargetString)
 		}
 	}
 	runContainer.Env = append(runContainer.Env,
