@@ -15,7 +15,7 @@ require (
 	github.com/onsi/gomega v1.10.2
 	github.com/pkg/errors v0.9.1
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/tools v0.1.3 // indirect
+	golang.org/x/tools v0.1.9 // indirect
 	google.golang.org/api v0.20.0
 	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.27.1

@@ -36,13 +36,9 @@ jobs:
 
     - name: Get go dependencies
       run: |
-        go get -v -t -d ./...
-        go get -v -u golang.org/x/lint/golint
-        go get -v -u golang.org/x/tools/cmd/goimports
-        if [ -f Gopkg.toml ]; then
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
-        fi
+        go install -v ./...
+        go install -v golang.org/x/lint/golint
+        go install -v golang.org/x/tools/cmd/goimports
 
     - name: Check for format and lint issues
       run: |
