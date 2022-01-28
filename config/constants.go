@@ -81,6 +81,10 @@ const (
 	// mounted in both the ready init container and the driver's run container.
 	ReadyMountPath = "/var/data/qps_workers"
 
+	// NonProxiedBootstrapMountPath stores the directory where the bootstrap.json file
+	// resides. This file is required by gRPC proxyless client.
+	NonProxiedBootstrapMountPath = "/bootstrap"
+
 	// ReadyOutputFile is the name of the file where the ready init container
 	// should write all IP addresses and port numbers for ready workers.
 	ReadyOutputFile = ReadyMountPath + "/addresses"
