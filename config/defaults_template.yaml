@@ -23,7 +23,7 @@ languages:
   runImage: "{{ .ImagePrefix }}cxx:{{ .Version }}"
 
 - language: go
-  buildImage: golang:1.14
+  buildImage: golang:1.16
   runImage: "{{ .ImagePrefix }}go:{{ .Version }}"
 
 - language: java
