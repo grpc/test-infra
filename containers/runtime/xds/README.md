@@ -80,12 +80,27 @@ The binary main.go takes the following options:
   from the configuration files, the flag here is to make sure that at lease one
   of the listener resource has the required name.
 
-- -sidecar-listener-port This field in only for validation. The listener port
-  that sidecar proxy is listeneing on. The traffic wish to go through envoy
-  should be send to this port. The default value of this field is `10000`.
+- -sidecar-listener-port
 
-- -validation-only This flag allows user to validate the custome resource
-  configuration. The default value of this filed is `false`
+  This field in only for validation. The listener port that sidecar proxy is
+  listening on. The traffic wish to go through envoy should be send to this
+  port. The default value of this field is `10000`.
+
+- -validation-only
+
+  This flag allows user to validate the custome resource configuration. The
+  default value of this filed is `false`
+
+- -path-to-bootstrap
+
+  Non-proxy clients requires a bootstrap file to help the xds client understands
+  where is the xds server. Since the bootstrap file is only needed when running
+  PSM tests, the `bootstrap.json` is included in the xDS server image to avoid
+  interference with regular benchmark. To be able to provide this file to the
+  test clients, xDS server needs to move the `bootstrap.json` file to a shared
+  volume. This flag allows user to provide the path of the `bootstrap.json`, if
+  there is nothing passed through the flag, the xds server will skip this
+  function.
 
 ## Custom configuration of xDS server
 
