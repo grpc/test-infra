@@ -93,7 +93,7 @@
             "address": {
               "socketAddress": {
                 "address": "0.0.0.0",
-                "portValue": 10000
+                "portValue": 19007
               }
             },
             "filterChains": [

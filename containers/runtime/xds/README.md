@@ -71,20 +71,20 @@ The binary main.go takes the following options:
   this field, for more information check section:
   [Custom configuration of xDS server](#Custom-configuration-of-xDS-server)
 
-- -psm-target-string
+- -non-proxied-target-string
 
-  This field in only for validation. The listener name that serves non-proxied
-  client (gRPC proxyless). The listener name has to match the
-  server-target-string in xds:///server-target-string, which is passed as target
-  for test client. The source of the truth for name of the listener's names are
-  from the configuration files, the flag here is to make sure that at lease one
-  of the listener resource has the required name.
+  This field only for validation. The listener name that serves non-proxied
+  client. The listener name has to match the server-target-string in
+  xds:///server-target-string, which is passed as target for test client. The
+  source of the truth for name of the listener's names are from the
+  configuration files, the flag here is to make sure that at lease one of the
+  listener resource has the required name.
 
 - -sidecar-listener-port
 
   This field in only for validation. The listener port that sidecar proxy is
   listening on. The traffic wish to go through envoy should be send to this
-  port. The default value of this field is `10000`.
+  port.
 
 - -validation-only
 
