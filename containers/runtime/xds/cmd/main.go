@@ -46,7 +46,7 @@ func main() {
 	flag.StringVar(&customConfigPath, "custom-config-path", "custom-config-path", "The path of user supplied configuration file, the path is relative path the root of test-infra repo")
 
 	// This sets the gRPC test listener name.
-	flag.StringVar(&resource.TestGrpcListenerName, "psm-target-string", "default_testGrpcListenerName", "This field is for validation only, the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
+	flag.StringVar(&resource.TestGrpcListenerName, "psm-target-string", "defaultApiListener", "This field is for validation only, the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
 
 	// This sets the port that the Envoy listener listens to, this is the port to send traffic if we wish the traffic to go through sidecar
 	flag.UintVar(&sidecarListenerPort, "sidecar-listener-port", 10000, "This field is for validation only, this is port that the sidecar test listener listens to")
