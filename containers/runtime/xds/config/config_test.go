@@ -20,19 +20,19 @@ import (
 
 var _ = Describe("config marshal and unmarshal", func() {
 	s := TestResource{
-		TestGrpcListenerName: "default_testGrpcListenerName",
+		TestGrpcListenerName: "defaultTestGrpcListenerName",
 		TestListenerPort:     1234,
 		TestEndpoints: []*TestEndpoint{{
-			TestUpstreamHost: "default_testUpstreamHost",
+			TestUpstreamHost: "defaultTestUpstreamHost",
 			TestUpstreamPort: 5678,
 		}},
 	}
 
-	currentVersion := "test_version"
-	testServiceClusterName := "default_testServiceClusterName"
-	testEnvoyListenerName := "default_testEnvoyListenerName"
-	testRouteName := "default_TestRouteName"
-	testEndpointName := "default_testEndpointName"
+	currentVersion := "testVersion"
+	testServiceClusterName := "defaultTestServiceClusterName"
+	testEnvoyListenerName := "defaultTestEnvoyListenerName"
+	testRouteName := "defaultTestRouteName"
+	testEndpointName := "defaultTestEndpointName"
 	var testTTL time.Duration
 	var originalConfig customSnapshot
 	var processedConfig customSnapshot
@@ -346,16 +346,16 @@ var _ = Describe("Update Endpoint", func() {
 
 	var snap cache.Snapshot
 
-	currentVersion := "test_version"
-	testServiceClusterName := "default_testServiceClusterName"
-	testEnvoyListenerName := "default_testEnvoyListenerName"
-	testRouteName := "default_TestRouteName"
-	testEndpointName := "default_testEndpointName"
+	currentVersion := "testVersion"
+	testServiceClusterName := "defaultTestServiceClusterName"
+	testEnvoyListenerName := "defaultTestEnvoyListenerName"
+	testRouteName := "defaultTestRouteName"
+	testEndpointName := "defaultTestEndpointName"
 	s := TestResource{
-		TestGrpcListenerName: "default_testGrpcListenerName",
+		TestGrpcListenerName: "defaultTestGrpcListenerName",
 		TestListenerPort:     1234,
 		TestEndpoints: []*TestEndpoint{{
-			TestUpstreamHost: "default_testUpstreamHost",
+			TestUpstreamHost: "defaultTestUpstreamHost",
 			TestUpstreamPort: 5678,
 		}},
 	}
@@ -406,16 +406,16 @@ var _ = Describe("Update Endpoint", func() {
 var _ = Describe("SocketListenerOnly", func() {
 	var snap cache.Snapshot
 
-	currentVersion := "test_version"
-	testServiceClusterName := "default_testServiceClusterName"
-	testEnvoyListenerName := "default_testEnvoyListenerName"
-	testRouteName := "default_TestRouteName"
-	testEndpointName := "default_testEndpointName"
+	currentVersion := "testVersion"
+	testServiceClusterName := "defaultTestServiceClusterName"
+	testEnvoyListenerName := "defaultTestEnvoyListenerName"
+	testRouteName := "defaultTestRouteName"
+	testEndpointName := "defaultTestEndpointName"
 	s := TestResource{
-		TestGrpcListenerName: "default_testGrpcListenerName",
+		TestGrpcListenerName: "defaultTestGrpcListenerName",
 		TestListenerPort:     1234,
 		TestEndpoints: []*TestEndpoint{{
-			TestUpstreamHost: "default_testUpstreamHost",
+			TestUpstreamHost: "defaultTestUpstreamHost",
 			TestUpstreamPort: 5678,
 		}},
 	}
