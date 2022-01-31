@@ -18,11 +18,13 @@ package podbuilder
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"log"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
@@ -172,6 +174,31 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 		ContainerPort: config.DriverPort,
 	})
 
+	// sidecar and xds server will keep the client pod alive even after the test
+	// finishes. A livenessPorbe is configured to check on worker's driver port,
+	// one the driver port on workers is closed the sidecar and xds containers 
+	// become unhealthy and kill themsleves.
+
+	initialDelaySeconds := int32(30)
+	periodSeconds := int32(5)
+
+	if initialDelaySecondsValue, ok := pb.test.Annotations["initialDelaySeconds"]; ok {
+		initialDelaySeconds64, err := strconv.ParseInt(initialDelaySecondsValue, 10, 32); 
+		if err != nil{
+			return nil, errors.Wrapf(err, "failed to parse the initial delay seconds for sidecar/xds containers's liveness probe: %v", initialDelaySecondsValue)
+		}
+		initialDelaySeconds = int32(initialDelaySeconds64)
+	}
+
+	if periodSecondsValue, ok := pb.test.Annotations["periodSeconds"]; ok {
+		periodSeconds64, err := strconv.ParseInt(periodSecondsValue, 10, 32);
+		if err != nil{
+			return nil, errors.Wrapf(err, "failed to parse the polling seconds for sidecar/xds containers's liveness probe: %v", periodSecondsValue)
+		}
+		periodSeconds = int32(periodSeconds64)
+	}
+
+
 	if client.XDS != nil {
 		pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
 			Name: config.NonProxiedBootstrapVolumeName,
@@ -217,6 +244,19 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 					ReadOnly:  false,
 				},
 			},
+			LivenessProbe: &corev1.Probe{
+				Handler: corev1.Handler{
+					TCPSocket: &corev1.TCPSocketAction {
+						Port: intstr.IntOrString{
+							IntVal: config.DriverPort},
+						Host: "localhost",
+					},
+				},
+				FailureThreshold: 1,
+				InitialDelaySeconds: initialDelaySeconds,
+				PeriodSeconds: periodSeconds,
+			},
+			
 		})
 
 		if client.Sidecar != nil {
@@ -226,6 +266,18 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 				Image:   safeStrUnwrap(client.Sidecar.Image),
 				Command: client.Sidecar.Command,
 				Args:    client.Sidecar.Args,
+				LivenessProbe: &corev1.Probe{
+					Handler: corev1.Handler{
+						TCPSocket: &corev1.TCPSocketAction {
+							Port: intstr.IntOrString{
+								IntVal: config.DriverPort},
+							Host: "localhost",
+						},
+					},
+					FailureThreshold: 1,
+					InitialDelaySeconds: initialDelaySeconds,
+					PeriodSeconds: periodSeconds,
+				},
 			})
 		} else {
 			log.Print("running gRPC proxyless service mesh test")
@@ -445,6 +497,14 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 						{
 							Name:  config.PodTimeoutEnv,
 							Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds),
+						},
+						{
+							Name:  "GRPC_GO_LOG_VERBOSITY_LEVEL",
+							Value: "99",
+						},
+						{
+							Name:  "GRPC_GO_LOG_SEVERITY_LEVEL",
+							Value: "info",
 						},
 					},
 					WorkingDir: config.WorkspaceMountPath,

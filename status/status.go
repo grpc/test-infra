@@ -54,7 +54,7 @@ func StateForContainerStatus(status *corev1.ContainerStatus) (State, *int32) {
 	if terminateState := status.State.Terminated; terminateState != nil {
 		var state State = Errored
 
-		if terminateState.ExitCode == 0 {
+		if terminateState.ExitCode == 0 || terminateState.ExitCode == 2{
 			state = Succeeded
 		}
 
