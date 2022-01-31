@@ -26,9 +26,10 @@ declare -a protos=(
     grpc/testing/payloads.proto
 )
 
-declare -A package
-package[grpc/core]=grpc_core
-package[grpc/testing]=grpc_testing
+declare -A package=(
+    [grpc/core]=grpc_core
+    [grpc/testing]=grpc_testing
+)
 
 for proto in "${protos[@]}"; do
     opts[${#opts[@]}]="--go_opt=M${proto}=github.com/grpc/test-infra/proto/${package[${proto%/*}]}"
