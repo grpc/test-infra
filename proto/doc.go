@@ -19,8 +19,8 @@
 // The protos can be rebuilt using the `go generate` command.
 package proto
 
-// Build grpc/core package
-//go:generate protoc -I ../third_party/grpc-proto --go_out=paths=source_relative,plugins=grpc:. grpc/core/stats.proto
+// Generate endpointupdater package
+//go:generate protoc -I. --go_out=. --go-grpc_out=. --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative endpointupdater/endpoint.proto
 
-// Build grpc/testing package
-//go:generate protoc -I ../third_party/grpc-proto --go_out=paths=source_relative,Mgrpc/core/stats.proto=github.com/grpc/test-infra/proto/grpc/core,plugins=grpc:. grpc/testing/benchmark_service.proto grpc/testing/control.proto grpc/testing/messages.proto grpc/testing/payloads.proto grpc/testing/report_qps_scenario_service.proto grpc/testing/stats.proto grpc/testing/worker_service.proto
+// Generate grpc/core and grpc/testing packages
+//go:generate ./generate-grpc.sh

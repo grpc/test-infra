@@ -16,7 +16,7 @@
 // versions:
 // 	protoc-gen-go v1.26.0
 // 	protoc        v3.12.4
-// source: endpoint.proto
+// source: endpointupdater/endpoint.proto
 
 package endpointupdater
 
@@ -46,7 +46,7 @@ type EndpointUpdaterRequest struct {
 func (x *EndpointUpdaterRequest) Reset() {
 	*x = EndpointUpdaterRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_endpoint_proto_msgTypes[0]
+		mi := &file_endpointupdater_endpoint_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -59,7 +59,7 @@ func (x *EndpointUpdaterRequest) String() string {
 func (*EndpointUpdaterRequest) ProtoMessage() {}
 
 func (x *EndpointUpdaterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_endpoint_proto_msgTypes[0]
+	mi := &file_endpointupdater_endpoint_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -72,7 +72,7 @@ func (x *EndpointUpdaterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndpointUpdaterRequest.ProtoReflect.Descriptor instead.
 func (*EndpointUpdaterRequest) Descriptor() ([]byte, []int) {
-	return file_endpoint_proto_rawDescGZIP(), []int{0}
+	return file_endpointupdater_endpoint_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *EndpointUpdaterRequest) GetIpAddress() string {
@@ -98,7 +98,7 @@ type EndpointUpdaterReply struct {
 func (x *EndpointUpdaterReply) Reset() {
 	*x = EndpointUpdaterReply{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_endpoint_proto_msgTypes[1]
+		mi := &file_endpointupdater_endpoint_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -111,7 +111,7 @@ func (x *EndpointUpdaterReply) String() string {
 func (*EndpointUpdaterReply) ProtoMessage() {}
 
 func (x *EndpointUpdaterReply) ProtoReflect() protoreflect.Message {
-	mi := &file_endpoint_proto_msgTypes[1]
+	mi := &file_endpointupdater_endpoint_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -124,13 +124,14 @@ func (x *EndpointUpdaterReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EndpointUpdaterReply.ProtoReflect.Descriptor instead.
 func (*EndpointUpdaterReply) Descriptor() ([]byte, []int) {
-	return file_endpoint_proto_rawDescGZIP(), []int{1}
+	return file_endpointupdater_endpoint_proto_rawDescGZIP(), []int{1}
 }
 
-var File_endpoint_proto protoreflect.FileDescriptor
+var File_endpointupdater_endpoint_proto protoreflect.FileDescriptor
 
-var file_endpoint_proto_rawDesc = []byte{
-	0x0a, 0x0e, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+var file_endpointupdater_endpoint_proto_rawDesc = []byte{
+	0x0a, 0x1e, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x72, 0x2f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x12, 0x0f, 0x65, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65,
 	0x72, 0x22, 0x4b, 0x0a, 0x16, 0x45, 0x6e, 0x64, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x55, 0x70, 0x64,
 	0x61, 0x74, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x69,
@@ -153,23 +154,23 @@ var file_endpoint_proto_rawDesc = []byte{
 }
 
 var (
-	file_endpoint_proto_rawDescOnce sync.Once
-	file_endpoint_proto_rawDescData = file_endpoint_proto_rawDesc
+	file_endpointupdater_endpoint_proto_rawDescOnce sync.Once
+	file_endpointupdater_endpoint_proto_rawDescData = file_endpointupdater_endpoint_proto_rawDesc
 )
 
-func file_endpoint_proto_rawDescGZIP() []byte {
-	file_endpoint_proto_rawDescOnce.Do(func() {
-		file_endpoint_proto_rawDescData = protoimpl.X.CompressGZIP(file_endpoint_proto_rawDescData)
+func file_endpointupdater_endpoint_proto_rawDescGZIP() []byte {
+	file_endpointupdater_endpoint_proto_rawDescOnce.Do(func() {
+		file_endpointupdater_endpoint_proto_rawDescData = protoimpl.X.CompressGZIP(file_endpointupdater_endpoint_proto_rawDescData)
 	})
-	return file_endpoint_proto_rawDescData
+	return file_endpointupdater_endpoint_proto_rawDescData
 }
 
-var file_endpoint_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_endpoint_proto_goTypes = []interface{}{
+var file_endpointupdater_endpoint_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_endpointupdater_endpoint_proto_goTypes = []interface{}{
 	(*EndpointUpdaterRequest)(nil), // 0: endpointupdater.EndpointUpdaterRequest
 	(*EndpointUpdaterReply)(nil),   // 1: endpointupdater.EndpointUpdaterReply
 }
-var file_endpoint_proto_depIdxs = []int32{
+var file_endpointupdater_endpoint_proto_depIdxs = []int32{
 	0, // 0: endpointupdater.EndpointUpdater.UpdateEndpoint:input_type -> endpointupdater.EndpointUpdaterRequest
 	1, // 1: endpointupdater.EndpointUpdater.UpdateEndpoint:output_type -> endpointupdater.EndpointUpdaterReply
 	1, // [1:2] is the sub-list for method output_type
@@ -179,13 +180,13 @@ var file_endpoint_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_endpoint_proto_init() }
-func file_endpoint_proto_init() {
-	if File_endpoint_proto != nil {
+func init() { file_endpointupdater_endpoint_proto_init() }
+func file_endpointupdater_endpoint_proto_init() {
+	if File_endpointupdater_endpoint_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_endpoint_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_endpointupdater_endpoint_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EndpointUpdaterRequest); i {
 			case 0:
 				return &v.state
@@ -197,7 +198,7 @@ func file_endpoint_proto_init() {
 				return nil
 			}
 		}
-		file_endpoint_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_endpointupdater_endpoint_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EndpointUpdaterReply); i {
 			case 0:
 				return &v.state
@@ -214,18 +215,18 @@ func file_endpoint_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_endpoint_proto_rawDesc,
+			RawDescriptor: file_endpointupdater_endpoint_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_endpoint_proto_goTypes,
-		DependencyIndexes: file_endpoint_proto_depIdxs,
-		MessageInfos:      file_endpoint_proto_msgTypes,
+		GoTypes:           file_endpointupdater_endpoint_proto_goTypes,
+		DependencyIndexes: file_endpointupdater_endpoint_proto_depIdxs,
+		MessageInfos:      file_endpointupdater_endpoint_proto_msgTypes,
 	}.Build()
-	File_endpoint_proto = out.File
-	file_endpoint_proto_rawDesc = nil
-	file_endpoint_proto_goTypes = nil
-	file_endpoint_proto_depIdxs = nil
+	File_endpointupdater_endpoint_proto = out.File
+	file_endpointupdater_endpoint_proto_rawDesc = nil
+	file_endpointupdater_endpoint_proto_goTypes = nil
+	file_endpointupdater_endpoint_proto_depIdxs = nil
 }

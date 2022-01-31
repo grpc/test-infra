@@ -6,7 +6,6 @@ require (
 	cloud.google.com/go/bigquery v1.4.0
 	github.com/envoyproxy/go-control-plane v0.10.0
 	github.com/go-logr/logr v0.3.0
-	github.com/golang/protobuf v1.5.0
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.1.2
 	github.com/jackc/pgx/v4 v4.14.1
