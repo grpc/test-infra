@@ -176,28 +176,27 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 
 	// sidecar and xds server will keep the client pod alive even after the test
 	// finishes. A livenessPorbe is configured to check on worker's driver port,
-	// one the driver port on workers is closed the sidecar and xds containers 
+	// one the driver port on workers is closed the sidecar and xds containers
 	// become unhealthy and kill themsleves.
 
 	initialDelaySeconds := int32(30)
 	periodSeconds := int32(5)
 
 	if initialDelaySecondsValue, ok := pb.test.Annotations["initialDelaySeconds"]; ok {
-		initialDelaySeconds64, err := strconv.ParseInt(initialDelaySecondsValue, 10, 32); 
-		if err != nil{
+		initialDelaySeconds64, err := strconv.ParseInt(initialDelaySecondsValue, 10, 32)
+		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse the initial delay seconds for sidecar/xds containers's liveness probe: %v", initialDelaySecondsValue)
 		}
 		initialDelaySeconds = int32(initialDelaySeconds64)
 	}
 
 	if periodSecondsValue, ok := pb.test.Annotations["periodSeconds"]; ok {
-		periodSeconds64, err := strconv.ParseInt(periodSecondsValue, 10, 32);
-		if err != nil{
+		periodSeconds64, err := strconv.ParseInt(periodSecondsValue, 10, 32)
+		if err != nil {
 			return nil, errors.Wrapf(err, "failed to parse the polling seconds for sidecar/xds containers's liveness probe: %v", periodSecondsValue)
 		}
 		periodSeconds = int32(periodSeconds64)
 	}
-
 
 	if client.XDS != nil {
 		pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
@@ -246,17 +245,16 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 			},
 			LivenessProbe: &corev1.Probe{
 				Handler: corev1.Handler{
-					TCPSocket: &corev1.TCPSocketAction {
+					TCPSocket: &corev1.TCPSocketAction{
 						Port: intstr.IntOrString{
 							IntVal: config.DriverPort},
 						Host: "localhost",
 					},
 				},
-				FailureThreshold: 1,
+				FailureThreshold:    1,
 				InitialDelaySeconds: initialDelaySeconds,
-				PeriodSeconds: periodSeconds,
+				PeriodSeconds:       periodSeconds,
 			},
-			
 		})
 
 		if client.Sidecar != nil {
@@ -268,15 +266,15 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 				Args:    client.Sidecar.Args,
 				LivenessProbe: &corev1.Probe{
 					Handler: corev1.Handler{
-						TCPSocket: &corev1.TCPSocketAction {
+						TCPSocket: &corev1.TCPSocketAction{
 							Port: intstr.IntOrString{
 								IntVal: config.DriverPort},
 							Host: "localhost",
 						},
 					},
-					FailureThreshold: 1,
+					FailureThreshold:    1,
 					InitialDelaySeconds: initialDelaySeconds,
-					PeriodSeconds: periodSeconds,
+					PeriodSeconds:       periodSeconds,
 				},
 			})
 		} else {
