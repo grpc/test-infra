@@ -22,5 +22,5 @@ package proto
 // Generate endpointupdater package
 //go:generate protoc -Iendpointupdater --go_out=endpointupdater --go-grpc_out=endpointupdater --go_opt=paths=source_relative --go-grpc_opt=paths=source_relative endpointupdater/endpoint.proto
 
-// Generate grpc/core and grpc/testing packages
+// Generate grpc_core and grpc_testing packages
 //go:generate ./generate-grpc.sh
