@@ -92,11 +92,11 @@ func main() {
 			l.Errorf("fail to read bootstrap: %v", err)
 		}
 		//Copy all the contents to the desitination file
-		err = ioutil.WriteFile(fmt.Sprintf("%v/bootstrap.json", testconfig.NonProxiedBootstrapMountPath), bootstrapBytes, 0755)
+		err = ioutil.WriteFile(fmt.Sprintf("%v/bootstrap.json", testconfig.ProxylessBootstrapMountPath), bootstrapBytes, 0755)
 		if err != nil {
 			l.Errorf("fail to output bootstrap.json to /bootstrap: %v", err)
 		}
-		l.Infof("bootstrap file for non-proxied clients are moved from %v to %v/bootstrap.json successfully", pathToBootstrap, testconfig.NonProxiedBootstrapMountPath)
+		l.Infof("bootstrap file for non-proxied clients are moved from %v to %v/bootstrap.json successfully", pathToBootstrap, testconfig.ProxylessBootstrapMountPath)
 	}
 
 	// Create a cache
@@ -117,7 +117,7 @@ func main() {
 		}
 
 		// Check the type of the test
-		if testInfo.TestType == testconfig.Proxied {
+		if testInfo.TestType == testconfig.ProxiedType {
 			l.Infof("running a proxied test, only leave socket listeners for validation reason, api_listeners are not presented to proxies")
 			if err := config.IncludeSocketListenerOnly(&snapshot); err != nil {
 				l.Errorf("fail to filter listener based on test type: %v", err)
