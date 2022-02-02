@@ -86,10 +86,11 @@ The binary main.go takes the following options:
   listening on. The traffic wish to go through envoy should be send to this
   port.
 
-- -validation-only
+- -validate-only
 
-  This flag allows user to validate the custome resource configuration. The
-  default value of this filed is `false`
+  This flag allows user to validate the custom resource configuration. The
+  default value of this filed is `false`, means the program only validate the
+  resources configurations and will not start any servers.
 
 - -path-to-bootstrap
 

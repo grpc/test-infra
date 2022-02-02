@@ -454,11 +454,11 @@ func (t *TestResource) UpdateEndpoint(snap *cache.Snapshot) error {
 	return nil
 }
 
-// SocketListenerOnly takes a pointer of a snapshot, and returns only the socket listeners.
+// IncludeSocketListenerOnly takes a pointer of a snapshot, and returns only the socket listeners.
 // This function is used for Proxied test since api_listneners which are used for the
 // non-proxed test can not be validated by Envoy causing the entire resources slices not to be
 // registed.
-func SocketListenerOnly(snap *cache.Snapshot) error {
+func IncludeSocketListenerOnly(snap *cache.Snapshot) error {
 	listenerResponseType := cache.GetResponseType(resource.ListenerType)
 	listeners := snap.Resources[int(listenerResponseType)]
 	socketListenerOnly := make(map[string]types.ResourceWithTTL)

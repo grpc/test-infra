@@ -46,13 +46,13 @@ func main() {
 	flag.StringVar(&customConfigPath, "custom-config-path", "custom-config-path", "The path of user supplied configuration file, the path is relative path the root of test-infra repo")
 
 	// This sets the gRPC test listener name.
-	flag.StringVar(&resource.TestGrpcListenerName, "non-proxied-target-string", "", "This field is for validation only, the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
+	flag.StringVar(&resource.TestGrpcListenerName, "proxyless-target-string", "", "This field is for validation only, the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
 
 	// This sets the port that the Envoy listener listens to, this is the port to send traffic if we wish the traffic to go through sidecar
-	flag.UintVar(&sidecarListenerPort, "sidecar-listener-port", 0, "This field is for validation only, this is port that the sidecar test listener listens to")
+	flag.UintVar(&sidecarListenerPort, "sidecar-listener-port", 0, "This field is for validation only, this is the listener port of the Envoy sidecar proxy")
 
 	// This sets if running validation only
-	flag.BoolVar(&validationOnly, "validation-only", false, "This sets if we are running for the validation only")
+	flag.BoolVar(&validationOnly, "validate-only", false, "This sets if we are running for the validation only")
 
 	// This set the bootstrap path, if not set the bootstrap will not be moved
 	flag.StringVar(&pathToBootstrap, "path-to-bootstrap", "", "This sets the path to bootstrap")
@@ -79,7 +79,13 @@ func main() {
 	if validationOnly {
 		return
 	}
-	// Move the bootstrap file
+	// Move the bootstrap file for proxyless client. The bootstrap files need to be
+	// accessible to the proxyless client, this logic helps move the bootstrap.json stored
+	// in xds server image to a shared volume between xds server and proxyless client at
+	// /bootstrap/bootstrap.json. From the root of the test-infra
+	// repo, the bootstrap file was originally stored in the path of
+	// contaners/runtime/xds/bootstrap.json, user can provide other path within
+	// test-infra, any changes related to this requires building a new xds server image.
 	if pathToBootstrap != "" {
 		bootstrapBytes, err := ioutil.ReadFile(pathToBootstrap)
 		if err != nil {
@@ -113,7 +119,7 @@ func main() {
 		// Check the type of the test
 		if testInfo.TestType == testconfig.Proxied {
 			l.Infof("running a proxied test, only leave socket listeners for validation reason, api_listeners are not presented to proxies")
-			if err := config.SocketListenerOnly(&snapshot); err != nil {
+			if err := config.IncludeSocketListenerOnly(&snapshot); err != nil {
 				l.Errorf("fail to filter listener based on test type: %v", err)
 			}
 			if err := snapshot.Consistent(); err != nil {
