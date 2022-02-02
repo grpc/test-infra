@@ -430,7 +430,7 @@ var _ = Describe("SocketListenerOnly", func() {
 			})
 	})
 	It("leaves only the socket listeners", func() {
-		err := SocketListenerOnly(&snap)
+		err := IncludeSocketListenerOnly(&snap)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, grpcListenerExist := snap.Resources[int(cache.GetResponseType(resource.ListenerType))].Items[s.TestGrpcListenerName]
