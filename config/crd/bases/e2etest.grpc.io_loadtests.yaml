@@ -606,9 +606,9 @@ spec:
                             type: object
                           type: array
                       type: object
-                    xds:
-                      description: XDS describes the XDS container, which is the runtime
-                        of the XDS Server of the test.
+                    xdsServer:
+                      description: XDSServer describes the XDS server container, which
+                        is the runtime of the XDS Server of the test.
                       properties:
                         args:
                           description: Args provide command line arguments to the

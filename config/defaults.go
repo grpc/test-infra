@@ -59,17 +59,17 @@ type Defaults struct {
 	// on.
 	PSMTestServerPort string `json:"psmTestServerPort"`
 
-	// XDSEndpointUpdatePort holds the port that the xDS server is listening
+	// XDSTestUpdatePort holds the port that the xDS server is listening
 	// on to update endpoints
-	XDSEndpointUpdatePort string `json:"xdsEndpointUpdatePort"`
+	XDSTestUpdatePort string `json:"xdsTestUpdatePort"`
 
 	// SidecarListenerPort holds the port the listener port serving for proxy
 	SidecarListenerPort string `json:"sidecarListenerPort"`
 
-	// NonProxiedTargetString is passed to the client as test target, for OSS
+	// ProxylessTargetString is passed to the client as test target, for OSS
 	// benchmark this value is a slice of the server Pod IP and the port
 	// for PSM test, it is the target_string in xds:///target_string.
-	NonProxiedTargetString string `json:"nonProxiedTargetString"`
+	ProxylessTargetString string `json:"proxylessTargetString"`
 }
 
 // Validate ensures that the required fields are present and an acceptable
@@ -110,11 +110,11 @@ func (d *Defaults) Validate() error {
 		return errors.Errorf("missing default test server port for PSM tests")
 	}
 
-	if d.XDSEndpointUpdatePort == "" {
+	if d.XDSTestUpdatePort == "" {
 		return errors.Errorf("missing default xds endpoint update server port for PSM tests")
 	}
 
-	if d.NonProxiedTargetString == "" {
+	if d.ProxylessTargetString == "" {
 		return errors.Errorf("missing default PSM server target string in PSM tests")
 	}
 

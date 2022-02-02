@@ -376,11 +376,11 @@ var _ = Describe("PodBuilder", func() {
 				for i := range readyContainer.Env {
 					env := &readyContainer.Env[i]
 
-					if env.Name == config.XDSEndpointUpdatePortEnv {
+					if env.Name == config.XDSTestUpdatePortEnv {
 						xdsEndpointUpdatePortEnv = env
 					}
 				}
-				Expect(xdsEndpointUpdatePortEnv.Value).To(Equal(builder.defaults.XDSEndpointUpdatePort))
+				Expect(xdsEndpointUpdatePortEnv.Value).To(Equal(builder.defaults.XDSTestUpdatePort))
 			})
 		})
 
@@ -402,7 +402,7 @@ var _ = Describe("PodBuilder", func() {
 						targetStringOverriteEnv = env
 					}
 				}
-				Expect(targetStringOverriteEnv.Value).To(Equal(fmt.Sprintf("xds:///%v", builder.defaults.NonProxiedTargetString)))
+				Expect(targetStringOverriteEnv.Value).To(Equal(fmt.Sprintf("xds:///%v", builder.defaults.ProxylessTargetString)))
 			})
 
 			It("sets an environment variable with the listener port for Envoy test", func() {
@@ -466,7 +466,7 @@ var _ = Describe("PodBuilder", func() {
 					}
 				}
 				Expect(bootstrapEnv).ToNot(BeNil())
-				Expect(bootstrapEnv.Value).To(Equal(config.NonProxiedBootstrapMountPath + "/bootstrap.json"))
+				Expect(bootstrapEnv.Value).To(Equal(config.ProxylessBootstrapMountPath + "/bootstrap.json"))
 			})
 
 			It("doesn't set GRPC_XDS_BOOTSTRAP env for client's run container for regular test", func() {
@@ -502,8 +502,8 @@ var _ = Describe("PodBuilder", func() {
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(runContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
-					Name:      config.NonProxiedBootstrapVolumeName,
-					MountPath: config.NonProxiedBootstrapMountPath,
+					Name:      config.ProxylessBootstrapVolumeName,
+					MountPath: config.ProxylessBootstrapMountPath,
 				}))
 			})
 			It("doesn't create volume mount for bootstrap on run container for regular test", func() {
@@ -518,8 +518,8 @@ var _ = Describe("PodBuilder", func() {
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(runContainer.VolumeMounts).ToNot(ContainElement(corev1.VolumeMount{
-					Name:      config.NonProxiedBootstrapVolumeName,
-					MountPath: config.NonProxiedBootstrapMountPath,
+					Name:      config.ProxylessBootstrapVolumeName,
+					MountPath: config.ProxylessBootstrapMountPath,
 				}))
 			})
 		})
@@ -562,8 +562,8 @@ var _ = Describe("PodBuilder", func() {
 				xdsContainer := kubehelpers.ContainerForName(config.XDSServerContainerName, pod.Spec.Containers)
 				Expect(xdsContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(xdsContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
-					Name:      config.NonProxiedBootstrapVolumeName,
-					MountPath: config.NonProxiedBootstrapMountPath,
+					Name:      config.ProxylessBootstrapVolumeName,
+					MountPath: config.ProxylessBootstrapMountPath,
 				}))
 			})
 
@@ -580,12 +580,12 @@ var _ = Describe("PodBuilder", func() {
 				for i := range xdsContainer.Env {
 					env := &xdsContainer.Env[i]
 
-					if env.Name == config.NonProxiedTargetStringEnv {
+					if env.Name == config.ProxylessTargetStringEnv {
 						nonProxiedServerTargetEnv = env
 					}
 				}
 				Expect(nonProxiedServerTargetEnv).ToNot(BeNil())
-				Expect(nonProxiedServerTargetEnv.Value).To(Equal(builder.defaults.NonProxiedTargetString))
+				Expect(nonProxiedServerTargetEnv.Value).To(Equal(builder.defaults.ProxylessTargetString))
 
 			})
 

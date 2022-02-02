@@ -258,7 +258,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 }
 
 func passTarget(quitServer bool, clientIP string, targets []*pb.Endpoint, testType string) error {
-	xdsEndpointUpdatePort := os.Getenv(testconfig.XDSEndpointUpdatePortEnv)
+	xdsEndpointUpdatePort := os.Getenv(testconfig.XDSTestUpdatePortEnv)
 	if xdsEndpointUpdatePort == "" {
 		log.Fatalf("failed to obtain the xds endpoint update server port for PSM test")
 	}
@@ -279,7 +279,7 @@ func passTarget(quitServer bool, clientIP string, targets []*pb.Endpoint, testTy
 	// Used separate goroutines to stop server, non-blocking
 	if quitServer {
 		go func() {
-			fmt.Println("stopping endpoint update server")
+			log.Printf("stopping test update server on client %v", clientIP)
 			if _, err := c.QuitTestUpdateServer(ctx, &pb.Void{}); err != nil {
 				statusCode, _ := grpcstatus.FromError(err)
 				log.Print(statusCode.Details()...)
@@ -382,6 +382,10 @@ func main() {
 		log.Fatalf("failed to fetch loadtest: %v", err)
 	}
 
+	if clientSpecValid, err := kubehelpers.IsClientsSpecValid(&test.Spec.Clients); !clientSpecValid {
+		log.Fatalf("validation failed in checking clients' spec: %v", err)
+	}
+
 	isPSMTest, err := kubehelpers.IsPSMTest(&test.Spec.Clients)
 	if err != nil {
 		log.Fatalf("failed to check if the current load test is a PSM test: %v", err)
@@ -407,11 +411,12 @@ func main() {
 			}
 			if isProxiedTest {
 				log.Printf("running proxied test")
-				testType = testconfig.Proxied
+				testType = testconfig.ProxiedType
 			} else {
-				log.Printf("running non-proxied test")
-				testType = testconfig.NonProxied
+				log.Printf("running proxyless test")
+				testType = testconfig.ProxylessType
 			}
+
 			if err := passTarget(true, clientNode.PodIP, targets, testType); err != nil {
 				log.Fatalf("failed to communicate backend targets to client %v: %v", clientNode.Name, err)
 			}

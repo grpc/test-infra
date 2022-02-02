@@ -107,8 +107,8 @@ func newReadyContainer(defs *config.Defaults, test *grpcv1.LoadTest) corev1.Cont
 				Value: defs.PSMTestServerPort,
 			},
 			{
-				Name:  config.XDSEndpointUpdatePortEnv,
-				Value: defs.XDSEndpointUpdatePort,
+				Name:  config.XDSTestUpdatePortEnv,
+				Value: defs.XDSTestUpdatePort,
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
@@ -198,25 +198,25 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 		periodSeconds = int32(periodSeconds64)
 	}
 
-	if client.XDS != nil {
+	if client.XDSServer != nil {
 		pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
-			Name: config.NonProxiedBootstrapVolumeName,
+			Name: config.ProxylessBootstrapVolumeName,
 		})
 
 		runContainer.Env = append(runContainer.Env, corev1.EnvVar{
 			Name:  "GRPC_XDS_BOOTSTRAP",
-			Value: config.NonProxiedBootstrapMountPath + "/bootstrap.json"})
+			Value: config.ProxylessBootstrapMountPath + "/bootstrap.json"})
 		runContainer.VolumeMounts = append(runContainer.VolumeMounts,
 			corev1.VolumeMount{
-				Name:      config.NonProxiedBootstrapVolumeName,
-				MountPath: config.NonProxiedBootstrapMountPath,
+				Name:      config.ProxylessBootstrapVolumeName,
+				MountPath: config.ProxylessBootstrapMountPath,
 				ReadOnly:  false})
 
 		pod.Spec.Containers = append(pod.Spec.Containers, corev1.Container{
 			Name:    config.XDSServerContainerName,
-			Image:   safeStrUnwrap(client.XDS.Image),
-			Command: client.XDS.Command,
-			Args:    client.XDS.Args,
+			Image:   safeStrUnwrap(client.XDSServer.Image),
+			Command: client.XDSServer.Command,
+			Args:    client.XDSServer.Args,
 			Env: []corev1.EnvVar{
 				{
 					Name:  config.KillAfterEnv,
@@ -227,8 +227,8 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 					Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds),
 				},
 				{
-					Name:  config.NonProxiedTargetStringEnv,
-					Value: pb.defaults.NonProxiedTargetString,
+					Name:  config.ProxylessTargetStringEnv,
+					Value: pb.defaults.ProxylessTargetString,
 				},
 				{
 					Name:  config.SidecarListenerPortEnv,
@@ -238,8 +238,8 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 			WorkingDir: config.WorkspaceMountPath,
 			VolumeMounts: []corev1.VolumeMount{
 				{
-					Name:      config.NonProxiedBootstrapVolumeName,
-					MountPath: config.NonProxiedBootstrapMountPath,
+					Name:      config.ProxylessBootstrapVolumeName,
+					MountPath: config.ProxylessBootstrapMountPath,
 					ReadOnly:  false,
 				},
 			},
@@ -339,13 +339,17 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 			Value: config.ReadyNodeInfoOutputFile,
 		})
 
+	if clientSpecValid, err := kubehelpers.IsClientsSpecValid(&pb.test.Spec.Clients); !clientSpecValid {
+		log.Fatalf("validation failed in checking clients' spec: %v", err)
+	}
+
 	isPSMTest, err := kubehelpers.IsPSMTest(&pb.test.Spec.Clients)
 	if err != nil {
-		return nil, errors.Wrapf(errTestType, "could not determine test type for test %q: %v", pb.test.Name, err)
+		return nil, errors.Wrapf(errTestType, "can not determine test type for test %q: %v", pb.test.Name, err)
 	}
 	isProxiedTest, err := kubehelpers.IsProxiedTest(&pb.test.Spec.Clients)
 	if err != nil {
-		return nil, errors.Wrapf(errTestType, "could not determine test type for test %q: %v", pb.test.Name, err)
+		return nil, errors.Wrapf(errTestType, "can not determine test type for test %q: %v", pb.test.Name, err)
 	}
 
 	serverTargetStringOverride := ""
@@ -354,7 +358,7 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 		if isProxiedTest {
 			serverTargetStringOverride = fmt.Sprintf("localhost:%v", pb.defaults.SidecarListenerPort)
 		} else {
-			serverTargetStringOverride = fmt.Sprintf("xds:///%v", pb.defaults.NonProxiedTargetString)
+			serverTargetStringOverride = fmt.Sprintf("xds:///%v", pb.defaults.ProxylessTargetString)
 		}
 	}
 	runContainer.Env = append(runContainer.Env,

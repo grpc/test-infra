@@ -27,14 +27,7 @@ import (
 var _ = Describe("IsPSMTest", func() {
 	var clients *[]grpcv1.Client
 
-	It("returns false and an error with an empty client set", func() {
-		clients = &[]grpcv1.Client{}
-		actual, err := IsPSMTest(clients)
-		Expect(actual).To(BeFalse())
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("returns true and an error for a client set that only some of the clients have xds container", func() {
+	It("returns true and nil for a client set that at least one client has xds container", func() {
 		clients = &[]grpcv1.Client{
 			{
 				Name:     optional.StringPtr("client-1"),
@@ -55,60 +48,7 @@ var _ = Describe("IsPSMTest", func() {
 					Command: []string{"./client"},
 					Args:    []string{"-verbose"},
 				},
-			},
-			{
-				Name:     optional.StringPtr("client-2"),
-				Language: "go",
-				Pool:     optional.StringPtr("workers-a"),
-				Clone: &grpcv1.Clone{
-					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
-					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
-					GitRef: optional.StringPtr("master"),
-				},
-				Build: &grpcv1.Build{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"go"},
-					Args:    []string{"build", "-o", "client", "./client/main.go"},
-				},
-				Run: grpcv1.Run{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"./client"},
-					Args:    []string{"-verbose"},
-				},
-				XDS: &grpcv1.XDSServer{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
-					Command: []string{"./xds"},
-					Args:    []string{"-verbose"},
-				},
-			},
-		}
-		actual, err := IsPSMTest(clients)
-		Expect(actual).To(BeTrue())
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("returns true and nil for a client set that all clients have xds container", func() {
-		clients = &[]grpcv1.Client{
-			{
-				Name:     optional.StringPtr("client-1"),
-				Language: "go",
-				Pool:     optional.StringPtr("workers-a"),
-				Clone: &grpcv1.Clone{
-					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
-					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
-					GitRef: optional.StringPtr("master"),
-				},
-				Build: &grpcv1.Build{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"go"},
-					Args:    []string{"build", "-o", "client", "./client/main.go"},
-				},
-				Run: grpcv1.Run{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"./client"},
-					Args:    []string{"-verbose"},
-				},
-				XDS: &grpcv1.XDSServer{
+				XDSServer: &grpcv1.XDSServer{
 					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
 					Command: []string{"./xds"},
 					Args:    []string{"-verbose"},
@@ -133,7 +73,7 @@ var _ = Describe("IsPSMTest", func() {
 					Command: []string{"./client"},
 					Args:    []string{"-verbose"},
 				},
-				XDS: &grpcv1.XDSServer{
+				XDSServer: &grpcv1.XDSServer{
 					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
 					Command: []string{"./xds"},
 					Args:    []string{"-verbose"},
@@ -197,14 +137,7 @@ var _ = Describe("IsPSMTest", func() {
 var _ = Describe("IsProxiedTest", func() {
 	var clients *[]grpcv1.Client
 
-	It("returns false and an error with an empty client set", func() {
-		clients = &[]grpcv1.Client{}
-		actual, err := IsProxiedTest(clients)
-		Expect(actual).To(BeFalse())
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("returns true and an error for a client set that only some of the clients have sidecar container", func() {
+	It("returns true and nil for a client set that at least one client has sidecar container", func() {
 		clients = &[]grpcv1.Client{
 			{
 				Name:     optional.StringPtr("client-1"),
@@ -225,102 +158,7 @@ var _ = Describe("IsProxiedTest", func() {
 					Command: []string{"./client"},
 					Args:    []string{"-verbose"},
 				},
-				XDS: &grpcv1.XDSServer{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
-					Command: []string{"./xds"},
-					Args:    []string{"-verbose"},
-				},
-			},
-			{
-				Name:     optional.StringPtr("client-2"),
-				Language: "go",
-				Pool:     optional.StringPtr("workers-a"),
-				Clone: &grpcv1.Clone{
-					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
-					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
-					GitRef: optional.StringPtr("master"),
-				},
-				Build: &grpcv1.Build{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"go"},
-					Args:    []string{"build", "-o", "client", "./client/main.go"},
-				},
-				Run: grpcv1.Run{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"./client"},
-					Args:    []string{"-verbose"},
-				},
-				XDS: &grpcv1.XDSServer{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
-					Command: []string{"./xds"},
-					Args:    []string{"-verbose"},
-				},
-				Sidecar: &grpcv1.Sidecar{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/sidecar:v1"),
-					Command: []string{"./sidecar"},
-					Args:    []string{"-verbose"},
-				},
-			},
-		}
-		actual, err := IsProxiedTest(clients)
-		Expect(actual).To(BeTrue())
-		Expect(err).To(HaveOccurred())
-	})
-	It("returns true and an error for a client set that at lease one of the client have sidecar container but no xds container", func() {
-		clients = &[]grpcv1.Client{
-			{
-				Name:     optional.StringPtr("client-2"),
-				Language: "go",
-				Pool:     optional.StringPtr("workers-a"),
-				Clone: &grpcv1.Clone{
-					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
-					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
-					GitRef: optional.StringPtr("master"),
-				},
-				Build: &grpcv1.Build{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"go"},
-					Args:    []string{"build", "-o", "client", "./client/main.go"},
-				},
-				Run: grpcv1.Run{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"./client"},
-					Args:    []string{"-verbose"},
-				},
-				Sidecar: &grpcv1.Sidecar{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/sidecar:v1"),
-					Command: []string{"./sidecar"},
-					Args:    []string{"-verbose"},
-				},
-			},
-		}
-		actual, err := IsProxiedTest(clients)
-		Expect(actual).To(BeTrue())
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("returns true and nil for a client set that all of clients have sidecar container", func() {
-		clients = &[]grpcv1.Client{
-			{
-				Name:     optional.StringPtr("client-1"),
-				Language: "go",
-				Pool:     optional.StringPtr("workers-a"),
-				Clone: &grpcv1.Clone{
-					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
-					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
-					GitRef: optional.StringPtr("master"),
-				},
-				Build: &grpcv1.Build{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"go"},
-					Args:    []string{"build", "-o", "client", "./client/main.go"},
-				},
-				Run: grpcv1.Run{
-					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
-					Command: []string{"./client"},
-					Args:    []string{"-verbose"},
-				},
-				XDS: &grpcv1.XDSServer{
+				XDSServer: &grpcv1.XDSServer{
 					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
 					Command: []string{"./xds"},
 					Args:    []string{"-verbose"},
@@ -350,7 +188,7 @@ var _ = Describe("IsProxiedTest", func() {
 					Command: []string{"./client"},
 					Args:    []string{"-verbose"},
 				},
-				XDS: &grpcv1.XDSServer{
+				XDSServer: &grpcv1.XDSServer{
 					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
 					Command: []string{"./xds"},
 					Args:    []string{"-verbose"},
@@ -388,7 +226,7 @@ var _ = Describe("IsProxiedTest", func() {
 					Command: []string{"./client"},
 					Args:    []string{"-verbose"},
 				},
-				XDS: &grpcv1.XDSServer{
+				XDSServer: &grpcv1.XDSServer{
 					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
 					Command: []string{"./xds"},
 					Args:    []string{"-verbose"},
@@ -413,7 +251,7 @@ var _ = Describe("IsProxiedTest", func() {
 					Command: []string{"./client"},
 					Args:    []string{"-verbose"},
 				},
-				XDS: &grpcv1.XDSServer{
+				XDSServer: &grpcv1.XDSServer{
 					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
 					Command: []string{"./xds"},
 					Args:    []string{"-verbose"},
@@ -423,5 +261,259 @@ var _ = Describe("IsProxiedTest", func() {
 		actual, err := IsProxiedTest(clients)
 		Expect(actual).To(BeFalse())
 		Expect(err).NotTo(HaveOccurred())
+	})
+})
+
+var _ = Describe("IsClientsSpecValid", func() {
+	var clients *[]grpcv1.Client
+
+	It("returns false and an error with an empty client set", func() {
+		clients = &[]grpcv1.Client{}
+		actual, err := IsClientsSpecValid(clients)
+		Expect(actual).To(BeFalse())
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("returns false and an error for a client set that only some of the clients have xds container", func() {
+		clients = &[]grpcv1.Client{
+			{
+				Name:     optional.StringPtr("client-1"),
+				Language: "go",
+				Pool:     optional.StringPtr("workers-a"),
+				Clone: &grpcv1.Clone{
+					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+					GitRef: optional.StringPtr("master"),
+				},
+				Build: &grpcv1.Build{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"go"},
+					Args:    []string{"build", "-o", "client", "./client/main.go"},
+				},
+				Run: grpcv1.Run{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"./client"},
+					Args:    []string{"-verbose"},
+				},
+			},
+			{
+				Name:     optional.StringPtr("client-2"),
+				Language: "go",
+				Pool:     optional.StringPtr("workers-a"),
+				Clone: &grpcv1.Clone{
+					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+					GitRef: optional.StringPtr("master"),
+				},
+				Build: &grpcv1.Build{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"go"},
+					Args:    []string{"build", "-o", "client", "./client/main.go"},
+				},
+				Run: grpcv1.Run{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"./client"},
+					Args:    []string{"-verbose"},
+				},
+				XDSServer: &grpcv1.XDSServer{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
+					Command: []string{"./xds"},
+					Args:    []string{"-verbose"},
+				},
+			},
+		}
+		actual, err := IsClientsSpecValid(clients)
+		Expect(actual).To(BeFalse())
+		Expect(err).To(HaveOccurred())
+	})
+	It("returns false and an error for a client set that only some of the clients have sidecar container", func() {
+		clients = &[]grpcv1.Client{
+			{
+				Name:     optional.StringPtr("client-1"),
+				Language: "go",
+				Pool:     optional.StringPtr("workers-a"),
+				Clone: &grpcv1.Clone{
+					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+					GitRef: optional.StringPtr("master"),
+				},
+				Build: &grpcv1.Build{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"go"},
+					Args:    []string{"build", "-o", "client", "./client/main.go"},
+				},
+				Run: grpcv1.Run{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"./client"},
+					Args:    []string{"-verbose"},
+				},
+				XDSServer: &grpcv1.XDSServer{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
+					Command: []string{"./xds"},
+					Args:    []string{"-verbose"},
+				},
+			},
+			{
+				Name:     optional.StringPtr("client-2"),
+				Language: "go",
+				Pool:     optional.StringPtr("workers-a"),
+				Clone: &grpcv1.Clone{
+					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+					GitRef: optional.StringPtr("master"),
+				},
+				Build: &grpcv1.Build{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"go"},
+					Args:    []string{"build", "-o", "client", "./client/main.go"},
+				},
+				Run: grpcv1.Run{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"./client"},
+					Args:    []string{"-verbose"},
+				},
+				XDSServer: &grpcv1.XDSServer{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
+					Command: []string{"./xds"},
+					Args:    []string{"-verbose"},
+				},
+				Sidecar: &grpcv1.Sidecar{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/sidecar:v1"),
+					Command: []string{"./sidecar"},
+					Args:    []string{"-verbose"},
+				},
+			},
+		}
+		actual, err := IsClientsSpecValid(clients)
+		Expect(actual).To(BeFalse())
+		Expect(err).To(HaveOccurred())
+	})
+	It("returns false and an error for a client set that at lease one of the client have sidecar container but no xds container", func() {
+		clients = &[]grpcv1.Client{
+			{
+				Name:     optional.StringPtr("client-2"),
+				Language: "go",
+				Pool:     optional.StringPtr("workers-a"),
+				Clone: &grpcv1.Clone{
+					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+					GitRef: optional.StringPtr("master"),
+				},
+				Build: &grpcv1.Build{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"go"},
+					Args:    []string{"build", "-o", "client", "./client/main.go"},
+				},
+				Run: grpcv1.Run{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"./client"},
+					Args:    []string{"-verbose"},
+				},
+				Sidecar: &grpcv1.Sidecar{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/sidecar:v1"),
+					Command: []string{"./sidecar"},
+					Args:    []string{"-verbose"},
+				},
+			},
+		}
+		actual, err := IsClientsSpecValid(clients)
+		Expect(actual).To(BeFalse())
+		Expect(err).To(HaveOccurred())
+	})
+	It("returns true and nil for a client set that all clients only xds container", func() {
+		clients = &[]grpcv1.Client{
+			{
+				Name:     optional.StringPtr("client-2"),
+				Language: "go",
+				Pool:     optional.StringPtr("workers-a"),
+				Clone: &grpcv1.Clone{
+					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+					GitRef: optional.StringPtr("master"),
+				},
+				Build: &grpcv1.Build{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"go"},
+					Args:    []string{"build", "-o", "client", "./client/main.go"},
+				},
+				Run: grpcv1.Run{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"./client"},
+					Args:    []string{"-verbose"},
+				},
+				XDSServer: &grpcv1.XDSServer{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
+					Command: []string{"./xds"},
+					Args:    []string{"-verbose"},
+				},
+			},
+		}
+		actual, err := IsClientsSpecValid(clients)
+		Expect(actual).To(BeTrue())
+		Expect(err).ToNot(HaveOccurred())
+	})
+	It("returns true and nil for a client set that all clients have xds server and sidecar containers", func() {
+		clients = &[]grpcv1.Client{
+			{
+				Name:     optional.StringPtr("client-2"),
+				Language: "go",
+				Pool:     optional.StringPtr("workers-a"),
+				Clone: &grpcv1.Clone{
+					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+					GitRef: optional.StringPtr("master"),
+				},
+				Build: &grpcv1.Build{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"go"},
+					Args:    []string{"build", "-o", "client", "./client/main.go"},
+				},
+				Run: grpcv1.Run{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"./client"},
+					Args:    []string{"-verbose"},
+				},
+				XDSServer: &grpcv1.XDSServer{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/xds:v1"),
+					Command: []string{"./xds"},
+					Args:    []string{"-verbose"},
+				},
+				Sidecar: &grpcv1.Sidecar{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/sidecar:v1"),
+					Command: []string{"./sidecar"},
+					Args:    []string{"-verbose"},
+				},
+			},
+		}
+		actual, err := IsClientsSpecValid(clients)
+		Expect(actual).To(BeTrue())
+		Expect(err).ToNot(HaveOccurred())
+	})
+	It("returns true and nil for a client set that all clients are running regular test", func() {
+		clients = &[]grpcv1.Client{
+			{
+				Name:     optional.StringPtr("client-2"),
+				Language: "go",
+				Pool:     optional.StringPtr("workers-a"),
+				Clone: &grpcv1.Clone{
+					Image:  optional.StringPtr("gcr.io/grpc-test-example/clone:v1"),
+					Repo:   optional.StringPtr("https://github.com/grpc/test-infra.git"),
+					GitRef: optional.StringPtr("master"),
+				},
+				Build: &grpcv1.Build{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"go"},
+					Args:    []string{"build", "-o", "client", "./client/main.go"},
+				},
+				Run: grpcv1.Run{
+					Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Command: []string{"./client"},
+					Args:    []string{"-verbose"},
+				},
+			},
+		}
+		actual, err := IsClientsSpecValid(clients)
+		Expect(actual).To(BeTrue())
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

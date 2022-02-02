@@ -85,13 +85,13 @@ func newDefaults() *config.Defaults {
 			Driver: "default-driver-pool",
 			Server: "default-server-pool",
 		},
-		CloneImage:             "gcr.io/grpc-fake-project/test-infra/clone",
-		ReadyImage:             "gcr.io/grpc-fake-project/test-infra/ready",
-		DriverImage:            "gcr.io/grpc-fake-project/test-infra/driver",
-		PSMTestServerPort:      "10010",
-		XDSEndpointUpdatePort:  "18005",
-		SidecarListenerPort:    "10000",
-		NonProxiedTargetString: "target-string",
+		CloneImage:            "gcr.io/grpc-fake-project/test-infra/clone",
+		ReadyImage:            "gcr.io/grpc-fake-project/test-infra/ready",
+		DriverImage:           "gcr.io/grpc-fake-project/test-infra/driver",
+		PSMTestServerPort:     "10010",
+		XDSTestUpdatePort:     "18005",
+		SidecarListenerPort:   "10000",
+		ProxylessTargetString: "target-string",
 		Languages: []config.LanguageDefault{
 			{
 				Language:   "cxx",
@@ -232,7 +232,7 @@ func newLoadTestWithPSM() *grpcv1.LoadTest {
 
 	test := newLoadTestWithoutClients()
 	client := newRegularClient()
-	client.XDS = &grpcv1.XDSServer{
+	client.XDSServer = &grpcv1.XDSServer{
 		Image:   &xdsImage,
 		Command: xdsCommand,
 		Args:    xdsArgs}
@@ -252,7 +252,7 @@ func newLoadTestWithSidecar() *grpcv1.LoadTest {
 
 	test := newLoadTestWithoutClients()
 	client := newRegularClient()
-	client.XDS = &grpcv1.XDSServer{
+	client.XDSServer = &grpcv1.XDSServer{
 		Image:   &xdsImage,
 		Command: xdsCommand,
 		Args:    xdsArgs}

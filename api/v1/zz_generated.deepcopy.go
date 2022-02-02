@@ -91,8 +91,8 @@ func (in *Client) DeepCopyInto(out *Client) {
 		*out = new(Sidecar)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.XDS != nil {
-		in, out := &in.XDS, &out.XDS
+	if in.XDSServer != nil {
+		in, out := &in.XDSServer, &out.XDSServer
 		*out = new(XDSServer)
 		(*in).DeepCopyInto(*out)
 	}

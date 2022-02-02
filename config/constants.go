@@ -70,21 +70,6 @@ const (
 	// response time for a pod after timeout.
 	KillAfterEnv = "KILL_AFTER"
 
-	// NonProxiedTargetStringEnv specifies the target string that PSM test client send
-	// traffic to.
-	NonProxiedTargetStringEnv = "NON_PROXIED_TARGET_STRING"
-
-	// NonProxiedBootstrapVolumeName holds the name of the volume which allows client to
-	// have access to bootstrap.json file for gRPC non-proxied client.
-	NonProxiedBootstrapVolumeName = "non-proxied-bootstrap"
-
-	// NonProxiedBootstrapMountPath stores the directory where the bootstrap.json file
-	// resides. This file is required by gRPC proxyless client.
-	NonProxiedBootstrapMountPath = "/bootstrap"
-
-	// NonProxied holds the non-proxied type of the PSM test.
-	NonProxied = "non-proxied"
-
 	// PoolLabel is the key for a label which will have the name of a pool as
 	// the value.
 	PoolLabel = "pool"
@@ -102,6 +87,14 @@ const (
 
 	// ProxylessType holds the proxyless type of the PSM test.
 	ProxylessType = "proxyless"
+
+	// ProxylessTargetStringEnv specifies the target string that PSM test client send
+	// traffic to.
+	ProxylessTargetStringEnv = "PROXYLESS_TARGET_STRING"
+
+	// ProxylessBootstrapVolumeName holds the name of the volume which allows client to
+	// have access to bootstrap.json file for gRPC proxyless client.
+	ProxylessBootstrapVolumeName = "proxyless-bootstrap"
 
 	// ReadyInitContainerName holds the name of the init container that blocks a
 	// driver from running until all worker pods are ready.
@@ -173,5 +166,9 @@ const (
 
 	// XDSServerContainerName holds the name of the xds server container which is a
 	// fake controller for Envoy and proxless gRPC client
-	XDSServerContainerName = "xds"
+	XDSServerContainerName = "xdsServer"
+
+	// XDSTestUpdatePortEnv specifies the name of the env variable that sets the
+	// port listened on for test update
+	XDSTestUpdatePortEnv = "XDS_TEST_UPDATE_PORT"
 )

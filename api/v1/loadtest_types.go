@@ -323,9 +323,9 @@ type Client struct {
 	// the proxy for the test associated with a proxy.
 	Sidecar *Sidecar `json:"sidecar,omitempty"`
 
-	// XDS describes the XDS container, which is the runtime of
+	// XDSServer describes the XDS server container, which is the runtime of
 	// the XDS Server of the test.
-	XDS *XDSServer `json:"xds,omitempty"`
+	XDSServer *XDSServer `json:"xdsServer,omitempty"`
 
 	// Run describes the run container, which is the runtime of the client for
 	// the actual test.

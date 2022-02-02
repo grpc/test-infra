@@ -15,9 +15,9 @@ killAfter: {{ .KillAfter }}
 
 psmTestServerPort: {{ .PSMTestServerPort }}
 
-xdsEndpointUpdatePort: {{ .XDSEndpointUpdatePort }}
+xdsTestUpdatePort: {{ .XDSTestUpdatePort }}
 
-nonProxiedTargetString: {{ .NonProxiedTargetString }}
+proxylessTargetString: {{ .proxylessTargetString }}
 
 sidecarListenerPort: {{ .SidecarListenerPort }}
 

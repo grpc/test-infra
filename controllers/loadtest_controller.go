@@ -130,9 +130,15 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return ctrl.Result{Requeue: true}, err
 		}
 
+		if clientSpecValid, err := kubehelpers.IsClientsSpecValid(&test.Spec.Clients); !clientSpecValid {
+			logger.Error(err, "validation failed in checking clients' spec: %v")
+			return ctrl.Result{Requeue: true}, err
+		}
+
 		isPSMTest, testTypeErr := kubehelpers.IsPSMTest(&test.Spec.Clients)
 		if testTypeErr != nil {
 			logger.Error(testTypeErr, "failed to update the scenario configmap")
+			return ctrl.Result{Requeue: true}, err
 		}
 
 		scenariosJSON := test.Spec.ScenariosJSON

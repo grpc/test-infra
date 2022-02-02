@@ -34,13 +34,13 @@ var _ = Describe("Defaults", func() {
 				Driver: "default-driver-pool",
 				Server: "default-server-pool",
 			},
-			CloneImage:             "gcr.io/grpc-fake-project/test-infra/clone",
-			ReadyImage:             "gcr.io/grpc-fake-project/test-infra/ready",
-			DriverImage:            "gcr.io/grpc-fake-project/test-infra/driver",
-			PSMTestServerPort:      "10010",
-			XDSEndpointUpdatePort:  "18005",
-			SidecarListenerPort:    "10000",
-			NonProxiedTargetString: "target-string",
+			CloneImage:            "gcr.io/grpc-fake-project/test-infra/clone",
+			ReadyImage:            "gcr.io/grpc-fake-project/test-infra/ready",
+			DriverImage:           "gcr.io/grpc-fake-project/test-infra/driver",
+			PSMTestServerPort:     "10010",
+			XDSTestUpdatePort:     "18005",
+			SidecarListenerPort:   "10000",
+			ProxylessTargetString: "target-string",
 			Languages: []LanguageDefault{
 				{
 					Language:   "cxx",
@@ -107,13 +107,13 @@ var _ = Describe("Defaults", func() {
 		})
 
 		It("returns an error when the test target string is not set", func() {
-			defaults.NonProxiedTargetString = ""
+			defaults.ProxylessTargetString = ""
 			err := defaults.Validate()
 			Expect(err).To(HaveOccurred())
 		})
 
-		It("returns an error when the xds endpoint update server port is not set", func() {
-			defaults.XDSEndpointUpdatePort = ""
+		It("returns an error when the xds test update server port is not set", func() {
+			defaults.XDSTestUpdatePort = ""
 			err := defaults.Validate()
 			Expect(err).To(HaveOccurred())
 		})

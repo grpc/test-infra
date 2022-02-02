@@ -38,15 +38,15 @@ import (
 // DefaultsData contains the values for fields that are accessible by the
 // defaults template file.
 type DefaultsData struct {
-	Version                string
-	InitImagePrefix        string
-	ImagePrefix            string
-	BuildImagePrefix       string
-	KillAfter              float64
-	PSMTestServerPort      string
-	XDSEndpointUpdatePort  string
-	NonProxiedTargetString string
-	SidecarListenerPort    string
+	Version               string
+	InitImagePrefix       string
+	ImagePrefix           string
+	BuildImagePrefix      string
+	KillAfter             float64
+	PSMTestServerPort     string
+	XDSTestUpdatePort     string
+	ProxylessTargetString string
+	SidecarListenerPort   string
 }
 
 func init() {
@@ -97,13 +97,13 @@ container images that are not used as init containers.`)
 
 	flag.Float64Var(&data.KillAfter, "kill-after", math.NaN(), "time allowed for pod to respond after timeout, the value should be in seconds")
 
-	flag.StringVar(&data.NonProxiedTargetString, "non-proxied-target-string", "", `target_string in xds:///target_string for test client to know where to send the test traffic in PSM tests`)
+	flag.StringVar(&data.ProxylessTargetString, "proxyless-hostname", "", `target string in xds:///target_string for test client to know where to send the test traffic in PSM tests`)
 
 	flag.StringVar(&data.PSMTestServerPort, "psm-test-server-port", "", `port of test server in PSM test`)
 
 	flag.StringVar(&data.SidecarListenerPort, "sidecar-listener-port", "", `listener port of the listener serving proxy`)
 
-	flag.StringVar(&data.XDSEndpointUpdatePort, "xds-endpoint-update-port", "server port that the xds server listeners on for endpoint update ", ``)
+	flag.StringVar(&data.XDSTestUpdatePort, "xds-test-update-port", "server port that the xds server listens on for endpoint update ", ``)
 
 	flag.Parse()
 
@@ -116,6 +116,7 @@ container images that are not used as init containers.`)
 	}
 
 	templ, err := template.ParseFiles(flag.Arg(0))
+
 	if err != nil {
 		exitWithErrorf(1, true, "could not open and parse <template-file>: %v", err)
 	}
