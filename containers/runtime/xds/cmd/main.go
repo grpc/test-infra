@@ -5,10 +5,14 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
+	"google.golang.org/grpc"
 
 	testconfig "github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/containers/runtime/xds"
@@ -105,6 +109,9 @@ func main() {
 	// Start the endpoint update server
 	testChannel := make(chan xds.TestInfo)
 
+	// Don't need to handle this server since if the test was terminated
+	// at this stage there must be something wrong with the test, no need
+	// for grace termination.
 	go xds.RunUpdateServer(testChannel, testUpdatePort)
 
 	var testInfo xds.TestInfo
@@ -136,6 +143,20 @@ func main() {
 		ctx := context.Background()
 		cb := &test.Callbacks{Debug: true}
 		srv := server.NewServer(ctx, cache, cb)
-		xds.RunxDSServer(ctx, srv, xdsServerPort)
+
+		grpcServer := grpc.NewServer()
+
+		// This is to gracefully shutdown the xds server
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGTERM)
+		go func() {
+			sig, ok := <-sigs
+			l.Infof("test complete, gracefully shutting down xds server, shutting down on %v", sig)
+			if ok {
+				grpcServer.GracefulStop()
+			}
+		}()
+
+		xds.RunxDSServer(ctx, srv, xdsServerPort, grpcServer)
 	}
 }

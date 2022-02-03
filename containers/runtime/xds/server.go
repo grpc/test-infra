@@ -12,8 +12,7 @@ import (
 )
 
 // RunxDSServer starts an xDS server at the given port.
-func RunxDSServer(ctx context.Context, srv server.Server, port uint) {
-	grpcServer := grpc.NewServer()
+func RunxDSServer(ctx context.Context, srv server.Server, port uint, grpcServer *grpc.Server) {
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
