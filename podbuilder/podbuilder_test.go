@@ -287,15 +287,15 @@ var _ = Describe("PodBuilder", func() {
 
 		Context("run container", func() {
 			It("creates volume mount for workspace", func() {
-				client.Run = grpcv1.Run{}
-				client.Run.Command = []string{"go"}
-				client.Run.Args = []string{"run", "main.go"}
+				client.Run = []corev1.Container{{}}
+				client.Run[0].Command = []string{"go"}
+				client.Run[0].Args = []string{"run", "main.go"}
 
 				pod, err := builder.PodForClient(client)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
 				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(runContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
 					Name:      config.WorkspaceVolumeName,
@@ -304,15 +304,15 @@ var _ = Describe("PodBuilder", func() {
 			})
 
 			It("exposes the driver port", func() {
-				client.Run = grpcv1.Run{}
-				client.Run.Command = []string{"go"}
-				client.Run.Args = []string{"run", "main.go"}
+				client.Run = []corev1.Container{{}}
+				client.Run[0].Command = []string{"go"}
+				client.Run[0].Args = []string{"run", "main.go"}
 
 				pod, err := builder.PodForClient(client)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
 				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
 			})
@@ -533,15 +533,15 @@ var _ = Describe("PodBuilder", func() {
 
 		Context("run container", func() {
 			It("creates volume mount for workspace", func() {
-				server.Run = grpcv1.Run{}
-				server.Run.Command = []string{"go"}
-				server.Run.Args = []string{"run", "main.go"}
+				server.Run = []corev1.Container{{}}
+				server.Run[0].Command = []string{"go"}
+				server.Run[0].Args = []string{"run", "main.go"}
 
 				pod, err := builder.PodForServer(server)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
 				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(runContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
 					Name:      config.WorkspaceVolumeName,
@@ -550,15 +550,15 @@ var _ = Describe("PodBuilder", func() {
 			})
 
 			It("exposes the driver port", func() {
-				server.Run = grpcv1.Run{}
-				server.Run.Command = []string{"go"}
-				server.Run.Args = []string{"run", "main.go"}
+				server.Run = []corev1.Container{{}}
+				server.Run[0].Command = []string{"go"}
+				server.Run[0].Args = []string{"run", "main.go"}
 
 				pod, err := builder.PodForServer(server)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
 				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
 			})
@@ -779,15 +779,15 @@ var _ = Describe("PodBuilder", func() {
 
 		Context("run container", func() {
 			It("creates volume mount for workspace", func() {
-				driver.Run = grpcv1.Run{}
-				driver.Run.Command = []string{"go"}
-				driver.Run.Args = []string{"run", "main.go"}
+				driver.Run = []corev1.Container{{}}
+				driver.Run[0].Command = []string{"go"}
+				driver.Run[0].Args = []string{"run", "main.go"}
 
 				pod, err := builder.PodForDriver(driver)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
 				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(runContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
 					Name:      config.WorkspaceVolumeName,

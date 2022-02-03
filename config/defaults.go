@@ -150,14 +150,14 @@ func (d *Defaults) setBuildOrDefault(im *imageMap, language string, build *grpcv
 
 // setRunOrDefault sets the default runtime image if it is unset. It returns an
 // error if there is no default runtime image for the provided language.
-func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *grpcv1.Run) error {
-	if run != nil && run.Image == nil {
+func (d *Defaults) setRunOrDefault(im *imageMap, language string, run *corev1.Container) error {
+	if run != nil && run.Image == "" {
 		runImage, err := im.runImage(language)
 		if err != nil {
 			return errors.Wrap(err, "could not infer default run image")
 		}
 
-		run.Image = &runImage
+		run.Image = runImage
 
 		run.Env = append(run.Env, corev1.EnvVar{
 			Name:  KillAfterEnv,
@@ -181,8 +181,12 @@ func (d *Defaults) setDriverDefaults(im *imageMap, testSpec *grpcv1.LoadTestSpec
 		driver.Language = "cxx"
 	}
 
-	if driver.Run.Image == nil {
-		driver.Run.Image = &d.DriverImage
+	if len(driver.Run) == 0 {
+		driver.Run = []corev1.Container{{Name: WorkerContainerName}}
+	}
+
+	if driver.Run[0].Image == "" {
+		driver.Run[0].Image = d.DriverImage
 	}
 
 	driver.Name = unwrapStrOrUUID(driver.Name)
@@ -192,7 +196,7 @@ func (d *Defaults) setDriverDefaults(im *imageMap, testSpec *grpcv1.LoadTestSpec
 		return errors.Wrap(err, "failed to set defaults on instructions to build the driver")
 	}
 
-	if err := d.setRunOrDefault(im, driver.Language, &driver.Run); err != nil {
+	if err := d.setRunOrDefault(im, driver.Language, &driver.Run[0]); err != nil {
 		return errors.Wrap(err, "failed to set defaults on instructions to run the driver")
 	}
 
@@ -213,7 +217,11 @@ func (d *Defaults) setClientDefaults(im *imageMap, client *grpcv1.Client) error 
 		return errors.Wrap(err, "failed to set defaults on instructions to build the client")
 	}
 
-	if err := d.setRunOrDefault(im, client.Language, &client.Run); err != nil {
+	if len(client.Run) == 0 {
+		client.Run = []corev1.Container{{Name: WorkerContainerName}}
+	}
+
+	if err := d.setRunOrDefault(im, client.Language, &client.Run[0]); err != nil {
 		return errors.Wrap(err, "failed to set defaults on instructions to run the client")
 	}
 
@@ -234,7 +242,11 @@ func (d *Defaults) setServerDefaults(im *imageMap, server *grpcv1.Server) error 
 		return errors.Wrap(err, "failed to set defaults on instructions to build the server")
 	}
 
-	if err := d.setRunOrDefault(im, server.Language, &server.Run); err != nil {
+	if len(server.Run) == 0 {
+		server.Run = []corev1.Container{{Name: WorkerContainerName}}
+	}
+
+	if err := d.setRunOrDefault(im, server.Language, &server.Run[0]); err != nil {
 		return errors.Wrap(err, "failed to set defaults on instructions to run the server")
 	}
 

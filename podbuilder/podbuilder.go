@@ -114,7 +114,7 @@ type PodBuilder struct {
 	pool     string
 	clone    *grpcv1.Clone
 	build    *grpcv1.Build
-	run      *grpcv1.Run
+	run      []corev1.Container
 }
 
 // New creates a PodBuilder instance. It accepts and uses defaults and a test to
@@ -123,6 +123,7 @@ func New(defaults *config.Defaults, test *grpcv1.LoadTest) *PodBuilder {
 	return &PodBuilder{
 		test:     test,
 		defaults: defaults,
+		run:      []corev1.Container{{}},
 	}
 }
 
@@ -133,7 +134,9 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(client.Pool)
 	pb.clone = client.Clone
 	pb.build = client.Build
-	pb.run = &client.Run
+	// Pods are build after setting the default, so at least one container
+	// in the client.Run has been set.
+	pb.run[0] = client.Run[0]
 
 	pod := pb.newPod()
 
@@ -147,7 +150,7 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
 
 	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  config.DriverPortEnv,
@@ -169,7 +172,9 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(driver.Pool)
 	pb.clone = driver.Clone
 	pb.build = driver.Build
-	pb.run = &driver.Run
+	// Pods are build after setting the default, so at least one container
+	// in the driver.Run has been set.
+	pb.run[0] = driver.Run[0]
 
 	pod := pb.newPod()
 
@@ -183,7 +188,7 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
 	addReadyInitContainer(pb.defaults, pb.test, &pod.Spec, runContainer)
 
 	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
@@ -233,7 +238,9 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(server.Pool)
 	pb.clone = server.Clone
 	pb.build = server.Build
-	pb.run = &server.Run
+	// Pods are build after setting the default, so at least one container
+	// in the server.Run has been set.
+	pb.run[0] = server.Run[0]
 
 	pod := pb.newPod()
 
@@ -247,7 +254,7 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
 
 	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  config.DriverPortEnv,
@@ -334,10 +341,10 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 			InitContainers: initContainers,
 			Containers: []corev1.Container{
 				{
-					Name:    config.RunContainerName,
-					Image:   safeStrUnwrap(pb.run.Image),
-					Command: pb.run.Command,
-					Args:    pb.run.Args,
+					Name:    config.RunContainerListName,
+					Image:   safeStrUnwrap(&pb.run[0].Image),
+					Command: pb.run[0].Command,
+					Args:    pb.run[0].Args,
 					Env: []corev1.EnvVar{
 						{
 							Name:  config.KillAfterEnv,

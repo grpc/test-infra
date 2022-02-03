@@ -112,9 +112,9 @@ func newLoadTestWithMultipleClientsAndServers(clientNum int, serverNum int) *grp
 				Name:     &driverComponentName,
 				Language: "cxx",
 				Pool:     &driverPool,
-				Run: grpcv1.Run{
-					Image: &driverImage,
-				},
+				Run: []corev1.Container{{
+					Image: driverImage,
+				}},
 			},
 			Results: &grpcv1.Results{
 				BigQueryTable: &bigQueryTable,
@@ -143,11 +143,11 @@ func newLoadTestWithMultipleClientsAndServers(clientNum int, serverNum int) *grp
 				Command: buildCommand,
 				Args:    buildArgs,
 			},
-			Run: grpcv1.Run{
-				Image:   &runImage,
+			Run: []corev1.Container{{
+				Image:   runImage,
 				Command: runCommand,
 				Args:    serverRunArgs,
-			},
+			}},
 		})
 	}
 
@@ -170,11 +170,11 @@ func newLoadTestWithMultipleClientsAndServers(clientNum int, serverNum int) *grp
 				Command: buildCommand,
 				Args:    buildArgs,
 			},
-			Run: grpcv1.Run{
-				Image:   &runImage,
+			Run: []corev1.Container{{
+				Image:   runImage,
 				Command: runCommand,
 				Args:    clientRunArgs,
-			},
+			}},
 		})
 	}
 	createdLoadTest.SetUID(types.UID("matching-test-uid"))

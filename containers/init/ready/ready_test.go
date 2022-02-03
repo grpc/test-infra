@@ -46,7 +46,7 @@ var _ = Describe("WaitForReadyPods", func() {
 		slowDuration = 100 * time.Millisecond * timeMultiplier
 
 		driverPod = newTestPod("driver")
-		driverRunContainer := kubehelpers.ContainerForName(config.RunContainerName, driverPod.Spec.Containers)
+		driverRunContainer := kubehelpers.ContainerForName(config.RunContainerListName, driverPod.Spec.Containers)
 		driverRunContainer.Ports = nil
 
 		serverPod = newTestPod("server")
@@ -203,7 +203,7 @@ var _ = Describe("WaitForReadyPods", func() {
 		var customPort int32 = 9542
 		client2Pod := newTestPod("client")
 		client2Pod.Name = "client-2"
-		client2PodContainer := kubehelpers.ContainerForName(config.RunContainerName, client2Pod.Spec.Containers)
+		client2PodContainer := kubehelpers.ContainerForName(config.RunContainerListName, client2Pod.Spec.Containers)
 		client2PodContainer.Ports[0].ContainerPort = customPort
 
 		podListerMock := &PodListerMock{

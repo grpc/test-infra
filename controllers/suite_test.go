@@ -162,9 +162,9 @@ func newLoadTest() *grpcv1.LoadTest {
 				Name:     optional.StringPtr("driver"),
 				Language: "cxx",
 				Pool:     optional.StringPtr("drivers"),
-				Run: grpcv1.Run{
-					Image: optional.StringPtr("gcr.io/grpc-test-example/driver:v1"),
-				},
+				Run: []corev1.Container{{
+					Image: *optional.StringPtr("gcr.io/grpc-test-example/driver:v1"),
+				}},
 			},
 			Servers: []grpcv1.Server{
 				{
@@ -181,11 +181,11 @@ func newLoadTest() *grpcv1.LoadTest {
 						Command: []string{"go"},
 						Args:    []string{"build", "-o", "server", "./server/main.go"},
 					},
-					Run: grpcv1.Run{
-						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Run: []corev1.Container{{
+						Image:   *optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
 						Command: []string{"./server"},
 						Args:    []string{"-verbose"},
-					},
+					}},
 				},
 			},
 			Clients: []grpcv1.Client{
@@ -203,11 +203,11 @@ func newLoadTest() *grpcv1.LoadTest {
 						Command: []string{"go"},
 						Args:    []string{"build", "-o", "client", "./client/main.go"},
 					},
-					Run: grpcv1.Run{
-						Image:   optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+					Run: []corev1.Container{{
+						Image:   *optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
 						Command: []string{"./client"},
 						Args:    []string{"-verbose"},
-					},
+					}},
 				},
 			},
 			Results: &grpcv1.Results{

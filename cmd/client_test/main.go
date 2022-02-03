@@ -114,9 +114,9 @@ func main() {
 							Command: []string{"go"},
 							Args:    []string{"build", "-o", "/src/workspace/bin/worker", "./benchmark/worker"},
 						},
-						Run: grpcv1.Run{
+						Run: []corev1.Container{{
 							Command: []string{"/src/workspace/bin/worker"},
-						},
+						}},
 					},
 				},
 				Clients: []grpcv1.Client{
@@ -130,9 +130,9 @@ func main() {
 							Command: []string{"go"},
 							Args:    []string{"build", "-o", "/src/workspace/bin/worker", "./benchmark/worker"},
 						},
-						Run: grpcv1.Run{
+						Run: []corev1.Container{{
 							Command: []string{"/src/workspace/bin/worker"},
-						},
+						}},
 					},
 				},
 				TimeoutSeconds: 900,

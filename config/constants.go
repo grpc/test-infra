@@ -98,9 +98,9 @@ const (
 	// example, "loadtest-role=server" indicates a server component.
 	RoleLabel = "loadtest-role"
 
-	// RunContainerName holds the name of the main container where the test is
-	// executed.
-	RunContainerName = "run"
+	// RunContainerListName holds the name of the list of containers that run
+	// simultaneously after the init containers.
+	RunContainerListName = "run"
 
 	// ScenariosFileEnv specifies the name of an env variable that specifies the
 	// path to a JSON file with scenarios.
@@ -121,6 +121,10 @@ const (
 	// WorkspaceVolumeName contains the name of the volume that is shared between
 	// the init containers and containers for a driver or worker pod.
 	WorkspaceVolumeName = "workspace"
+
+	// WorkerContainerName holds the name of the worker container where the test is
+	// executed.
+	WorkerContainerName = "worker"
 
 	// KillAfterEnv specifies the name of the env variable that sets the allowed response time for a pod after timeout.
 	KillAfterEnv = "KILL_AFTER"
