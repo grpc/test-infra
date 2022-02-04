@@ -98,9 +98,10 @@ const (
 	// example, "loadtest-role=server" indicates a server component.
 	RoleLabel = "loadtest-role"
 
-	// RunContainerListName holds the name of the list of containers that run
-	// simultaneously after the init containers.
-	RunContainerListName = "run"
+	// RunContainerName holds the name of the main container where the test is
+	// executed. The runtime for the test may contain multiple run containers.
+	// The main container is always the first container on the list.
+	RunContainerName = "run"
 
 	// ScenariosFileEnv specifies the name of an env variable that specifies the
 	// path to a JSON file with scenarios.

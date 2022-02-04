@@ -2910,8 +2910,8 @@ spec:
                         will choose a pool based on defaults.
                       type: string
                     run:
-                      description: Run describes a list of run container, , which
-                        is the runtime of the server for the actual test.
+                      description: Run describes a list of run containers, which is
+                        the runtime of the server for the actual test.
                       items:
                         description: A single application container that you want
                           to run within a pod.

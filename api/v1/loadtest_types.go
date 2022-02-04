@@ -178,7 +178,7 @@ type Server struct {
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
-	// Run describes a list of run container, , which is the runtime of the server for
+	// Run describes a list of run containers, which is the runtime of the server for
 	// the actual test.
 	Run []corev1.Container `json:"run"`
 }

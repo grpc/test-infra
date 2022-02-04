@@ -295,7 +295,7 @@ var _ = Describe("PodBuilder", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(runContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
 					Name:      config.WorkspaceVolumeName,
@@ -312,7 +312,7 @@ var _ = Describe("PodBuilder", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
 				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
 			})
@@ -541,7 +541,7 @@ var _ = Describe("PodBuilder", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(runContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
 					Name:      config.WorkspaceVolumeName,
@@ -558,7 +558,7 @@ var _ = Describe("PodBuilder", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
 				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
 			})
@@ -787,7 +787,7 @@ var _ = Describe("PodBuilder", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(pod.Spec.Containers).ToNot(BeEmpty())
 
-				runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(runContainer.VolumeMounts).ToNot(BeEmpty())
 				Expect(runContainer.VolumeMounts).To(ContainElement(corev1.VolumeMount{
 					Name:      config.WorkspaceVolumeName,

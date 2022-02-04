@@ -134,8 +134,6 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(client.Pool)
 	pb.clone = client.Clone
 	pb.build = client.Build
-	// Pods are build after setting the default, so at least one container
-	// in the client.Run has been set.
 	pb.run[0] = client.Run[0]
 
 	pod := pb.newPod()
@@ -150,7 +148,7 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 
 	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  config.DriverPortEnv,
@@ -188,7 +186,7 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 	addReadyInitContainer(pb.defaults, pb.test, &pod.Spec, runContainer)
 
 	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
@@ -254,7 +252,7 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerListName, pod.Spec.Containers)
+	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 
 	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  config.DriverPortEnv,
@@ -341,7 +339,7 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 			InitContainers: initContainers,
 			Containers: []corev1.Container{
 				{
-					Name:    config.RunContainerListName,
+					Name:    config.RunContainerName,
 					Image:   safeStrUnwrap(&pb.run[0].Image),
 					Command: pb.run[0].Command,
 					Args:    pb.run[0].Args,
