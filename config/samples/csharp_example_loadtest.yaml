@@ -23,7 +23,7 @@ spec:
     language: csharp
     name: '0'
     run:
-      args:
+    - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
@@ -31,10 +31,11 @@ spec:
             --driver_port="${DRIVER_PORT}"
       command:
       - bash
+      name: main
   driver:
     language: cxx
     name: '0'
-    run: {}
+    run: []
   scenariosJSON: |
     {
       "scenarios": {
@@ -104,7 +105,7 @@ spec:
     language: csharp
     name: '0'
     run:
-      args:
+    - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
@@ -112,5 +113,6 @@ spec:
             --driver_port="${DRIVER_PORT}"
       command:
       - bash
+      name: main
   timeoutSeconds: 900
   ttlSeconds: 86400
