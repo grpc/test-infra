@@ -163,7 +163,7 @@ func newLoadTest() *grpcv1.LoadTest {
 				Language: "cxx",
 				Pool:     optional.StringPtr("drivers"),
 				Run: []corev1.Container{{
-					Image: *optional.StringPtr("gcr.io/grpc-test-example/driver:v1"),
+					Image: "gcr.io/grpc-test-example/driver:v1",
 				}},
 			},
 			Servers: []grpcv1.Server{
@@ -182,7 +182,7 @@ func newLoadTest() *grpcv1.LoadTest {
 						Args:    []string{"build", "-o", "server", "./server/main.go"},
 					},
 					Run: []corev1.Container{{
-						Image:   *optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+						Image:   "gcr.io/grpc-test-example/go:v1",
 						Command: []string{"./server"},
 						Args:    []string{"-verbose"},
 					}},
@@ -204,7 +204,7 @@ func newLoadTest() *grpcv1.LoadTest {
 						Args:    []string{"build", "-o", "client", "./client/main.go"},
 					},
 					Run: []corev1.Container{{
-						Image:   *optional.StringPtr("gcr.io/grpc-test-example/go:v1"),
+						Image:   "gcr.io/grpc-test-example/go:v1",
 						Command: []string{"./client"},
 						Args:    []string{"-verbose"},
 					}},
