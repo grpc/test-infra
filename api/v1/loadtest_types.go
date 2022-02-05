@@ -126,8 +126,8 @@ type Driver struct {
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
-	// Run describes a list of run container, where the first container is the
-	// runtime of the driver for the actual test.
+	// Run describes a list of run containers. The container for the test driver is always
+	// the first container on the list.
 	Run []corev1.Container `json:"run"`
 }
 
@@ -178,8 +178,8 @@ type Server struct {
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
-	// Run describes a list of run containers, which is the runtime of the server for
-	// the actual test.
+	// Run describes a list of run containers. The container for the test server is always
+	// the first container on the list.
 	Run []corev1.Container `json:"run"`
 }
 
@@ -232,8 +232,8 @@ type Client struct {
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
-	// Run describes a list of run container, , which is the runtime of the client for
-	// the actual test.
+	// Run describes a list of run containers. The container for the test client is always
+	// the first container on the list.
 	Run []corev1.Container `json:"run"`
 }
 

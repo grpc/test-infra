@@ -246,8 +246,8 @@ spec:
                         will choose a pool based on defaults.
                       type: string
                     run:
-                      description: Run describes a list of run container, , which
-                        is the runtime of the client for the actual test.
+                      description: Run describes a list of run containers. The container
+                        for the test client is always the first container on the list.
                       items:
                         description: A single application container that you want
                           to run within a pod.
@@ -1579,9 +1579,8 @@ spec:
                       choose a pool based on defaults.
                     type: string
                   run:
-                    description: Run describes a list of run container, where the
-                      first container is the runtime of the driver for the actual
-                      test.
+                    description: Run describes a list of run containers. The container
+                      for the test driver is always the first container on the list.
                     items:
                       description: A single application container that you want to
                         run within a pod.
@@ -2910,8 +2909,8 @@ spec:
                         will choose a pool based on defaults.
                       type: string
                     run:
-                      description: Run describes a list of run containers, which is
-                        the runtime of the server for the actual test.
+                      description: Run describes a list of run containers. The container
+                        for the test server is always the first container on the list.
                       items:
                         description: A single application container that you want
                           to run within a pod.

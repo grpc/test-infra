@@ -27,7 +27,7 @@ spec:
     language: go
     name: '0'
     run:
-    - name: "run"
+    - name: "main"
       args:
       - -c
       - |
@@ -118,7 +118,7 @@ spec:
     language: go
     name: '0'
     run:
-    - name: "run"
+    - name: "main"
       args:
       - -c
       - |

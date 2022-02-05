@@ -101,7 +101,7 @@ const (
 	// RunContainerName holds the name of the main container where the test is
 	// executed. The runtime for the test may contain multiple run containers.
 	// The main container is always the first container on the list.
-	RunContainerName = "run"
+	RunContainerName = "main"
 
 	// ScenariosFileEnv specifies the name of an env variable that specifies the
 	// path to a JSON file with scenarios.
@@ -122,10 +122,6 @@ const (
 	// WorkspaceVolumeName contains the name of the volume that is shared between
 	// the init containers and containers for a driver or worker pod.
 	WorkspaceVolumeName = "workspace"
-
-	// WorkerContainerName holds the name of the worker container where the test is
-	// executed.
-	WorkerContainerName = "worker"
 
 	// KillAfterEnv specifies the name of the env variable that sets the allowed response time for a pod after timeout.
 	KillAfterEnv = "KILL_AFTER"

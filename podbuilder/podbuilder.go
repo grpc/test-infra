@@ -123,7 +123,6 @@ func New(defaults *config.Defaults, test *grpcv1.LoadTest) *PodBuilder {
 	return &PodBuilder{
 		test:     test,
 		defaults: defaults,
-		run:      []corev1.Container{{}},
 	}
 }
 
@@ -134,7 +133,7 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(client.Pool)
 	pb.clone = client.Clone
 	pb.build = client.Build
-	pb.run[0] = client.Run[0]
+	pb.run = client.Run
 
 	pod := pb.newPod()
 
@@ -170,9 +169,7 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(driver.Pool)
 	pb.clone = driver.Clone
 	pb.build = driver.Build
-	// Pods are build after setting the default, so at least one container
-	// in the driver.Run has been set.
-	pb.run[0] = driver.Run[0]
+	pb.run = driver.Run
 
 	pod := pb.newPod()
 
@@ -236,9 +233,7 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(server.Pool)
 	pb.clone = server.Clone
 	pb.build = server.Build
-	// Pods are build after setting the default, so at least one container
-	// in the server.Run has been set.
-	pb.run[0] = server.Run[0]
+	pb.run = server.Run
 
 	pod := pb.newPod()
 
