@@ -1,4 +1,4 @@
-# Dasnboard
+# Dashboard
 
 This folder contains the components necessary to build and deploy a dashboard to
 visualize gRPC OSS benchmarking results.
@@ -33,7 +33,7 @@ benchmarking] page uses the default configuration. The variables
 `REPLICATOR_CONFIG_TEMPLATE` and `DASHBOARDS_CONFIG_DIR` can be set to build
 dashboards with different configurations.
 
-[bigquery]: https://github.com/
+[bigquery]: https://cloud.google.com/bigquery
 [grafana dashboard config]: config/grafana/dashboards/default/
 [grpc performance benchmarking]: https://grpc.io/docs/guides/benchmarking/
 [postgres replicator]: cmd/postgres_replicator/README.md
@@ -48,7 +48,6 @@ table below shows the names and values of the variables in our main dashboard:
 | --------------------------- | --------------------------------------------- |
 | `BQ_PROJECT_ID`             | `grpc-testing`                                |
 | `CLOUD_SQL_INSTANCE`        | `grpc-testing:us-central1:grafana-datasource` |
-| `DEPLOY_TARGET`             | `grafana`                                     |
 | `GCP_DATA_TRANSFER_SERVICE` | `postgres-replicator`                         |
 | `GCP_GRAFANA_SERVICE`       | `grafana`                                     |
 | `GCP_PROJECT_ID`            | `grpc-testing`                                |
@@ -57,7 +56,7 @@ table below shows the names and values of the variables in our main dashboard:
 | `PG_PASS`                   | \*\*\*                                        |
 | `PG_USER`                   | `grafana-user`                                |
 
-Docker files that can be used to build and deply the Postgres replicator and
+Docker files that can be used to build and deploy the Postgres replicator and
 Grafana dashboard are then created with the following commands:
 
 ```shell
