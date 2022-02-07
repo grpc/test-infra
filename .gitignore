@@ -5,6 +5,8 @@
 *.so
 *.dylib
 bin/*
+dashboard/containers/**
+dashboard/bin/*
 **/main
 **/*.out
 
