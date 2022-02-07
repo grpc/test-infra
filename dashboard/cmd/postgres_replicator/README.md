@@ -4,7 +4,7 @@ This tool replicates streaming data from BigQuery into PostgreSQL.
 
 ## Configuration
 
-It is configured with a YAML file. Here is an example configuration file:
+The tool is configured with a YAML file. Here is an example configuration file:
 
 ```yaml
 # Source database settings
@@ -52,7 +52,7 @@ This port number can be overridden via the `PORT` environment variable.
 
 ## Running
 
-From the test-infra project root, run `make replicator`, then
+From the dashboard project root, run `make replicator`, then
 `bin/replicator -c <config_file>`.
 
 When the replicator receives a `GET` request for `/run`, it will transfer new
@@ -64,8 +64,8 @@ ignore additional requests to `/run` (but still return `200`).
 1. The data in the database must be sequentially ordered by time. Specifically,
    there must be a column of BigQuery datatype TIMESTAMP. This timestamp should
    strictly increase for new data.
-2. Configuration only allows for one GCP project at a time.
-3. All table names must be unique, even across multiple BigQuery datasets
+1. Configuration only allows for one GCP project at a time.
+1. All table names must be unique, even across multiple BigQuery datasets
 
 ## How it works
 
@@ -87,13 +87,14 @@ BigQuery table.
 
 For non-nested columns, the replicator currently supports
 
-- FLOAT
-- STRING
-- TIMESTAMP
+- `FLOAT`
+- `STRING`
+- `TIMESTAMP`
 
 BigQuery table fields that are of the `RECORD`/`REPEATED`/`STRUCT`/`ARRAY` type
 are converted to JSON and stored in Postgres as the JSON datatype. To retrieve
-values from the Postgres table, see the [JSON Functions and Operators] page.
+values from the Postgres table, see the documentation on [JSON Functions and
+Operators].
 
 For example, if your BigQuery table has the FLOAT field `stats.client1.latency`,
 this could then be queried and typecast with the following in Postgres:
