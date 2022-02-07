@@ -20,6 +20,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	corev1 "k8s.io/api/core/v1"
+
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 )
 
@@ -240,21 +242,21 @@ var _ = Describe("Defaults", func() {
 
 			It("sets missing image for run container", func() {
 				driver.Language = "cxx"
-				driver.Run.Image = nil
+				driver.Run[0].Image = ""
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(driver.Run.Image).ToNot(BeNil())
-				Expect(*driver.Run.Image).To(Equal(defaults.DriverImage))
+				Expect(driver.Run[0].Image).ToNot(BeEmpty())
+				Expect(driver.Run[0].Image).To(Equal(defaults.DriverImage))
 			})
 
 			It("does not error if run container image cannot be inferred but is set", func() {
 				image := "example-image"
 
 				driver.Language = "fortran" // unknown language
-				driver.Run.Image = &image
-				driver.Run.Command = []string{"do-stuff"}
+				driver.Run[0].Image = image
+				driver.Run[0].Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -349,7 +351,7 @@ var _ = Describe("Defaults", func() {
 
 			It("sets missing image for run container", func() {
 				server.Language = "cxx"
-				server.Run.Image = nil
+				server.Run[0].Image = ""
 
 				expectedRunImage, err := defaultImageMap.runImage(server.Language)
 				Expect(err).ToNot(HaveOccurred())
@@ -357,16 +359,16 @@ var _ = Describe("Defaults", func() {
 				err = defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(server.Run.Image).ToNot(BeNil())
-				Expect(*server.Run.Image).To(Equal(expectedRunImage))
+				Expect(server.Run[0].Image).ToNot(BeEmpty())
+				Expect(server.Run[0].Image).To(Equal(expectedRunImage))
 			})
 
 			It("errors if image for run container cannot be inferred", func() {
 				server.Build = nil // disable build to ensure run is the problem
 
 				server.Language = "fortran" // unknown language
-				server.Run.Image = nil      // no explicit image
-				server.Run.Command = []string{"do-stuff"}
+				server.Run[0].Image = ""    // no explicit image
+				server.Run[0].Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).To(HaveOccurred())
@@ -376,8 +378,8 @@ var _ = Describe("Defaults", func() {
 				image := "example-image"
 
 				server.Language = "fortran" // unknown language
-				server.Run.Image = &image
-				server.Run.Command = []string{"do-stuff"}
+				server.Run[0].Image = image
+				server.Run[0].Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -472,7 +474,7 @@ var _ = Describe("Defaults", func() {
 
 			It("sets missing image for run container", func() {
 				client.Language = "cxx"
-				client.Run.Image = nil
+				client.Run[0].Image = ""
 
 				expectedRunImage, err := defaultImageMap.runImage(client.Language)
 				Expect(err).ToNot(HaveOccurred())
@@ -480,14 +482,14 @@ var _ = Describe("Defaults", func() {
 				err = defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(client.Run.Image).ToNot(BeNil())
-				Expect(*client.Run.Image).To(Equal(expectedRunImage))
+				Expect(client.Run[0].Image).ToNot(BeEmpty())
+				Expect(client.Run[0].Image).To(Equal(expectedRunImage))
 			})
 
 			It("errors if image for run container cannot be inferred", func() {
 				client.Language = "fortran" // unknown language
-				client.Run.Image = nil      // no explicit image
-				client.Run.Command = []string{"do-stuff"}
+				client.Run[0].Image = ""    // no explicit image
+				client.Run[0].Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).To(HaveOccurred())
@@ -497,8 +499,8 @@ var _ = Describe("Defaults", func() {
 				image := "example-image"
 
 				client.Language = "fortran" // unknown language
-				client.Run.Image = &image
-				client.Run.Command = []string{"do-stuff"}
+				client.Run[0].Image = image
+				client.Run[0].Command = []string{"do-stuff"}
 
 				err := defaults.SetLoadTestDefaults(loadtest)
 				Expect(err).ToNot(HaveOccurred())
@@ -537,9 +539,9 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 				Name:     &driverComponentName,
 				Language: "cxx",
 				Pool:     &driverPool,
-				Run: grpcv1.Run{
-					Image: &driverImage,
-				},
+				Run: []corev1.Container{{
+					Image: driverImage,
+				}},
 			},
 
 			Servers: []grpcv1.Server{
@@ -557,11 +559,11 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 						Command: buildCommand,
 						Args:    buildArgs,
 					},
-					Run: grpcv1.Run{
-						Image:   &runImage,
+					Run: []corev1.Container{{
+						Image:   runImage,
 						Command: runCommand,
 						Args:    serverRunArgs,
-					},
+					}},
 				},
 			},
 
@@ -580,11 +582,11 @@ var completeLoadTest = func() *grpcv1.LoadTest {
 						Command: buildCommand,
 						Args:    buildArgs,
 					},
-					Run: grpcv1.Run{
-						Image:   &runImage,
+					Run: []corev1.Container{{
+						Image:   runImage,
 						Command: runCommand,
 						Args:    clientRunArgs,
-					},
+					}},
 				},
 			},
 

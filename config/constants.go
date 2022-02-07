@@ -99,8 +99,9 @@ const (
 	RoleLabel = "loadtest-role"
 
 	// RunContainerName holds the name of the main container where the test is
-	// executed.
-	RunContainerName = "run"
+	// executed. The runtime for the test may contain multiple run containers.
+	// The main container is always the first container on the list.
+	RunContainerName = "main"
 
 	// ScenariosFileEnv specifies the name of an env variable that specifies the
 	// path to a JSON file with scenarios.

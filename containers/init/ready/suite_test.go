@@ -24,6 +24,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -54,7 +55,7 @@ func newTestPod(role string) corev1.Pod {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name: "run",
+					Name: config.RunContainerName,
 					Ports: []corev1.ContainerPort{
 						{
 							Name:          "driver",
@@ -112,9 +113,9 @@ func newLoadTestWithMultipleClientsAndServers(clientNum int, serverNum int) *grp
 				Name:     &driverComponentName,
 				Language: "cxx",
 				Pool:     &driverPool,
-				Run: grpcv1.Run{
-					Image: &driverImage,
-				},
+				Run: []corev1.Container{{
+					Image: driverImage,
+				}},
 			},
 			Results: &grpcv1.Results{
 				BigQueryTable: &bigQueryTable,
@@ -143,11 +144,11 @@ func newLoadTestWithMultipleClientsAndServers(clientNum int, serverNum int) *grp
 				Command: buildCommand,
 				Args:    buildArgs,
 			},
-			Run: grpcv1.Run{
-				Image:   &runImage,
+			Run: []corev1.Container{{
+				Image:   runImage,
 				Command: runCommand,
 				Args:    serverRunArgs,
-			},
+			}},
 		})
 	}
 
@@ -170,11 +171,11 @@ func newLoadTestWithMultipleClientsAndServers(clientNum int, serverNum int) *grp
 				Command: buildCommand,
 				Args:    buildArgs,
 			},
-			Run: grpcv1.Run{
-				Image:   &runImage,
+			Run: []corev1.Container{{
+				Image:   runImage,
 				Command: runCommand,
 				Args:    clientRunArgs,
-			},
+			}},
 		})
 	}
 	createdLoadTest.SetUID(types.UID("matching-test-uid"))

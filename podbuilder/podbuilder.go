@@ -114,7 +114,7 @@ type PodBuilder struct {
 	pool     string
 	clone    *grpcv1.Clone
 	build    *grpcv1.Build
-	run      *grpcv1.Run
+	run      []corev1.Container
 }
 
 // New creates a PodBuilder instance. It accepts and uses defaults and a test to
@@ -133,7 +133,7 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(client.Pool)
 	pb.clone = client.Clone
 	pb.build = client.Build
-	pb.run = &client.Run
+	pb.run = client.Run
 
 	pod := pb.newPod()
 
@@ -169,7 +169,7 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(driver.Pool)
 	pb.clone = driver.Clone
 	pb.build = driver.Build
-	pb.run = &driver.Run
+	pb.run = driver.Run
 
 	pod := pb.newPod()
 
@@ -233,7 +233,7 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 	pb.pool = safeStrUnwrap(server.Pool)
 	pb.clone = server.Clone
 	pb.build = server.Build
-	pb.run = &server.Run
+	pb.run = server.Run
 
 	pod := pb.newPod()
 
@@ -335,9 +335,9 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 			Containers: []corev1.Container{
 				{
 					Name:    config.RunContainerName,
-					Image:   safeStrUnwrap(pb.run.Image),
-					Command: pb.run.Command,
-					Args:    pb.run.Args,
+					Image:   safeStrUnwrap(&pb.run[0].Image),
+					Command: pb.run[0].Command,
+					Args:    pb.run[0].Args,
 					Env: []corev1.EnvVar{
 						{
 							Name:  config.KillAfterEnv,

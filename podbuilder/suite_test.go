@@ -144,9 +144,9 @@ func newLoadTest() *grpcv1.LoadTest {
 				Name:     &driverComponentName,
 				Language: "cxx",
 				Pool:     &driverPool,
-				Run: grpcv1.Run{
-					Image: &driverImage,
-				},
+				Run: []corev1.Container{{
+					Image: driverImage,
+				}},
 			},
 
 			Servers: []grpcv1.Server{
@@ -164,11 +164,11 @@ func newLoadTest() *grpcv1.LoadTest {
 						Command: buildCommand,
 						Args:    buildArgs,
 					},
-					Run: grpcv1.Run{
-						Image:   &runImage,
+					Run: []corev1.Container{{
+						Image:   runImage,
 						Command: runCommand,
 						Args:    serverRunArgs,
-					},
+					}},
 				},
 			},
 
@@ -187,11 +187,11 @@ func newLoadTest() *grpcv1.LoadTest {
 						Command: buildCommand,
 						Args:    buildArgs,
 					},
-					Run: grpcv1.Run{
-						Image:   &runImage,
+					Run: []corev1.Container{{
+						Image:   runImage,
 						Command: runCommand,
 						Args:    clientRunArgs,
-					},
+					}},
 				},
 			},
 

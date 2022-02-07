@@ -232,24 +232,24 @@ var _ = Describe("ForLoadTest", func() {
 			Spec: grpcv1.LoadTestSpec{
 				Driver: &grpcv1.Driver{
 					Name: optional.StringPtr("driver"),
-					Run: grpcv1.Run{
-						Image: optional.StringPtr("fake-driver-image"),
-					},
+					Run: []corev1.Container{{
+						Image: *optional.StringPtr("fake-driver-image"),
+					}},
 				},
 				Servers: []grpcv1.Server{
 					{
 						Name: optional.StringPtr("server-1"),
-						Run: grpcv1.Run{
-							Image: optional.StringPtr("fake-server-image"),
-						},
+						Run: []corev1.Container{{
+							Image: *optional.StringPtr("fake-server-image"),
+						}},
 					},
 				},
 				Clients: []grpcv1.Client{
 					{
 						Name: optional.StringPtr("client-1"),
-						Run: grpcv1.Run{
-							Image: optional.StringPtr("fake-client-image"),
-						},
+						Run: []corev1.Container{{
+							Image: *optional.StringPtr("fake-client-image"),
+						}},
 					},
 				},
 				TTLSeconds:     int32(120),

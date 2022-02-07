@@ -26,17 +26,18 @@ spec:
     language: java
     name: '0'
     run:
-      args:
+    - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
             /run_scripts/run_worker.sh
       command:
       - bash
+      name: main
   driver:
     language: cxx
     name: '0'
-    run: {}
+    run: []
   scenariosJSON: |
     {
       "scenarios": {
@@ -115,12 +116,13 @@ spec:
     language: java
     name: '0'
     run:
-      args:
+    - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
             /run_scripts/run_worker.sh
       command:
       - bash
+      name: main
   timeoutSeconds: 900
   ttlSeconds: 86400

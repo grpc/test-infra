@@ -18,7 +18,7 @@ spec:
     name: '0'
     pool: ${workers_pool}
     run:
-      args:
+    - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
@@ -27,12 +27,14 @@ spec:
       command:
       - bash
       image: ${prebuilt_image_prefix}/cxx:${prebuilt_image_tag}
+      name: main
   driver:
     language: cxx
     name: '0'
     pool: ${driver_pool}
     run:
-      image: ${driver_image}
+    - image: ${driver_image}
+      name: main
   results:
     bigQueryTable: ${big_query_table}
   scenariosJSON: |
@@ -104,7 +106,7 @@ spec:
     name: '0'
     pool: ${workers_pool}
     run:
-      args:
+    - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
@@ -113,5 +115,6 @@ spec:
       command:
       - bash
       image: ${prebuilt_image_prefix}/cxx:${prebuilt_image_tag}
+      name: main
   timeoutSeconds: 900
   ttlSeconds: 86400

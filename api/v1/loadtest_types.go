@@ -79,39 +79,6 @@ type Build struct {
 	Env []corev1.EnvVar `json:"env,omitempty"`
 }
 
-// Run defines expectations regarding the runtime environment for the
-// test component itself.
-type Run struct {
-	// Image is the name of the container image that provides the
-	// runtime for the test component.
-	//
-	// This field is optional when a Language is specified on the
-	// Component. For example, a developer may specify a "python3"
-	// client. This field will be implicitly set to the most recent
-	// supported python3 image.
-	// +optional
-	Image *string `json:"image,omitempty"`
-
-	// Command is the path to the executable that will run the component
-	// of the test. When unset, the entrypoint of the container image
-	// will be used.
-	// +optional
-	Command []string `json:"command,omitempty"`
-
-	// Args provide command line arguments to the command.
-	// +optional
-	Args []string `json:"args,omitempty"`
-
-	// Env are environment variables that should be set within the
-	// running container.
-	// +optional
-	Env []corev1.EnvVar `json:"env,omitempty"`
-
-	// VolumeMounts permit sharing directories across containers.
-	// +optional
-	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
-}
-
 // Driver defines a component that orchestrates the server and clients in the
 // test.
 type Driver struct {
@@ -159,9 +126,9 @@ type Driver struct {
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
-	// Run describes the run container, which is the runtime of the driver for
-	// the actual test.
-	Run Run `json:"run"`
+	// Run describes a list of run containers. The container for the test driver is always
+	// the first container on the list.
+	Run []corev1.Container `json:"run"`
 }
 
 // Server defines a component that receives traffic from a set of client
@@ -211,9 +178,9 @@ type Server struct {
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
-	// Run describes the run container, which is the runtime of the server for
-	// the actual test.
-	Run Run `json:"run"`
+	// Run describes a list of run containers. The container for the test server is always
+	// the first container on the list.
+	Run []corev1.Container `json:"run"`
 }
 
 // Client defines a component that sends traffic to a server component.
@@ -265,9 +232,9 @@ type Client struct {
 	// +optional
 	Build *Build `json:"build,omitempty"`
 
-	// Run describes the run container, which is the runtime of the client for
-	// the actual test.
-	Run Run `json:"run"`
+	// Run describes a list of run containers. The container for the test client is always
+	// the first container on the list.
+	Run []corev1.Container `json:"run"`
 }
 
 // Results defines where and how test results and artifacts should be

@@ -23,17 +23,18 @@ spec:
     language: php7
     name: '0'
     run:
-      args:
+    - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
         /run_scripts/run_worker.sh
       command:
       - bash
+      name: main
   driver:
     language: cxx
     name: '0'
-    run: {}
+    run: []
   scenariosJSON: |
     {
       "scenarios": {
@@ -107,7 +108,7 @@ spec:
     language: cxx
     name: '0'
     run:
-      args:
+    - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
@@ -115,5 +116,6 @@ spec:
             --server_port=10010
       command:
       - bash
+      name: main
   timeoutSeconds: 900
   ttlSeconds: 86400
