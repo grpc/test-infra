@@ -14,7 +14,6 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
 	"google.golang.org/grpc"
 
-	testconfig "github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/containers/runtime/xds"
 	config "github.com/grpc/test-infra/containers/runtime/xds/config"
 
@@ -23,11 +22,8 @@ import (
 
 func main() {
 
-	resource := config.TestResource{}
-
 	var nodeID string
 	var xdsServerPort uint
-	var sidecarListenerPort uint
 	var defaultConfigPath string
 	var customConfigPath string
 	var testUpdatePort uint
@@ -49,21 +45,13 @@ func main() {
 	// User supplied configuration path, the path is relative path using ./containers/runtime/xds
 	flag.StringVar(&customConfigPath, "custom-config-path", "custom-config-path", "The path of user supplied configuration file, the path is relative path the root of test-infra repo")
 
-	// This sets the gRPC test listener name.
-	flag.StringVar(&resource.TestGrpcListenerName, "proxyless-target-string", "", "This field is for validation only, the gRPC listener's name, should match the server_target_string in xds:///server_target_string")
-
-	// This sets the port that the Envoy listener listens to, this is the port to send traffic if we wish the traffic to go through sidecar
-	flag.UintVar(&sidecarListenerPort, "sidecar-listener-port", 0, "This field is for validation only, this is the listener port of the Envoy sidecar proxy")
-
 	// This sets if running validation only
 	flag.BoolVar(&validationOnly, "validate-only", false, "This sets if we are running for the validation only")
 
-	// This set the bootstrap path, if not set the bootstrap will not be moved
-	flag.StringVar(&pathToBootstrap, "path-to-bootstrap", "", "This sets the path to bootstrap")
+	// This set the path to the original bootstrap file in xds container image, if not set the bootstrap will not be moved
+	flag.StringVar(&pathToBootstrap, "path-to-bootstrap", "", "This sets the original path to bootstrap")
 
 	flag.Parse()
-
-	resource.TestListenerPort = uint32(sidecarListenerPort)
 
 	l := xds.Logger{}
 
@@ -74,7 +62,7 @@ func main() {
 	}
 
 	// validate the snapshot
-	if err := resource.ValidateResource(snapshot); err != nil {
+	if snapshot.Consistent(); err != nil {
 		l.Errorf("fail to validate the generated snapshot for xDS server: %v", err)
 	}
 
@@ -96,11 +84,11 @@ func main() {
 			l.Errorf("fail to read bootstrap: %v", err)
 		}
 		//Copy all the contents to the desitination file
-		err = ioutil.WriteFile(fmt.Sprintf("%v/bootstrap.json", testconfig.ProxylessBootstrapMountPath), bootstrapBytes, 0755)
+		err = ioutil.WriteFile(fmt.Sprintf("%v/bootstrap.json", "/bootstrap"), bootstrapBytes, 0755)
 		if err != nil {
 			l.Errorf("fail to output bootstrap.json to /bootstrap: %v", err)
 		}
-		l.Infof("bootstrap file for non-proxied clients are moved from %v to %v/bootstrap.json successfully", pathToBootstrap, testconfig.ProxylessBootstrapMountPath)
+		l.Infof("bootstrap file for non-proxied clients are moved from %v to %v/bootstrap.json successfully", pathToBootstrap, "/bootstrap")
 	}
 
 	// Create a cache
@@ -112,19 +100,19 @@ func main() {
 	// Don't need to handle this server since if the test was terminated
 	// at this stage there must be something wrong with the test, no need
 	// for grace termination.
-	go xds.RunUpdateServer(testChannel, testUpdatePort)
+	go xds.RunUpdateServer(testChannel, testUpdatePort, &snapshot)
 
 	var testInfo xds.TestInfo
 	testInfo, ok := <-testChannel
 	if ok {
 		// Update test endpoint and type for the snapshot resource
-		resource.TestEndpoints = testInfo.Endpoints
-		if err := resource.UpdateEndpoint(&snapshot); err != nil {
+		endpoints := testInfo.Endpoints
+		if err := config.UpdateEndpoint(&snapshot, endpoints); err != nil {
 			l.Errorf("fail to update endpoint for xDS server: %v", err)
 		}
 
 		// Check the type of the test
-		if testInfo.TestType == testconfig.ProxiedType {
+		if testInfo.IsProxied {
 			l.Infof("running a proxied test, only leave socket listeners for validation reason, api_listeners are not presented to proxies")
 			if err := config.IncludeSocketListenerOnly(&snapshot); err != nil {
 				l.Errorf("fail to filter listener based on test type: %v", err)

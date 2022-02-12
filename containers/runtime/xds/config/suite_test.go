@@ -108,7 +108,7 @@ func makeRoute(testRouteName string, testServiceClusterName string) *route.Route
 	}
 }
 
-func makeGrpcHTTPListener(testRouteName string, testGrpcListenerName string, testListenerPort uint32) *listener.Listener {
+func makeGrpcHTTPListener(testRouteName string, testGrpcListenerName string) *listener.Listener {
 	a, _ := anypb.New(&v3routerpb.Router{})
 
 	hcm, _ := anypb.New(&v3httppb.HttpConnectionManager{
@@ -128,20 +128,7 @@ func makeGrpcHTTPListener(testRouteName string, testGrpcListenerName string, tes
 	},
 	)
 	return &listener.Listener{
-		Name: testGrpcListenerName,
-		// this listener is configured with API listener, add a fake address to pass
-		// validation
-		Address: &core.Address{
-			Address: &core.Address_SocketAddress{
-				SocketAddress: &core.SocketAddress{
-					Protocol: core.SocketAddress_TCP,
-					Address:  "0.0.0.0",
-					PortSpecifier: &core.SocketAddress_PortValue{
-						PortValue: uint32(testListenerPort),
-					},
-				},
-			},
-		},
+		Name:        testGrpcListenerName,
 		ApiListener: &listener.ApiListener{ApiListener: hcm},
 		FilterChains: []*listener.FilterChain{{
 			Name: "filter-chain-name",

@@ -135,5 +135,5 @@ var TestUpdater_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "test_updater.proto",
+	Metadata: "testupdater/test_updater.proto",
 }

@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -19,16 +20,13 @@ import (
 )
 
 var _ = Describe("config marshal and unmarshal", func() {
-	s := TestResource{
-		TestGrpcListenerName: "defaultTestGrpcListenerName",
-		TestListenerPort:     1234,
-		TestEndpoints: []*TestEndpoint{{
-			TestUpstreamHost: "defaultTestUpstreamHost",
-			TestUpstreamPort: 5678,
-		}},
-	}
-
 	currentVersion := "testVersion"
+	testGrpcListenerName := "defaultTestGrpcListenerName"
+	testEnvoyListenerPort := 1234
+	endpoints := []*TestEndpoint{{
+		TestUpstreamHost: "defaultTestUpstreamHost",
+		TestUpstreamPort: 5678,
+	}}
 	testServiceClusterName := "defaultTestServiceClusterName"
 	testEnvoyListenerName := "defaultTestEnvoyListenerName"
 	testRouteName := "defaultTestRouteName"
@@ -50,7 +48,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 		currentResourceName = testEndpointName
 		endpointOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {types.ResourceWithTTL{
-				Resource: makeEndpoint(testEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort),
+				Resource: makeEndpoint(testEndpointName, endpoints[0].TestUpstreamHost, endpoints[0].TestUpstreamPort),
 				TTL:      &testTTL},
 			}})
 		Expect(err).ToNot(HaveOccurred())
@@ -143,11 +141,11 @@ var _ = Describe("config marshal and unmarshal", func() {
 		listenerOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {
 				types.ResourceWithTTL{
-					Resource: makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(s.TestListenerPort)),
+					Resource: makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(testEnvoyListenerPort)),
 					TTL:      &testTTL,
 				},
 				types.ResourceWithTTL{
-					Resource: makeGrpcHTTPListener(testRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort)),
+					Resource: makeGrpcHTTPListener(testRouteName, testGrpcListenerName),
 					TTL:      &testTTL,
 				},
 			}})
@@ -165,8 +163,8 @@ var _ = Describe("config marshal and unmarshal", func() {
 		Expect(reflect.DeepEqual(originalConfig.GetVersion(currentResourceType), processedConfig.GetVersion(currentResourceType))).To(BeTrue())
 
 		// gRPC Listeners
-		originalResourceGRPC := originalConfig.GetResourcesAndTTL(currentResourceType)[s.TestGrpcListenerName]
-		processedResourceGRPC := processedConfig.GetResourcesAndTTL(currentResourceType)[s.TestGrpcListenerName]
+		originalResourceGRPC := originalConfig.GetResourcesAndTTL(currentResourceType)[testGrpcListenerName]
+		processedResourceGRPC := processedConfig.GetResourcesAndTTL(currentResourceType)[testGrpcListenerName]
 
 		// check the resource is processed correctly
 		Expect(proto.Equal(originalResourceGRPC.Resource, processedResourceGRPC.Resource)).To(BeTrue())
@@ -175,8 +173,8 @@ var _ = Describe("config marshal and unmarshal", func() {
 		Expect(reflect.DeepEqual(originalResourceGRPC.TTL, processedResourceGRPC.TTL)).To(BeTrue())
 
 		// Envoy Listeners
-		originalResourceEnvoy := originalConfig.GetResourcesAndTTL(currentResourceType)[s.TestGrpcListenerName]
-		processedResourceEnvoy := processedConfig.GetResourcesAndTTL(currentResourceType)[s.TestGrpcListenerName]
+		originalResourceEnvoy := originalConfig.GetResourcesAndTTL(currentResourceType)[testGrpcListenerName]
+		processedResourceEnvoy := processedConfig.GetResourcesAndTTL(currentResourceType)[testGrpcListenerName]
 
 		// check the resource is processed correctly
 		Expect(proto.Equal(originalResourceEnvoy.Resource, processedResourceEnvoy.Resource)).To(BeTrue())
@@ -325,8 +323,8 @@ var _ = Describe("config marshal and unmarshal", func() {
 			map[resource.Type][]types.Resource{
 				resource.ClusterType:  {makeCluster(testServiceClusterName, testEndpointName)},
 				resource.RouteType:    {makeRoute(testRouteName, testServiceClusterName)},
-				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(s.TestListenerPort)), makeGrpcHTTPListener(testRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort))},
-				resource.EndpointType: {makeEndpoint(testEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort)},
+				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(testEnvoyListenerPort)), makeGrpcHTTPListener(testRouteName, testGrpcListenerName)},
+				resource.EndpointType: {makeEndpoint(testEndpointName, endpoints[0].TestUpstreamHost, endpoints[0].TestUpstreamPort)},
 			})
 
 		originalConfig = customSnapshot{fullSet}
@@ -345,32 +343,31 @@ var _ = Describe("config marshal and unmarshal", func() {
 var _ = Describe("Update Endpoint", func() {
 
 	var snap cache.Snapshot
+	var endpoints []TestEndpoint
 
 	currentVersion := "testVersion"
 	testServiceClusterName := "defaultTestServiceClusterName"
 	testEnvoyListenerName := "defaultTestEnvoyListenerName"
 	testRouteName := "defaultTestRouteName"
 	testEndpointName := "defaultTestEndpointName"
-	s := TestResource{
-		TestGrpcListenerName: "defaultTestGrpcListenerName",
-		TestListenerPort:     1234,
-		TestEndpoints: []*TestEndpoint{{
-			TestUpstreamHost: "defaultTestUpstreamHost",
-			TestUpstreamPort: 5678,
-		}},
-	}
+	testGrpcListenerName := "defaultTestGrpcListenerName"
+	testEnvoyListenerPort := 1234
+	originalEndpoints := []TestEndpoint{{
+		TestUpstreamHost: "defaultTestUpstreamHost",
+		TestUpstreamPort: 5678,
+	}}
 
 	BeforeEach(func() {
 		snap, _ = cache.NewSnapshot(currentVersion,
 			map[resource.Type][]types.Resource{
 				resource.ClusterType:  {makeCluster(testServiceClusterName, testEndpointName)},
 				resource.RouteType:    {makeRoute(testRouteName, testServiceClusterName)},
-				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(s.TestListenerPort)), makeGrpcHTTPListener(testRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort))},
-				resource.EndpointType: {makeEndpoint(testEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort)},
+				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(testEnvoyListenerPort)), makeGrpcHTTPListener(testRouteName, testGrpcListenerName)},
+				resource.EndpointType: {makeEndpoint(testEndpointName, originalEndpoints[0].TestUpstreamHost, originalEndpoints[0].TestUpstreamPort)},
 			})
 	})
 	It("returns err when the number of endpoints doesn't match", func() {
-		s.TestEndpoints = []*TestEndpoint{{
+		endpoints = []TestEndpoint{{
 			TestUpstreamHost: "test-host-1",
 			TestUpstreamPort: 1,
 		}, {
@@ -378,17 +375,17 @@ var _ = Describe("Update Endpoint", func() {
 			TestUpstreamPort: 2,
 		}}
 
-		err := s.UpdateEndpoint(&snap)
+		err := UpdateEndpoint(&snap, endpoints)
 
 		Expect(err).To(HaveOccurred())
 	})
 	It("update the endpoints", func() {
-		s.TestEndpoints = []*TestEndpoint{{
+		endpoints = []TestEndpoint{{
 			TestUpstreamHost: "test-host-1",
 			TestUpstreamPort: uint32(1),
 		}}
 
-		err := s.UpdateEndpoint(&snap)
+		err := UpdateEndpoint(&snap, endpoints)
 
 		endpointResource := snap.Resources[int(cache.GetResponseType(resource.EndpointType))].Items[testEndpointName].Resource
 		endpointData, err := protojson.Marshal(endpointResource)
@@ -411,33 +408,99 @@ var _ = Describe("SocketListenerOnly", func() {
 	testEnvoyListenerName := "defaultTestEnvoyListenerName"
 	testRouteName := "defaultTestRouteName"
 	testEndpointName := "defaultTestEndpointName"
-	s := TestResource{
-		TestGrpcListenerName: "defaultTestGrpcListenerName",
-		TestListenerPort:     1234,
-		TestEndpoints: []*TestEndpoint{{
-			TestUpstreamHost: "defaultTestUpstreamHost",
-			TestUpstreamPort: 5678,
-		}},
-	}
+	testGrpcListenerName := "defaultTestGrpcListenerName"
+	testEnvoyListenerPort := 1234
+	endpoints := []*TestEndpoint{{
+		TestUpstreamHost: "defaultTestUpstreamHost",
+		TestUpstreamPort: 5678,
+	}}
 
 	BeforeEach(func() {
 		snap, _ = cache.NewSnapshot(currentVersion,
 			map[resource.Type][]types.Resource{
 				resource.ClusterType:  {makeCluster(testServiceClusterName, testEndpointName)},
 				resource.RouteType:    {makeRoute(testRouteName, testServiceClusterName)},
-				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(s.TestListenerPort)), makeGrpcHTTPListener(testRouteName, s.TestGrpcListenerName, uint32(s.TestListenerPort))},
-				resource.EndpointType: {makeEndpoint(testEndpointName, s.TestEndpoints[0].TestUpstreamHost, s.TestEndpoints[0].TestUpstreamPort)},
+				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(testEnvoyListenerPort)), makeGrpcHTTPListener(testRouteName, testGrpcListenerName)},
+				resource.EndpointType: {makeEndpoint(testEndpointName, endpoints[0].TestUpstreamHost, endpoints[0].TestUpstreamPort)},
 			})
 	})
 	It("leaves only the socket listeners", func() {
 		err := IncludeSocketListenerOnly(&snap)
 		Expect(err).ToNot(HaveOccurred())
 
-		_, grpcListenerExist := snap.Resources[int(cache.GetResponseType(resource.ListenerType))].Items[s.TestGrpcListenerName]
+		_, grpcListenerExist := snap.Resources[int(cache.GetResponseType(resource.ListenerType))].Items[testGrpcListenerName]
 		Expect(grpcListenerExist).To(BeFalse())
 
 		_, envoyListenerExist := snap.Resources[int(cache.GetResponseType(resource.ListenerType))].Items[testEnvoyListenerName]
 		Expect(envoyListenerExist).To(BeTrue())
 	})
 
+})
+
+var _ = Describe("ConstructProxylessTestTarget", func() {
+	var snap cache.Snapshot
+
+	currentVersion := "testVersion"
+	testServiceClusterName := "defaultTestServiceClusterName"
+	testEnvoyListenerName := "defaultTestEnvoyListenerName"
+	testRouteName := "defaultTestRouteName"
+	testEndpointName := "defaultTestEndpointName"
+	testGrpcListenerName := "defaultTestGrpcListenerName"
+	testEnvoyListenerPort := 1234
+	endpoints := []TestEndpoint{{
+		TestUpstreamHost: "defaultTestUpstreamHost",
+		TestUpstreamPort: 5678,
+	}}
+
+	BeforeEach(func() {
+		snap, _ = cache.NewSnapshot(currentVersion,
+			map[resource.Type][]types.Resource{
+				resource.ClusterType:  {makeCluster(testServiceClusterName, testEndpointName)},
+				resource.RouteType:    {makeRoute(testRouteName, testServiceClusterName)},
+				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(testEnvoyListenerPort)), makeGrpcHTTPListener(testRouteName, testGrpcListenerName)},
+				resource.EndpointType: {makeEndpoint(testEndpointName, endpoints[0].TestUpstreamHost, endpoints[0].TestUpstreamPort)},
+			})
+	})
+	It("finds the proxyless test server target ", func() {
+		target, err := ConstructProxylessTestTarget(&snap)
+
+		Expect(err).ToNot(HaveOccurred())
+
+		expected := "xds:///" + testGrpcListenerName
+
+		Expect(expected == target).To(BeTrue())
+	})
+})
+
+var _ = Describe("ConstructProxiedTestTarget", func() {
+	var snap cache.Snapshot
+
+	currentVersion := "testVersion"
+	testServiceClusterName := "defaultTestServiceClusterName"
+	testEnvoyListenerName := "defaultTestEnvoyListenerName"
+	testRouteName := "defaultTestRouteName"
+	testEndpointName := "defaultTestEndpointName"
+	testGrpcListenerName := "defaultTestGrpcListenerName"
+	testEnvoyListenerPort := 1234
+	endpoints := []TestEndpoint{{
+		TestUpstreamHost: "defaultTestUpstreamHost",
+		TestUpstreamPort: 5678,
+	}}
+
+	BeforeEach(func() {
+		snap, _ = cache.NewSnapshot(currentVersion,
+			map[resource.Type][]types.Resource{
+				resource.ClusterType:  {makeCluster(testServiceClusterName, testEndpointName)},
+				resource.RouteType:    {makeRoute(testRouteName, testServiceClusterName)},
+				resource.ListenerType: {makeEnvoyHTTPListener(testRouteName, testEnvoyListenerName, uint32(testEnvoyListenerPort)), makeGrpcHTTPListener(testRouteName, testGrpcListenerName)},
+				resource.EndpointType: {makeEndpoint(testEndpointName, endpoints[0].TestUpstreamHost, endpoints[0].TestUpstreamPort)},
+			})
+	})
+	It("finds the proxied test server target ", func() {
+		target, err := ConstructProxiedTestTarget(&snap)
+		Expect(err).ToNot(HaveOccurred())
+
+		expected := "localhost:" + fmt.Sprint(testEnvoyListenerPort)
+		Expect(expected == target).To(BeTrue())
+	})
 })

@@ -70,9 +70,6 @@ const (
 	// the value.
 	PoolLabel = "pool"
 
-	// ProxiedType holds the proxied type of the PSM test.
-	ProxiedType = "proxied"
-
 	// ReadyInitContainerName holds the name of the init container that blocks a
 	// driver from running until all worker pods are ready.
 	ReadyInitContainerName = "ready"
@@ -80,10 +77,6 @@ const (
 	// ReadyMountPath is the absolute path where the ready volume should be
 	// mounted in both the ready init container and the driver's run container.
 	ReadyMountPath = "/var/data/qps_workers"
-
-	// ProxylessBootstrapMountPath stores the directory where the bootstrap.json file
-	// resides. This file is required by gRPC proxyless client.
-	ProxylessBootstrapMountPath = "/bootstrap"
 
 	// ReadyOutputFile is the name of the file where the ready init container
 	// should write all IP addresses and port numbers for ready workers.
@@ -135,7 +128,4 @@ const (
 
 	// PodTimeoutEnv specifies the name of the env variable that sets the timeout for a pod.
 	PodTimeoutEnv = "POD_TIMEOUT"
-
-	// ProxylessType holds the proxyless type of the PSM test.
-	ProxylessType = "proxyless"
 )

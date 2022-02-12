@@ -265,59 +265,12 @@ func (cr *customResource) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// TestResource provides the names of the resources.
-type TestResource struct {
-	// testGrpcListenerName is only used by gRPC xDS client, must be used as xds:///<listener_name>,
-	// API listener is required.
-	TestGrpcListenerName string
-	// testListenerPort is only used by Envoy, socket listener, traffic will be directly direct to
-	// this port.
-	TestListenerPort uint32
-	// List of endpoints to load balance to, these will all goes into the same Endpoint resource.
-	TestEndpoints []*TestEndpoint
-}
-
 // TestEndpoint is the address and the port of the backends.
 type TestEndpoint struct {
 	// TestUpstreamHost is upstream host address
 	TestUpstreamHost string
 	// TestUpstreamHost is upstream host port
 	TestUpstreamPort uint32
-}
-
-// ValidateResource is a method of TestResource, it validates:
-// 1. the intended server_target in Non-Proxied test matches at
-// lease one listener.
-// 2. The port intended to be used in Proxied test is at lease listed
-// in one of the socket listeners.
-// 3. The configuration generated from the config json file are consistent.
-func (t *TestResource) ValidateResource(snap cache.Snapshot) error {
-	// gRPC listener name must match match the server_target_string in
-	// xds:///server_target_string"
-	listenerType := cache.GetResponseType(resource.ListenerType)
-	if _, ok := snap.Resources[listenerType].Items[t.TestGrpcListenerName]; !ok {
-		return errors.New(fmt.Sprintf("failed validation of listener resource, please set up gRPC listener with name %v", t.TestGrpcListenerName))
-	}
-
-	// Envoy listener's port value is used by routing traffic to Envoy sidecar
-	for _, listenerWithTTL := range snap.Resources[listenerType].Items {
-		forValidation := listener.Listener{}
-		listenerData, err := protojson.Marshal(listenerWithTTL.Resource)
-		if err != nil {
-			return errors.Wrapf(err, "failed to validate Envoy listener's port value")
-		}
-		if err = protojson.Unmarshal(listenerData, &forValidation); err != nil {
-			return errors.Wrapf(err, "failed to validate Envoy listener's port value")
-		}
-		if forValidation.ApiListener == nil && forValidation.Address.GetSocketAddress().GetPortValue() != t.TestListenerPort {
-			return errors.Wrapf(err, "failed to validate Envoy listener's port value: Envoy listener's port value %v does not match the port that the client target port %v, \n", forValidation.Address.GetSocketAddress().GetPortValue(), t.TestListenerPort)
-		}
-	}
-	// check consistency
-	if err := snap.Consistent(); err != nil {
-		return errors.Wrapf(err, "validation failed, snapshpt is inconsistent")
-	}
-	return nil
 }
 
 // GenerateSnapshotFromConfigFiles takes a default configuration file
@@ -391,7 +344,7 @@ func GenerateSnapshotFromConfigFiles(defaultConfigPath string, userSuppliedConfi
 }
 
 // UpdateEndpoint takes a list of endpoints to updated the Endpoint resources in the snapshot
-func (t *TestResource) UpdateEndpoint(snap *cache.Snapshot) error {
+func UpdateEndpoint(snap *cache.Snapshot, endpoints []TestEndpoint) error {
 	// currently we only support one cluster, get the endpointName from the cluster resource
 	// break after the d first cluster
 	for _, clusterResource := range snap.Resources[int(cache.GetResponseType(resource.ClusterType))].Items {
@@ -421,13 +374,13 @@ func (t *TestResource) UpdateEndpoint(snap *cache.Snapshot) error {
 			allConfiguredBackends += len(localityLbEndpoints.LbEndpoints)
 		}
 
-		if len(t.TestEndpoints) != allConfiguredBackends {
-			return errors.New(fmt.Sprintf("number of endpoint supplied from config : %v is different from the actual number of backends: %v \n", allConfiguredBackends, len(t.TestEndpoints)))
+		if len(endpoints) != allConfiguredBackends {
+			return errors.New(fmt.Sprintf("number of endpoint supplied from config : %v is different from the actual number of backends: %v \n", allConfiguredBackends, len(endpoints)))
 		}
 
 		// update the endpoints, so far all actual backends are supplied to the same locality group
 		updatedEndpoints := []*endpoint.LbEndpoint{}
-		for _, eachBackend := range t.TestEndpoints {
+		for _, eachBackend := range endpoints {
 			curEndpoint := endpoint.LbEndpoint{
 				HostIdentifier: &endpoint.LbEndpoint_Endpoint{
 					Endpoint: &endpoint.Endpoint{
@@ -484,4 +437,51 @@ func IncludeSocketListenerOnly(snap *cache.Snapshot) error {
 	}
 
 	return nil
+}
+
+// ConstructProxylessTestTarget finds the target of the Proxyless test
+// based on the configuration json file
+func ConstructProxylessTestTarget(snap *cache.Snapshot) (string, error) {
+	listenerResponseType := cache.GetResponseType(resource.ListenerType)
+	listeners := snap.Resources[int(listenerResponseType)]
+	for listenerName, listenerResource := range listeners.Items {
+		listenerData, err := protojson.Marshal(listenerResource.Resource)
+		if err != nil {
+			return "", err
+		}
+		curlistener := listener.Listener{}
+		if err := protojson.Unmarshal(listenerData, &curlistener); err != nil {
+			return "", err
+		}
+		if curlistener.GetApiListener() != nil && curlistener.GetAddress() == nil {
+			constructedServerTarget := "xds:///" + listenerName
+			return constructedServerTarget, nil
+		}
+	}
+	return "", errors.New("failed to find proxyless target string: no Api_Listener found")
+}
+
+// ConstructProxiedTestTarget finds the target of the Proxyless test
+// based on the configuration json file
+func ConstructProxiedTestTarget(snap *cache.Snapshot) (string, error) {
+	listenerResponseType := cache.GetResponseType(resource.ListenerType)
+	listeners := snap.Resources[int(listenerResponseType)]
+	for _, listenerResource := range listeners.Items {
+		listenerData, err := protojson.Marshal(listenerResource.Resource)
+		if err != nil {
+			return "", err
+		}
+		curlistener := listener.Listener{}
+		if err := protojson.Unmarshal(listenerData, &curlistener); err != nil {
+			return "", err
+		}
+		if curlistener.GetApiListener() == nil && curlistener.GetAddress().Address != nil {
+			envoyPort := curlistener.Address.GetSocketAddress().GetPortValue()
+			constructedServerTarget := "localhost:" + fmt.Sprint(envoyPort)
+			return constructedServerTarget, nil
+		}
+	}
+
+	return "", errors.New("failed to find proxied target string: no socket_listener found")
+
 }

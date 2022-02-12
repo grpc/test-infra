@@ -9,14 +9,21 @@ The xDS server is the fake control plane used in running PSM performance test.
 The xDS server first creates a piece of resource snapshot from the configuration
 files. Note that the configuration files here only contains placeholders for the
 address and port for backend services. After validation of the configuration
-files supplied, a gRPC server for endpoint update is started. The endpoint
-update server listens on test backends' the podIP and test port. On receiving
-the backend servers' podIP and test port, the resource of the xDS server will be
-updated accordingly.
+files supplied, a gRPC server for test update is started. The test update server
+communicate with the Driver's ready conteiner, it listens for test backends'
+podIP, test port and if the test is a proxied test.
 
-Another piece of information communicated from the Driver's ready container is
-the type of the test. For "proxied" test, the xds server will remove all
-api_listneners and only serves the socket listener for validation purpose.
+For "proxied" test, the xds server will remove all api_listneners and only
+serves the socket listener to the Envoy. This is a work around to ensure that
+the resources as a whole pass the validation of Envoy.
+
+Based on if the current test is a proxied test, the xDS server will construct
+the corresponding target string and return to Driver's ready container, the
+Driver's ready container will then keep the information for Driver's run
+container to use. This target string is used to overrite the test target that
+the driver sends to client for conducting the tests.
+
+The test update server will be closed after the communication.
 
 After filling in the actual backend services, the xDS server starts listening on
 request and server the configuration created through above steps.
@@ -35,7 +42,7 @@ of the listener has the name of the server target string.
 go run main.go
    -default-config-path config/default_config.json \
    -endpoint-update-port 18005    \
-   -psm-target-string default_testGrpcListenerName
+   -psm-target-string defaultApiListener
 
 ```
 
@@ -71,26 +78,12 @@ The binary main.go takes the following options:
   this field, for more information check section:
   [Custom configuration of xDS server](#Custom-configuration-of-xDS-server)
 
-- -non-proxied-target-string
-
-  This field only for validation. The listener name that serves non-proxied
-  client. The listener name has to match the server-target-string in
-  xds:///server-target-string, which is passed as target for test client. The
-  source of the truth for name of the listener's names are from the
-  configuration files, the flag here is to make sure that at lease one of the
-  listener resource has the required name.
-
-- -sidecar-listener-port
-
-  This field in only for validation. The listener port that sidecar proxy is
-  listening on. The traffic wish to go through envoy should be send to this
-  port.
-
 - -validate-only
 
-  This flag allows user to validate the custom resource configuration. The
-  default value of this filed is `false`, means the program only validate the
-  resources configurations and will not start any servers.
+  This flag allows user to validate the custom resource configuration,
+  especially for case that a custom configuration is submitted. The default
+  value of this filed is `false`, means the program only validate the resources
+  configurations and will not start any servers.
 
 - -path-to-bootstrap
 
@@ -118,7 +111,7 @@ ready be served:
 ```shell
 go run main.go
    -default-config-path config/default_config.json \
-   -validation-only true
+   -validate-only true
 ```
 
 Currently, the `sidecar-listener-port` and `psm-target-string` fields are for

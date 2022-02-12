@@ -30,7 +30,7 @@ message Void {
 
 message TestUpdateRequest {
   repeated Endpoint endpoints = 1;
-  string test_type = 2;
+  bool is_proxied = 2;
 }
 
 message Endpoint{
@@ -38,6 +38,8 @@ message Endpoint{
   uint32 port = 2;
 }
 
-message TestUpdateReply {}
+message TestUpdateReply {
+  string  psm_server_target_override = 1;
+}
 
 
