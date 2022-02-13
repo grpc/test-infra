@@ -7,7 +7,7 @@ gRPC OSS benchmarks save results to [BigQuery]. The dashboard consists of two
 components:
 
 1. A [Postgres replicator], to transfer the results to a Postgres database.
-1. A Grafana dashboard, to displays the results from the Postgres database.
+1. A Grafana dashboard, to display the results from the Postgres database.
 
 These components can be built and deployed manually using the
 [Makefile](Makefile) (see [manual build](#manual-build)).
@@ -51,9 +51,9 @@ table below shows the names and values of the variables in our main dashboard:
 | `GCP_DATA_TRANSFER_SERVICE` | `postgres-replicator`                         |
 | `GCP_GRAFANA_SERVICE`       | `grafana`                                     |
 | `GCP_PROJECT_ID`            | `grpc-testing`                                |
-| `GRAFANA_ADMIN_PASS`        | \*\*\*                                        |
+| `GRAFANA_ADMIN_PASS`        | ...                                           |
 | `PG_DATABASE`               | `datasource`                                  |
-| `PG_PASS`                   | \*\*\*                                        |
+| `PG_PASS`                   | ...                                           |
 | `PG_USER`                   | `grafana-user`                                |
 
 Docker files that can be used to build and deploy the Postgres replicator and
