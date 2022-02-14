@@ -24,7 +24,6 @@ spec:
     spec:
       nodeSelector:
         default-system-pool: "true"
-      containers:
       # securityContext:
       #   runAsNonRoot: true
       containers:
