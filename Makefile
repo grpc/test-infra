@@ -1,11 +1,11 @@
 # Version tag for all images
-TEST_INFRA_VERSION ?= "latest"
+TEST_INFRA_VERSION ?= latest
 
 # Version of the gRPC driver
-DRIVER_VERSION ?= "master"
+DRIVER_VERSION ?= master
 
-# Prefix for all images used as clone and ready containers, enabling use with registries
-# other than DockerHub
+# Prefix for all images used as clone and ready containers, enabling use with
+# registries other than DockerHub
 INIT_IMAGE_PREFIX ?= ""
 
 # Prefix for all images used as build containers, enabling use with registries
@@ -14,10 +14,10 @@ BUILD_IMAGE_PREFIX ?= ""
 
 # Prefix for all images used as runtime containers, enabling use with registries
 # other than DockerHub
-IMAGE_PREFIX ?= ""
+RUN_IMAGE_PREFIX ?= ""
 
 # Image URL to use all building/pushing image targets
-CONTROLLER_IMG ?= ${IMAGE_PREFIX}controller:${TEST_INFRA_VERSION}
+CONTROLLER_IMG ?= $(RUN_IMAGE_PREFIX)controller:$(TEST_INFRA_VERSION)
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
@@ -73,9 +73,9 @@ vet: ## Run go vet against code.
 
 ENVTEST_ASSETS_DIR = $(PROJECT_DIR)/testbin
 test: manifests generate fmt vet ## Run tests.
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out -race -v
+	mkdir -p $(ENVTEST_ASSETS_DIR)
+	test -f $(ENVTEST_ASSETS_DIR)/setup-envtest.sh || curl -sSLo $(ENVTEST_ASSETS_DIR)/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
+	source $(ENVTEST_ASSETS_DIR)/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out -race -v
 
 ##@ Build executables
 
@@ -96,98 +96,98 @@ delete_prebuilt_workers: fmt vet ## Build the delete_prebuilt_workers tool binar
 all-images: clone-image controller-image csharp-build-image cxx-image driver-image go-image java-image node-build-image node-image php7-build-image php7-image python-image ready-image ruby-build-image ruby-image ## Build all container images.
 
 clone-image: ## Build the clone init container image.
-	docker build -t ${INIT_IMAGE_PREFIX}clone:${TEST_INFRA_VERSION} containers/init/clone
+	docker build -t $(INIT_IMAGE_PREFIX)clone:$(TEST_INFRA_VERSION) containers/init/clone
 
 controller-image: ## Build the load test controller container image.
-	docker build -t ${CONTROLLER_IMG} -f containers/runtime/controller/Dockerfile .
+	docker build -t $(CONTROLLER_IMG) -f containers/runtime/controller/Dockerfile .
 
 csharp-build-image: ## Build the C# build-time container image.
-	docker build -t ${BUILD_IMAGE_PREFIX}csharp:${TEST_INFRA_VERSION} containers/init/build/csharp
+	docker build -t $(BUILD_IMAGE_PREFIX)csharp:$(TEST_INFRA_VERSION) containers/init/build/csharp
 
 cxx-image: ## Build the C++ test runtime container image.
-	docker build -t ${IMAGE_PREFIX}cxx:${TEST_INFRA_VERSION} containers/runtime/cxx
+	docker build -t $(RUN_IMAGE_PREFIX)cxx:$(TEST_INFRA_VERSION) containers/runtime/cxx
 
 driver-image: ## Build the driver container image.
-	docker build --build-arg GITREF=${DRIVER_VERSION} --build-arg BREAK_CACHE="$(date +%Y%m%d%H%M%S)" -t ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION} containers/runtime/driver
+	docker build --build-arg GITREF=$(DRIVER_VERSION) --build-arg BREAK_CACHE="$(date +%Y%m%d%H%M%S)" -t $(RUN_IMAGE_PREFIX)driver:$(TEST_INFRA_VERSION) containers/runtime/driver
 
 go-image: ## Build the Go test runtime container image.
-	docker build -t ${IMAGE_PREFIX}go:${TEST_INFRA_VERSION} containers/runtime/go
+	docker build -t $(RUN_IMAGE_PREFIX)go:$(TEST_INFRA_VERSION) containers/runtime/go
 
 java-image: ## Build the Java test runtime container image.
-	docker build -t ${IMAGE_PREFIX}java:${TEST_INFRA_VERSION} containers/runtime/java
+	docker build -t $(RUN_IMAGE_PREFIX)java:$(TEST_INFRA_VERSION) containers/runtime/java
 
 node-build-image: ## Build the Node.js build image
-	docker build -t ${BUILD_IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/init/build/node
+	docker build -t $(BUILD_IMAGE_PREFIX)node:$(TEST_INFRA_VERSION) containers/init/build/node
 
 node-image: ## Build the Node.js test runtime container image.
-	docker build -t ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION} containers/runtime/node
+	docker build -t $(RUN_IMAGE_PREFIX)node:$(TEST_INFRA_VERSION) containers/runtime/node
 
 php7-build-image: ## Build the PHP7 build-time container image.
-	docker build -t ${BUILD_IMAGE_PREFIX}php7:${TEST_INFRA_VERSION} containers/init/build/php7
+	docker build -t $(BUILD_IMAGE_PREFIX)php7:$(TEST_INFRA_VERSION) containers/init/build/php7
 
 php7-image: ## Build the PHP7 test runtime container image.
-	docker build -t ${IMAGE_PREFIX}php7:${TEST_INFRA_VERSION} containers/runtime/php7
+	docker build -t $(RUN_IMAGE_PREFIX)php7:$(TEST_INFRA_VERSION) containers/runtime/php7
 
 python-image: ## Build the Python test runtime container image.
-	docker build -t ${IMAGE_PREFIX}python:${TEST_INFRA_VERSION} containers/runtime/python
+	docker build -t $(RUN_IMAGE_PREFIX)python:$(TEST_INFRA_VERSION) containers/runtime/python
 
 ready-image: ## Build the ready init container image.
-	docker build -t ${INIT_IMAGE_PREFIX}ready:${TEST_INFRA_VERSION} -f containers/init/ready/Dockerfile .
+	docker build -t $(INIT_IMAGE_PREFIX)ready:$(TEST_INFRA_VERSION) -f containers/init/ready/Dockerfile .
 
 ruby-build-image: ## Build the Ruby build-time container image.
-	docker build -t ${BUILD_IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION} containers/init/build/ruby
+	docker build -t $(BUILD_IMAGE_PREFIX)ruby:$(TEST_INFRA_VERSION) containers/init/build/ruby
 
 ruby-image: ## Build the Ruby test runtime container image.
-	docker build -t ${IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION} containers/runtime/ruby
+	docker build -t $(RUN_IMAGE_PREFIX)ruby:$(TEST_INFRA_VERSION) containers/runtime/ruby
 
 ##@ Publish container images
 
 push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-driver-image push-go-image push-java-image push-node-build-image push-node-image push-php7-build-image push-php7-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
 
 push-clone-image: ## Push the clone init container image to a registry.
-	docker push ${INIT_IMAGE_PREFIX}clone:${TEST_INFRA_VERSION}
+	docker push $(INIT_IMAGE_PREFIX)clone:$(TEST_INFRA_VERSION)
 
 push-controller-image: ## Push the load test controller container image to a registry.
-	docker push ${CONTROLLER_IMG}
+	docker push $(CONTROLLER_IMG)
 
 push-csharp-build-image: ## Push the C# build-time container image to a registry.
-	docker push ${BUILD_IMAGE_PREFIX}csharp:${TEST_INFRA_VERSION}
+	docker push $(BUILD_IMAGE_PREFIX)csharp:$(TEST_INFRA_VERSION)
 
 push-cxx-image: ## Push the C++ test runtime container image to a registry.
-	docker push ${IMAGE_PREFIX}cxx:${TEST_INFRA_VERSION}
+	docker push $(RUN_IMAGE_PREFIX)cxx:$(TEST_INFRA_VERSION)
 
 push-driver-image: ## Push the driver container image to a registry.
-	docker push ${IMAGE_PREFIX}driver:${TEST_INFRA_VERSION}
+	docker push $(RUN_IMAGE_PREFIX)driver:$(TEST_INFRA_VERSION)
 
 push-go-image: ## Push the Go test runtime container image to a registry.
-	docker push ${IMAGE_PREFIX}go:${TEST_INFRA_VERSION}
+	docker push $(RUN_IMAGE_PREFIX)go:$(TEST_INFRA_VERSION)
 
 push-java-image: ## Push the Java test runtime container image to a registry.
-	docker push ${IMAGE_PREFIX}java:${TEST_INFRA_VERSION}
+	docker push $(RUN_IMAGE_PREFIX)java:$(TEST_INFRA_VERSION)
 
 push-node-build-image: ## Push the Node.js build image to a docker registry
-	docker push ${BUILD_IMAGE_PREFIX}node:${TEST_INFRA_VERSION}
+	docker push $(BUILD_IMAGE_PREFIX)node:$(TEST_INFRA_VERSION)
 
 push-node-image: ## Push the Node.js test runtime container image to a registry.
-	docker push ${IMAGE_PREFIX}node:${TEST_INFRA_VERSION}
+	docker push $(RUN_IMAGE_PREFIX)node:$(TEST_INFRA_VERSION)
 
 push-php7-build-image: ## Push the PHP7 build-time container image to a registry.
-	docker push ${BUILD_IMAGE_PREFIX}php7:${TEST_INFRA_VERSION}
+	docker push $(BUILD_IMAGE_PREFIX)php7:$(TEST_INFRA_VERSION)
 
 push-php7-image: ## Push the PHP7 test runtime container image to a registry.
-	docker push ${IMAGE_PREFIX}php7:${TEST_INFRA_VERSION}
+	docker push $(RUN_IMAGE_PREFIX)php7:$(TEST_INFRA_VERSION)
 
 push-python-image: ## Push the Python test runtime container image to a registry.
-	docker push ${IMAGE_PREFIX}python:${TEST_INFRA_VERSION}
+	docker push $(RUN_IMAGE_PREFIX)python:$(TEST_INFRA_VERSION)
 
 push-ready-image: ## Push the ready init container image to a registry.
-	docker push ${INIT_IMAGE_PREFIX}ready:${TEST_INFRA_VERSION}
+	docker push $(INIT_IMAGE_PREFIX)ready:$(TEST_INFRA_VERSION)
 
 push-ruby-build-image: ## Push the Ruby build-time container image to a registry.
-	docker push ${BUILD_IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION}
+	docker push $(BUILD_IMAGE_PREFIX)ruby:$(TEST_INFRA_VERSION)
 
 push-ruby-image: ## Push the Ruby test runtime container image to a registry.
-	docker push ${IMAGE_PREFIX}ruby:${TEST_INFRA_VERSION}
+	docker push $(RUN_IMAGE_PREFIX)ruby:$(TEST_INFRA_VERSION)
 
 ##@ Deployment
 
@@ -208,7 +208,7 @@ uninstall-rbac: manifests kustomize ## Uninstall RBACs from the K8s cluster spec
 	$(KUSTOMIZE) build config/rbac | kubectl delete --ignore-not-found=true -f -
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${CONTROLLER_IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(CONTROLLER_IMG)
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
