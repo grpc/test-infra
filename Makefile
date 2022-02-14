@@ -214,19 +214,15 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
+##@ Tools
+
 CONTROLLER_GEN = $(PROJECT_DIR)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
-# Downloading kustomize with go get is deprecated, and go install is currently
-# failing. The definition below can be uncommented once this issue is fixed:
-# https://github.com/kubernetes-sigs/kustomize/issues/3618
-# KUSTOMIZE = $(PROJECT_DIR)/bin/kustomize
-# kustomize: ## Download kustomize locally if necessary.
-# 	$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
-KUSTOMIZE = kustomize
-kustomize:
-	@[ -f "$(shell which $@)" ] || (echo "tool not found: $@"; exit 1)
+KUSTOMIZE = $(PROJECT_DIR)/bin/kustomize
+kustomize: ## Download kustomize locally if necessary.
+	$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.5.2)
 
 # go-install-tool will 'go install' any package $2 and install it to $1.
 define go-install-tool
