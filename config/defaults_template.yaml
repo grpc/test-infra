@@ -9,7 +9,7 @@ cloneImage: "{{ .InitImagePrefix }}clone:{{ .Version }}"
 
 readyImage: "{{ .InitImagePrefix }}ready:{{ .Version }}"
 
-driverImage: "{{ .ImagePrefix }}driver:{{ .Version }}"
+driverImage: "{{ .RunImagePrefix }}driver:{{ .Version }}"
 
 killAfter: {{ .KillAfter }}
 
@@ -19,37 +19,37 @@ languages:
   runImage: mcr.microsoft.com/dotnet/runtime:3.1-bullseye-slim
 
 - language: cxx
-  buildImage: l.gcr.io/google/bazel:latest
-  runImage: "{{ .ImagePrefix }}cxx:{{ .Version }}"
+  buildImage: l.gcr.io/google/bazel:3.5.0
+  runImage: "{{ .RunImagePrefix }}cxx:{{ .Version }}"
 
 - language: go
   buildImage: golang:1.16
-  runImage: "{{ .ImagePrefix }}go:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}go:{{ .Version }}"
 
 - language: java
   buildImage: gradle:jdk8
-  runImage: "{{ .ImagePrefix }}java:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}java:{{ .Version }}"
 
 - language: node
   buildImage: "{{ .BuildImagePrefix }}node:{{ .Version }}"
-  runImage: "{{ .ImagePrefix }}node:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}node:{{ .Version }}"
 
 - language: php7
   buildImage: "{{ .BuildImagePrefix }}php7:{{ .Version }}"
-  runImage: "{{ .ImagePrefix }}php7:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}php7:{{ .Version }}"
 
 - language: php7_protobuf_c
   buildImage: "{{ .BuildImagePrefix }}php7:{{ .Version }}"
-  runImage: "{{ .ImagePrefix }}php7:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}php7:{{ .Version }}"
 
 - language: python
-  buildImage: l.gcr.io/google/bazel:latest
-  runImage: "{{ .ImagePrefix }}python:{{ .Version }}"
+  buildImage: l.gcr.io/google/bazel:3.5.0
+  runImage: "{{ .RunImagePrefix }}python:{{ .Version }}"
 
 - language: python_asyncio
-  buildImage: l.gcr.io/google/bazel:latest
-  runImage: "{{ .ImagePrefix }}python:{{ .Version }}"
+  buildImage: l.gcr.io/google/bazel:3.5.0
+  runImage: "{{ .RunImagePrefix }}python:{{ .Version }}"
 
 - language: ruby
   buildImage: "{{ .BuildImagePrefix }}ruby:{{ .Version }}"
-  runImage: "{{ .ImagePrefix }}ruby:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}ruby:{{ .Version }}"

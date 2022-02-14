@@ -40,8 +40,8 @@ import (
 type DefaultsData struct {
 	Version          string
 	InitImagePrefix  string
-	ImagePrefix      string
 	BuildImagePrefix string
+	RunImagePrefix   string
 	KillAfter        float64
 }
 
@@ -84,10 +84,10 @@ init container images.`)
 This -build-image-prefix flag allows a specific prefix to apply to all
 build container images.`)
 
-	flag.StringVar(&data.ImagePrefix, "image-prefix", "", `prefix to append to container images (optional)
+	flag.StringVar(&data.RunImagePrefix, "run-image-prefix", "", `prefix to append to container images (optional)
 
-This -image-prefix flag allows a specific prefix to apply to all
-container images that are not used as init containers.`)
+This -run-image-prefix flag allows a specific prefix to apply to all
+run container images.`)
 
 	flag.BoolVar(&validate, "validate", true, "validate the output configuration for correctness")
 
