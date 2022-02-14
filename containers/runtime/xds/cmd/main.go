@@ -14,6 +14,7 @@ import (
 	"github.com/envoyproxy/go-control-plane/pkg/test/v3"
 	"google.golang.org/grpc"
 
+	grpcv1config "github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/containers/runtime/xds"
 	config "github.com/grpc/test-infra/containers/runtime/xds/config"
 
@@ -34,7 +35,7 @@ func main() {
 	flag.UintVar(&xdsServerPort, "xds-server-port", 18000, "xDS management server port, this is where Envoy/gRPC client gets update")
 
 	// The port that endpoint updater server listens on
-	flag.UintVar(&testUpdatePort, "test-update-port", 18005, "test update server port, this is where test updater pass the endpoints and test type to xds server")
+	flag.UintVar(&testUpdatePort, "test-update-port", grpcv1config.ServerUpdatePort, "test update server port, this is where test updater pass the endpoints and test type to xds server")
 
 	// Tell Envoy/xDS client to use this Node ID, it is important to match what provided in the bootstrap files
 	flag.StringVar(&nodeID, "node-ID", "test_id", "Node ID")
