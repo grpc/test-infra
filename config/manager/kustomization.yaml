@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: gcr.io/grpc-testing/e2etest/runtime/controller
-  newTag: v0.7.2-kb3.3
+  newTag: v1.0.0
