@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: controller
-  newTag: v1.0.0
+  newTag: v1.x.x
