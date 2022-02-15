@@ -189,6 +189,17 @@ This should match what is included in the [controller configuration].
 [pre-built images]:
   ../tools/README.md#using-prebuilt-images-with-grpc-oss-benchmarks
 
+## Deleting the previous deployment
+
+The following command deletes the previous deployment from the cluster:
+
+```shell
+kubectl -n test-infra-system delete deployments --all
+```
+
+This is an optional step, but may be advisable, so we can start from a clean
+deployment.
+
 ## Deploying to the cluster
 
 Assuming that you are connected to the cluster where you want to deploy, the
