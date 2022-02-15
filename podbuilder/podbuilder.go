@@ -25,7 +25,6 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
-	"github.com/grpc/test-infra/kubehelpers"
 )
 
 // errNoPool is the base error when a PodBuilder cannot determine the pool for
@@ -147,7 +146,7 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	runContainer := &pod.Spec.Containers[0]
 
 	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  config.DriverPortEnv,
@@ -183,7 +182,7 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	runContainer := &pod.Spec.Containers[0]
 	addReadyInitContainer(pb.defaults, pb.test, &pod.Spec, runContainer)
 
 	pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
@@ -247,7 +246,7 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 	}
 	pod.Spec.NodeSelector = nodeSelector
 
-	runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+	runContainer := &pod.Spec.Containers[0]
 
 	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  config.DriverPortEnv,
@@ -321,6 +320,39 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 		})
 	}
 
+	var runContainers []corev1.Container
+	for i, r := range pb.run {
+		if i == 0 {
+			r.WorkingDir = config.WorkspaceMountPath
+			r.VolumeMounts = append(r.VolumeMounts, []corev1.VolumeMount{
+				{
+					Name:      config.WorkspaceVolumeName,
+					MountPath: config.WorkspaceMountPath,
+					ReadOnly:  false,
+				},
+				{
+					Name:      config.BazelCacheVolumeName,
+					MountPath: config.BazelCacheMountPath,
+					ReadOnly:  false,
+				}}...)
+		}
+
+		if len(r.Env) == 0 {
+			r.Env = []corev1.EnvVar{}
+		}
+		r.Env = append(r.Env, []corev1.EnvVar{
+			{
+				Name:  config.KillAfterEnv,
+				Value: fmt.Sprintf("%f", pb.defaults.KillAfter),
+			},
+			{
+				Name:  config.PodTimeoutEnv,
+				Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds),
+			},
+		}...)
+		runContainers = append(runContainers, r)
+	}
+
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%s-%s", pb.test.Name, pb.role, pb.name),
@@ -332,38 +364,8 @@ func (pb *PodBuilder) newPod() *corev1.Pod {
 		},
 		Spec: corev1.PodSpec{
 			InitContainers: initContainers,
-			Containers: []corev1.Container{
-				{
-					Name:    config.RunContainerName,
-					Image:   safeStrUnwrap(&pb.run[0].Image),
-					Command: pb.run[0].Command,
-					Args:    pb.run[0].Args,
-					Env: []corev1.EnvVar{
-						{
-							Name:  config.KillAfterEnv,
-							Value: fmt.Sprintf("%f", pb.defaults.KillAfter),
-						},
-						{
-							Name:  config.PodTimeoutEnv,
-							Value: fmt.Sprintf("%d", pb.test.Spec.TimeoutSeconds),
-						},
-					},
-					WorkingDir: config.WorkspaceMountPath,
-					VolumeMounts: []corev1.VolumeMount{
-						{
-							Name:      config.WorkspaceVolumeName,
-							MountPath: config.WorkspaceMountPath,
-							ReadOnly:  false,
-						},
-						{
-							Name:      config.BazelCacheVolumeName,
-							MountPath: config.BazelCacheMountPath,
-							ReadOnly:  false,
-						},
-					},
-				},
-			},
-			RestartPolicy: corev1.RestartPolicyNever,
+			Containers:     runContainers,
+			RestartPolicy:  corev1.RestartPolicyNever,
 			Affinity: &corev1.Affinity{
 				PodAntiAffinity: &corev1.PodAntiAffinity{
 					RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{

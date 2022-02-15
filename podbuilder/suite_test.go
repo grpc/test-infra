@@ -145,6 +145,7 @@ func newLoadTest() *grpcv1.LoadTest {
 				Language: "cxx",
 				Pool:     &driverPool,
 				Run: []corev1.Container{{
+					Name:  config.RunContainerName,
 					Image: driverImage,
 				}},
 			},
@@ -165,6 +166,7 @@ func newLoadTest() *grpcv1.LoadTest {
 						Args:    buildArgs,
 					},
 					Run: []corev1.Container{{
+						Name:    config.RunContainerName,
 						Image:   runImage,
 						Command: runCommand,
 						Args:    serverRunArgs,
@@ -188,9 +190,16 @@ func newLoadTest() *grpcv1.LoadTest {
 						Args:    buildArgs,
 					},
 					Run: []corev1.Container{{
+						Name:    config.RunContainerName,
 						Image:   runImage,
 						Command: runCommand,
 						Args:    clientRunArgs,
+					}, {
+						Name:          "xdsServer",
+						Image:         "xds-image",
+						Command:       []string{"xds-command"},
+						Args:          []string{"xds-args"},
+						LivenessProbe: &corev1.Probe{},
 					}},
 				},
 			},
