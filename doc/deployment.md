@@ -198,6 +198,12 @@ controller can be deployed as follows:
 make install deploy
 ```
 
+This step depends only on `TEST_INFRA_VERSION` and `RUN_IMAGE_PREFIX`.
+
+The command above can also be used to deploy an existing version of the
+controller. In this case, the environment variables should point to the location
+of the controller binary.
+
 ## Verifying the deployment
 
 You can verify that the deployment started by running the following command:
