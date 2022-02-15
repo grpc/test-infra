@@ -17,6 +17,7 @@ limitations under the License.
 package podbuilder
 
 import (
+	"fmt"
 	"reflect"
 
 	. "github.com/onsi/ginkgo"
@@ -286,8 +287,9 @@ var _ = Describe("PodBuilder", func() {
 		})
 
 		Context("run container", func() {
-			It("creates volume mount for workspace", func() {
+			It("creates volume mount for workspace on the first run container", func() {
 				client.Run = []corev1.Container{{}}
+				client.Run[0].Name = config.RunContainerName
 				client.Run[0].Command = []string{"go"}
 				client.Run[0].Args = []string{"run", "main.go"}
 
@@ -303,8 +305,9 @@ var _ = Describe("PodBuilder", func() {
 				}))
 			})
 
-			It("exposes the driver port", func() {
+			It("exposes the driver port on the first run container", func() {
 				client.Run = []corev1.Container{{}}
+				client.Run[0].Name = config.RunContainerName
 				client.Run[0].Command = []string{"go"}
 				client.Run[0].Args = []string{"run", "main.go"}
 
@@ -315,6 +318,37 @@ var _ = Describe("PodBuilder", func() {
 				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
 				Expect(getNames(runContainer.Ports)).To(ContainElement("driver"))
 				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
+			})
+
+			It("attached the env to other run containers", func() {
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(pod.Spec.Containers)).To(Equal(len(builder.run)))
+
+				expected := builder.run[1].DeepCopy()
+				expected.Env = append(expected.Env, []corev1.EnvVar{
+					{
+						Name:  config.KillAfterEnv,
+						Value: fmt.Sprintf("%f", builder.defaults.KillAfter),
+					},
+					{
+						Name:  config.PodTimeoutEnv,
+						Value: fmt.Sprintf("%d", builder.test.Spec.TimeoutSeconds),
+					},
+				}...)
+				actual := kubehelpers.ContainerForName("xdsServer", pod.Spec.Containers)
+				Expect(reflect.DeepEqual(expected, actual)).To(BeTrue())
+			})
+
+			It("doesn't change existing fields on other run containers", func() {
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(len(pod.Spec.Containers)).To(Equal(len(builder.run)))
+
+				expected := builder.run[1].DeepCopy()
+				actual := kubehelpers.ContainerForName("xdsServer", pod.Spec.Containers)
+				actual.Env = nil
+				Expect(reflect.DeepEqual(expected, actual)).To(BeTrue())
 			})
 		})
 
@@ -534,6 +568,7 @@ var _ = Describe("PodBuilder", func() {
 		Context("run container", func() {
 			It("creates volume mount for workspace", func() {
 				server.Run = []corev1.Container{{}}
+				server.Run[0].Name = config.RunContainerName
 				server.Run[0].Command = []string{"go"}
 				server.Run[0].Args = []string{"run", "main.go"}
 
@@ -551,6 +586,7 @@ var _ = Describe("PodBuilder", func() {
 
 			It("exposes the driver port", func() {
 				server.Run = []corev1.Container{{}}
+				server.Run[0].Name = config.RunContainerName
 				server.Run[0].Command = []string{"go"}
 				server.Run[0].Args = []string{"run", "main.go"}
 
@@ -780,6 +816,7 @@ var _ = Describe("PodBuilder", func() {
 		Context("run container", func() {
 			It("creates volume mount for workspace", func() {
 				driver.Run = []corev1.Container{{}}
+				driver.Run[0].Name = config.RunContainerName
 				driver.Run[0].Command = []string{"go"}
 				driver.Run[0].Args = []string{"run", "main.go"}
 

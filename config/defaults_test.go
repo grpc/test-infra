@@ -251,6 +251,21 @@ var _ = Describe("Defaults", func() {
 				Expect(driver.Run[0].Image).To(Equal(defaults.DriverImage))
 			})
 
+			It("sets run container if the run container is nil", func() {
+				driver.Run = nil
+				err := defaults.SetLoadTestDefaults(loadtest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(driver.Run[0].Name).To(Equal("main"))
+			})
+
+			It("doesn't override the name of the first run container if set", func() {
+				err := defaults.SetLoadTestDefaults(loadtest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(driver.Run[0].Name).To(Equal(loadtest.Spec.Driver.Run[0].Name))
+			})
+
 			It("does not error if run container image cannot be inferred but is set", func() {
 				image := "example-image"
 
