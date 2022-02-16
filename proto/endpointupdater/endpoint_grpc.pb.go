@@ -33,7 +33,7 @@ func NewTestUpdaterClient(cc grpc.ClientConnInterface) TestUpdaterClient {
 
 func (c *testUpdaterClient) UpdateTest(ctx context.Context, in *TestUpdateRequest, opts ...grpc.CallOption) (*TestUpdateReply, error) {
 	out := new(TestUpdateReply)
-	err := c.cc.Invoke(ctx, "/testupdater.TestUpdater/UpdateTest", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/endpointupdater.TestUpdater/UpdateTest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (c *testUpdaterClient) UpdateTest(ctx context.Context, in *TestUpdateReques
 
 func (c *testUpdaterClient) QuitTestUpdateServer(ctx context.Context, in *Void, opts ...grpc.CallOption) (*Void, error) {
 	out := new(Void)
-	err := c.cc.Invoke(ctx, "/testupdater.TestUpdater/QuitTestUpdateServer", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/endpointupdater.TestUpdater/QuitTestUpdateServer", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func _TestUpdater_UpdateTest_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/testupdater.TestUpdater/UpdateTest",
+		FullMethod: "/endpointupdater.TestUpdater/UpdateTest",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestUpdaterServer).UpdateTest(ctx, req.(*TestUpdateRequest))
@@ -110,7 +110,7 @@ func _TestUpdater_QuitTestUpdateServer_Handler(srv interface{}, ctx context.Cont
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/testupdater.TestUpdater/QuitTestUpdateServer",
+		FullMethod: "/endpointupdater.TestUpdater/QuitTestUpdateServer",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TestUpdaterServer).QuitTestUpdateServer(ctx, req.(*Void))
@@ -122,7 +122,7 @@ func _TestUpdater_QuitTestUpdateServer_Handler(srv interface{}, ctx context.Cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TestUpdater_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "testupdater.TestUpdater",
+	ServiceName: "endpointupdater.TestUpdater",
 	HandlerType: (*TestUpdaterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -135,5 +135,5 @@ var TestUpdater_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "testupdater/test_updater.proto",
+	Metadata: "endpoint.proto",
 }

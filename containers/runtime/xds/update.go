@@ -1,5 +1,5 @@
 /*
-Copyright 2022 gRPC authors.
+Copyright 2021 gRPC authors.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -21,7 +21,7 @@ import (
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
 	config "github.com/grpc/test-infra/containers/runtime/xds/config"
-	pb "github.com/grpc/test-infra/proto/testupdater"
+	pb "github.com/grpc/test-infra/proto/endpointupdater"
 	grpc "google.golang.org/grpc"
 )
 

@@ -16,7 +16,7 @@ syntax = "proto3";
 
 option go_package = "github.com/grpc/test-infra/proto/endpointupdater";
 
-package testupdater;
+package endpointupdater;
 
 service TestUpdater {
   // Sends an update
