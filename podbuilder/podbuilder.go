@@ -25,6 +25,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
 )
 
 // errNoPool is the base error when a PodBuilder cannot determine the pool for
@@ -151,6 +152,23 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 	pod.Spec.Containers[0].Env = append(pod.Spec.Containers[0].Env, corev1.EnvVar{
 		Name:  config.DriverPortEnv,
 		Value: fmt.Sprint(config.DriverPort)})
+
+	if xdsServer := kubehelpers.ContainerForName("xds-server", pod.Spec.Containers); xdsServer != nil {
+		if envoy := kubehelpers.ContainerForName("envoy", pod.Spec.Containers); envoy == nil {
+			pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{Name: "grpc-xds-bootstrap"})
+
+			runContainer.VolumeMounts = append(runContainer.VolumeMounts, corev1.VolumeMount{
+				Name:      "grpc-xds-bootstrap",
+				MountPath: "/bootstrap",
+				ReadOnly:  false,
+			})
+			xdsServer.VolumeMounts = append(xdsServer.VolumeMounts, corev1.VolumeMount{
+				Name:      "grpc-xds-bootstrap",
+				MountPath: "/bootstrap",
+				ReadOnly:  false,
+			})
+		}
+	}
 
 	runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
 		Name:          "driver",

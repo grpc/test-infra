@@ -34,6 +34,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
 	"github.com/grpc/test-infra/podbuilder"
 	"github.com/grpc/test-infra/status"
 )
@@ -83,7 +84,7 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	if rawTest.Status.State.IsTerminated() {
-		if time.Now().Sub(rawTest.Status.StartTime.Time) >= testTTL {
+		if time.Since(rawTest.Status.StartTime.Time) >= testTTL {
 			logger.Info("test expired, deleting", "startTime", rawTest.Status.StartTime, "testTTL", testTTL)
 			if err = r.Delete(ctx, rawTest); err != nil {
 				logger.Error(err, "fail to delete test")
@@ -129,13 +130,22 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return ctrl.Result{Requeue: true}, err
 		}
 
+		scenariosJSON := test.Spec.ScenariosJSON
+
+		testServerPort := config.TestServerPort
+		scenariosJSON, err = kubehelpers.UpdateConfigMapWithServerPort(fmt.Sprint(testServerPort), test.Spec.ScenariosJSON)
+		if err != nil {
+			logger.Error(err, "failed to update ConfigMap with test server port")
+			return ctrl.Result{Requeue: true}, err
+		}
+
 		cfgMap = &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      req.Name,
 				Namespace: req.Namespace,
 			},
 			Data: map[string]string{
-				"scenarios.json": test.Spec.ScenariosJSON,
+				"scenarios.json": scenariosJSON,
 			},
 
 			// TODO: Enable ConfigMap immutability when it becomes available

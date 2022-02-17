@@ -19,8 +19,13 @@ if [ -n "${QPS_WORKERS_FILE}" ]; then
   export QPS_WORKERS=$(cat "${QPS_WORKERS_FILE}")
 fi
 
+
+if [ -f /var/data/qps_workers/server_target_override ]; then
+  SERVER_TARGET_OVERRIDE=$(cat /var/data/qps_workers/server_target_override)
+fi
+
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --scenarios_file="${SCENARIOS_FILE}" \
-  --scenario_result_file=scenario_result.json
+  --scenario_result_file=scenario_result.json --qps_server_target_override="${SERVER_TARGET_OVERRIDE}"
 
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --quit=true
 

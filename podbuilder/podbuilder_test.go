@@ -144,6 +144,60 @@ var _ = Describe("PodBuilder", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
+		It("creates the grpc-xds-bootstrap volume for client pod", func() {
+			test.Spec.Clients[0].Run = append(test.Spec.Clients[0].Run, corev1.Container{
+				Name:          "xds-server",
+				Image:         "xds-image",
+				Command:       []string{"xds-command"},
+				Args:          []string{"xds-args"},
+				LivenessProbe: &corev1.Probe{},
+			})
+			builder = New(defaults, test)
+			pod, err := builder.PodForClient(&test.Spec.Clients[0])
+			Expect(err).ToNot(HaveOccurred())
+			Expect(pod.Spec.Volumes).Should(ContainElement(corev1.Volume{Name: "grpc-xds-bootstrap"}))
+		})
+
+		It("attaches the grpc-xds-bootstrap volume to xds-server container when running a proxyless test", func() {
+			test.Spec.Clients[0].Run = append(test.Spec.Clients[0].Run, corev1.Container{
+				Name:          "xds-server",
+				Image:         "xds-image",
+				Command:       []string{"xds-command"},
+				Args:          []string{"xds-args"},
+				LivenessProbe: &corev1.Probe{},
+			})
+			builder = New(defaults, test)
+			pod, err := builder.PodForClient(&test.Spec.Clients[0])
+			Expect(err).ToNot(HaveOccurred())
+
+			xdsServer := kubehelpers.ContainerForName("xds-server", pod.Spec.Containers)
+			Expect(xdsServer.VolumeMounts).Should(ContainElement(corev1.VolumeMount{
+				Name:      "grpc-xds-bootstrap",
+				MountPath: "/bootstrap",
+				ReadOnly:  false,
+			}))
+		})
+
+		It("attaches the grpc-xds-bootstrap volume to main container when running a proxyless test", func() {
+			test.Spec.Clients[0].Run = append(test.Spec.Clients[0].Run, corev1.Container{
+				Name:          "xds-server",
+				Image:         "xds-image",
+				Command:       []string{"xds-command"},
+				Args:          []string{"xds-args"},
+				LivenessProbe: &corev1.Probe{},
+			})
+			builder = New(defaults, test)
+			pod, err := builder.PodForClient(&test.Spec.Clients[0])
+			Expect(err).ToNot(HaveOccurred())
+
+			runContainer := pod.Spec.Containers[0]
+			Expect(runContainer.VolumeMounts).Should(ContainElement(corev1.VolumeMount{
+				Name:      "grpc-xds-bootstrap",
+				MountPath: "/bootstrap",
+				ReadOnly:  false,
+			}))
+		})
+
 		Context("clone init container", func() {
 			It("contains an init container named clone when clone instructions are present", func() {
 				client.Clone = new(grpcv1.Clone)

@@ -216,7 +216,7 @@ func newLoadTest() *grpcv1.LoadTest {
 			Results: &grpcv1.Results{
 				BigQueryTable: optional.StringPtr("example-dataset.example-table"),
 			},
-			ScenariosJSON: "{\"scenarios\": []}",
+			ScenariosJSON: "{\"scenarios\":{\"name\":\"scenariso-1\",\"server_config\":{\"server_type\":\"ASYNC_GENERIC_SERVER\"}}}",
 		},
 		Status: grpcv1.LoadTestStatus{},
 	}
