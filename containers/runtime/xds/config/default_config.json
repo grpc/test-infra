@@ -3,10 +3,10 @@
     {
       "Version": "1",
       "Items": {
-        "default_testServiceClusterName": {
+        "defaultTestServiceCluster": {
           "Resource": {
             "@type": "type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment",
-            "clusterName": "default_testServiceClusterName",
+            "clusterName": "defaultTestServiceCluster",
             "endpoints": [
               {
                 "locality": {
@@ -17,7 +17,7 @@
                     "endpoint": {
                       "address": {
                         "socketAddress": {
-                          "address": "default_testUpstreamHost",
+                          "address": "defaultTestUpstreamHost",
                           "portValue": 5678
                         }
                       }
@@ -35,16 +35,16 @@
     {
       "Version": "1",
       "Items": {
-        "default_testServiceClusterName": {
+        "defaultTestServiceCluster": {
           "Resource": {
             "@type": "type.googleapis.com/envoy.config.cluster.v3.Cluster",
-            "name": "default_testServiceClusterName",
+            "name": "defaultTestServiceCluster",
             "type": "EDS",
             "edsClusterConfig": {
               "edsConfig": {
                 "ads": {}
               },
-              "serviceName": "default_testServiceClusterName"
+              "serviceName": "defaultTestServiceCluster"
             },
             "connectTimeout": "5s",
             "http2ProtocolOptions": {}
@@ -56,10 +56,10 @@
     {
       "Version": "1",
       "Items": {
-        "default_TestRouteName": {
+        "defaultTestRoute": {
           "Resource": {
             "@type": "type.googleapis.com/envoy.config.route.v3.RouteConfiguration",
-            "name": "default_TestRouteName",
+            "name": "defaultTestRoute",
             "virtualHosts": [
               {
                 "name": "example_virtual_host",
@@ -72,7 +72,7 @@
                       "prefix": "/"
                     },
                     "route": {
-                      "cluster": "default_testServiceClusterName"
+                      "cluster": "defaultTestServiceCluster"
                     }
                   }
                 ]
@@ -86,14 +86,14 @@
     {
       "Version": "1",
       "Items": {
-        "default_testEnvoyListenerName": {
+        "defaultSocketListener": {
           "Resource": {
             "@type": "type.googleapis.com/envoy.config.listener.v3.Listener",
-            "name": "default_testEnvoyListenerName",
+            "name": "defaultSocketListener",
             "address": {
               "socketAddress": {
                 "address": "0.0.0.0",
-                "portValue": 10000
+                "portValue": 19007
               }
             },
             "filterChains": [
@@ -108,7 +108,7 @@
                         "configSource": {
                           "ads": {}
                         },
-                        "routeConfigName": "default_TestRouteName"
+                        "routeConfigName": "defaultTestRoute"
                       },
                       "httpFilters": [
                         {
@@ -123,10 +123,10 @@
           },
           "TTL": null
         },
-        "default_testGrpcListenerName": {
+        "defaultApiListener": {
           "Resource": {
             "@type": "type.googleapis.com/envoy.config.listener.v3.Listener",
-            "name": "default_testGrpcListenerName",
+            "name": "defaultApiListener",
             "filterChains": [
               {
                 "filters": [
@@ -138,7 +138,7 @@
                         "configSource": {
                           "ads": {}
                         },
-                        "routeConfigName": "default_TestRouteName"
+                        "routeConfigName": "defaultTestRoute"
                       },
                       "httpFilters": [
                         {
@@ -161,7 +161,7 @@
                   "configSource": {
                     "ads": {}
                   },
-                  "routeConfigName": "default_TestRouteName"
+                  "routeConfigName": "defaultTestRoute"
                 },
                 "httpFilters": [
                   {

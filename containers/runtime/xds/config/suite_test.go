@@ -35,7 +35,6 @@ import (
 	route "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	v3routerpb "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3"
 	v3httppb "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/network/http_connection_manager/v3"
-	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 )
 
@@ -109,7 +108,7 @@ func makeRoute(testRouteName string, testServiceClusterName string) *route.Route
 	}
 }
 
-func makeGrpcHTTPListener(testRouteName string, testGrpcListenerName string, testListenerPort uint32) *listener.Listener {
+func makeGrpcHTTPListener(testRouteName string, testGrpcListenerName string) *listener.Listener {
 	a, _ := anypb.New(&v3routerpb.Router{})
 
 	hcm, _ := anypb.New(&v3httppb.HttpConnectionManager{
@@ -129,20 +128,7 @@ func makeGrpcHTTPListener(testRouteName string, testGrpcListenerName string, tes
 	},
 	)
 	return &listener.Listener{
-		Name: testGrpcListenerName,
-		// this listener is configured with API listener, add a fake address to pass
-		// validation
-		Address: &core.Address{
-			Address: &core.Address_SocketAddress{
-				SocketAddress: &core.SocketAddress{
-					Protocol: core.SocketAddress_TCP,
-					Address:  "0.0.0.0",
-					PortSpecifier: &core.SocketAddress_PortValue{
-						PortValue: uint32(testListenerPort),
-					},
-				},
-			},
-		},
+		Name:        testGrpcListenerName,
 		ApiListener: &listener.ApiListener{ApiListener: hcm},
 		FilterChains: []*listener.FilterChain{{
 			Name: "filter-chain-name",
@@ -159,25 +145,12 @@ func makeEnvoyHTTPListener(testRouteName string, testEnvoyListenerName string, t
 	manager := &v3httppb.HttpConnectionManager{
 		CodecType:  v3httppb.HttpConnectionManager_AUTO,
 		StatPrefix: "http",
-		RouteSpecifier: &v3httppb.HttpConnectionManager_Rds{
-			Rds: &v3httppb.Rds{
-				ConfigSource: &core.ConfigSource{
-					ResourceApiVersion: resource.DefaultAPIVersion,
-					ConfigSourceSpecifier: &core.ConfigSource_ApiConfigSource{
-						ApiConfigSource: &core.ApiConfigSource{
-							TransportApiVersion:       resource.DefaultAPIVersion,
-							ApiType:                   core.ApiConfigSource_GRPC,
-							SetNodeOnFirstMessageOnly: true,
-							GrpcServices: []*core.GrpcService{{
-								TargetSpecifier: &core.GrpcService_EnvoyGrpc_{
-									EnvoyGrpc: &core.GrpcService_EnvoyGrpc{ClusterName: "xds_cluster"},
-								},
-							}},
-						},
-					}},
-				RouteConfigName: testRouteName,
+		RouteSpecifier: &v3httppb.HttpConnectionManager_Rds{Rds: &v3httppb.Rds{
+			ConfigSource: &core.ConfigSource{
+				ConfigSourceSpecifier: &core.ConfigSource_Ads{Ads: &core.AggregatedConfigSource{}},
 			},
-		},
+			RouteConfigName: testRouteName,
+		}},
 		HttpFilters: []*v3httppb.HttpFilter{{
 			Name: wellknown.Router,
 		}},

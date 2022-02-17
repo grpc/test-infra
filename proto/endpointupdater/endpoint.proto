@@ -18,14 +18,28 @@ option go_package = "github.com/grpc/test-infra/proto/endpointupdater";
 
 package endpointupdater;
 
-service EndpointUpdater {
+service TestUpdater {
   // Sends an update
-  rpc UpdateEndpoint (EndpointUpdaterRequest) returns (EndpointUpdaterReply) {}
+  rpc UpdateTest (TestUpdateRequest) returns (TestUpdateReply) {}
+
+  rpc QuitTestUpdateServer(Void) returns (Void);
 }
 
-message EndpointUpdaterRequest {
+message Void {
+}
+
+message TestUpdateRequest {
+  repeated Endpoint endpoints = 1;
+  bool is_proxied = 2;
+}
+
+message Endpoint{
   string ip_address = 1;
   uint32 port = 2;
 }
 
-message EndpointUpdaterReply {}
+message TestUpdateReply {
+  string  psm_server_target_override = 1;
+}
+
+
