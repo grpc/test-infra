@@ -206,7 +206,7 @@ Assuming that you are connected to the cluster where you want to deploy, the
 controller can be deployed as follows:
 
 ```shell
-make install deploy
+make deploy install
 ```
 
 This step depends only on `TEST_INFRA_VERSION` and `RUN_IMAGE_PREFIX`.
