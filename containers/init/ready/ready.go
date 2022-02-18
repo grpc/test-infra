@@ -289,7 +289,6 @@ func communicateWithEachClient(clientIP string, targets []*pb.Endpoint, isProxie
 			log.Print(statusCode.Details()...)
 		}
 	}()
-
 	return psmServerTargetOverride, nil
 }
 
@@ -389,23 +388,20 @@ func main() {
 		log.Fatalf("validation failed in checking clients' spec: %v", err)
 	}
 
-	isPSMTest := kubehelpers.IsPSMTest(&test.Spec.Clients)
-
-	if isPSMTest {
+	if kubehelpers.IsPSMTest(&test.Spec.Clients) {
 		log.Printf("running PSM test, prepare to send backends information and test type to xds server")
 
-		psmTargetOverride := ""
 		endpoints := buildEndpoints(nodesInfo.Servers, uint32(testconfig.TestServerPort))
+
+		isProxied := kubehelpers.IsProxiedTest(&test.Spec.Clients)
+		if isProxied {
+			log.Printf("running proxied test")
+		} else {
+			log.Printf("running proxyless test")
+		}
+
+		psmTargetOverride := ""
 		for _, clientNode := range nodesInfo.Clients {
-			var isProxied bool
-			isProxiedTest := kubehelpers.IsProxiedTest(&test.Spec.Clients)
-			if isProxiedTest {
-				log.Printf("running proxied test")
-				isProxied = true
-			} else {
-				log.Printf("running proxyless test")
-				isProxied = false
-			}
 
 			currentPSMTargetOverride, err := communicateWithEachClient(clientNode.PodIP, endpoints, isProxied)
 			if err != nil {
@@ -430,8 +426,40 @@ func main() {
 			log.Fatalf("failed to obtain PSM server target")
 		}
 
-		log.Println("waiting 20s in case we are running a proxied test where we need Envoy to be fully started")
-		time.Sleep(20 * time.Second)
+		if isProxied {
+			envoyListenerPort := strings.Split(psmTargetOverride, ":")[1]
+			readyEnvoy := make(map[string]bool)
+			startTime := time.Now()
+			for {
+				if time.Now().Sub(startTime) >= DefaultTimeout {
+					log.Fatalf("timeout exceed")
+				}
+
+				for _, clientNode := range nodesInfo.Clients {
+					if readyEnvoy[clientNode.PodIP] {
+						continue
+					}
+
+					curEnvoyAdmin := net.JoinHostPort(clientNode.PodIP, envoyListenerPort)
+					conn, err := net.DialTimeout("tcp", curEnvoyAdmin, timeout)
+					if err != nil {
+						log.Printf("Envoy on %v is not ready: %v", clientNode.PodIP, err)
+					}
+					if conn != nil {
+						defer conn.Close()
+						readyEnvoy[clientNode.PodIP] = true
+						log.Printf("Envoy on %v: %v is ready. \n", clientNode.Name, clientNode.PodIP)
+					}
+
+					time.Sleep(pollInterval)
+				}
+
+				if len(readyEnvoy) == len(nodesInfo.Clients) {
+					log.Printf("all Envoy sidecars are fully functioning")
+					break
+				}
+			}
+		}
 	}
 
 	outputMetadataFile := DefaultMetadataOutputFile
