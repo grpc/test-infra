@@ -429,6 +429,9 @@ func main() {
 		} else {
 			log.Fatalf("failed to obtain PSM server target")
 		}
+
+		log.Println("waiting 20s in case we are running a proxied test where we need Envoy to be fully started")
+		time.Sleep(20 * time.Second)
 	}
 
 	outputMetadataFile := DefaultMetadataOutputFile
