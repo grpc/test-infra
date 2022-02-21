@@ -63,7 +63,7 @@ desired version. The following commands clone the repo and check out version
 
 ```shell
 git clone https://github.com/grpc/test-infra && cd test-infra
-git checkout tags/v1.0.0
+git checkout refs/tags/v1.0.0
 ```
 
 ### Environment variables
