@@ -1,19 +1,21 @@
 # Version tag for all images
 TEST_INFRA_VERSION ?= latest
 
-# Version of the gRPC driver
-DRIVER_VERSION ?= master
+# Version of gRPC core used for the gRPC driver
+# Pinned to include https://github.com/grpc/grpc/pull/28805
+# TODO(paulosjca): Update to v1.45.0 once released
+DRIVER_VERSION ?= ccd8d577d063f97d02ce80a134c33cf51de530d1
 
 # Prefix for all images used as clone and ready containers, enabling use with
-# registries other than DockerHub
+# registries other than Docker Hub
 INIT_IMAGE_PREFIX ?= ""
 
 # Prefix for all images used as build containers, enabling use with registries
-# other than DockerHub
+# other than Docker Hub
 BUILD_IMAGE_PREFIX ?= ""
 
 # Prefix for all images used as runtime containers, enabling use with registries
-# other than DockerHub
+# other than Docker Hub
 RUN_IMAGE_PREFIX ?= ""
 
 # Image URL to use all building/pushing image targets
