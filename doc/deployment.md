@@ -71,7 +71,7 @@ git checkout tags/v1.0.0
 The following environment variables must be set before starting the build:
 
 - `TEST_INFRA_VERSION`
-- 'DRIVER_VERSION`
+- `DRIVER_VERSION`
 - `INIT_IMAGE_PREFIX`
 - `BUILD_IMAGE_PREFIX`
 - `RUN_IMAGE_PREFIX`
