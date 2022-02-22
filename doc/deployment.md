@@ -63,7 +63,7 @@ desired version. The following commands clone the repo and check out version
 
 ```shell
 git clone https://github.com/grpc/test-infra && cd test-infra
-git checkout tags/v1.0.0
+git checkout --detach v1.0.0
 ```
 
 ### Environment variables
@@ -78,14 +78,15 @@ The following environment variables must be set before starting the build:
 - `KILL_AFTER`
 
 `TEST_INFRA_VERSION` is used to tag the images created by the controller build,
-and defaults to `latest`. The other variables must be set explicitly.
+and defaults to `latest`.
 
 `DRIVER_VERSION` is the version of the load test driver. The driver is built
-from the [gRPC Core] repository, so it should be set to the latest release of
-gRPC (e.g. `v1.44.0`).
+from the [gRPC Core] repository. This variable defaults to a recent known good
+version of gRPC, so it is safe to leave it unset.
 
 `INIT_IMAGE_PREFIX`, `BUILD_IMAGE_PREFIX` and `RUN_IMAGE_PREFIX` define the
-repository locations where various kinds of images will be uploaded.
+repository locations where various kinds of images will be uploaded. If not set,
+will upload to Docker Hub.
 
 `KILL_AFTER` is the time interval in seconds after which a KILL signal will be
 sent to test components, if they have not terminated after timeout. Component
@@ -97,7 +98,6 @@ The variables used to build the `v1.0.0` release are as follows:
 
 ```shell
 export TEST_INFRA_VERSION=v1.0.0
-export DRIVER_VERSION=v1.44.0
 export INIT_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/
 export BUILD_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/build/
 export RUN_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/runtime/
