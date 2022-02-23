@@ -194,7 +194,7 @@ var _ = Describe("PodBuilder", func() {
 			Expect(runContainer.VolumeMounts).Should(ContainElement(corev1.VolumeMount{
 				Name:      "grpc-xds-bootstrap",
 				MountPath: "/bootstrap",
-				ReadOnly:  false,
+				ReadOnly:  true,
 			}))
 		})
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2020 gRPC authors.
+Copyright 2022 gRPC authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import (
 )
 
 // UpdateConfigMapWithServerPort accepts a server port string and a scenarioString string.
-// It returns a updated scenarioString with server port inserted. Currently only supports
+// It returns an updated scenarioString with server port inserted. Currently only supports
 // single scenario.
-// TODO: wanlin31 to update the function to support array of scenarios.
+// TODO(wanlin31): update the function to support an array of scenarios
 func UpdateConfigMapWithServerPort(port string, scenarioString string) (string, error) {
 	updatedScenarios := ""
 	var jsonScenarioMap map[string]map[string]json.RawMessage
@@ -35,11 +35,11 @@ func UpdateConfigMapWithServerPort(port string, scenarioString string) (string, 
 		return updatedScenarios, err
 	}
 	serverConfig["port"] = port
-	serverConfigByte, err := json.Marshal(serverConfig)
+	serverConfigBytes, err := json.Marshal(serverConfig)
 	if err != nil {
 		return updatedScenarios, err
 	}
-	jsonScenarioMap["scenarios"]["server_config"] = serverConfigByte
+	jsonScenarioMap["scenarios"]["server_config"] = serverConfigBytes
 	scenariosJSONByte, err := json.Marshal(jsonScenarioMap)
 	if err != nil {
 		return updatedScenarios, err

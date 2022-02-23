@@ -153,14 +153,14 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 		Name:  config.DriverPortEnv,
 		Value: fmt.Sprint(config.DriverPort)})
 
-	if xdsServer := kubehelpers.ContainerForName("xds-server", pod.Spec.Containers); xdsServer != nil {
-		if envoy := kubehelpers.ContainerForName("envoy", pod.Spec.Containers); envoy == nil {
+	if xdsServer := kubehelpers.ContainerForName(config.XdsServerContainerName, pod.Spec.Containers); xdsServer != nil {
+		if envoy := kubehelpers.ContainerForName(config.EnvoyContainerName, pod.Spec.Containers); envoy == nil {
 			pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{Name: "grpc-xds-bootstrap"})
 
 			runContainer.VolumeMounts = append(runContainer.VolumeMounts, corev1.VolumeMount{
 				Name:      "grpc-xds-bootstrap",
 				MountPath: "/bootstrap",
-				ReadOnly:  false,
+				ReadOnly:  true,
 			})
 			xdsServer.VolumeMounts = append(xdsServer.VolumeMounts, corev1.VolumeMount{
 				Name:      "grpc-xds-bootstrap",

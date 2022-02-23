@@ -20,4 +20,12 @@ const (
 	// ServerUpdatePort is the port on the xDS server to listen to
 	// configuration for PSM test only.
 	ServerUpdatePort = 18005
+
+	// XdsServerContainerName holds the name of the xds-server
+	// container for PSM test only.
+	XdsServerContainerName = "xds-server"
+
+	// EnvoyContainerName holds the name of the envoy
+	// container for a proxied PSM test only.
+	EnvoyContainerName = "envoy"
 )

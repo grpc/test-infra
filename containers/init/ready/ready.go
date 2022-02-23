@@ -88,6 +88,9 @@ const DefaultServerTargetOverrideOutputFile = testconfig.ReadyMountPath + "/serv
 // included in the addresses returned by the WaitForReadyPods function.
 const DefaultDriverPort int32 = 10000
 
+// defaultConnectionTimeout specifies the default maximum allowed duration of a RPC call .
+const defaultConnectionTimeout = 20 * time.Second
+
 // KubeConfigEnv is the name of the environment variable that may contain a
 // path to a kubeconfig file. This environment variable does not need to be set
 // when the container runs on a node in a Kubernetes cluster.
@@ -261,6 +264,15 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 	return podAddresses, &nodesInfo, nil
 }
 
+// communicateWithEachClient takes a client IP, a list of server IP plus its
+// test port and a boolean value indicates if the test is a proxied test. The
+// function communicates with the given client's xds server through a RPC
+// including information such as the full list of the server IP plus its test
+// port and the boolean value indicates the PSM test type. In the response of
+// the RPC, communicateWithEachClient gets back the target string will be used
+// in the loadtest.After the communication, the function starts a separate
+// goroutine to close the test update server on the xds server container. Then
+// the function returns the target string as an return value.
 func communicateWithEachClient(clientIP string, targets []*pb.Endpoint, isProxied bool) (string, error) {
 	var psmServerTargetOverride string
 	dialTarget := net.JoinHostPort(clientIP, fmt.Sprint(testconfig.ServerUpdatePort))
@@ -270,7 +282,7 @@ func communicateWithEachClient(clientIP string, targets []*pb.Endpoint, isProxie
 	}
 	defer conn.Close()
 	c := pb.NewTestUpdaterClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultConnectionTimeout)
 	defer cancel()
 	reply, err := c.UpdateTest(ctx, &pb.TestUpdateRequest{Endpoints: targets, IsProxied: isProxied})
 	if err != nil {
@@ -391,7 +403,7 @@ func main() {
 	if kubehelpers.IsPSMTest(&test.Spec.Clients) {
 		log.Printf("running PSM test, prepare to send backends information and test type to xds server")
 
-		endpoints := buildEndpoints(nodesInfo.Servers, uint32(testconfig.TestServerPort))
+		endpoints := buildEndpoints(nodesInfo.Servers, uint32(testconfig.ServerPort))
 
 		isProxied := kubehelpers.IsProxiedTest(&test.Spec.Clients)
 		if isProxied {
@@ -427,7 +439,10 @@ func main() {
 		}
 
 		if isProxied {
-			envoyListenerPort := strings.Split(psmTargetOverride, ":")[1]
+			_, envoyListenerPort, err := net.SplitHostPort(psmTargetOverride)
+			if err != nil {
+				log.Fatalf("failed to obtain socket listener port")
+			}
 			readyEnvoy := make(map[string]bool)
 			startTime := time.Now()
 			for {
@@ -440,8 +455,8 @@ func main() {
 						continue
 					}
 
-					curEnvoyAdmin := net.JoinHostPort(clientNode.PodIP, envoyListenerPort)
-					conn, err := net.DialTimeout("tcp", curEnvoyAdmin, timeout)
+					curEnvoyListener := net.JoinHostPort(clientNode.PodIP, envoyListenerPort)
+					conn, err := net.DialTimeout("tcp", curEnvoyListener, timeout)
 					if err != nil {
 						log.Printf("Envoy on %v is not ready: %v", clientNode.PodIP, err)
 					}

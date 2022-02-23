@@ -1,5 +1,5 @@
 /*
-Copyright 2020 gRPC authors.
+Copyright 2022 gRPC authors.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -17,48 +17,49 @@ import (
 	"fmt"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
 )
 
-// IsPSMTest checks if a given Loadtest is a PSM test. This check must be
-// used after validate the spec of the clients.
+//IsPSMTest checks if a given LoadTest is a (proxied or proxyless) service
+// mesh test. This test must be performed after validating the client specs.
 func IsPSMTest(clients *[]grpcv1.Client) bool {
 	for _, c := range *clients {
-		if ContainerForName("xds-server", c.Run) != nil {
+		if ContainerForName(config.XdsServerContainerName, c.Run) != nil {
 			return true
 		}
 	}
 	return false
 }
 
-// IsProxiedTest is to check if the current test have sidecar container
-// specified. This check must be used after validate the spec of the clients.
+// IsProxiedTest checks if the current test has a sidecar container specified.
+// This check must be performed after validating the client specs.
 func IsProxiedTest(clients *[]grpcv1.Client) bool {
 	for _, c := range *clients {
-		if ContainerForName("envoy", c.Run) != nil {
+		if ContainerForName(config.EnvoyContainerName, c.Run) != nil {
 			return true
 		}
 	}
 	return false
 }
 
-// IsClientsSpecValid checks if the given set of the client specs are valid.
+// IsClientsSpecValid checks if the given set of the client spec is valid.
 func IsClientsSpecValid(clients *[]grpcv1.Client) (bool, error) {
 	if len(*clients) == 0 {
-		err := fmt.Errorf("no client specified in the given load test")
+		err := fmt.Errorf("no client specified")
 		return false, err
 	}
 	var numberOfClientWithSidecar int
 	var numberOfClientWithXdsServer int
 
 	for _, c := range *clients {
-		if ContainerForName("xds-server", c.Run) != nil {
+		if ContainerForName(config.XdsServerContainerName, c.Run) != nil {
 			numberOfClientWithXdsServer++
-			if ContainerForName("envoy", c.Run) != nil {
+			if ContainerForName(config.EnvoyContainerName, c.Run) != nil {
 				numberOfClientWithSidecar++
 			}
 		} else {
-			if ContainerForName("envoy", c.Run) != nil {
-				err := fmt.Errorf("encountered a client specified a sidecar container without specifyling xds-server container")
+			if ContainerForName(config.EnvoyContainerName, c.Run) != nil {
+				err := fmt.Errorf("encountered a client with envoy container but no xds-server container")
 				return false, err
 			}
 		}
@@ -70,12 +71,12 @@ func IsClientsSpecValid(clients *[]grpcv1.Client) (bool, error) {
 
 	if numberOfClientWithSidecar == 0 {
 		if len(*clients) != numberOfClientWithXdsServer {
-			err := fmt.Errorf("only some of the clients have xds-server container specified")
+			err := fmt.Errorf("encountered some clients with xds-server container and some without xds-server container")
 			return false, err
 		}
 	} else {
 		if len(*clients) != numberOfClientWithSidecar {
-			err := fmt.Errorf("only some of the clients have envoy container specified")
+			err := fmt.Errorf("encountered some clients with envoy container and some without envoy container")
 			return false, err
 		}
 	}

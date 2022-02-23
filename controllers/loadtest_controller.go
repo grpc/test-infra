@@ -132,12 +132,14 @@ func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 		scenariosJSON := test.Spec.ScenariosJSON
 
-		testServerPort := config.TestServerPort
+		testServerPort := config.ServerPort
 		scenariosJSON, err = kubehelpers.UpdateConfigMapWithServerPort(fmt.Sprint(testServerPort), test.Spec.ScenariosJSON)
 		if err != nil {
 			logger.Error(err, "failed to update ConfigMap with test server port")
 			return ctrl.Result{Requeue: true}, err
 		}
+
+		logger.Info(fmt.Sprintf("using %v as test server port", config.ServerPort))
 
 		cfgMap = &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
