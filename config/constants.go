@@ -115,6 +115,10 @@ const (
 	// on a server component.
 	ServerRole = "server"
 
+	// ServerPort is the number of the port that the test server listens on
+	// to run test.
+	ServerPort = 10010
+
 	// WorkspaceMountPath contains the path to mount the volume identified by
 	// `workspaceVolume`.
 	WorkspaceMountPath = "/src/workspace"

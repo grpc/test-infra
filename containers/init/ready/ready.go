@@ -29,9 +29,13 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	grpcclientset "github.com/grpc/test-infra/clientset"
-	"github.com/grpc/test-infra/config"
+	testconfig "github.com/grpc/test-infra/config"
+	"github.com/grpc/test-infra/kubehelpers"
+	pb "github.com/grpc/test-infra/proto/endpointupdater"
 	"github.com/grpc/test-infra/status"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc"
+	grpcstatus "google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -74,10 +78,18 @@ const DefaultMetadataOutputFile = "/tmp/metadata.json"
 // write the node infomation.
 const DefaultNodeInfoOutputFile = "/tmp/node_info.json"
 
+// DefaultServerTargetOverrideOutputFile is the name of the defalt file where the
+// executable should write the string to override the test target, this is only
+// used for PSM tests.
+const DefaultServerTargetOverrideOutputFile = testconfig.ReadyMountPath + "/server_target_override"
+
 // DefaultDriverPort is the default port for communication between the driver
 // and worker pods. When another port could not be found on a pod, this port is
 // included in the addresses returned by the WaitForReadyPods function.
 const DefaultDriverPort int32 = 10000
+
+// defaultConnectionTimeout specifies the default maximum allowed duration of a RPC call .
+const defaultConnectionTimeout = 20 * time.Second
 
 // KubeConfigEnv is the name of the environment variable that may contain a
 // path to a kubeconfig file. This environment variable does not need to be set
@@ -203,7 +215,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 		}
 		ownedPods := status.PodsForLoadTest(loadtest, podList.Items)
 		for _, pod := range ownedPods {
-			if pod.Labels[config.RoleLabel] == config.DriverRole {
+			if pod.Labels[testconfig.RoleLabel] == testconfig.DriverRole {
 				if !driverMatched && pod.Status.PodIP != "" {
 					nodesInfo.Driver = NodeInfo{
 						Name:     pod.Name,
@@ -223,7 +235,7 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 			matchingPods[pod.Name] = true
 			ip := pod.Status.PodIP
 			driverPort := findDriverPort(pod)
-			if pod.Labels[config.RoleLabel] == config.ServerRole {
+			if pod.Labels[testconfig.RoleLabel] == testconfig.ServerRole {
 				serverPodAddresses[serverMatchCount] = net.JoinHostPort(ip, fmt.Sprint(driverPort))
 				nodesInfo.Servers = append(nodesInfo.Servers, NodeInfo{
 					Name:     pod.Name,
@@ -250,6 +262,57 @@ func WaitForReadyPods(ctx context.Context, ltg LoadTestGetter, pl PodLister, tes
 	}
 	podAddresses := append(serverPodAddresses, clientPodAddresses...)
 	return podAddresses, &nodesInfo, nil
+}
+
+// communicateWithEachClient takes a client IP, a list of server IP plus its
+// test port and a boolean value indicates if the test is a proxied test. The
+// function communicates with the given client's xds server through a RPC
+// including information such as the full list of the server IP plus its test
+// port and the boolean value indicates the PSM test type. In the response of
+// the RPC, communicateWithEachClient gets back the target string will be used
+// in the loadtest.After the communication, the function starts a separate
+// goroutine to close the test update server on the xds server container. Then
+// the function returns the target string as an return value.
+func communicateWithEachClient(clientIP string, targets []*pb.Endpoint, isProxied bool) (string, error) {
+	var psmServerTargetOverride string
+	dialTarget := net.JoinHostPort(clientIP, fmt.Sprint(testconfig.ServerUpdatePort))
+	conn, err := grpc.Dial(dialTarget, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewTestUpdaterClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultConnectionTimeout)
+	defer cancel()
+	reply, err := c.UpdateTest(ctx, &pb.TestUpdateRequest{Endpoints: targets, IsProxied: isProxied})
+	if err != nil {
+		statusCode, _ := grpcstatus.FromError(err)
+		log.Print(statusCode.Details()...)
+		log.Fatalf("could not connect to test update server: %v", err)
+	}
+	psmServerTargetOverride = reply.PsmServerTargetOverride
+
+	log.Printf("all backend targets has been communicated to client %v", clientIP)
+
+	go func() {
+		log.Printf("stopping test update server on client %v", clientIP)
+		if _, err := c.QuitTestUpdateServer(ctx, &pb.Void{}); err != nil {
+			statusCode, _ := grpcstatus.FromError(err)
+			log.Print(statusCode.Details()...)
+		}
+	}()
+	return psmServerTargetOverride, nil
+}
+
+func buildEndpoints(serverNodes []NodeInfo, psmTestServerPort uint32) []*pb.Endpoint {
+	var targets []*pb.Endpoint
+	for _, serverNode := range serverNodes {
+		targets = append(targets, &pb.Endpoint{
+			IpAddress: serverNode.PodIP,
+			Port:      psmTestServerPort,
+		})
+	}
+	return targets
 }
 
 func main() {
@@ -324,13 +387,94 @@ func main() {
 		log.Fatalf("failed to wait for ready pods: %v", err)
 	}
 
-	log.Printf("all pods ready, exiting successfully")
+	log.Printf("all pods ready")
 	workerFileBody := strings.Join(podIPs, ",")
 	ioutil.WriteFile(outputFile, []byte(workerFileBody), 0777)
 
 	test, err := grpcClientset.LoadTestV1().LoadTests(corev1.NamespaceDefault).Get(ctx, os.Args[1], metav1.GetOptions{})
 	if err != nil {
-		log.Fatalf("failed to fetch loadtest for obtaining metadata: %v", err)
+		log.Fatalf("failed to fetch loadtest: %v", err)
+	}
+
+	if clientSpecValid, err := kubehelpers.IsClientsSpecValid(&test.Spec.Clients); !clientSpecValid {
+		log.Fatalf("validation failed in checking clients' spec: %v", err)
+	}
+
+	if kubehelpers.IsPSMTest(&test.Spec.Clients) {
+		log.Printf("running PSM test, prepare to send backends information and test type to xds server")
+
+		endpoints := buildEndpoints(nodesInfo.Servers, uint32(testconfig.ServerPort))
+
+		isProxied := kubehelpers.IsProxiedTest(&test.Spec.Clients)
+		if isProxied {
+			log.Printf("running proxied test")
+		} else {
+			log.Printf("running proxyless test")
+		}
+
+		psmTargetOverride := ""
+		for _, clientNode := range nodesInfo.Clients {
+
+			currentPSMTargetOverride, err := communicateWithEachClient(clientNode.PodIP, endpoints, isProxied)
+			if err != nil {
+				log.Fatalf("failed to communicate backend endpoints to client %v: %v", clientNode.Name, err)
+			}
+
+			if psmTargetOverride == "" {
+				psmTargetOverride = currentPSMTargetOverride
+			} else {
+				if psmTargetOverride != currentPSMTargetOverride {
+					log.Fatalf("not all client have the same server target")
+				}
+			}
+		}
+
+		if psmTargetOverride != "" {
+			if err := ioutil.WriteFile(DefaultServerTargetOverrideOutputFile, []byte(psmTargetOverride), 0777); err != nil {
+				log.Fatalf("failed to write PSM server target: %v to %v", psmTargetOverride, DefaultServerTargetOverrideOutputFile)
+			}
+			log.Printf("write PSM server target: %v to %v\n", psmTargetOverride, DefaultServerTargetOverrideOutputFile)
+		} else {
+			log.Fatalf("failed to obtain PSM server target")
+		}
+
+		if isProxied {
+			_, envoyListenerPort, err := net.SplitHostPort(psmTargetOverride)
+			if err != nil {
+				log.Fatalf("failed to obtain socket listener port")
+			}
+			readyEnvoy := make(map[string]bool)
+			startTime := time.Now()
+			for {
+				if time.Now().Sub(startTime) >= DefaultTimeout {
+					log.Fatalf("timeout exceed")
+				}
+
+				for _, clientNode := range nodesInfo.Clients {
+					if readyEnvoy[clientNode.PodIP] {
+						continue
+					}
+
+					curEnvoyListener := net.JoinHostPort(clientNode.PodIP, envoyListenerPort)
+					conn, err := net.DialTimeout("tcp", curEnvoyListener, timeout)
+					if err != nil {
+						log.Printf("Envoy on %v is not ready: %v", clientNode.PodIP, err)
+					}
+					if conn != nil {
+						defer conn.Close()
+						readyEnvoy[clientNode.PodIP] = true
+						log.Printf("Envoy on %v: %v is ready. \n", clientNode.Name, clientNode.PodIP)
+					}
+
+					time.Sleep(pollInterval)
+				}
+
+				if len(readyEnvoy) == len(nodesInfo.Clients) {
+					log.Printf("all Envoy sidecars are fully functioning")
+					break
+				}
+			}
+		}
 	}
 
 	outputMetadataFile := DefaultMetadataOutputFile

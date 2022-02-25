@@ -27,6 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
@@ -143,11 +144,13 @@ var _ = Describe("LoadTest controller", func() {
 			}, err
 		}
 
+		expectedScenario := "{\"scenarios\":{\"name\":\"scenariso-1\",\"server_config\":{\"port\":\"10010\",\"server_type\":\"ASYNC_GENERIC_SERVER\"}}}"
+
 		By("checking that the ConfigMap was created correctly")
 		Eventually(getConfigMapFields).Should(Equal(expectedFields{
 			name:          test.Name,
 			namespace:     test.Namespace,
-			scenariosJSON: test.Spec.ScenariosJSON,
+			scenariosJSON: expectedScenario,
 			owner:         test.Name,
 		}))
 	})
