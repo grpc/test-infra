@@ -1,9 +1,9 @@
 # Deployment
 
-This page explains how to set up a testbed to run [gRPC OSS benchmarks]. The
+This page explains how to set up a testbed to run [gRPC OSS benchmarks][]. The
 testbed consists of a Kubernetes cluster and a custom controller deployed to the
 cluster. For other aspects of running tests once the testbed is set up, see
-[tools].
+[tools][].
 
 [grpc oss benchmarks]: ../README.md#grpc-oss-benchmarks
 [tools]: ../tools/README.md
@@ -45,10 +45,11 @@ another set of node pools that can be used for ad hoc testing:
 Some pools are labeled with `default-*-pool` labels. These labels specify which
 pool to use if it is not specified in the LoadTest configuration. With the
 configuration above, these tests (for instance, the tests specified in the
-[examples]) will use the `drivers` and `workers-8core` pools, and not interfere
-with continuous integration jobs. The default labels are defined as part of the
-[controller configuration](#controller-configuration): if they are not set, the
-controller will only run tests where the `pool` labels are specified explicitly.
+[examples][]) will use the `drivers` and `workers-8core` pools, and not
+interfere with continuous integration jobs. The default labels are defined as
+part of the [controller configuration](#controller-configuration): if they are
+not set, the controller will only run tests where the `pool` labels are
+specified explicitly.
 
 ## Controller setup
 
@@ -81,8 +82,8 @@ The following environment variables must be set before starting the build:
 and defaults to `latest`.
 
 `DRIVER_VERSION` is the version of the load test driver. The driver is built
-from the [gRPC Core] repository. This variable defaults to a recent known good
-version of gRPC, so it is safe to leave it unset.
+from the [gRPC Core][grpccore] repository. This variable defaults to a recent
+known good version of gRPC, so it is safe to leave it unset.
 
 `INIT_IMAGE_PREFIX`, `BUILD_IMAGE_PREFIX` and `RUN_IMAGE_PREFIX` define the
 repository locations where various kinds of images will be uploaded. If not set,
@@ -91,8 +92,8 @@ will upload to Docker Hub.
 `KILL_AFTER` is the time interval in seconds after which a KILL signal will be
 sent to test components, if they have not terminated after timeout. Component
 timeout is set in the LoadTest configuration. `KILL_AFTER` is set in the
-[controller configuration], as a safeguard for components that may hang and
-consume resources after test timeout.
+[controller configuration](#controller-configuration), as a safeguard for
+components that may hang and consume resources after test timeout.
 
 The variables used to build the `v1.0.0` release are as follows:
 
@@ -109,6 +110,8 @@ changing the environment variables.
 
 You can change `TEST_INFRA_VERSION` to any label you would like to apply to your
 images.
+
+[grpccore]: https://github.com/grpc/grpc
 
 ### Controller configuration
 
@@ -130,7 +133,8 @@ go run config/cmd/configure.go \
 This step must be completed before
 [building and pushing images](#building-and-pushing-images).
 
-The structure of the configuration file can be seen in [defaults_template.yaml].
+The structure of the configuration file can be seen in
+[defaults_template.yaml][].
 
 The controller configuration contains default pool labels (see
 [cluster setup](#cluster-setup)) and the value of `KILL_AFTER`, in addition to
@@ -161,8 +165,8 @@ container image used by the driver. These images must be included in any build.
 
 The set of images also includes build and runtime images for every supported
 language, plus a language-agnostic clone container image. These images are
-necessary to run any tests that do not use [pre-built images], such as the
-[examples].
+necessary to run any tests that do not use [pre-built images][], such as the
+[examples][].
 
 The complete set of images built for `v1.0.0` is as follows:
 
@@ -184,7 +188,8 @@ gcr.io/grpc-testing/e2etest/runtime/python:v1.0.0
 gcr.io/grpc-testing/e2etest/runtime/ruby:v1.0.0
 ```
 
-This should match what is included in the [controller configuration].
+This should match what is included in the
+[controller configuration](#controller-configuration).
 
 [pre-built images]:
   ../tools/README.md#using-prebuilt-images-with-grpc-oss-benchmarks
@@ -276,4 +281,3 @@ Verify that the deployment is able to run a test by running the example Go test:
    ```
 
 [examples]: ../config/samples/README.md
-[grpc core]: https://github.com/grpc/grpc
