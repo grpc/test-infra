@@ -6,11 +6,11 @@ kind: LoadTest
 metadata:
   annotations:
     scenario: java_generic_async_streaming_ping_pong_secure
-    uniquifier: basic
+    uniquifier: proxyless
   labels:
     language: java
-    prefix: examples
-  name: psm-java
+    prefix: psm-examples
+  name: examples-java-generic-async-streaming-ping-pong
 spec:
   clients:
   - build:
@@ -48,13 +48,20 @@ spec:
       - containers/runtime/xds/bootstrap.json
       command:
       - main
-      image: gcr.io/grpc-testing/runtime/xds:test
-      name: xds-server
+      image: ${psm_image_prefix}/xds:${psm_image_tag}
       livenessProbe:
-        tcpSocket:
-          port: 10000
         initialDelaySeconds: 30
         periodSeconds: 5
+        tcpSocket:
+          port: 10000
+      name: xds-server
+    - image: ${psm_image_prefix}/sidecar:${psm_image_tag}
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        tcpSocket:
+          port: 10000
+      name: envoy
   driver:
     language: cxx
     name: '0'

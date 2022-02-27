@@ -6,11 +6,11 @@ kind: LoadTest
 metadata:
   annotations:
     scenario: go_generic_sync_streaming_ping_pong_secure
-    uniquifier: basic
+    uniquifier: proxied
   labels:
     language: go
-    prefix: examples
-  name: psm-go-proxied
+    prefix: psm-examples
+  name: psm-examples-go-generic-sync-streaming-ping-pong
 spec:
   clients:
   - build:
@@ -47,19 +47,19 @@ spec:
       - containers/runtime/xds/bootstrap.json
       command:
       - main
-      image: gcr.io/grpc-testing/runtime/xds:test
+      image: ${psm_image_prefix}/xds:${psm_image_tag}
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        tcpSocket:
+          port: 10000
       name: xds-server
+    - image: ${psm_image_prefix}/sidecar:${psm_image_tag}
       livenessProbe:
-        tcpSocket:
-          port: 10000
         initialDelaySeconds: 30
         periodSeconds: 5
-    - image: gcr.io/grpc-testing/runtime/sidecar:test
-      livenessProbe:
         tcpSocket:
-          port: 10000
-        initialDelaySeconds: 30
-        periodSeconds: 5
+          port: 10000 
       name: envoy
   driver:
     language: cxx
