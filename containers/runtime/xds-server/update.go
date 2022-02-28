@@ -20,7 +20,7 @@ import (
 	"net"
 
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
-	config "github.com/grpc/test-infra/containers/runtime/xds/config"
+	config "github.com/grpc/test-infra/containers/runtime/xds-server/config"
 	pb "github.com/grpc/test-infra/proto/endpointupdater"
 	grpc "google.golang.org/grpc"
 )

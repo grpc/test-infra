@@ -168,7 +168,7 @@ var _ = Describe("IsProxiedTest", func() {
 						Command: []string{"./xds"},
 						Args:    []string{"-verbose"},
 					}, {
-						Name:    "envoy",
+						Name:    "sidecar",
 						Image:   "gcr.io/grpc-test-example/sidecar:v1",
 						Command: []string{"./sidecar"},
 						Args:    []string{"-verbose"},
@@ -200,7 +200,7 @@ var _ = Describe("IsProxiedTest", func() {
 						Command: []string{"./xds"},
 						Args:    []string{"-verbose"},
 					}, {
-						Name:    "envoy",
+						Name:    "sidecar",
 						Image:   "gcr.io/grpc-test-example/sidecar:v1",
 						Command: []string{"./sidecar"},
 						Args:    []string{"-verbose"},
@@ -394,7 +394,7 @@ var _ = Describe("IsClientsSpecValid", func() {
 						Command: []string{"./xds"},
 						Args:    []string{"-verbose"},
 					}, {
-						Name:    "envoy",
+						Name:    "sidecar",
 						Image:   "gcr.io/grpc-test-example/sidecar:v1",
 						Command: []string{"./sidecar"},
 						Args:    []string{"-verbose"},
@@ -428,7 +428,7 @@ var _ = Describe("IsClientsSpecValid", func() {
 						Command: []string{"./client"},
 						Args:    []string{"-verbose"},
 					}, {
-						Name:    "envoy",
+						Name:    "sidecar",
 						Image:   "gcr.io/grpc-test-example/sidecar:v1",
 						Command: []string{"./sidecar"},
 						Args:    []string{"-verbose"},
@@ -501,7 +501,7 @@ var _ = Describe("IsClientsSpecValid", func() {
 						Command: []string{"./xds"},
 						Args:    []string{"-verbose"},
 					}, {
-						Name:    "envoy",
+						Name:    "sidecar",
 						Image:   "gcr.io/grpc-test-example/sidecar:v1",
 						Command: []string{"./sidecar"},
 						Args:    []string{"-verbose"},

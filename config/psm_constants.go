@@ -25,7 +25,7 @@ const (
 	// container for PSM test only.
 	XdsServerContainerName = "xds-server"
 
-	// EnvoyContainerName holds the name of the envoy
+	// SidecarContainerName holds the name of the sidecar
 	// container for a proxied PSM test only.
-	EnvoyContainerName = "envoy"
+	SidecarContainerName = "sidecar"
 )

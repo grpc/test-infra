@@ -200,22 +200,22 @@ push-ruby-image: ## Push the Ruby test runtime container image to a registry.
 
 ##@ Build PSM related container images
 
-all-psm-images: envoy-image xds-server-image ## Build all psm related container images to a registry.
+all-psm-images: sidecar-image xds-server-image ## Build all psm related container images to a registry.
 
-envoy-image: ## Build the envoy runtime container image.
-	docker build --no-cache -t ${PSM_IMAGE_PREFIX}sidecar:${TEST_INFRA_VERSION} containers/runtime/envoy/
+sidecar-image: ## Build the sidecar runtime container image.
+	docker build --no-cache -t ${PSM_IMAGE_PREFIX}sidecar:${TEST_INFRA_VERSION} containers/runtime/sidecar/
 
 xds-server-image: ## Build the xds server runtime container image.
-	docker build --no-cache -t ${PSM_IMAGE_PREFIX}xds:${TEST_INFRA_VERSION} -f containers/runtime/xds/Dockerfile .
+	docker build --no-cache -t ${PSM_IMAGE_PREFIX}xds-server:${TEST_INFRA_VERSION} -f containers/runtime/xds-server/Dockerfile .
 
 ##@ Publish PSM related container images
-push-all-psm-images: push-envoy-image push-xds-server-image ## Push all psm related container images to a registry.
+push-all-psm-images: push-sidecar-image push-xds-server-image ## Push all psm related container images to a registry.
 
-push-envoy-image: ## Push the envoy image to container registry.
+push-sidecar-image: ## Push the sidecar image to container registry.
 	docker push ${PSM_IMAGE_PREFIX}sidecar:${TEST_INFRA_VERSION}
 
 push-xds-server-image: ## Push the xds-server image to container registry.
-	docker push ${PSM_IMAGE_PREFIX}xds:${TEST_INFRA_VERSION}
+	docker push ${PSM_IMAGE_PREFIX}xds-server:${TEST_INFRA_VERSION}
 
 ##@ Deployment
 
