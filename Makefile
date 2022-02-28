@@ -43,6 +43,9 @@ PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+# Make all targets PHONY.
+MAKEFLAGS += --always-make
+
 all: controller all-tools
 
 all-tools: runner prepare_prebuilt_workers delete_prebuilt_workers
@@ -197,26 +200,20 @@ push-ruby-image: ## Push the Ruby test runtime container image to a registry.
 
 ##@ Build PSM related container images
 
-.PHONY: all-psm-images 
 all-psm-images: envoy-image xds-server-image ## Build all psm related container images to a registry.
 
-.PHONY: envoy-image 
 envoy-image: ## Build the envoy runtime container image.
 	docker build --no-cache -t ${PSM_IMAGE_PREFIX}sidecar:${TEST_INFRA_VERSION} containers/runtime/envoy/
 
-.PHONY: xds-server-image
 xds-server-image: ## Build the xds server runtime container image.
 	docker build --no-cache -t ${PSM_IMAGE_PREFIX}xds:${TEST_INFRA_VERSION} -f containers/runtime/xds/Dockerfile .
 
 ##@ Publish PSM related container images
-.PHONY: push-all-psm-images
 push-all-psm-images: push-envoy-image push-xds-server-image ## Push all psm related container images to a registry.
 
-.PHONY: push-envoy-image
 push-envoy-image: ## Push the envoy image to container registry.
 	docker push ${PSM_IMAGE_PREFIX}sidecar:${TEST_INFRA_VERSION}
 
-.PHONY: push-xds-server-image
 push-xds-server-image: ## Push the xds-server image to container registry.
 	docker push ${PSM_IMAGE_PREFIX}xds:${TEST_INFRA_VERSION}
 

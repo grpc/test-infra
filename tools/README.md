@@ -4,12 +4,12 @@ The tools contained in this folder enable a user to run multiple tests, wait for
 them to finish, and generate an xml report with pass/fail results.
 
 These tools are intended to work with load test configurations generated from
-load test scenarios by tools stored in repository [grpc/grpc]. For information
+load test scenarios by tools stored in the [gRPC Core][grpccore] repository. For information
 on those tools and examples of the tools being used together, see the
 [gRPC OSS benchmarks README](https://github.com/grpc/grpc/blob/master/tools/run_tests/performance/README.md#grpc-oss-benchmarks)
 in that repository.
 
-[grpc/grpc]: https://github.com/grpc/grpc
+[grpccore]: https://github.com/grpc/grpc
 
 ## Building the tools
 
@@ -108,7 +108,7 @@ The tool `prepare_prebuilt_workers` takes the following options:
   `csharp`, `c++`/`cxx`, `go`, `java`, `node`, `node_purejs`, `php7`.
   `php7_protobuf_c`, `python`, `python_asyncio` and `ruby`.
 - `-t`<br> Tag for prebuilt images. Tag is a required field. Tag complies with
-  [docker tag's restrictions](https://docs.docker.com/engine/reference/commandline/tag/#extended-description).
+  [Docker's tag restrictions](https://docs.docker.com/engine/reference/commandline/tag/#extended-description).
 - `-r`<br> Root directory of Dockerfiles.
 - `-build-only`<br> Option to build only, when specified `-build-only=true`
   images will only be built locally.

@@ -11,7 +11,7 @@ struct.
 The configuration files should follow the structure in the daufult_config.json
 file.
 
-- Resources: An array holding the resouces, there are currently 8 types of
+- Resources: An array holding the resources, there are currently 8 types of
   resources, the index of this array corresponds to the resource type.
 - Version: Versions indicate the version of current group of resource. This
   field is served as key in VersionMap.
@@ -46,7 +46,7 @@ their protos. The 8 types of resources:
 
 ## Default configuration JSON file
 
-The daufult_config.json file contains a piece of configuration that has two
+The default_config.json file contains a piece of configuration that has two
 listeners named: `default_testEnvoyListenerName` and
 `default_testGrpcListenerName`, one cluster, one route and one Endpoint
 resource. The two listeners are pointing to the same cluster, eventually the

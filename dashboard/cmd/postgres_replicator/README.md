@@ -94,11 +94,10 @@ For non-nested columns, the replicator currently supports
 BigQuery table fields that are of the `RECORD`/`REPEATED`/`STRUCT`/`ARRAY` type
 are converted to JSON and stored in Postgres as the JSON datatype. To retrieve
 values from the Postgres table, see the documentation on [JSON Functions and
-Operators].
+Operators][jsonfunctions].
 
 For example, if your BigQuery table has the FLOAT field `stats.client1.latency`,
 this could then be queried and typecast with the following in Postgres:
 `SELECT CAST(stats->client1->>'latency' AS DOUBLE PRECISION...`
 
-[json functions and operators]:
-  https://www.postgresql.org/docs/12/functions-json.html
+[jsonfunctions]: https://www.postgresql.org/docs/12/functions-json.html

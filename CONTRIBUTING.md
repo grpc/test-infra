@@ -19,17 +19,16 @@ before your PR can be merged.
 Trivial changes and small bug fixes do not need prior communication. You can
 just submit a PR with minimum details. For larger PRs, we ask that before
 contributing, please make the effort to coordinate with the maintainers of the
-project via a Github issue or via
-[grpcio](https://groups.google.com/forum/#!forum/grpc-io) mailing list. This
-will prevent you from doing extra or redundant work that may or may not be
-merged.
+project via a Github issue or via [grpcio](https://groups.google.com/g/grpc-io)
+mailing list. This will prevent you from doing extra or redundant work that may
+or may not be merged.
 
 ## Have Questions?
 
 It is best to ask questions on forums other than Github repos. Github repos are
 for filing issues and submitting PRs. You have a higher chance of getting help
 from the community if you ask your questions on
-[grpcio](https://groups.google.com/forum/#!forum/grpc-io) mailing list or
+[grpcio](https://groups.google.com/g/grpc-io) mailing list or
 [Stackoverflow](https://stackoverflow.com/).
 
 ## Guidelines For Pull Requests
@@ -73,19 +72,19 @@ How to get your contributions merged smoothly and quickly.
   - `go test ./...` to run all tests
   - `go test -race ./...` to run tests in race mode
   - `go vet ./...` to find any functional issues
-  - `golint ./...` to find any style issues (after installing [golint])
+  - `golint ./...` to find any style issues (after installing [golint][])
 
 - Go code should comply with the [Effective Go] guide and try to avoid pitfalls
-  in Go's [Code Review Comments]. It should be checked using [go vet] and
-  formatted using [gofmt]. Comments should adhere to the [Documenting Go Code]
-  post.
+  in Go's [Code Review Comments]. It should be checked using [go vet][] and
+  formatted using [gofmt][]. Comments should adhere to the [Documenting Go
+  Code][godoc] post.
 
 - Exceptions to the rules can be made if there's a compelling reason for doing
   so.
 
-[golint]: https://github.com/golang/lint
-[effective go]: https://golang.org/doc/effective_go.html
 [code review comments]: https://github.com/golang/go/wiki/CodeReviewComments
+[effective go]: https://golang.org/doc/effective_go.html
 [go vet]: https://golang.org/cmd/vet/
+[godoc]: https://blog.golang.org/godoc
 [gofmt]: https://blog.golang.org/gofmt
-[documenting go code]: https://blog.golang.org/godoc
+[golint]: https://github.com/golang/lint

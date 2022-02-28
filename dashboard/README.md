@@ -3,10 +3,11 @@
 This folder contains the components necessary to build and deploy a dashboard to
 visualize gRPC OSS benchmarking results.
 
-gRPC OSS benchmarks save results to [BigQuery]. The dashboard consists of two
-components:
+gRPC OSS benchmarks save results to [BigQuery][bigquery]. The dashboard consists
+of two components:
 
-1. A [Postgres replicator], to transfer the results to a Postgres database.
+1. A [Postgres replicator][replicator], to transfer the results to a Postgres
+   database.
 1. A Grafana dashboard, to display the results from the Postgres database.
 
 These components can be built and deployed manually using the
@@ -19,25 +20,25 @@ Notice that the dashboard build is independent from the top-level build.
 The configuration of the Postgres replicator is defined in a YAML file. The
 default configuration is defined here, in template form:
 
-- [config/postgres_replicator/default/config.yaml][postgres replicator config]
+- [config/postgres_replicator/default/config.yaml][replicatorconfig]
 
-For more information, see [Postgres replicator].
+For more information, see [Postgres replicator][replicator].
 
 The configuration of the Grafana dashboard is defined in a set of dashboards
 specified in JSON files. The default configuration is defined here:
 
-- [config/grafana/dashboards/default/][grafana dashboard config]
+- [config/grafana/dashboards/default/][grafanaconfig]
 
 The continuous integration dashboard linked from the [gRPC performance
-benchmarking] page uses the default configuration. The variables
+benchmarking][benchmarking] page uses the default configuration. The variables
 `REPLICATOR_CONFIG_TEMPLATE` and `DASHBOARDS_CONFIG_DIR` can be set to build
 dashboards with different configurations.
 
+[benchmarking]: https://grpc.io/docs/guides/benchmarking/
 [bigquery]: https://cloud.google.com/bigquery
-[grafana dashboard config]: config/grafana/dashboards/default/
-[grpc performance benchmarking]: https://grpc.io/docs/guides/benchmarking/
-[postgres replicator]: cmd/postgres_replicator/README.md
-[postgres replicator config]: config/postgres_replicator/default/config.yaml
+[grafanaconfig]: config/grafana/dashboards/default/
+[replicator]: cmd/postgres_replicator/README.md
+[replicatorconfig]: config/postgres_replicator/default/config.yaml
 
 ## Manual build
 
@@ -66,11 +67,12 @@ make configure-dashboard
 
 ## Cloud build
 
-The continuous integration dashboard is built and deployed with [Cloud Build],
-using the configuration specified in [cloudbuild.yaml](cloudbuild.yaml).
+The continuous integration dashboard is built and deployed with [Cloud
+Build][cloudbuild], using the configuration specified in
+[cloudbuild.yaml](cloudbuild.yaml).
 
 The use of Cloud Build allows the dashboard to be redeployed automatically on
 configuration changes. In addition, it allows passwords such as `PG_PASS` and
 `GRAFANA_ADMIN_PASS` to be stored as secrets in the cloud project.
 
-[cloud build]: https://cloud.google.com/build
+[cloudbuild]: https://cloud.google.com/build

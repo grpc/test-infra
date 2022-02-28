@@ -10,18 +10,18 @@ The xDS server first creates a piece of resource snapshot from the configuration
 files. Note that the configuration files here only contains placeholders for the
 address and port for backend services. After validation of the configuration
 files supplied, a gRPC server for test update is started. The test update server
-communicate with the Driver's ready conteiner, it listens for test backends'
+communicate with the Driver's ready container, it listens for test backends'
 podIP, test port and if the test is a proxied test.
 
-For "proxied" test, the xds server will remove all api_listneners and only
-serves the socket listener to the Envoy. This is a work around to ensure that
-the resources as a whole pass the validation of Envoy.
+For proxied test, the xds server will remove all api_listneners and only serves
+the socket listener to the Envoy. This is a work around to ensure that the
+resources as a whole pass the validation of Envoy.
 
-Based on if the current test is a proxied test, the xDS server will construct
-the corresponding target string and return to Driver's ready container, the
-Driver's ready container will then keep the information for Driver's run
-container to use. This target string is used to overrite the test target that
-the driver sends to client for conducting the tests.
+Based on whether the current test is a proxied test or not, the xDS server will
+construct the corresponding target string and return to the driver's ready
+container, the Driver's ready container will then keep the information for
+Driver's run container to use. This target string is used to override the test
+target that the driver sends to client for conducting the tests.
 
 The test update server will be closed after the communication.
 
@@ -30,8 +30,8 @@ request and server the configuration created through above steps.
 
 ## Options for starting the xDS server
 
-The following example start a xDS server with the initial endpoint update server
-listening on port 18005, serving resource snapshot created based on
+The following example start an xDS server with the initial endpoint update
+server listening on port 18005, serving resource snapshot created based on
 `config/default_config.json`. The server target string passed to gRPC proxyless
 client needs to match the name of the listener resource that handling the
 requests, the listener name is primarily supplied through the
@@ -76,7 +76,7 @@ The binary main.go takes the following options:
 
   The path of the user supplied configuration JSON file. No default value for
   this field, for more information check section:
-  [Custom configuration of xDS server](#Custom-configuration-of-xDS-server)
+  [Custom configuration of xDS server](#custom-configuration-of-xds-server)
 
 - -validate-only
 
