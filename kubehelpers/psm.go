@@ -35,7 +35,7 @@ func IsPSMTest(clients *[]grpcv1.Client) bool {
 // This check must be performed after validating the client specs.
 func IsProxiedTest(clients *[]grpcv1.Client) bool {
 	for _, c := range *clients {
-		if ContainerForName(config.EnvoyContainerName, c.Run) != nil {
+		if ContainerForName(config.SidecarContainerName, c.Run) != nil {
 			return true
 		}
 	}
@@ -54,11 +54,11 @@ func IsClientsSpecValid(clients *[]grpcv1.Client) (bool, error) {
 	for _, c := range *clients {
 		if ContainerForName(config.XdsServerContainerName, c.Run) != nil {
 			numberOfClientWithXdsServer++
-			if ContainerForName(config.EnvoyContainerName, c.Run) != nil {
+			if ContainerForName(config.SidecarContainerName, c.Run) != nil {
 				numberOfClientWithSidecar++
 			}
 		} else {
-			if ContainerForName(config.EnvoyContainerName, c.Run) != nil {
+			if ContainerForName(config.SidecarContainerName, c.Run) != nil {
 				err := fmt.Errorf("encountered a client with envoy container but no xds-server container")
 				return false, err
 			}

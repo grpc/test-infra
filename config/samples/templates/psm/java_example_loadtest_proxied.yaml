@@ -61,7 +61,7 @@ spec:
         periodSeconds: 5
         tcpSocket:
           port: 10000
-      name: envoy
+      name: sidecar
   driver:
     language: cxx
     name: '0'

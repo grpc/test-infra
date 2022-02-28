@@ -154,7 +154,7 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 		Value: fmt.Sprint(config.DriverPort)})
 
 	if xdsServer := kubehelpers.ContainerForName(config.XdsServerContainerName, pod.Spec.Containers); xdsServer != nil {
-		if envoy := kubehelpers.ContainerForName(config.EnvoyContainerName, pod.Spec.Containers); envoy == nil {
+		if sidecar := kubehelpers.ContainerForName(config.SidecarContainerName, pod.Spec.Containers); sidecar == nil {
 			pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{Name: "grpc-xds-bootstrap"})
 
 			runContainer.VolumeMounts = append(runContainer.VolumeMounts, corev1.VolumeMount{
