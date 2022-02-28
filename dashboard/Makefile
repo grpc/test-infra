@@ -7,6 +7,9 @@ REPLICATOR_OUTPUT_DIR ?= bin
 GRAFANA_CONTAINER_OUTPUT_DIR ?= containers/grafana
 REPLICATOR_CONTAINER_OUTPUT_DIR ?= containers/replicator
 
+# Make all targets PHONY.
+MAKEFLAGS += --always-make
+
 configure-grafana:
 	scripts/check_env.sh GCP_GRAFANA_SERVICE PG_USER PG_PASS PG_DATABASE GRAFANA_ADMIN_PASS CLOUD_SQL_INSTANCE
 	mkdir -p $(GRAFANA_CONTAINER_OUTPUT_DIR)
