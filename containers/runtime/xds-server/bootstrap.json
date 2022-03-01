@@ -1,18 +1,18 @@
 {
-    "xds_servers": [
-      {
-        "server_uri": "localhost:18000",
-        "channel_creds": [
-          {
-            "type": "insecure"
-          }
-        ],
-        "server_features": [
-          "xds_v3"
-        ]
-      }
-    ],
-    "node": {
-      "id": "test_id"
+  "xds_servers": [
+    {
+      "server_uri": "localhost:18000",
+      "channel_creds": [
+        {
+          "type": "insecure"
+        }
+      ],
+      "server_features": [
+        "xds_v3"
+      ]
     }
+  ],
+  "node": {
+    "id": "test_id"
+  }
 }

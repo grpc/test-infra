@@ -41,5 +41,3 @@ message Endpoint{
 message TestUpdateReply {
   string  psm_server_target_override = 1;
 }
-
-

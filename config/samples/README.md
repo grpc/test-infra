@@ -23,6 +23,9 @@ All examples are generated from templates stored in the [grpc/grpc] repository.
 For more information, please visit the [gRPC OSS benchmarks README] on
 [grpc/grpc].
 
+Examples for [PSM benchmarks](../../README.md#psm-benchmarks) can be found
+[here](templates/psm/README.md).
+
 [control.proto]:
   https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto
 [grpc/grpc]: https://github.com/grpc/grpc

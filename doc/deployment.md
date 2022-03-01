@@ -60,11 +60,11 @@ and how to deploy it to the cluster.
 
 In order to build a specific version of the controller, you must check out the
 desired version. The following commands clone the repo and check out version
-`v1.0.0`:
+`v1.1.0`:
 
 ```shell
 git clone https://github.com/grpc/test-infra && cd test-infra
-git checkout --detach v1.0.0
+git checkout --detach v1.1.0
 ```
 
 ### Environment variables
@@ -95,10 +95,10 @@ timeout is set in the LoadTest configuration. `KILL_AFTER` is set in the
 [controller configuration](#controller-configuration), as a safeguard for
 components that may hang and consume resources after test timeout.
 
-The variables used to build the `v1.0.0` release are as follows:
+The variables used to build the `v1.1.0` release are as follows:
 
 ```shell
-export TEST_INFRA_VERSION=v1.0.0
+export TEST_INFRA_VERSION=v1.1.0
 export INIT_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/
 export BUILD_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/build/
 export RUN_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/runtime/
@@ -168,24 +168,24 @@ language, plus a language-agnostic clone container image. These images are
 necessary to run any tests that do not use [pre-built images][], such as the
 [examples][].
 
-The complete set of images built for `v1.0.0` is as follows:
+The complete set of images built for `v1.1.0` is as follows:
 
 ```shell
-gcr.io/grpc-testing/e2etest/init/build/csharp:v1.0.0
-gcr.io/grpc-testing/e2etest/init/build/node:v1.0.0
-gcr.io/grpc-testing/e2etest/init/build/php7:v1.0.0
-gcr.io/grpc-testing/e2etest/init/build/ruby:v1.0.0
-gcr.io/grpc-testing/e2etest/init/clone:v1.0.0
-gcr.io/grpc-testing/e2etest/init/ready:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/controller:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/cxx:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/driver:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/go:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/java:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/node:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/php7:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/python:v1.0.0
-gcr.io/grpc-testing/e2etest/runtime/ruby:v1.0.0
+gcr.io/grpc-testing/e2etest/init/build/csharp:v1.1.0
+gcr.io/grpc-testing/e2etest/init/build/node:v1.1.0
+gcr.io/grpc-testing/e2etest/init/build/php7:v1.1.0
+gcr.io/grpc-testing/e2etest/init/build/ruby:v1.1.0
+gcr.io/grpc-testing/e2etest/init/clone:v1.1.0
+gcr.io/grpc-testing/e2etest/init/ready:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/controller:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/cxx:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/driver:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/go:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/java:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/node:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/php7:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/python:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/ruby:v1.1.0
 ```
 
 This should match what is included in the
@@ -193,6 +193,32 @@ This should match what is included in the
 
 [pre-built images]:
   ../tools/README.md#using-prebuilt-images-with-grpc-oss-benchmarks
+
+### PSM benchmarks images
+
+PSM benchmarks images are not required for the controller deployment, but are
+required if you intend to run [PSM benchmarks](../README.md#psm-benchmarks).
+
+PSM images require setting the environment variable `PSM_IMAGE_PREFIX`. In our
+regular release, we set `PSM_IMAGE_PREFIX` to the same location as
+`RUN_IMAGE_PREFIX`:
+
+```shell
+export PSM_IMAGE_PREFIX="${RUN_IMAGE_PREFIX}"
+```
+
+Images can be built and pushed with the following command:
+
+```shell
+make all-psm-images push-all-psm-images
+```
+
+The complete set of PSM images built for `v1.1.0` is as follows:
+
+```shell
+gcr.io/grpc-testing/e2etest/runtime/sidecar:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.1.0
+```
 
 ## Deleting the previous deployment
 

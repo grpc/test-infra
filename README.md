@@ -41,6 +41,24 @@ For more information, and to build your own dashboard, see
 
 [bigquery]: https://cloud.google.com/bigquery
 
+## PSM benchmarks
+
+This repository now includes infrastructure to support
+[service mesh](https://istio.io/latest/about/service-mesh/) benchmarks comparing
+dataplane performance of proxyless gRPC service mesh (PSM) deployments and that
+of proxied deployments using an Envoy sidecar.
+
+The client pod in PSM benchmarks includes a
+[fake xDS server](containers/runtime/xds-server/README.md) that serves as a gRPC
+control plane. The client pod in the proxied case also includes an Envoy
+[sidecar](containers/runtime/sidecar/README.md).
+
+[Examples](config/samples/templates/psm/README.md) of proxied and proxyless
+tests are now available.
+
+This is only an initial release. Additional features and more detailed
+documentation will be added in a future release.
+
 ## Contributing
 
 Welcome! Please read [how to contribute](CONTRIBUTING.md) before proceeding.
