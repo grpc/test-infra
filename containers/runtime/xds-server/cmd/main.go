@@ -28,7 +28,7 @@ import (
 	"google.golang.org/grpc"
 
 	grpcv1config "github.com/grpc/test-infra/config"
-	"github.com/grpc/test-infra/containers/runtime/xds-server"
+	xds "github.com/grpc/test-infra/containers/runtime/xds-server"
 	config "github.com/grpc/test-infra/containers/runtime/xds-server/config"
 
 	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3"
