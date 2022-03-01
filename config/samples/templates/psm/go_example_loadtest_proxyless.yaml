@@ -44,9 +44,9 @@ spec:
       name: main
     - args:
       - -default-config-path 
-      - containers/runtime/xds/config/default_config.json 
+      - containers/runtime/xds-server/config/default_config.json 
       - -path-to-bootstrap
-      - containers/runtime/xds/bootstrap.json
+      - containers/runtime/xds-server/bootstrap.json
       command:
       - main
       image: ${psm_image_prefix}/xds:${psm_image_tag}
