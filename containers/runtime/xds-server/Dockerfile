@@ -18,6 +18,6 @@ RUN mkdir /bootstrap
 WORKDIR /src/workspace
 
 COPY . .
-RUN go install ./containers/runtime/xds/cmd/main.go
+RUN go install ./containers/runtime/xds-server/cmd/main.go
 
 CMD ["bash"]
