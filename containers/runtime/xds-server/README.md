@@ -1,8 +1,8 @@
 # Fake control plane
 
-This directory contains a fake control plane used to run [PSM
-benchmarks][../../../readme.md#psm-benchmarks]. The fake control plane runs in a
-container as part of the test client pod.
+This directory contains a fake control plane used to run
+[PSM benchmarks](../../../README.md#psm-benchmarks). The fake control plane runs
+in a container as part of the test client pod.
 
 ## xDS server
 
