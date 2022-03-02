@@ -199,14 +199,6 @@ This should match what is included in the
 PSM benchmarks images are not required for the controller deployment, but are
 required if you intend to run [PSM benchmarks](../README.md#psm-benchmarks).
 
-PSM images require setting the environment variable `PSM_IMAGE_PREFIX`. In our
-regular release, we set `PSM_IMAGE_PREFIX` to the same location as
-`RUN_IMAGE_PREFIX`:
-
-```shell
-export PSM_IMAGE_PREFIX="${RUN_IMAGE_PREFIX}"
-```
-
 Images can be built and pushed with the following command:
 
 ```shell
@@ -219,6 +211,10 @@ The complete set of PSM images built for `v1.1.0` is as follows:
 gcr.io/grpc-testing/e2etest/runtime/sidecar:v1.1.0
 gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.1.0
 ```
+
+> Note: PSM images are pushed by default to the location specified by
+> `RUN_IMAGE_PREFIX`. You can change this location by setting the variable
+> `PSM_IMAGE_PREFIX`.
 
 ## Deleting the previous deployment
 
