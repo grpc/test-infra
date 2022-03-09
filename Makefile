@@ -20,7 +20,7 @@ RUN_IMAGE_PREFIX ?= ""
 
 # Prefix for all images used for PSM related tests, enabling use with
 # registries other than Docker Hub
-PSM_IMAGE_PREFIX ?= ""
+PSM_IMAGE_PREFIX ?= $(RUN_IMAGE_PREFIX)
 
 # Image URL to use all building/pushing image targets
 CONTROLLER_IMG ?= $(RUN_IMAGE_PREFIX)controller:$(TEST_INFRA_VERSION)
