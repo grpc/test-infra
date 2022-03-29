@@ -35,6 +35,12 @@ if [ -n "${BQ_RESULT_TABLE}" ]; then
   fi
   if [ -r "${NODE_INFO_OUTPUT_FILE}" ]; then
     cp "${NODE_INFO_OUTPUT_FILE}" node_info.json
+    if [ -n "${SERVER_TARGET_OVERRIDE}" ]; then
+      python3 /src/code/tools/run_tests/performance/prometheus.py \
+        --url=http://prometheus.prometheus.svc.cluster.local:9090 \
+        --pod_type=clients --container_name=main \
+        --container_name=sidecar
+    fi
   fi
   python3 /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="${BQ_RESULT_TABLE}"
 fi
