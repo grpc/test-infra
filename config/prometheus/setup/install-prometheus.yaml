@@ -1,0 +1,117 @@
+---
+# From https://github.com/istio/tools/blob/1.13.2/perf/istio-install/base/templates/prometheus-install.yaml 
+# with namespace replaced and configuration related to Istio left out.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: prometheus
+  labels:
+    app: prometheus
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd
+parameters:
+  type: pd-ssd
+provisioner: kubernetes.io/gce-pd
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-prometheus
+  labels:
+    app: prometheus
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - services
+      - endpoints
+      - pods
+      - nodes/proxy
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    verbs: ["get"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-prometheus
+  labels:
+    app: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-prometheus
+subjects:
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: prometheus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: prometheus
+  annotations:
+    prometheus.io/scrape: "true"
+  labels:
+    app: prometheus
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - name: http-prometheus
+      protocol: TCP
+      port: 9090
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus
+  namespace: prometheus
+spec:
+  alerting:
+    alertmanagers:
+      - name: alertmanager-main
+        namespace: prometheus
+        port: web
+  ruleSelector:
+    matchLabels:
+      role: prometheus-example-rules
+      prometheus: prometheus
+  image: quay.io/prometheus/prometheus:v2.32.1
+  version: v2.32.1
+  retention: 72h
+  scrapeInterval: 15s
+  serviceAccountName: prometheus
+  enableAdminAPI: false
+  serviceMonitorNamespaceSelector: {}
+  serviceMonitorSelector: {}
+  podMonitorNamespaceSelector: {}
+  podMonitorSelector: {}
+  podMetadata:
+    labels:
+      app: prometheus
+  securityContext:
+    fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            # required field
+            storage: 20Gi
+        storageClassName: ssd

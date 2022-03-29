@@ -1,3 +1,6 @@
+---
+# From https://github.com/istio/tools/blob/1.13.2/perf/istio-install/addons/servicemonitors.yaml 
+# with namespace and release replaced.
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -5,7 +8,7 @@ metadata:
   namespace: prometheus
   labels:
     monitoring: kubelet-monitor
-    release: wanlin
+    release: grpc-testing
 spec:
   endpoints:
     - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
