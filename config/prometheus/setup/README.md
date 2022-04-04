@@ -4,22 +4,31 @@
 is used to install Prometheus. A prometheus operator is a custom controller
 helps managing the Prometheus instance.
 
-## Quick Start
+## Installing Prometheus through Makefile
 
-Create `prometheus` namespace:
+### Uninstalling Prometheus
 
-```shell
-kubectl create namespace prometheus
-```
-
-Use following command to install Prometheus, this command applied all yaml
-configurations from config/prometheus/setup/ to the cluster:
+Use following command to uninstall Prometheus,
 
 ```shell
 
-kubectl create -f config/prometheus/setup/
+make uninstall-prometheus
 
 ```
+
+### Installing Prometheus
+
+Use following command to install Prometheus, this command concatenates all yaml
+configurations from config/prometheus/setup/ and applies the output file to the
+cluster:
+
+```shell
+
+make install-prometheus
+
+```
+
+## Installing Prometheus manually
 
 ### Prometheus Operator
 
