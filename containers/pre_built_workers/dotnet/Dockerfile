@@ -38,9 +38,8 @@ RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 # Build standalone build of qps worker, put output into qps_worker directory.
 RUN dotnet publish -c Release -o qps_worker perf/benchmarkapps/QpsWorker/
 
-# Note that the libgrpc_csharp_ext.so library built by the build image
-# needs to be binary-compatible with the runtime image (e.g. they need to be based off of the same linux distro)
-# Because of that, care needs to be taken to always used a runtime image that's compatible with the build image.
+# Note that the QpsWorker built by "dotnet publish" in the previous step needs to be runnable
+# with the runtime image below.
 FROM mcr.microsoft.com/dotnet/aspnet:6.0-bullseye-slim
 
 RUN mkdir -p /execute
