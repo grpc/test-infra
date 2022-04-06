@@ -18,6 +18,10 @@ languages:
   buildImage: "{{ .BuildImagePrefix }}csharp:{{ .Version }}"
   runImage: mcr.microsoft.com/dotnet/runtime:3.1-bullseye-slim
 
+- language: dotnet
+  buildImage: "{{ .BuildImagePrefix }}dotnet:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}dotnet:{{ .Version }}"
+
 - language: cxx
   buildImage: l.gcr.io/google/bazel:3.5.0
   runImage: "{{ .RunImagePrefix }}cxx:{{ .Version }}"
