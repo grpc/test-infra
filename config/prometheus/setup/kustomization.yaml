@@ -1,6 +1,0 @@
-resources:
-- namespace.yaml
-- crds.yaml
-- install-prometheus-operator.yaml
-- install-prometheus.yaml
-- servicemonitors.yaml

@@ -239,11 +239,17 @@ install-rbac: manifests kustomize ## Install RBACs into the K8s cluster specifie
 uninstall-rbac: manifests kustomize ## Uninstall RBACs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/rbac | kubectl delete --ignore-not-found=true -f -
 
-install-prometheus: kustomize ## Install Prometheus and Prometheus Operator into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/prometheus/setup/ | kubectl create -f -
+install-prometheus-crds: ## Install Prometheus and Prometheus Operator related CRDs into the K8s cluster specified in ~/.kube/config.
+	kubectl create -f config/prometheus/crds/bases/crds.yaml
 
-uninstall-prometheus: kustomize ## Uninstall Prometheus and Prometheus Operator into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/prometheus/setup/ | kubectl delete --ignore-not-found=true -f -
+uninstall-prometheus-crds: ## Uninstall Prometheus and Prometheus Operator related CRDs from the K8s cluster specified in ~/.kube/config.
+	kubectl delete --ignore-not-found=true -f config/prometheus/crds/bases/crds.yaml
+
+deploy-prometheus: kustomize ## Deploy Prometheus Operator and Prometheus into the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/prometheus/ | kubectl apply -f -
+
+undeploy-prometheus: kustomize ## Delete Prometheus Operator and Prometheus deployment from the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/prometheus/ | kubectl delete --ignore-not-found=true -f -
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(CONTROLLER_IMG)
