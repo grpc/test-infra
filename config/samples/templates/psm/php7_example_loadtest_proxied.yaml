@@ -5,37 +5,31 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: java_generic_async_streaming_ping_pong_insecure
-    uniquifier: proxyless
+    scenario: php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong_insecure
+    uniquifier: proxied
   labels:
-    language: java
+    language: php7
     prefix: psm-examples
-  name: psm-examples-java-generic-async-streaming-ping-pong-insecure-proxyless
+  name: psm-examples-php7-protobuf-php-extension-to-cpp-protobuf-sync-unary-ping-pong-insecure-proxied
 spec:
   clients:
   - build:
-      args:
-      - -PskipAndroid=true
-      - -PskipCodegen=true
-      - :grpc-benchmarks:installDist
       command:
-      - gradle
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-java.git
-    language: java
+      repo: https://github.com/grpc/grpc.git
+    language: php7
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /run_scripts/run_worker.sh
+        /run_scripts/run_worker.sh
       command:
       - bash
-      env:
-      - name: GRPC_XDS_BOOTSTRAP
-        value: /bootstrap/bootstrap.json
       name: main
     - args:
       - -default-config-path 
@@ -44,13 +38,20 @@ spec:
       - containers/runtime/xds-server/bootstrap.json
       command:
       - main
-      image: ${psm_image_prefix}/xds-server:${psm_image_tag}
+      image: gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.2.0-pre.1
       livenessProbe:
         initialDelaySeconds: 30
         periodSeconds: 5
         tcpSocket:
           port: 10000
       name: xds-server
+    - image: gcr.io/grpc-testing/e2etest/runtime/side-car:v1.2.0-pre.1
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        tcpSocket:
+          port: 10000 
+      name: sidecar
   driver:
     language: cxx
     name: '0'
@@ -58,17 +59,18 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "java_generic_async_streaming_ping_pong_insecure",
+        "name": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong_insecure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
-          "client_type": "ASYNC_CLIENT",
+          "client_type": "SYNC_CLIENT",
+          "security_params": null,
           "outstanding_rpcs_per_channel": 1,
           "client_channels": 1,
           "async_client_threads": 1,
           "client_processes": 0,
           "threads_per_cq": 0,
-          "rpc_type": "STREAMING",
+          "rpc_type": "UNARY",
           "histogram_params": {
             "resolution": 0.01,
             "max_possible": 60000000000.0
@@ -80,7 +82,7 @@ spec:
             }
           ],
           "payload_config": {
-            "bytebuf_params": {
+            "simple_params": {
               "req_size": 0,
               "resp_size": 0
             }
@@ -90,7 +92,8 @@ spec:
           }
         },
         "server_config": {
-          "server_type": "ASYNC_GENERIC_SERVER",
+          "server_type": "SYNC_SERVER",
+          "security_params": null,
           "async_server_threads": 1,
           "server_processes": 0,
           "threads_per_cq": 0,
@@ -99,37 +102,33 @@ spec:
               "name": "grpc.optimization_target",
               "str_value": "latency"
             }
-          ],
-          "payload_config": {
-            "bytebuf_params": {
-              "req_size": 0,
-              "resp_size": 0
-            }
-          }
+          ]
         },
-        "warmup_seconds": 15,
+        "warmup_seconds": 5,
         "benchmark_seconds": 30
       }
     }
   servers:
   - build:
       args:
-      - -PskipAndroid=true
-      - -PskipCodegen=true
-      - :grpc-benchmarks:installDist
+      - build
+      - --config
+      - opt
+      - //test/cpp/qps:qps_worker
       command:
-      - gradle
+      - bazel
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-java.git
-    language: java
+      repo: https://github.com/grpc/grpc.git
+    language: cxx
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /run_scripts/run_worker.sh
+            bazel-bin/test/cpp/qps/qps_worker --driver_port="${DRIVER_PORT}" \
+            --server_port=10010
       command:
       - bash
       name: main

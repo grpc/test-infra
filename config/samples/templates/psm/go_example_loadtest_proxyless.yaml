@@ -5,12 +5,12 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: go_generic_sync_streaming_ping_pong_secure
+    scenario: go_generic_sync_streaming_ping_pong_insecure
     uniquifier: proxyless
   labels:
     language: go
     prefix: psm-examples
-  name: psm-examples-go-generic-sync-streaming-ping-pong
+  name: psm-examples-go-generic-sync-streaming-ping-pong-insecure-proxyless
 spec:
   clients:
   - build:
@@ -35,10 +35,6 @@ spec:
       command:
       - bash
       env:
-      - name: GRPC_GO_LOG_VERBOSITY_LEVEL
-        value: "99"
-      - name:  GRPC_GO_LOG_SEVERITY_LEVEL
-        value: info
       - name: GRPC_XDS_BOOTSTRAP
         value: /bootstrap/bootstrap.json
       name: main
@@ -63,7 +59,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "go_generic_sync_streaming_ping_pong_secure",
+        "name": "go_generic_sync_streaming_ping_pong_insecure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {

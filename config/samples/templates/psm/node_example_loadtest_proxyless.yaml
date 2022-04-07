@@ -5,32 +5,30 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: java_generic_async_streaming_ping_pong_insecure
+    scenario: node_to_node_generic_async_streaming_ping_pong_insecure
     uniquifier: proxyless
   labels:
-    language: java
+    language: node
     prefix: psm-examples
-  name: psm-examples-java-generic-async-streaming-ping-pong-insecure-proxyless
+  name: psm-examples-node-to-node-generic-async-streaming-ping-pong-insecure-proxyless
 spec:
   clients:
   - build:
-      args:
-      - -PskipAndroid=true
-      - -PskipCodegen=true
-      - :grpc-benchmarks:installDist
       command:
-      - gradle
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-java.git
-    language: java
+      repo: https://github.com/grpc/grpc-node.git
+    language: node
     name: '0'
     run:
     - args:
       - -c
       - |
-        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /run_scripts/run_worker.sh
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" node -r \
+            ./test/fixtures/native_native.js test/performance/worker.js \
+            --benchmark_impl=grpc --driver_port="${DRIVER_PORT}"
       command:
       - bash
       env:
@@ -58,11 +56,12 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "java_generic_async_streaming_ping_pong_insecure",
+        "name": "node_to_node_generic_async_streaming_ping_pong_insecure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
           "client_type": "ASYNC_CLIENT",
+          "security_params": null,
           "outstanding_rpcs_per_channel": 1,
           "client_channels": 1,
           "async_client_threads": 1,
@@ -91,6 +90,7 @@ spec:
         },
         "server_config": {
           "server_type": "ASYNC_GENERIC_SERVER",
+          "security_params": null,
           "async_server_threads": 1,
           "server_processes": 0,
           "threads_per_cq": 0,
@@ -107,29 +107,27 @@ spec:
             }
           }
         },
-        "warmup_seconds": 15,
+        "warmup_seconds": 5,
         "benchmark_seconds": 30
       }
     }
   servers:
   - build:
-      args:
-      - -PskipAndroid=true
-      - -PskipCodegen=true
-      - :grpc-benchmarks:installDist
       command:
-      - gradle
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-java.git
-    language: java
+      repo: https://github.com/grpc/grpc-node.git
+    language: node
     name: '0'
     run:
     - args:
       - -c
       - |
-        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /run_scripts/run_worker.sh
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" node -r \
+            ./test/fixtures/native_native.js test/performance/worker.js \
+            --benchmark_impl=grpc --driver_port="${DRIVER_PORT}"
       command:
       - bash
       name: main

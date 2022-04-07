@@ -5,12 +5,12 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: java_generic_async_streaming_ping_pong_secure
-    uniquifier: proxyless
+    scenario: java_generic_async_streaming_ping_pong_insecure
+    uniquifier: proxied
   labels:
     language: java
     prefix: psm-examples
-  name: psm-examples-java-generic-async-streaming-ping-pong
+  name: psm-examples-java-generic-async-streaming-ping-pong-insecure-proxied
 spec:
   clients:
   - build:
@@ -34,10 +34,6 @@ spec:
       command:
       - bash
       env:
-      - name: GRPC_GO_LOG_VERBOSITY_LEVEL
-        value: "99"
-      - name:  GRPC_GO_LOG_SEVERITY_LEVEL
-        value: info
       - name: GRPC_XDS_BOOTSTRAP
         value: /bootstrap/bootstrap.json
       name: main
@@ -69,7 +65,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "java_generic_async_streaming_ping_pong_secure",
+        "name": "java_generic_async_streaming_ping_pong_insecure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {

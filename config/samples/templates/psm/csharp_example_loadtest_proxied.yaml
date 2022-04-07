@@ -5,37 +5,32 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: java_generic_async_streaming_ping_pong_insecure
-    uniquifier: proxyless
+    scenario: csharp_protobuf_async_unary_ping_pong
+    uniquifier: proxied
   labels:
-    language: java
+    language: csharp
     prefix: psm-examples
-  name: psm-examples-java-generic-async-streaming-ping-pong-insecure-proxyless
+  name: psm-examples-csharp-protobuf-async-unary-ping-pong-proxied
 spec:
   clients:
   - build:
-      args:
-      - -PskipAndroid=true
-      - -PskipCodegen=true
-      - :grpc-benchmarks:installDist
       command:
-      - gradle
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-java.git
-    language: java
+      repo: https://github.com/grpc/grpc.git
+    language: csharp
     name: '0'
     run:
     - args:
       - -c
       - |
-        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /run_scripts/run_worker.sh
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
+            qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
-      env:
-      - name: GRPC_XDS_BOOTSTRAP
-        value: /bootstrap/bootstrap.json
       name: main
     - args:
       - -default-config-path 
@@ -51,6 +46,13 @@ spec:
         tcpSocket:
           port: 10000
       name: xds-server
+    - image: ${psm_image_prefix}/sidecar:${psm_image_tag}
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        tcpSocket:
+          port: 10000 
+      name: sidecar
   driver:
     language: cxx
     name: '0'
@@ -58,17 +60,18 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "java_generic_async_streaming_ping_pong_insecure",
+        "name": "csharp_protobuf_async_unary_ping_pong_insecure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
           "client_type": "ASYNC_CLIENT",
+          "security_params": null,
           "outstanding_rpcs_per_channel": 1,
           "client_channels": 1,
           "async_client_threads": 1,
           "client_processes": 0,
           "threads_per_cq": 0,
-          "rpc_type": "STREAMING",
+          "rpc_type": "UNARY",
           "histogram_params": {
             "resolution": 0.01,
             "max_possible": 60000000000.0
@@ -80,7 +83,7 @@ spec:
             }
           ],
           "payload_config": {
-            "bytebuf_params": {
+            "simple_params": {
               "req_size": 0,
               "resp_size": 0
             }
@@ -90,8 +93,9 @@ spec:
           }
         },
         "server_config": {
-          "server_type": "ASYNC_GENERIC_SERVER",
-          "async_server_threads": 1,
+          "server_type": "ASYNC_SERVER",
+          "security_params": null,
+          "async_server_threads": 0,
           "server_processes": 0,
           "threads_per_cq": 0,
           "channel_args": [
@@ -99,37 +103,29 @@ spec:
               "name": "grpc.optimization_target",
               "str_value": "latency"
             }
-          ],
-          "payload_config": {
-            "bytebuf_params": {
-              "req_size": 0,
-              "resp_size": 0
-            }
-          }
+          ]
         },
-        "warmup_seconds": 15,
+        "warmup_seconds": 5,
         "benchmark_seconds": 30
       }
     }
   servers:
   - build:
-      args:
-      - -PskipAndroid=true
-      - -PskipCodegen=true
-      - :grpc-benchmarks:installDist
       command:
-      - gradle
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-java.git
-    language: java
+      repo: https://github.com/grpc/grpc.git
+    language: csharp
     name: '0'
     run:
     - args:
       - -c
       - |
-        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /run_scripts/run_worker.sh
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
+            qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
       name: main

@@ -5,32 +5,33 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: java_generic_async_streaming_ping_pong_insecure
+    scenario: cpp_generic_async_streaming_ping_pong_insecure
     uniquifier: proxyless
   labels:
-    language: java
+    language: cxx
     prefix: psm-examples
-  name: psm-examples-java-generic-async-streaming-ping-pong-insecure-proxyless
+  name: psm-examples-cpp-generic-async-streaming-ping-pong-insecure-proxyless
 spec:
   clients:
   - build:
       args:
-      - -PskipAndroid=true
-      - -PskipCodegen=true
-      - :grpc-benchmarks:installDist
+      - build
+      - --config
+      - opt
+      - //test/cpp/qps:qps_worker
       command:
-      - gradle
+      - bazel
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-java.git
-    language: java
+      repo: https://github.com/grpc/grpc.git
+    language: cxx
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /run_scripts/run_worker.sh
+            bazel-bin/test/cpp/qps/qps_worker --driver_port="${DRIVER_PORT}"
       command:
       - bash
       env:
@@ -58,11 +59,12 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "java_generic_async_streaming_ping_pong_insecure",
+        "name": "cpp_generic_async_streaming_ping_pong_insecure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
           "client_type": "ASYNC_CLIENT",
+          "security_params": null,
           "outstanding_rpcs_per_channel": 1,
           "client_channels": 1,
           "async_client_threads": 1,
@@ -91,6 +93,7 @@ spec:
         },
         "server_config": {
           "server_type": "ASYNC_GENERIC_SERVER",
+          "security_params": null,
           "async_server_threads": 1,
           "server_processes": 0,
           "threads_per_cq": 0,
@@ -107,29 +110,31 @@ spec:
             }
           }
         },
-        "warmup_seconds": 15,
+        "warmup_seconds": 5,
         "benchmark_seconds": 30
       }
     }
   servers:
   - build:
       args:
-      - -PskipAndroid=true
-      - -PskipCodegen=true
-      - :grpc-benchmarks:installDist
+      - build
+      - --config
+      - opt
+      - //test/cpp/qps:qps_worker
       command:
-      - gradle
+      - bazel
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-java.git
-    language: java
+      repo: https://github.com/grpc/grpc.git
+    language: cxx
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /run_scripts/run_worker.sh
+            bazel-bin/test/cpp/qps/qps_worker --driver_port="${DRIVER_PORT}" \
+            --server_port=10010
       command:
       - bash
       name: main
