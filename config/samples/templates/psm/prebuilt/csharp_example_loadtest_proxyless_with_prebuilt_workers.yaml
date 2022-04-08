@@ -1,0 +1,125 @@
+# Load test configurations generated from a template by loadtest_config.py.
+# See documentation below:
+# https://github.com/grpc/grpc/blob/master/tools/run_tests/performance/README.md#grpc-oss-benchmarks
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  annotations:
+    pool: ${workers_pool}
+    scenario: csharp_protobuf_async_unary_ping_pong_insecure
+    uniquifier: proxyless-prebuilt
+  labels:
+    language: csharp
+    prefix: psm-examples
+  name: psm-examples-csharp-protobuf-async-unary-ping-pong-insecure-proxyless-prebuilt
+spec:
+  clients:
+  - language: csharp
+    name: '0'
+    pool: ${workers_pool}
+    run:
+    - args:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
+            /execute/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+            --driver_port="${DRIVER_PORT}"
+      command:
+      - bash
+      env:
+      - name: GRPC_XDS_BOOTSTRAP
+        value: /bootstrap/bootstrap.json
+      image: ${prebuilt_image_prefix}/csharp:${prebuilt_image_tag}
+      name: main
+    - args:
+      - -default-config-path 
+      - containers/runtime/xds-server/config/default_config.json 
+      - -path-to-bootstrap
+      - containers/runtime/xds-server/bootstrap.json
+      command:
+      - main
+      image: ${psm_image_prefix}/xds-server:${psm_image_tag}
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        tcpSocket:
+          port: 10000
+      name: xds-server
+  driver:
+    language: cxx
+    name: '0'
+    pool: ${driver_pool}
+    run:
+    - image: ${driver_image}
+      name: main
+  results:
+    bigQueryTable: ${big_query_table}
+  scenariosJSON: |
+    {
+      "scenarios": {
+        "name": "csharp_protobuf_async_unary_ping_pong_insecure",
+        "num_servers": 1,
+        "num_clients": 1,
+        "client_config": {
+          "client_type": "ASYNC_CLIENT",
+          "security_params": null,
+          "outstanding_rpcs_per_channel": 1,
+          "client_channels": 1,
+          "async_client_threads": 1,
+          "client_processes": 0,
+          "threads_per_cq": 0,
+          "rpc_type": "UNARY",
+          "histogram_params": {
+            "resolution": 0.01,
+            "max_possible": 60000000000.0
+          },
+          "channel_args": [
+            {
+              "name": "grpc.optimization_target",
+              "str_value": "latency"
+            }
+          ],
+          "payload_config": {
+            "simple_params": {
+              "req_size": 0,
+              "resp_size": 0
+            }
+          },
+          "load_params": {
+            "closed_loop": {}
+          }
+        },
+        "server_config": {
+          "server_type": "ASYNC_SERVER",
+          "security_params": null,
+          "async_server_threads": 0,
+          "server_processes": 0,
+          "threads_per_cq": 0,
+          "channel_args": [
+            {
+              "name": "grpc.optimization_target",
+              "str_value": "latency"
+            }
+          ]
+        },
+        "warmup_seconds": 5,
+        "benchmark_seconds": 30
+      }
+    }
+  servers:
+  - language: csharp
+    name: '0'
+    pool: ${workers_pool}
+    run:
+    - args:
+      - -c
+      - |
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
+            /execute/qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+            --driver_port="${DRIVER_PORT}"
+      command:
+      - bash
+      image: ${prebuilt_image_prefix}/csharp:${prebuilt_image_tag}
+      name: main
+  timeoutSeconds: 900
+  ttlSeconds: 86400
