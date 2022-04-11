@@ -20,5 +20,5 @@ func NewLogger(tableName string) *Logger {
 
 // Errorf adds an "Error: " prefix to the format string
 func (l *Logger) Errorf(format string, v ...interface{}) {
-	l.Printf("Error: " + format)
+	l.Printf(fmt.Sprintf("Error: %s", format), v...)
 }
