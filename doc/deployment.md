@@ -218,7 +218,7 @@ gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.1.0
 
 ## Deleting the previous deployment
 
-The following command deletes the previous deployment from the cluster:
+The following command deletes all previous deployments from the cluster:
 
 ```shell
 kubectl -n test-infra-system delete deployments --all
@@ -227,7 +227,13 @@ kubectl -n test-infra-system delete deployments --all
 This is an optional step, but may be advisable, so we can start from a clean
 deployment.
 
+PSM benchmarks require a [Prometheus Operator][prometheusoperator] deployment,
+in addition to the controller. If you delete all previous deployments, you will
+need to to deploy it again.
+
 ## Deploying to the cluster
+
+### Controller {#deploying-controller}
 
 Assuming that you are connected to the cluster where you want to deploy, the
 controller can be deployed as follows:
@@ -242,7 +248,18 @@ The command above can also be used to deploy an existing version of the
 controller. In this case, the environment variables should point to the location
 of the controller binary.
 
-## Verifying the deployment
+### Prometheus {#deploying-prometheus}
+
+PSM benchmarks require a [Prometheus Operator][prometheusoperator] deployment.
+This can be deployed as follows:
+
+```shell
+make install-prometheus
+```
+
+## Verifying the deployments
+
+### Controller {#verifying-controller}
 
 You can verify that the deployment started by running the following command:
 
@@ -276,67 +293,34 @@ It may take a while for the deployment to start. If it does not, you will need
 to debug the deployment by checking the description of its pod and the logs of
 its `manager` container. The deployment runs in namespace `test-infra-system`.
 
-## Deleting Prometheus
+### Prometheus {#verifying-prometheus}
 
-The following command deletes the previously installed Prometheus from the
-cluster:
-
-```shell
-make uninstall-prometheus
-```
-
-This is also an optional step, but may be advisable, so we can start from a
-clean deployment.
-
-## Installing Prometheus
-
-The following command can be used to install Prometheus to the cluster:
+You can verify that Prometheus started by running the following command:
 
 ```shell
-make install-prometheus
-```
-
-## Verifying the Prometheus
-
-You can verify that the Prometheus started by running the following command:
-
-```shell
-kubectl get all -n prometheus
+kubectl get services -n test-infra-system
 ```
 
 You should eventually see following resources in the command output and a
 `CLUSTER-IP` has been assigned to `service/prometheus`:
 
 ```shell
-NAME                                       READY   STATUS    RESTARTS   AGE
-pod/prometheus-operator-677cf7f876-mqm6w   1/1     Running   0          3m29s
-pod/prometheus-prometheus-0                2/2     Running   0          3m25s
-
-NAME                          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-service/prometheus            ClusterIP   10.108.15.152   <none>        9090/TCP   3m28s
-service/prometheus-operated   ClusterIP   None            <none>        9090/TCP   3m25s
-service/prometheus-operator   ClusterIP   None            <none>        8080/TCP   3m29s
-
-NAME                                  READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/prometheus-operator   1/1     1            1           3m29s
-
-NAME                                             DESIRED   CURRENT   READY   AGE
-replicaset.apps/prometheus-operator-677cf7f876   1         1         1       3m30s
-
-NAME                                     READY   AGE
-statefulset.apps/prometheus-prometheus   1/1     3m26s
+NAME                  TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE
+prometheus            ClusterIP   10.20.7.234   <none>        9090/TCP   9d
+prometheus-operated   ClusterIP   None          <none>        9090/TCP   9d
+prometheus-operator   ClusterIP   None          <none>        8080/TCP   9d
 ```
 
-After the all the resources are up and running, you can forward the port by
+After all resources are up and running, you can forward the port with the
 following command:
 
 ```shell
-kubectl port-forward service/prometheus 9090:9090 -n prometheus
+kubectl port-forward service/prometheus 9090:9090 -n test-infra-system
 
 ```
 
 Then you can verify that Prometheus is serving metrics by navigating to its
-metrics endpoint: `http://localhost:9090/graph`.
+metrics endpoint: http://localhost:9090/graph.
 
 ## Running an example test
 
@@ -365,3 +349,4 @@ Verify that the deployment is able to run a test by running the example Go test:
    ```
 
 [examples]: ../config/samples/README.md
+[prometheusoperator]: ../prometheus/setup/README.md
