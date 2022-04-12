@@ -257,7 +257,7 @@ This can be deployed as follows:
 make install-prometheus-crds deploy-prometheus
 ```
 
-If the CRDs has already been created, it will need to be uninstalled first:
+If the CRDs have already been created, they will need to be uninstalled first:
 
 ```shell
 make undeploy-prometheus uninstall-prometheus-crds
