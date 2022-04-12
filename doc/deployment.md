@@ -254,16 +254,16 @@ PSM benchmarks require a [Prometheus Operator][prometheusoperator] deployment.
 This can be deployed as follows:
 
 ```shell
-make install-prometheus-crd deploy-prometheus
+make install-prometheus-crds deploy-prometheus
 ```
 
-If the CRD has already been created, it will need to be uninstalled first:
+If the CRDs has already been created, it will need to be uninstalled first:
 
 ```shell
-make undeploy-prometheus uninstall-prometheus-crd
+make undeploy-prometheus uninstall-prometheus-crds
 ```
 
-Alternatively, you can keep the previous CRD and only deploy the operator.
+Alternatively, you can keep the previous CRDs and only deploy the operator.
 
 ## Verifying the deployments
 
