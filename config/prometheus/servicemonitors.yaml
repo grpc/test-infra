@@ -5,7 +5,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: kubelet
-  namespace: prometheus
+  namespace: test-infra-system
   labels:
     monitoring: kubelet-monitor
     release: grpc-testing
@@ -48,7 +48,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: kube-state-metrics
-  namespace: prometheus
+  namespace: test-infra-system
   labels:
     k8s-app: kube-state-metrics
 spec:

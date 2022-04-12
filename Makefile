@@ -2,8 +2,12 @@
 TEST_INFRA_VERSION ?= latest
 
 # Version of gRPC core used for the gRPC driver
-# Pinned to newer commit to include changes that were not 
-# in the v1.45.0
+# Pinned to include the following PRs:
+# https://github.com/grpc/grpc/pull/29160
+# https://github.com/grpc/grpc/pull/29207
+# https://github.com/grpc/grpc/pull/29057
+# https://github.com/grpc/grpc/pull/29197
+# TODO(wanlin31): Update to v1.46.0 once released
 DRIVER_VERSION ?= 58612ba1555ba5ebe5a62be0087be33fbd8b426b
 
 # Prefix for all images used as clone and ready containers, enabling use with
@@ -246,6 +250,18 @@ install-rbac: manifests kustomize ## Install RBACs into the K8s cluster specifie
 
 uninstall-rbac: manifests kustomize ## Uninstall RBACs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/rbac | kubectl delete --ignore-not-found=true -f -
+
+install-prometheus-crds: ## Install Prometheus and Prometheus Operator related CRDs into the K8s cluster specified in ~/.kube/config.
+	kubectl create -f config/prometheus/crds/bases/crds.yaml
+
+uninstall-prometheus-crds: ## Uninstall Prometheus and Prometheus Operator related CRDs from the K8s cluster specified in ~/.kube/config.
+	kubectl delete --ignore-not-found=true -f config/prometheus/crds/bases/crds.yaml
+
+deploy-prometheus: kustomize ## Deploy Prometheus Operator and Prometheus into the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/prometheus/ | kubectl apply -f -
+
+undeploy-prometheus: kustomize ## Delete Prometheus Operator and Prometheus deployment from the K8s cluster specified in ~/.kube/config.
+	$(KUSTOMIZE) build config/prometheus/ | kubectl delete --ignore-not-found=true -f -
 
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(CONTROLLER_IMG)
