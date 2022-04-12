@@ -357,4 +357,4 @@ Verify that the deployment is able to run a test by running the example Go test:
    ```
 
 [examples]: ../config/samples/README.md
-[prometheusoperator]: ../prometheus/setup/README.md
+[prometheusoperator]: ../prometheus/README.md
