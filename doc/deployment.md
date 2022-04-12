@@ -233,7 +233,7 @@ need to to deploy it again.
 
 ## Deploying to the cluster
 
-### Controller {#deploying-controller}
+### Deploying the controller
 
 Assuming that you are connected to the cluster where you want to deploy, the
 controller can be deployed as follows:
@@ -248,7 +248,7 @@ The command above can also be used to deploy an existing version of the
 controller. In this case, the environment variables should point to the location
 of the controller binary.
 
-### Prometheus {#deploying-prometheus}
+### Deploying Prometheus
 
 PSM benchmarks require a [Prometheus Operator][prometheusoperator] deployment.
 This can be deployed as follows:
@@ -267,7 +267,7 @@ Alternatively, you can keep the previous CRD and only deploy the operator.
 
 ## Verifying the deployments
 
-### Controller {#verifying-controller}
+### Verifying the controller
 
 You can verify that the deployment started by running the following command:
 
@@ -301,7 +301,7 @@ It may take a while for the deployment to start. If it does not, you will need
 to debug the deployment by checking the description of its pod and the logs of
 its `manager` container. The deployment runs in namespace `test-infra-system`.
 
-### Prometheus {#verifying-prometheus}
+### Verifying Prometheus
 
 You can verify that Prometheus started by running the following command:
 
