@@ -5,33 +5,29 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
+    scenario: php7_protobuf_c_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
     uniquifier: proxyless
   labels:
-    language: go
+    language: php7_protobuf_c
     prefix: psm-examples
-  name: psm-examples-go-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-proxyless
+  name: psm-examples-php7-protobuf-c-extension-to-cpp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-proxyless
 spec:
   clients:
   - build:
-      args:
-      - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
       command:
-      - go
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+      repo: https://github.com/grpc/grpc.git
+    language: php7_protobuf_c
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+        /run_scripts/run_protobuf_c_worker.sh
       command:
       - bash
       env:
@@ -59,7 +55,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
+        "name": "php7_protobuf_c_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -114,29 +110,25 @@ spec:
   - build:
       args:
       - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
+      - --config
+      - opt
+      - //test/cpp/qps:qps_worker
       command:
-      - go
+      - bazel
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+      repo: https://github.com/grpc/grpc.git
+    language: cxx
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+            bazel-bin/test/cpp/qps/qps_worker --driver_port="${DRIVER_PORT}" \
+            --server_port=10010
       command:
       - bash
-      env:
-      - name: GRPC_GO_LOG_VERBOSITY_LEVEL
-        value: '99'
-      - name: GRPC_GO_LOG_SEVERITY_LEVEL
-        value: info
       name: main
   timeoutSeconds: 900
   ttlSeconds: 86400

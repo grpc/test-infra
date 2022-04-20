@@ -5,33 +5,30 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
+    scenario: csharp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
     uniquifier: proxyless
   labels:
-    language: go
+    language: csharp
     prefix: psm-examples
-  name: psm-examples-go-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-proxyless
+  name: psm-examples-csharp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-proxyless
 spec:
   clients:
   - build:
-      args:
-      - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
       command:
-      - go
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+      repo: https://github.com/grpc/grpc.git
+    language: csharp
     name: '0'
     run:
     - args:
       - -c
       - |
-        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
+            qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
       env:
@@ -59,7 +56,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
+        "name": "csharp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -112,31 +109,23 @@ spec:
     }
   servers:
   - build:
-      args:
-      - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
       command:
-      - go
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+      repo: https://github.com/grpc/grpc.git
+    language: csharp
     name: '0'
     run:
     - args:
       - -c
       - |
-        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" dotnet exec \
+            qps_worker/Grpc.IntegrationTesting.QpsWorker.dll \
+            --driver_port="${DRIVER_PORT}"
       command:
       - bash
-      env:
-      - name: GRPC_GO_LOG_VERBOSITY_LEVEL
-        value: '99'
-      - name: GRPC_GO_LOG_SEVERITY_LEVEL
-        value: info
       name: main
   timeoutSeconds: 900
   ttlSeconds: 86400
