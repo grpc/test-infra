@@ -6,12 +6,12 @@ kind: LoadTest
 metadata:
   annotations:
     pool: ${workers_pool}
-    scenario: node_to_node_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
+    scenario: node_to_node_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: prebuilt-proxied
   labels:
     language: node
     prefix: psm-examples
-  name: psm-examples-node-to-node-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-prebuilt-proxied
+  name: psm-examples-node-to-node-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-prebuilt-proxied
 spec:
   clients:
   - language: node
@@ -61,7 +61,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "node_to_node_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
+        "name": "node_to_node_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {

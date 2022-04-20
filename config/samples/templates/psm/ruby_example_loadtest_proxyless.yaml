@@ -5,12 +5,12 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: ruby_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
+    scenario: ruby_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: proxyless
   labels:
     language: ruby
     prefix: psm-examples
-  name: psm-examples-ruby-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-proxyless
+  name: psm-examples-ruby-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxyless
 spec:
   clients:
   - build:
@@ -55,7 +55,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "ruby_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
+        "name": "ruby_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {

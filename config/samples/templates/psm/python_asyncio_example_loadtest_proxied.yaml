@@ -5,12 +5,12 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: python_asyncio_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
+    scenario: python_asyncio_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: proxied
   labels:
     language: python_asyncio
     prefix: psm-examples
-  name: psm-examples-python-asyncio-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-proxied
+  name: psm-examples-python-asyncio-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxied
 spec:
   clients:
   - build:
@@ -64,7 +64,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "python_asyncio_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
+        "name": "python_asyncio_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {

@@ -6,12 +6,12 @@ kind: LoadTest
 metadata:
   annotations:
     pool: ${workers_pool}
-    scenario: java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
+    scenario: java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: prebuilt-proxied
   labels:
     language: java
     prefix: psm-examples
-  name: psm-examples-java-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-prebuilt-proxied
+  name: psm-examples-java-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-prebuilt-proxied
 spec:
   clients:
   - language: java
@@ -60,7 +60,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
+        "name": "java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -107,7 +107,7 @@ spec:
             }
           ]
         },
-        "warmup_seconds": 5,
+        "warmup_seconds": 15,
         "benchmark_seconds": 30
       }
     }

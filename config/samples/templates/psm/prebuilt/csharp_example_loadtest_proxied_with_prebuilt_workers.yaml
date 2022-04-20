@@ -6,12 +6,12 @@ kind: LoadTest
 metadata:
   annotations:
     pool: ${workers_pool}
-    scenario: csharp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
+    scenario: csharp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: prebuilt-proxied
   labels:
     language: csharp
     prefix: psm-examples
-  name: psm-examples-csharp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-prebuilt-proxied
+  name: psm-examples-csharp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-prebuilt-proxied
 spec:
   clients:
   - language: csharp
@@ -61,7 +61,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "csharp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
+        "name": "csharp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {

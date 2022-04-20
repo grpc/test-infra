@@ -6,12 +6,12 @@ kind: LoadTest
 metadata:
   annotations:
     pool: ${workers_pool}
-    scenario: go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load
+    scenario: go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: prebuilt-proxyless
   labels:
     language: go
     prefix: psm-examples
-  name: psm-examples-go-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000offered-load-prebuilt-proxyless
+  name: psm-examples-go-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-prebuilt-proxyless
 spec:
   clients:
   - language: go
@@ -57,7 +57,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000offered_load",
+        "name": "go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
