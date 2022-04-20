@@ -56,6 +56,18 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "dotnet_protobuf_sync_to_async_unary_ping_pong"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "go_protobuf_sync_unary_ping_pong_secure"
             },
             "properties": [
@@ -320,6 +332,18 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "dotnet_to_cpp_protobuf_sync_unary_ping_pong"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong"
             },
             "properties": [
@@ -539,6 +563,18 @@
               {
                 "id": "displayName",
                 "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_ping_pong"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           },
@@ -874,6 +910,18 @@
                 "value": "C# (Grpc.Core)"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
           }
         ]
       },
@@ -1135,6 +1183,18 @@
                 "value": "C# (Grpc.Core)"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
           }
         ]
       },
@@ -1392,6 +1452,18 @@
               {
                 "id": "displayName",
                 "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -1653,6 +1725,18 @@
                 "value": "C# (Grpc.Core)"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
           }
         ]
       },
@@ -1910,6 +1994,18 @@
               {
                 "id": "displayName",
                 "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -2171,6 +2267,18 @@
                 "value": "C# (Grpc.Core)"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
           }
         ]
       },
@@ -2428,6 +2536,18 @@
               {
                 "id": "displayName",
                 "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -2689,6 +2809,18 @@
                 "value": "C# (Grpc.Core)"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
           }
         ]
       },
@@ -2946,6 +3078,18 @@
               {
                 "id": "displayName",
                 "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -3207,6 +3351,18 @@
                 "value": "C# (Grpc.Core)"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
           }
         ]
       },
@@ -3464,6 +3620,18 @@
               {
                 "id": "displayName",
                 "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -3725,6 +3893,18 @@
                 "value": "C# (Grpc.Core)"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
+              }
+            ]
           }
         ]
       },
@@ -3982,6 +4162,18 @@
               {
                 "id": "displayName",
                 "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_ping_pong_1MB"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
