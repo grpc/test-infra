@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
+	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,7 +80,7 @@ func (ls *LogSaver) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest) 
 }
 
 func (ls *LogSaver) getPodLogBuffer(ctx context.Context, pod *corev1.Pod) (*bytes.Buffer, error) {
-	req := ls.podsGetter.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
+	req := ls.podsGetter.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: config.RunContainerName})
 	driverLogs, err := req.Stream(ctx)
 	if err != nil {
 		return nil, err
