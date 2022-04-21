@@ -5,33 +5,29 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
+    scenario: ruby_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: proxied
   labels:
-    language: go
+    language: ruby
     prefix: psm-examples
-  name: psm-examples-go-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxied
+  name: psm-examples-ruby-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxied
 spec:
   clients:
   - build:
-      args:
-      - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
       command:
-      - go
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+      repo: https://github.com/grpc/grpc
+    language: ruby
     name: '0'
     run:
     - args:
       - -c
       - |
-        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" ruby \
+            src/ruby/qps/worker.rb --driver_port="${DRIVER_PORT}"
       command:
       - bash
       name: main
@@ -63,7 +59,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
+        "name": "ruby_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -116,24 +112,20 @@ spec:
     }
   servers:
   - build:
-      args:
-      - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
       command:
-      - go
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+      repo: https://github.com/grpc/grpc
+    language: ruby
     name: '0'
     run:
     - args:
       - -c
       - |
-        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+        timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" ruby \
+            src/ruby/qps/worker.rb --driver_port="${DRIVER_PORT}"
       command:
       - bash
       name: main

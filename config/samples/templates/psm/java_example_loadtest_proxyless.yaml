@@ -5,12 +5,12 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: java_generic_async_streaming_ping_pong_secure
+    scenario: java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: proxyless
   labels:
     language: java
     prefix: psm-examples
-  name: psm-examples-java-generic-async-streaming-ping-pong
+  name: psm-examples-java-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxyless
 spec:
   clients:
   - build:
@@ -34,16 +34,12 @@ spec:
       command:
       - bash
       env:
-      - name: GRPC_GO_LOG_VERBOSITY_LEVEL
-        value: "99"
-      - name:  GRPC_GO_LOG_SEVERITY_LEVEL
-        value: info
       - name: GRPC_XDS_BOOTSTRAP
         value: /bootstrap/bootstrap.json
       name: main
     - args:
-      - -default-config-path 
-      - containers/runtime/xds-server/config/default_config.json 
+      - -default-config-path
+      - containers/runtime/xds-server/config/default_config.json
       - -path-to-bootstrap
       - containers/runtime/xds-server/bootstrap.json
       command:
@@ -62,17 +58,18 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "java_generic_async_streaming_ping_pong_secure",
+        "name": "java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
           "client_type": "ASYNC_CLIENT",
+          "security_params": null,
           "outstanding_rpcs_per_channel": 1,
-          "client_channels": 1,
+          "client_channels": 8,
           "async_client_threads": 1,
           "client_processes": 0,
           "threads_per_cq": 0,
-          "rpc_type": "STREAMING",
+          "rpc_type": "UNARY",
           "histogram_params": {
             "resolution": 0.01,
             "max_possible": 60000000000.0
@@ -84,18 +81,21 @@ spec:
             }
           ],
           "payload_config": {
-            "bytebuf_params": {
-              "req_size": 0,
-              "resp_size": 0
+            "simple_params": {
+              "req_size": 1024,
+              "resp_size": 1024
             }
           },
           "load_params": {
-            "closed_loop": {}
+            "poisson": {
+              "offered_load": 5000
+            }
           }
         },
         "server_config": {
-          "server_type": "ASYNC_GENERIC_SERVER",
-          "async_server_threads": 1,
+          "server_type": "ASYNC_SERVER",
+          "security_params": null,
+          "async_server_threads": 16,
           "server_processes": 0,
           "threads_per_cq": 0,
           "channel_args": [
@@ -103,13 +103,7 @@ spec:
               "name": "grpc.optimization_target",
               "str_value": "latency"
             }
-          ],
-          "payload_config": {
-            "bytebuf_params": {
-              "req_size": 0,
-              "resp_size": 0
-            }
-          }
+          ]
         },
         "warmup_seconds": 15,
         "benchmark_seconds": 30

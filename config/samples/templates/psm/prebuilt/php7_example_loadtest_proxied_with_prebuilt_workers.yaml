@@ -5,35 +5,27 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
-    uniquifier: proxied
+    pool: ${workers_pool}
+    scenario: php7_protobuf_php_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
+    uniquifier: prebuilt-proxied
   labels:
-    language: go
+    language: php7
     prefix: psm-examples
-  name: psm-examples-go-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxied
+  name: psm-examples-php7-protobuf-php-extension-to-cpp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-prebuilt-proxied
 spec:
   clients:
-  - build:
-      args:
-      - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
-      command:
-      - go
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+  - language: php7
     name: '0'
+    pool: ${workers_pool}
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+        /run_scripts/run_worker.sh
       command:
       - bash
+      image: ${prebuilt_image_prefix}/php7:${prebuilt_image_tag}
       name: main
     - args:
       - -default-config-path
@@ -59,11 +51,16 @@ spec:
   driver:
     language: cxx
     name: '0'
-    run: []
+    pool: ${driver_pool}
+    run:
+    - image: ${driver_image}
+      name: main
+  results:
+    bigQueryTable: ${big_query_table}
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
+        "name": "php7_protobuf_php_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -115,27 +112,19 @@ spec:
       }
     }
   servers:
-  - build:
-      args:
-      - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
-      command:
-      - go
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+  - language: cxx
     name: '0'
+    pool: ${workers_pool}
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+            /source/code/bazel-bin/test/cpp/qps/qps_worker \
+            --driver_port="${DRIVER_PORT}" --server_port=10010
       command:
       - bash
+      image: ${prebuilt_image_prefix}/cxx:${prebuilt_image_tag}
       name: main
   timeoutSeconds: 900
   ttlSeconds: 86400

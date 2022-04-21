@@ -5,33 +5,29 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
+    scenario: php7_protobuf_php_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: proxied
   labels:
-    language: go
+    language: php7
     prefix: psm-examples
-  name: psm-examples-go-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxied
+  name: psm-examples-php7-protobuf-php-extension-to-cpp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxied
 spec:
   clients:
   - build:
-      args:
-      - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
       command:
-      - go
+      - bash
+      - /build_scripts/build_qps_worker.sh
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+      repo: https://github.com/grpc/grpc.git
+    language: php7
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+        /run_scripts/run_worker.sh
       command:
       - bash
       name: main
@@ -42,14 +38,14 @@ spec:
       - containers/runtime/xds-server/bootstrap.json
       command:
       - main
-      image: ${psm_image_prefix}/xds-server:${psm_image_tag}
+      image: gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.2.0-pre.1
       livenessProbe:
         initialDelaySeconds: 30
         periodSeconds: 5
         tcpSocket:
           port: 10000
       name: xds-server
-    - image: ${psm_image_prefix}/sidecar:${psm_image_tag}
+    - image: gcr.io/grpc-testing/e2etest/runtime/side-car:v1.2.0-pre.1
       livenessProbe:
         initialDelaySeconds: 30
         periodSeconds: 5
@@ -63,7 +59,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "go_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
+        "name": "php7_protobuf_php_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -118,22 +114,23 @@ spec:
   - build:
       args:
       - build
-      - -o
-      - /src/workspace/bin/worker
-      - ./benchmark/worker
+      - --config
+      - opt
+      - //test/cpp/qps:qps_worker
       command:
-      - go
+      - bazel
     clone:
       gitRef: master
-      repo: https://github.com/grpc/grpc-go.git
-    language: go
+      repo: https://github.com/grpc/grpc.git
+    language: cxx
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /src/workspace/bin/worker --driver_port="${DRIVER_PORT}"
+            bazel-bin/test/cpp/qps/qps_worker --driver_port="${DRIVER_PORT}" \
+            --server_port=10010
       command:
       - bash
       name: main
