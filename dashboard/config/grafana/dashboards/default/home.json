@@ -49,7 +49,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_sync_to_async_unary_ping_pong"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           },
@@ -155,8 +167,12 @@
         },
         {
           "$$hashKey": "object:383",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:388",
@@ -190,7 +206,7 @@
           "metricColumn": "none",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n  (metadata->>'created')::timestamp AS time,\n  (scenario->>'name') AS metric,\n  MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM\n ci_master_results_8core\nWHERE\n $__timeFilter(metadata->>'created') AND\n scenario->>'name' IN (\n   'java_protobuf_unary_ping_pong_secure',\n   'ruby_protobuf_unary_ping_pong',\n   'node_to_node_protobuf_async_unary_ping_pong_secure',\n   'node_purejs_to_node_protobuf_async_unary_ping_pong_secure',\n   'csharp_protobuf_sync_to_async_unary_ping_pong',\n   'cpp_protobuf_sync_unary_ping_pong_secure',\n   'go_protobuf_sync_unary_ping_pong_secure',\n   'python_protobuf_sync_unary_ping_pong',\n   'netperf_tcp_rr'\n )\n \n GROUP BY\n     time, metric;",
+          "rawSql": "SELECT\n  (metadata->>'created')::timestamp AS time,\n  (scenario->>'name') AS metric,\n  MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM\n ci_master_results_8core\nWHERE\n $__timeFilter(metadata->>'created') AND\n scenario->>'name' IN (\n   'java_protobuf_unary_ping_pong_secure',\n   'ruby_protobuf_unary_ping_pong',\n   'node_to_node_protobuf_async_unary_ping_pong_secure',\n   'node_purejs_to_node_protobuf_async_unary_ping_pong_secure',\n   'csharp_protobuf_sync_to_async_unary_ping_pong',\n   'dotnet_protobuf_sync_to_async_unary_ping_pong',\n   'cpp_protobuf_sync_unary_ping_pong_secure',\n   'go_protobuf_sync_unary_ping_pong_secure',\n   'python_protobuf_sync_unary_ping_pong',\n   'netperf_tcp_rr'\n )\n \n GROUP BY\n     time, metric;",
           "refId": "A",
           "select": [
             [
@@ -313,7 +329,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_to_cpp_protobuf_sync_unary_ping_pong"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           },
@@ -395,8 +423,12 @@
         },
         {
           "$$hashKey": "object:924",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:929",
@@ -429,7 +461,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n    'csharp_to_cpp_protobuf_sync_unary_ping_pong',\n    'ruby_to_cpp_protobuf_sync_unary_ping_pong',\n    'cpp_protobuf_sync_unary_ping_pong_secure',\n    'python_to_cpp_protobuf_sync_unary_ping_pong',\n    'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong',\n    'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong',\n    'netperf_tcp_rr'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n    'csharp_to_cpp_protobuf_sync_unary_ping_pong',\n    'dotnet_to_cpp_protobuf_sync_unary_ping_pong',\n    'ruby_to_cpp_protobuf_sync_unary_ping_pong',\n    'cpp_protobuf_sync_unary_ping_pong_secure',\n    'python_to_cpp_protobuf_sync_unary_ping_pong',\n    'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong',\n    'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong',\n    'netperf_tcp_rr'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -538,7 +570,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_ping_pong"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           },
@@ -656,8 +700,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -700,7 +748,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n    'cpp_protobuf_async_streaming_ping_pong_secure',\n    'csharp_protobuf_async_streaming_ping_pong',\n    'ruby_protobuf_sync_streaming_ping_pong',\n    'node_to_node_protobuf_async_streaming_ping_pong_secure',\n    'node_purejs_to_node_protobuf_async_streaming_ping_pong_secure',\n    'java_protobuf_async_streaming_ping_pong_secure',\n    'go_protobuf_sync_streaming_ping_pong_secure',\n    'python_protobuf_sync_streaming_ping_pong',\n    'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_ping_pong',\n    'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_ping_pong',\n    'netperf_tcp_rr'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n    'cpp_protobuf_async_streaming_ping_pong_secure',\n    'csharp_protobuf_async_streaming_ping_pong',\n    'dotnet_protobuf_async_streaming_ping_pong',\n    'ruby_protobuf_sync_streaming_ping_pong',\n    'node_to_node_protobuf_async_streaming_ping_pong_secure',\n    'node_purejs_to_node_protobuf_async_streaming_ping_pong_secure',\n    'java_protobuf_async_streaming_ping_pong_secure',\n    'go_protobuf_sync_streaming_ping_pong_secure',\n    'python_protobuf_sync_streaming_ping_pong',\n    'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_ping_pong',\n    'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_ping_pong',\n    'netperf_tcp_rr'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -871,7 +919,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -917,8 +977,12 @@
         },
         {
           "$$hashKey": "object:3479",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:3484",
@@ -961,7 +1025,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -1132,7 +1196,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -1178,8 +1254,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -1222,7 +1302,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -1391,7 +1471,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -1437,8 +1529,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -1481,7 +1577,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -1650,7 +1746,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -1696,8 +1804,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -1740,7 +1852,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -1909,7 +2021,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -1955,8 +2079,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -1999,7 +2127,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -2168,7 +2296,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -2214,8 +2354,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -2258,7 +2402,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -2427,7 +2571,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -2473,8 +2629,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -2517,7 +2677,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -2686,7 +2846,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -2732,8 +2904,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -2776,7 +2952,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -2945,7 +3121,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -2991,8 +3179,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -3035,7 +3227,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -3204,7 +3396,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -3250,8 +3454,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -3294,7 +3502,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -3463,7 +3671,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -3509,8 +3729,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -3553,7 +3777,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -3722,7 +3946,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -3768,8 +4004,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -3812,7 +4052,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -3981,7 +4221,19 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "C#"
+                "value": "C# (Grpc.Core)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "dotnet_protobuf_async_unary_ping_pong_1MB"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "C# (grpc-dotnet)"
               }
             ]
           }
@@ -4027,8 +4279,12 @@
         },
         {
           "$$hashKey": "object:1759",
-          "alias": "C#",
+          "alias": "C# (Grpc.Core)",
           "color": "#73BF69"
+        },
+        {
+          "alias": "C# (grpc-dotnet)",
+          "color": "#37872D"
         },
         {
           "$$hashKey": "object:1764",
@@ -4071,7 +4327,7 @@
           "metricColumn": "scenario",
           "queryType": "randomWalk",
           "rawQuery": true,
-          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_ping_pong_secure_1MB',\n     'csharp_protobuf_async_unary_ping_pong_1MB',\n     'python_protobuf_sync_unary_ping_pong_1MB',\n     'ruby_protobuf_unary_ping_pong_1MB',\n     'node_protobuf_unary_ping_pong_1MB'\n  )\n\nGROUP BY\n  \"time\", metric;",
+          "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_ping_pong_secure_1MB',\n     'csharp_protobuf_async_unary_ping_pong_1MB',\n     'dotnet_protobuf_async_unary_ping_pong_1MB',\n     'python_protobuf_sync_unary_ping_pong_1MB',\n     'ruby_protobuf_unary_ping_pong_1MB',\n     'node_protobuf_unary_ping_pong_1MB'\n  )\n\nGROUP BY\n  \"time\", metric;",
           "refId": "A",
           "select": [
             [
@@ -4152,5 +4408,5 @@
   "timezone": "browser",
   "title": "gRPC Performance Multi-language on GKE (@upstream/master)",
   "uid": "18sWlbd7z",
-  "version": 8
+  "version": 9
 }
