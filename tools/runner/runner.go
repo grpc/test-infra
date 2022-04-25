@@ -146,9 +146,16 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 				reporter.Error("Could not save pod logs: %s", err)
 			}
 			reporter.AddProperty("name", loadTest.Name)
-			for property, value := range savedLogs.GenerateProperties(loadTest) {
+			for property, value := range savedLogs.GenerateNameProperties(loadTest) {
 				reporter.AddProperty(property, value)
 			}
+
+			if r.logSaver.logURLPrefix != "" {
+				for property, value := range savedLogs.GenerateLogProperties(loadTest, r.logSaver.logURLPrefix) {
+					reporter.AddProperty(property, value)
+				}
+			}
+
 			if status != "Succeeded" {
 				reporter.Error("Test failed with reason %q: %v", loadTest.Status.Reason, loadTest.Status.Message)
 			} else {

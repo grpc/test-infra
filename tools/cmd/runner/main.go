@@ -34,6 +34,7 @@ func main() {
 	var c runner.ConcurrencyLevels
 	var a string
 	var p time.Duration
+	var u string
 	var retries uint
 	var deleteSuccessfulTests bool
 
@@ -41,6 +42,7 @@ func main() {
 	flag.StringVar(&o, "o", "", "name of the output file for xunit xml report")
 	flag.Var(&c, "c", "concurrency level, in the form [<queue name>:]<concurrency level>")
 	flag.StringVar(&a, "annotation-key", "pool", "annotation key to parse for queue assignment")
+	flag.StringVar(&u, "log-url-prefix", "", "prefix for log urls")
 	flag.DurationVar(&p, "polling-interval", 20*time.Second, "polling interval for load test status")
 	flag.UintVar(&retries, "polling-retries", 2, "Maximum retries in case of communication failure")
 	flag.BoolVar(&deleteSuccessfulTests, "delete-successful-tests", false, "Delete tests immediately in case of successful termination")
@@ -69,14 +71,22 @@ func main() {
 		outputDirMap[qName] = outputDir
 	}
 
+	logURLPrefix := ""
+	if u != "" {
+		logURLPrefix = "http://cnsviewer2/placer/prod/home/kokoro-dedicated/build_artifacts/" + u + "/github/grpc/"
+	}
+
 	log.Printf("Annotation key for queue assignment: %s", a)
 	log.Printf("Polling interval: %v", p)
 	log.Printf("Polling retries: %d", retries)
 	log.Printf("Test counts per queue: %v", runner.CountConfigs(configQueueMap))
 	log.Printf("Queue concurrency levels: %v", c)
 	log.Printf("Output directories: %v", outputDirMap)
+	if logURLPrefix != "" {
+		log.Printf("Prefix for url for saved logs: %s", logURLPrefix)
+	}
 
-	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, runner.NewLogSaver(runner.NewPodsGetter()))
+	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, runner.NewLogSaver(runner.NewPodsGetter(), logURLPrefix))
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 

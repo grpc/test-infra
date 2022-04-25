@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
-	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,17 +19,20 @@ import (
 
 // LogSaver provides functionality to save pod logs to files.
 type LogSaver struct {
-	podsGetter corev1types.PodsGetter
+	podsGetter   corev1types.PodsGetter
+	logURLPrefix string
 }
 
 // NewLogSaver creates a new LogSaver object.
-func NewLogSaver(podsGetter corev1types.PodsGetter) *LogSaver {
+func NewLogSaver(podsGetter corev1types.PodsGetter, logURLPrefix string) *LogSaver {
 	return &LogSaver{
-		podsGetter: podsGetter,
+		podsGetter:   podsGetter,
+		logURLPrefix: logURLPrefix,
 	}
 }
 
-// SavePodLogs saves pod logs to files with same name as pod.
+// SavePodLogs saves container logs to files with name in format
+// pod-name-container-name.log.
 // This function returns a map where pods are keys and values are the filepath
 // of the saved log.
 func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podLogDir string) (*SavedLogs, error) {
@@ -50,16 +52,21 @@ func (ls *LogSaver) SavePodLogs(ctx context.Context, loadTest *grpcv1.LoadTest, 
 
 	// Write logs to files
 	for _, pod := range pods {
-		logFilePath := filepath.Join(podLogDir, pod.Name+".log")
-		buffer, err := ls.getPodLogBuffer(ctx, pod)
+		containerNametoLogPathMap := make(map[string]string)
+		containerNamesToLogMap, err := ls.getPodLogBuffers(ctx, pod)
 		if err != nil {
 			return savedLogs, fmt.Errorf("could not get log from pod: %s", err)
 		}
-		err = ls.writeBufferToFile(buffer, logFilePath)
-		if err != nil {
-			return savedLogs, fmt.Errorf("could not write pod log buffer to file: %s", err)
+		for containerName, buffer := range containerNamesToLogMap {
+			logFilePath := filepath.Join(podLogDir, fmt.Sprintf("%s-%s.log", pod.Name, containerName))
+			err = ls.writeBufferToFile(buffer, logFilePath)
+			if err != nil {
+				return savedLogs, fmt.Errorf("could not write %s container in %s pod log buffer to file: %s", containerName, pod.Name, err)
+			}
+			containerNametoLogPathMap[containerName] = logFilePath
 		}
-		savedLogs.podToPathMap[pod] = logFilePath
+
+		savedLogs.podToPathMap[pod] = containerNametoLogPathMap
 	}
 	return savedLogs, nil
 }
@@ -79,18 +86,24 @@ func (ls *LogSaver) getTestPods(ctx context.Context, loadTest *grpcv1.LoadTest) 
 	return testPods, nil
 }
 
-func (ls *LogSaver) getPodLogBuffer(ctx context.Context, pod *corev1.Pod) (*bytes.Buffer, error) {
-	req := ls.podsGetter.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: config.RunContainerName})
-	driverLogs, err := req.Stream(ctx)
-	if err != nil {
-		return nil, err
+// getPodLogBuffers retrieves logs from all existing containers
+// from the pod and save the log buffers in a map, the key of
+// the map is the container name and the value of the map is the
+// log buffers.
+func (ls *LogSaver) getPodLogBuffers(ctx context.Context, pod *corev1.Pod) (map[string]*bytes.Buffer, error) {
+	containerNamesToLogMap := make(map[string]*bytes.Buffer)
+	for _, container := range pod.Spec.Containers {
+		req := ls.podsGetter.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container.Name})
+		containerLogs, err := req.Stream(ctx)
+		if err != nil {
+			return nil, err
+		}
+		defer containerLogs.Close()
+		logBuffer := new(bytes.Buffer)
+		logBuffer.ReadFrom(containerLogs)
+		containerNamesToLogMap[container.Name] = logBuffer
 	}
-	defer driverLogs.Close()
-
-	logBuffer := new(bytes.Buffer)
-	logBuffer.ReadFrom(driverLogs)
-
-	return logBuffer, nil
+	return containerNamesToLogMap, nil
 }
 
 func (ls *LogSaver) writeBufferToFile(buffer *bytes.Buffer, filePath string) error {
@@ -118,22 +131,36 @@ func (ls *LogSaver) writeBufferToFile(buffer *bytes.Buffer, filePath string) err
 
 // SavedLogs adds functions to get information about saved pod logs.
 type SavedLogs struct {
-	podToPathMap map[*corev1.Pod]string
+	podToPathMap map[*corev1.Pod]map[string]string
 }
 
 // NewSavedLogs creates a new SavedLogs object.
 func NewSavedLogs() *SavedLogs {
 	return &SavedLogs{
-		podToPathMap: make(map[*corev1.Pod]string),
+		podToPathMap: make(map[*corev1.Pod]map[string]string),
 	}
 }
 
-// GenerateProperties creates pod-log related properties.
-func (sl *SavedLogs) GenerateProperties(loadTest *grpcv1.LoadTest) map[string]string {
+// GenerateNameProperties creates pod-name related properties.
+func (sl *SavedLogs) GenerateNameProperties(loadTest *grpcv1.LoadTest) map[string]string {
 	properties := make(map[string]string)
 	for pod := range sl.podToPathMap {
 		name := sl.podToPropertyName(pod.Name, loadTest.Name, "name")
 		properties[name] = pod.Name
+	}
+	return properties
+}
+
+// GenerateLogProperties creates pod-log related properties.
+func (sl *SavedLogs) GenerateLogProperties(loadTest *grpcv1.LoadTest, logURLPrefix string) map[string]string {
+	properties := make(map[string]string)
+	for pod, buffers := range sl.podToPathMap {
+		for containerName, logFilePath := range buffers {
+			elementName := "log." + containerName
+			name := sl.podToPropertyName(pod.Name, loadTest.Name, elementName)
+			url := logURLPrefix + logFilePath
+			properties[name] = url
+		}
 	}
 	return properties
 }
