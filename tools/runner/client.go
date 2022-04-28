@@ -17,6 +17,8 @@ limitations under the License.
 package runner
 
 import (
+	"context"
+	"errors"
 	"log"
 	"os"
 	"strings"
@@ -36,6 +38,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	clientset "github.com/grpc/test-infra/clientset"
+	"github.com/grpc/test-infra/status"
 )
 
 // NewLoadTestGetter returns a client to interact with LoadTest resources. The
@@ -83,6 +86,20 @@ func NewK8sClientset() *kubernetes.Clientset {
 func NewPodsGetter() corev1types.PodsGetter {
 	clientset := NewK8sClientset()
 	return clientset.CoreV1()
+}
+
+// GetTestPods retrieves the pods associated with a LoadTest.
+func GetTestPods(ctx context.Context, loadTest *grpcv1.LoadTest, podsGetter corev1types.PodsGetter) ([]*corev1.Pod, error) {
+	podLister := podsGetter.Pods(metav1.NamespaceAll)
+	// Get a list of all pods
+	podList, err := podLister.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, errors.New("Failed to fetch list of pods")
+	}
+
+	// Get pods just for this specific test
+	testPods := status.PodsForLoadTest(loadTest, podList.Items)
+	return testPods, nil
 }
 
 // getKubernetesConfig retrieves the kubernetes configuration.

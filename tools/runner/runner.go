@@ -26,6 +26,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	clientset "github.com/grpc/test-infra/clientset"
+	corev1types "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // AfterIntervalFunction returns a function that stops for a time interval.
@@ -50,18 +51,21 @@ type Runner struct {
 	// deleteSuccessfulTests determines whether tests that terminate without
 	// errors should be deleted immediately.
 	deleteSuccessfulTests bool
-	// logSaver saves pod log files
-	logSaver *LogSaver
+	// podsLister obtain a list of pods
+	podsGetter corev1types.PodsGetter
+	// logURLPrefix is used to calculate the link to the log saved in placer
+	logURLPrefix string
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, logSaver *LogSaver) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, podsGetter corev1types.PodsGetter, logURLPrefix string) *Runner {
 	return &Runner{
 		loadTestGetter:        loadTestGetter,
 		afterInterval:         afterInterval,
 		retries:               retries,
 		deleteSuccessfulTests: deleteSuccessfulTests,
-		logSaver:              logSaver,
+		podsGetter:            podsGetter,
+		logURLPrefix:          logURLPrefix,
 	}
 }
 
@@ -141,19 +145,21 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			savedLogs, err := r.logSaver.SavePodLogs(ctx, loadTest, outputDir)
+			pods, err := GetTestPods(ctx, loadTest, r.podsGetter)
+			if err != nil {
+				reporter.Error("Could not list all pods belongs to %s: %s", loadTest.Name, err)
+			}
+			savedLogInfos, err := SaveLogs(ctx, loadTest, pods, r.podsGetter, outputDir)
 			if err != nil {
 				reporter.Error("Could not save pod logs: %s", err)
 			}
 			reporter.AddProperty("name", loadTest.Name)
-			for property, value := range savedLogs.GenerateNameProperties(loadTest) {
+			for property, value := range PodNameProperties(pods, loadTest.Name) {
 				reporter.AddProperty(property, value)
 			}
 
-			if r.logSaver.logURLPrefix != "" {
-				for property, value := range savedLogs.GenerateLogProperties(loadTest, r.logSaver.logURLPrefix) {
-					reporter.AddProperty(property, value)
-				}
+			for property, value := range PodLogProperties(savedLogInfos, r.logURLPrefix) {
+				reporter.AddProperty(property, value)
 			}
 
 			if status != "Succeeded" {
