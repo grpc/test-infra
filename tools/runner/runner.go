@@ -42,6 +42,9 @@ type Runner struct {
 	// loadTestGetter interacts with the cluster to create, get and delete
 	// LoadTests.
 	loadTestGetter clientset.LoadTestGetter
+	// podsGetter has a method to return a PodInterface which provide access
+	// to work with Pod resources.
+	corev1types.PodsGetter
 	// afterInterval stops for a set time interval before returning.
 	// It is used to set a polling interval.
 	afterInterval func()
@@ -51,8 +54,6 @@ type Runner struct {
 	// deleteSuccessfulTests determines whether tests that terminate without
 	// errors should be deleted immediately.
 	deleteSuccessfulTests bool
-	// podsLister obtain a list of pods
-	podsGetter corev1types.PodsGetter
 	// logURLPrefix is used to calculate the link to the log saved in placer
 	logURLPrefix string
 }
@@ -64,7 +65,7 @@ func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), re
 		afterInterval:         afterInterval,
 		retries:               retries,
 		deleteSuccessfulTests: deleteSuccessfulTests,
-		podsGetter:            podsGetter,
+		PodsGetter:            podsGetter,
 		logURLPrefix:          logURLPrefix,
 	}
 }
@@ -145,20 +146,20 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			pods, err := GetTestPods(ctx, loadTest, r.podsGetter)
+			pods, err := GetTestPods(ctx, loadTest, r.PodsGetter)
 			if err != nil {
 				reporter.Error("Could not list all pods belongs to %s: %s", loadTest.Name, err)
 			}
-			savedLogInfos, err := SaveLogs(ctx, loadTest, pods, r.podsGetter, outputDir)
+			savedLogInfos, err := SaveAllLogs(ctx, loadTest, r.PodsGetter, pods, outputDir)
 			if err != nil {
 				reporter.Error("Could not save pod logs: %s", err)
 			}
 			reporter.AddProperty("name", loadTest.Name)
-			for property, value := range PodNameProperties(pods, loadTest.Name) {
+			for property, value := range PodNameProperties(pods, loadTest.Name, "pod") {
 				reporter.AddProperty(property, value)
 			}
 
-			for property, value := range PodLogProperties(savedLogInfos, r.logURLPrefix) {
+			for property, value := range PodLogProperties(savedLogInfos, r.logURLPrefix, "pod") {
 				reporter.AddProperty(property, value)
 			}
 

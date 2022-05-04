@@ -78,7 +78,7 @@ func main() {
 	log.Printf("Queue concurrency levels: %v", c)
 	log.Printf("Output directories: %v", outputDirMap)
 	if logURLPrefix != "" {
-		log.Printf("Prefix for url for saved logs: %s", logURLPrefix)
+		log.Printf("Prefix for log urls: %s", logURLPrefix)
 	}
 
 	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, runner.NewPodsGetter(), logURLPrefix)

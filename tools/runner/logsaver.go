@@ -29,11 +29,15 @@ import (
 	corev1types "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-// SaveLogs saves logs to files, the name of the files are in format
-// pod-name-container-name.log.
-// This function returns a list of pointers of LogInfo.
-func SaveLogs(ctx context.Context, loadTest *grpcv1.LoadTest, pods []*corev1.Pod, podsGetter corev1types.PodsGetter, podLogDir string) ([]*LogInfo, error) {
-	logInfos := []*LogInfo{}
+// SaveAllLogs saves all logs to files and return their LogInfo.
+//
+// SaveAllLogs goes through all the containers in each pod and write
+// the log to the a given path if the container have logs. The name
+// of the files are in format pod-name-container-name.log. After
+// writing the logs the function returns a list of pointers of
+// LogInfo objects containing the log's information.
+func SaveAllLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podsGetter corev1types.PodsGetter, pods []*corev1.Pod, podLogDir string) ([]*LogInfo, error) {
+	var logInfos []*LogInfo
 
 	// Attempt to create directory. Will not error if directory already exists
 	err := os.MkdirAll(podLogDir, os.ModePerm)
@@ -44,33 +48,27 @@ func SaveLogs(ctx context.Context, loadTest *grpcv1.LoadTest, pods []*corev1.Pod
 	// Write logs to files
 	for _, pod := range pods {
 		for _, container := range pod.Spec.Containers {
-			logBuffer, err := GetLogBuffer(ctx, pod, podsGetter, container.Name)
-
-			if err != nil {
-				return logInfos, fmt.Errorf("could not get log from pod: %s", err)
-			}
-
-			if logBuffer.Len() == 0 {
-				continue
-			}
-
 			logFilePath := filepath.Join(podLogDir, fmt.Sprintf("%s-%s.log", pod.Name, container.Name))
-			logInfo := NewLogInfo(PodNameElement(pod.Name, loadTest.Name), container.Name, logFilePath)
 
-			err = writeBufferToFile(logBuffer, logFilePath)
+			logInfo, err := SaveLog(ctx, loadTest, pod, podsGetter, container.Name, logFilePath)
 			if err != nil {
-				return logInfos, fmt.Errorf("could not write %s container in %s pod log buffer to file: %s", logInfo.containerName, pod.Name, err)
+				return logInfos, fmt.Errorf("could not get log from container: %v", err)
 			}
-
-			logInfos = append(logInfos, logInfo)
+			if logInfo != nil {
+				logInfos = append(logInfos, logInfo)
+			}
 		}
 	}
 	return logInfos, nil
 }
 
-// GetLogBuffer retrieves logs from a specific container
-// in the given pod and return the log buffer.
-func GetLogBuffer(ctx context.Context, pod *corev1.Pod, podsGetter corev1types.PodsGetter, containerName string) (*bytes.Buffer, error) {
+// SaveLog retrieves and save logs for a specific container.
+//
+// SaveLog retrieves logs from a container under given container
+// name within given pod,then save the logs to the given file
+// path, if there are logs to save. The function also returns
+// a point of the LogInfo object.
+func SaveLog(ctx context.Context, loadTest *grpcv1.LoadTest, pod *corev1.Pod, podsGetter corev1types.PodsGetter, containerName string, filePath string) (*LogInfo, error) {
 	req := podsGetter.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: containerName})
 	containerLogs, err := req.Stream(ctx)
 	if err != nil {
@@ -79,28 +77,27 @@ func GetLogBuffer(ctx context.Context, pod *corev1.Pod, podsGetter corev1types.P
 	defer containerLogs.Close()
 	logBuffer := new(bytes.Buffer)
 	logBuffer.ReadFrom(containerLogs)
-	return logBuffer, nil
-}
 
-func writeBufferToFile(buffer *bytes.Buffer, filePath string) error {
 	// Don't write empty buffers
-	if buffer.Len() == 0 {
-		return nil
+	if logBuffer.Len() == 0 {
+		return nil, nil
 	}
 
 	// Open output file
 	file, err := os.Create(filePath)
 	if err != nil {
-		return fmt.Errorf("could not open %s for writing", filePath)
+		return nil, fmt.Errorf("could not open %s for writing", filePath)
 	}
 	defer file.Close()
 
 	// Write log to output file
-	_, err = io.Copy(file, buffer)
+	_, err = io.Copy(file, logBuffer)
 	file.Sync()
 	if err != nil {
-		return fmt.Errorf("error writing to %s: %v", filePath, err)
+		return nil, fmt.Errorf("error writing to %s: %v", filePath, err)
 	}
 
-	return nil
+	logInfo := &LogInfo{PodNameElem: PodNameElem(pod.Name, loadTest.Name), ContainerName: containerName, LogPath: filePath}
+
+	return logInfo, nil
 }

@@ -23,52 +23,60 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// LogInfo contains infomation for a log entry.
+// LogInfo contains infomation for each log file.
 type LogInfo struct {
-	podNameElement string
-	containerName  string
-	logPath        string
+	// PodNameElem is a part of the pod name.
+	// PodNameElem is the remaining part of the pod name after the
+	// subtraction of the LoadTest name. Examples of the PodNameElem
+	// are: client-0, driver-0 and server-0.
+	PodNameElem string
+	// ContainerName is the container's name where the log comes from.
+	ContainerName string
+	// LogPath is where the log is saved.
+	LogPath string
 }
 
-// NewLogInfo creates a pointer of new LogInfo object.
-func NewLogInfo(podNameElement string, containerName string, logPath string) *LogInfo {
-	return &LogInfo{
-		podNameElement: podNameElement,
-		containerName:  containerName,
-		logPath:        logPath,
-	}
-}
-
-// PodLogProperties creates container log property name to
-// container log link map.
-func PodLogProperties(logInfos []*LogInfo, logURLPrefix string) map[string]string {
+// PodLogProperties creates log property name to property value map.
+func PodLogProperties(logInfos []*LogInfo, logURLPrefix string, prefix ...string) map[string]string {
 	properties := make(map[string]string)
 	for _, logInfo := range logInfos {
-		prefix := []string{logInfo.podNameElement, "name", "log", logInfo.containerName}
-		podLogPropertyKey := strings.Join(prefix, ".")
-		url := logURLPrefix + logInfo.logPath
-		properties[podLogPropertyKey] = url
+		podLogPropertyKey := PodLogPropertyKey(logInfo, prefix...)
+		logURL := logURLPrefix + logInfo.LogPath
+		properties[podLogPropertyKey] = logURL
 	}
 	return properties
 }
 
-// PodNameElement trim off the loadtest name from the pod name,
-// and return only the element of pod name such as client-0,
+// PodNameElem generate the pod name element.
+//
+// PodNameElem trims off the given LoadTest name and "-" from the
+// given pod name,returns remaining part such as client-0,
 // driver-0 and server-0.
-func PodNameElement(podName, loadTestName string) string {
+func PodNameElem(podName, loadTestName string) string {
 	prefix := fmt.Sprintf("%s-", loadTestName)
 	podNameElement := strings.TrimPrefix(podName, prefix)
 	return podNameElement
 }
 
+// PodLogPropertyKey generates the key for a pod log property.
+func PodLogPropertyKey(logInfo *LogInfo, prefix ...string) string {
+	key := strings.Join(append(prefix, logInfo.PodNameElem, "log", logInfo.ContainerName), ".")
+	return key
+}
+
 // PodNameProperties creates pod property name to pod name map.
-func PodNameProperties(pods []*corev1.Pod, loadTestName string) map[string]string {
+func PodNameProperties(pods []*corev1.Pod, loadTestName string, prefix ...string) map[string]string {
 	properties := make(map[string]string)
 	for _, pod := range pods {
-		prefix := []string{PodNameElement(pod.Name, loadTestName), "name"}
-		podNamePropertyKey := strings.Join(prefix, ".")
+		podNamePropertyKey := PodNamePropertyKey(PodNameElem(pod.Name, loadTestName), prefix...)
 		properties[podNamePropertyKey] = pod.Name
 	}
 
 	return properties
+}
+
+// PodNamePropertyKey generates the key for a pod name property.
+func PodNamePropertyKey(podNameElem string, prefix ...string) string {
+	key := strings.Join(append(prefix, podNameElem, "name"), ".")
+	return key
 }
