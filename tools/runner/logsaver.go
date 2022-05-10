@@ -30,8 +30,7 @@ import (
 )
 
 // SaveAllLogs saves all logs to files and return their LogInfo.
-//
-// SaveAllLogs goes through all the containers in each pod and write
+// This function goes through all the containers in each pod and write
 // the log to the a given path if the container have logs. The name
 // of the files are in format pod-name-container-name.log. After
 // writing the logs the function returns a list of pointers of
@@ -42,18 +41,18 @@ func SaveAllLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podsGetter core
 	// Attempt to create directory. Will not error if directory already exists
 	err := os.MkdirAll(podLogDir, os.ModePerm)
 	if err != nil {
-		return logInfos, fmt.Errorf("Failed to create pod log output directory %s: %v", podLogDir, err)
+		return logInfos, fmt.Errorf("failed to create pod log output directory %s: %v", podLogDir, err)
 	}
 
 	// Write logs to files
 	for _, pod := range pods {
 		for _, container := range pod.Spec.Containers {
-			logFilePath := filepath.Join(podLogDir, fmt.Sprintf("%s-%s.log", pod.Name, container.Name))
 
-			logInfo, err := SaveLog(ctx, loadTest, pod, podsGetter, container.Name, logFilePath)
+			logInfo, err := SaveLog(ctx, loadTest, pod, podsGetter, container.Name, podLogDir)
 			if err != nil {
 				return logInfos, fmt.Errorf("could not get log from container: %v", err)
 			}
+
 			if logInfo != nil {
 				logInfos = append(logInfos, logInfo)
 			}
@@ -63,18 +62,18 @@ func SaveAllLogs(ctx context.Context, loadTest *grpcv1.LoadTest, podsGetter core
 }
 
 // SaveLog retrieves and save logs for a specific container.
-//
-// SaveLog retrieves logs from a container under given container
-// name within given pod,then save the logs to the given file
-// path, if there are logs to save. The function also returns
-// a point of the LogInfo object.
-func SaveLog(ctx context.Context, loadTest *grpcv1.LoadTest, pod *corev1.Pod, podsGetter corev1types.PodsGetter, containerName string, filePath string) (*LogInfo, error) {
+// This function retrieves logs from a container under given
+// container name within given pod,then save the logs to the
+// given file path, if there are logs to save. The function
+// also returns a point of the LogInfo object.
+func SaveLog(ctx context.Context, loadTest *grpcv1.LoadTest, pod *corev1.Pod, podsGetter corev1types.PodsGetter, containerName string, podLogDir string) (*LogInfo, error) {
 	req := podsGetter.Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: containerName})
 	containerLogs, err := req.Stream(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer containerLogs.Close()
+
 	logBuffer := new(bytes.Buffer)
 	logBuffer.ReadFrom(containerLogs)
 
@@ -84,6 +83,7 @@ func SaveLog(ctx context.Context, loadTest *grpcv1.LoadTest, pod *corev1.Pod, po
 	}
 
 	// Open output file
+	filePath := filepath.Join(podLogDir, LogFileName(pod.Name, containerName))
 	file, err := os.Create(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("could not open %s for writing", filePath)
@@ -97,7 +97,16 @@ func SaveLog(ctx context.Context, loadTest *grpcv1.LoadTest, pod *corev1.Pod, po
 		return nil, fmt.Errorf("error writing to %s: %v", filePath, err)
 	}
 
-	logInfo := &LogInfo{PodNameElem: PodNameElem(pod.Name, loadTest.Name), ContainerName: containerName, LogPath: filePath}
+	logInfo := &LogInfo{
+		PodNameElem:   PodNameElem(pod.Name, loadTest.Name),
+		ContainerName: containerName,
+		LogPath:       filePath,
+	}
 
 	return logInfo, nil
+}
+
+// LogFileName construct logs file name from pod and container name.
+func LogFileName(podName string, containerName string) string {
+	return fmt.Sprintf("%s-%s.log", podName, containerName)
 }

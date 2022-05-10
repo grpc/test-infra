@@ -18,7 +18,7 @@ package runner
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -94,7 +94,7 @@ func GetTestPods(ctx context.Context, loadTest *grpcv1.LoadTest, podsGetter core
 	// Get a list of all pods
 	podList, err := podLister.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, errors.New("Failed to fetch list of pods")
+		return nil, fmt.Errorf("failed to fetch list of pods: %v", err)
 	}
 
 	// Get pods just for this specific test

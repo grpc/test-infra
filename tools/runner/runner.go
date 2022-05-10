@@ -148,11 +148,11 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		case loadTest.Status.State.IsTerminated():
 			pods, err := GetTestPods(ctx, loadTest, r.PodsGetter)
 			if err != nil {
-				reporter.Error("Could not list all pods belongs to %s: %s", loadTest.Name, err)
+				reporter.Error("Could not list all pods: %v", err)
 			}
 			savedLogInfos, err := SaveAllLogs(ctx, loadTest, r.PodsGetter, pods, outputDir)
 			if err != nil {
-				reporter.Error("Could not save pod logs: %s", err)
+				reporter.Error("Could not save pod logs: %v", err)
 			}
 			reporter.AddProperty("name", loadTest.Name)
 			for property, value := range PodNameProperties(pods, loadTest.Name, "pod") {
