@@ -26,6 +26,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	clientset "github.com/grpc/test-infra/clientset"
+	corev1types "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // AfterIntervalFunction returns a function that stops for a time interval.
@@ -41,6 +42,9 @@ type Runner struct {
 	// loadTestGetter interacts with the cluster to create, get and delete
 	// LoadTests.
 	loadTestGetter clientset.LoadTestGetter
+	// podsGetter has a method to return a PodInterface which provide access
+	// to work with Pod resources.
+	podsGetter corev1types.PodsGetter
 	// afterInterval stops for a set time interval before returning.
 	// It is used to set a polling interval.
 	afterInterval func()
@@ -50,18 +54,19 @@ type Runner struct {
 	// deleteSuccessfulTests determines whether tests that terminate without
 	// errors should be deleted immediately.
 	deleteSuccessfulTests bool
-	// logSaver saves pod log files
-	logSaver *LogSaver
+	// logURLPrefix  is a prefix to be added to log path urls.
+	logURLPrefix string
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, logSaver *LogSaver) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, podsGetter corev1types.PodsGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, logURLPrefix string) *Runner {
 	return &Runner{
 		loadTestGetter:        loadTestGetter,
+		podsGetter:            podsGetter,
 		afterInterval:         afterInterval,
 		retries:               retries,
 		deleteSuccessfulTests: deleteSuccessfulTests,
-		logSaver:              logSaver,
+		logURLPrefix:          logURLPrefix,
 	}
 }
 
@@ -141,14 +146,23 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			savedLogs, err := r.logSaver.SavePodLogs(ctx, loadTest, outputDir)
+			pods, err := GetTestPods(ctx, loadTest, r.podsGetter)
 			if err != nil {
-				reporter.Error("Could not save pod logs: %s", err)
+				reporter.Error("Could not list all pods: %v", err)
+			}
+			savedLogInfos, err := SaveAllLogs(ctx, loadTest, r.podsGetter, pods, outputDir)
+			if err != nil {
+				reporter.Error("Could not save pod logs: %v", err)
 			}
 			reporter.AddProperty("name", loadTest.Name)
-			for property, value := range savedLogs.GenerateProperties(loadTest) {
+			for property, value := range PodNameProperties(pods, loadTest.Name, "pod") {
 				reporter.AddProperty(property, value)
 			}
+
+			for property, value := range PodLogProperties(savedLogInfos, r.logURLPrefix, "pod") {
+				reporter.AddProperty(property, value)
+			}
+
 			if status != "Succeeded" {
 				reporter.Error("Test failed with reason %q: %v", loadTest.Status.Reason, loadTest.Status.Message)
 			} else {

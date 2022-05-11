@@ -36,6 +36,7 @@ func main() {
 	var p time.Duration
 	var retries uint
 	var deleteSuccessfulTests bool
+	var logURLPrefix string
 
 	flag.Var(&i, "i", "input files containing load test configurations")
 	flag.StringVar(&o, "o", "", "name of the output file for xunit xml report")
@@ -44,6 +45,7 @@ func main() {
 	flag.DurationVar(&p, "polling-interval", 20*time.Second, "polling interval for load test status")
 	flag.UintVar(&retries, "polling-retries", 2, "Maximum retries in case of communication failure")
 	flag.BoolVar(&deleteSuccessfulTests, "delete-successful-tests", false, "Delete tests immediately in case of successful termination")
+	flag.StringVar(&logURLPrefix, "log-url-prefix", "", "prefix for log urls")
 	flag.Parse()
 
 	inputConfigs, err := runner.DecodeFromFiles(i)
@@ -75,8 +77,11 @@ func main() {
 	log.Printf("Test counts per queue: %v", runner.CountConfigs(configQueueMap))
 	log.Printf("Queue concurrency levels: %v", c)
 	log.Printf("Output directories: %v", outputDirMap)
+	if logURLPrefix != "" {
+		log.Printf("Prefix for log urls: %s", logURLPrefix)
+	}
 
-	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, runner.NewLogSaver(runner.NewPodsGetter()))
+	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.NewPodsGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, logURLPrefix)
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 
