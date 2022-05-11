@@ -91,13 +91,14 @@ func NewPodsGetter() corev1types.PodsGetter {
 // GetTestPods retrieves the pods associated with a LoadTest.
 func GetTestPods(ctx context.Context, loadTest *grpcv1.LoadTest, podsGetter corev1types.PodsGetter) ([]*corev1.Pod, error) {
 	podLister := podsGetter.Pods(metav1.NamespaceAll)
-	// Get a list of all pods
+
+	// Get a list of all pods.
 	podList, err := podLister.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch list of pods: %v", err)
 	}
 
-	// Get pods just for this specific test
+	// Get pods just for this specific test.
 	testPods := status.PodsForLoadTest(loadTest, podList.Items)
 	return testPods, nil
 }

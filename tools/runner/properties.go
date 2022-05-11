@@ -25,18 +25,17 @@ import (
 
 // LogInfo contains infomation for each log file.
 type LogInfo struct {
-	// PodNameElem is a part of the pod name.
-	// PodNameElem is the remaining part of the pod name after the
-	// subtraction of the LoadTest name. Examples of the PodNameElem
-	// are: client-0, driver-0 and server-0.
+	// PodNameElem is the element added to the LoadTest name to
+	// construct the pod name. Examples of PodNameElem are client-0,
+	// driver-0 and server-0.
 	PodNameElem string
 	// ContainerName is the container's name where the log comes from.
 	ContainerName string
-	// LogPath is where the log is saved.
+	// LogPath is the path pointing to the log file.
 	LogPath string
 }
 
-// PodLogProperties creates log property name to property value map.
+// PodLogProperties creates a map of log property keys to log path urls.
 func PodLogProperties(logInfos []*LogInfo, logURLPrefix string, prefix ...string) map[string]string {
 	properties := make(map[string]string)
 	for _, logInfo := range logInfos {
@@ -47,24 +46,13 @@ func PodLogProperties(logInfos []*LogInfo, logURLPrefix string, prefix ...string
 	return properties
 }
 
-// PodNameElem generate the pod name element.
-//
-// PodNameElem trims off the given LoadTest name and "-" from the
-// given pod name,returns remaining part such as client-0,
-// driver-0 and server-0.
-func PodNameElem(podName, loadTestName string) string {
-	prefix := fmt.Sprintf("%s-", loadTestName)
-	podNameElement := strings.TrimPrefix(podName, prefix)
-	return podNameElement
-}
-
 // PodLogPropertyKey generates the key for a pod log property.
 func PodLogPropertyKey(logInfo *LogInfo, prefix ...string) string {
 	key := strings.Join(append(prefix, logInfo.PodNameElem, "log", logInfo.ContainerName), ".")
 	return key
 }
 
-// PodNameProperties creates pod property name to pod name map.
+// PodNameProperties creates a map of pod name property keys to pod names.
 func PodNameProperties(pods []*corev1.Pod, loadTestName string, prefix ...string) map[string]string {
 	properties := make(map[string]string)
 	for _, pod := range pods {
@@ -73,6 +61,15 @@ func PodNameProperties(pods []*corev1.Pod, loadTestName string, prefix ...string
 	}
 
 	return properties
+}
+
+// PodNameElem returns the pod name element used to construct a pod name.
+// Pods within a LoadTest are distinguished by elements attached to the
+// LoadTest name, such as client-0, driver-0, server-0.
+func PodNameElem(podName, loadTestName string) string {
+	prefix := fmt.Sprintf("%s-", loadTestName)
+	podNameElem := strings.TrimPrefix(podName, prefix)
+	return podNameElem
 }
 
 // PodNamePropertyKey generates the key for a pod name property.

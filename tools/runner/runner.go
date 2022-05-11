@@ -44,7 +44,7 @@ type Runner struct {
 	loadTestGetter clientset.LoadTestGetter
 	// podsGetter has a method to return a PodInterface which provide access
 	// to work with Pod resources.
-	corev1types.PodsGetter
+	podsGetter corev1types.PodsGetter
 	// afterInterval stops for a set time interval before returning.
 	// It is used to set a polling interval.
 	afterInterval func()
@@ -54,18 +54,18 @@ type Runner struct {
 	// deleteSuccessfulTests determines whether tests that terminate without
 	// errors should be deleted immediately.
 	deleteSuccessfulTests bool
-	// logURLPrefix is used to calculate the link to the log saved in placer
+	// logURLPrefix  is a prefix to be added to log path urls.
 	logURLPrefix string
 }
 
 // NewRunner creates a new Runner object.
-func NewRunner(loadTestGetter clientset.LoadTestGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, podsGetter corev1types.PodsGetter, logURLPrefix string) *Runner {
+func NewRunner(loadTestGetter clientset.LoadTestGetter, podsGetter corev1types.PodsGetter, afterInterval func(), retries uint, deleteSuccessfulTests bool, logURLPrefix string) *Runner {
 	return &Runner{
 		loadTestGetter:        loadTestGetter,
+		podsGetter:            podsGetter,
 		afterInterval:         afterInterval,
 		retries:               retries,
 		deleteSuccessfulTests: deleteSuccessfulTests,
-		PodsGetter:            podsGetter,
 		logURLPrefix:          logURLPrefix,
 	}
 }
@@ -146,11 +146,11 @@ func (r *Runner) runTest(ctx context.Context, config *grpcv1.LoadTest, reporter 
 		status = statusString(config)
 		switch {
 		case loadTest.Status.State.IsTerminated():
-			pods, err := GetTestPods(ctx, loadTest, r.PodsGetter)
+			pods, err := GetTestPods(ctx, loadTest, r.podsGetter)
 			if err != nil {
 				reporter.Error("Could not list all pods: %v", err)
 			}
-			savedLogInfos, err := SaveAllLogs(ctx, loadTest, r.PodsGetter, pods, outputDir)
+			savedLogInfos, err := SaveAllLogs(ctx, loadTest, r.podsGetter, pods, outputDir)
 			if err != nil {
 				reporter.Error("Could not save pod logs: %v", err)
 			}

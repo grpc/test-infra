@@ -81,7 +81,7 @@ func main() {
 		log.Printf("Prefix for log urls: %s", logURLPrefix)
 	}
 
-	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, runner.NewPodsGetter(), logURLPrefix)
+	r := runner.NewRunner(runner.NewLoadTestGetter(), runner.NewPodsGetter(), runner.AfterIntervalFunction(p), retries, deleteSuccessfulTests, logURLPrefix)
 
 	logPrefixFmt := runner.LogPrefixFmt(configQueueMap)
 
