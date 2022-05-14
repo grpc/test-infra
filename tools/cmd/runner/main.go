@@ -96,7 +96,7 @@ func main() {
 	done := make(chan *runner.TestSuiteReporter)
 
 	for qName, configs := range configQueueMap {
-		testSuiteReporter := reporter.NewTestSuiteReporter(qName, logPrefixFmt, runner.TestCaseNameFromAnnotations("scenario"))
+		testSuiteReporter := reporter.NewTestSuiteReporter(qName, logPrefixFmt, runner.TestCaseNameFromAnnotations("scenario", "uniquifier"))
 		testSuiteReporter.SetStartTime(time.Now())
 		go r.Run(ctx, configs, testSuiteReporter, c[qName], outputDirMap[qName], done)
 	}
