@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM gradle:jdk11
+FROM openjdk:11-jdk-bullseye
 
 RUN mkdir -p /pre
 WORKDIR /pre
@@ -35,9 +35,9 @@ RUN git submodule update --init
 RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
 RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
-RUN gradle -PskipAndroid=true -PskipCodegen=true :grpc-benchmarks:installDist
+RUN ./gradlew -PskipAndroid=true -PskipCodegen=true -Dorg.gradle.jvmargs=-Xmx2g :grpc-benchmarks:installDist
 
-FROM openjdk:11
+FROM openjdk:11-jdk-slim-bullseye
 
 RUN mkdir -p /execute
 WORKDIR /execute
