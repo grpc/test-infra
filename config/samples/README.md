@@ -14,6 +14,11 @@ The examples in this folder are basic examples that build and run the test
 components when the test is applied, and do not save data to BigQuery. These can
 be run by applying them to the cluster with `kubectl apply -f`.
 
+Special considerations is required for running csharp examples, the support of
+csharp in [grc/grpc](https://github.com/grpc/grpc) is removed by
+<https://github.com/grpc/grpc/pull/29225>, csharp benchmark test is only
+supported by version v1.45.2 and earlier versions.
+
 The examples in the [templates](./templates) folder are templates that use
 prebuilt images and require parameter substitution before running.
 [Tools](../../tools/README.md) are provided to build images and run tests with
