@@ -15,6 +15,13 @@
 
 set -ex
 
+# Check if the grpc version is compatible with the test
+FILE=tools/dockerfile/interoptest/grpc_interop_csharp/Dockerfile
+if [ ! -f "$FILE" ]; then
+    echo "Current gRPC version does not support csharp(core) benchmark test, please use a compatible gRPC version, see details in https://github.com/grpc/grpc/pull/29225."
+    exit 1
+fi
+
 # Build C# native extension with cmake
 mkdir -p cmake/build
 pushd cmake/build
