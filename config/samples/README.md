@@ -14,11 +14,6 @@ The examples in this folder are basic examples that build and run the test
 components when the test is applied, and do not save data to BigQuery. These can
 be run by applying them to the cluster with `kubectl apply -f`.
 
-Special considerations is required for running csharp examples, the support of
-csharp in [grc/grpc](https://github.com/grpc/grpc) is removed by
-<https://github.com/grpc/grpc/pull/29225>, csharp benchmark test is only
-supported by version v1.46.x and earlier versions.
-
 The examples in the [templates](./templates) folder are templates that use
 prebuilt images and require parameter substitution before running.
 [Tools](../../tools/README.md) are provided to build images and run tests with
@@ -31,9 +26,16 @@ For more information, please visit the [gRPC OSS benchmarks README] on
 Examples for [PSM benchmarks](../../README.md#psm-benchmarks) can be found
 [here](templates/psm/README.md).
 
+Special considerations is required for running `csharp` examples. These examples
+correspond to the legacy C# implementation in [grpc/grpc]. This implementation
+was removed by <https://github.com/grpc/grpc/pull/29225>, and is only supported
+in version `v1.46.x` and earlier versions of [grpc/grpc]. For the newer C#
+implementation in [grpc/grpc-dotnet], see the `dotnet` examples.
+
 [control.proto]:
   https://github.com/grpc/grpc-proto/blob/master/grpc/testing/control.proto
 [grpc/grpc]: https://github.com/grpc/grpc
+[grpc/grpc-dotnet]: https://github.com/grpc/grpc-dotnet
 [grpc/grpc-proto]: https://github.com/grpc/grpc-proto
 [grpc oss benchmarks readme]:
   https://github.com/grpc/grpc/blob/master/tools/run_tests/performance/README.md#grpc-oss-benchmarks
