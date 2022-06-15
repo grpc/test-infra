@@ -1,0 +1,44 @@
+steps:
+- name: debian:buster
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - |
+    apt-get update
+    apt-get install -y gettext-base make
+    pushd dashboard
+    make configure-grafana
+    make configure-replicator
+  env:
+  - 'GCP_PROJECT_ID=$_GCP_PROJECT_ID'
+  - 'GCP_GRAFANA_SERVICE=$_GCP_GRAFANA_SERVICE'
+  - 'GCP_DATA_TRANSFER_SERVICE=$_GCP_DATA_TRANSFER_SERVICE'
+  - 'BQ_PROJECT_ID=$_BQ_PROJECT_ID'
+  - 'PG_USER=$_PG_USER'
+  - 'PG_DATABASE=$_PG_DATABASE'
+  - 'CLOUD_SQL_INSTANCE=$_CLOUD_SQL_INSTANCE'
+  - 'DASHBOARDS_CONFIG_DIR=config/grafana/dashboards/internal'
+  - 'REPLICATOR_CONFIG_TEMPLATE=config/postgres_replicator/internal/config.yaml'
+  - 'GRAFANA_CONTAINER_OUTPUT_DIR=containers/grafana-internal'
+  - 'REPLICATOR_CONTAINER_OUTPUT_DIR=containers/postgres-replicator-internal'
+  secretEnv:
+  - GRAFANA_ADMIN_PASS
+  - PG_PASS
+
+# Deploy to App Engine
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+  - -c
+  - |
+    pushd dashboard/containers/$_DEPLOY_TARGET
+    gcloud config set app/cloud_build_timeout 3600 && gcloud app deploy 
+  timeout: 3600s
+options:
+  logging: CLOUD_LOGGING_ONLY
+availableSecrets:
+  secretManager:
+  - versionName: projects/$PROJECT_ID/secrets/GRAFANA_ADMIN_PASS/versions/latest
+    env: GRAFANA_ADMIN_PASS
+  - versionName: projects/$PROJECT_ID/secrets/PG_PASS/versions/latest
+    env: PG_PASS

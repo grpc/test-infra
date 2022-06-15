@@ -48,7 +48,7 @@ table below shows the names and values of the variables in our main dashboard:
 | Variable                    | Value                                         |
 | --------------------------- | --------------------------------------------- |
 | `BQ_PROJECT_ID`             | `grpc-testing`                                |
-| `CLOUD_SQL_INSTANCE`        | `grpc-testing:us-central1:grafana-datasource` |
+| `CLOUD_SQL_INSTANCE`        | `grpc-testing:us-central1:grafana-data` |
 | `GCP_DATA_TRANSFER_SERVICE` | `postgres-replicator`                         |
 | `GCP_GRAFANA_SERVICE`       | `grafana`                                     |
 | `GCP_PROJECT_ID`            | `grpc-testing`                                |
@@ -62,7 +62,7 @@ Grafana dashboard are then created with the following commands:
 
 ```shell
 make configure-replicator
-make configure-dashboard
+make configure-grafana
 ```
 
 ## Cloud build
