@@ -12,9 +12,10 @@ MAKEFLAGS += --always-make
 
 configure-grafana:
 	scripts/check_env.sh GCP_GRAFANA_SERVICE PG_USER PG_PASS PG_DATABASE GRAFANA_ADMIN_PASS CLOUD_SQL_INSTANCE
-	mkdir -p $(GRAFANA_CONTAINER_OUTPUT_DIR)
+	mkdir -p $(GRAFANA_CONTAINER_OUTPUT_DIR)/provisioning
 	cp -r $(DASHBOARDS_CONFIG_DIR) $(GRAFANA_CONTAINER_OUTPUT_DIR)/dashboards
-	cp -r grafana/* $(GRAFANA_CONTAINER_OUTPUT_DIR)
+	cp -r grafana/provisioning/* $(GRAFANA_CONTAINER_OUTPUT_DIR)/provisioning
+	envsubst < grafana/grafana.ini > $(GRAFANA_CONTAINER_OUTPUT_DIR)/grafana.ini
 	cp $(CONFIG_TEMPLATE_DIR)/grafana/Dockerfile $(GRAFANA_CONTAINER_OUTPUT_DIR)/Dockerfile
 	envsubst < $(CONFIG_TEMPLATE_DIR)/grafana/app.yaml > $(GRAFANA_CONTAINER_OUTPUT_DIR)/app.yaml
 
