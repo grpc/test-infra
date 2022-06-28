@@ -12,5 +12,5 @@ transfer:
   datasets:
   - name: e2e_benchmarks
     tables:
-    - name: psm_ci_master_results_8core
+    - name: psm_experimental_results_8core
       dateField: metadata.created
