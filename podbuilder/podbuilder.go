@@ -18,6 +18,7 @@ package podbuilder
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -238,6 +239,14 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 				Value: *bigQueryTable,
 			})
 		}
+	}
+
+	usePrometheus, ok := pb.test.Annotations["enablePrometheus"]
+	if ok && strings.ToLower(usePrometheus) == "true" {
+		runContainer.Env = append(runContainer.Env,
+			corev1.EnvVar{
+				Name:  config.EnablePrometheusEnv,
+				Value: "true"})
 	}
 
 	return pod, nil

@@ -20,7 +20,7 @@ import (
 	"github.com/grpc/test-infra/config"
 )
 
-//IsPSMTest checks if a given LoadTest is a (proxied or proxyless) service
+// IsPSMTest checks if a given LoadTest is a (proxied or proxyless) service
 // mesh test. This test must be performed after validating the client specs.
 func IsPSMTest(clients *[]grpcv1.Client) bool {
 	for _, c := range *clients {

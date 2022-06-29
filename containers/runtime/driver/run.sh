@@ -35,7 +35,7 @@ if [ -n "${BQ_RESULT_TABLE}" ]; then
   fi
   if [ -r "${NODE_INFO_OUTPUT_FILE}" ]; then
     cp "${NODE_INFO_OUTPUT_FILE}" node_info.json
-    if [ -n "${SERVER_TARGET_OVERRIDE}" ]; then
+    if [ -n "${SERVER_TARGET_OVERRIDE}" ] || [ -n "${ENABLE_PROMETHEUS}" ]; then
       python3 /src/code/tools/run_tests/performance/prometheus.py \
         --url=http://prometheus.test-infra-system.svc.cluster.local:9090 \
         --pod_type=clients --container_name=main \
