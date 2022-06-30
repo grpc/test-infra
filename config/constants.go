@@ -66,9 +66,9 @@ const (
 	// DriverPortEnv specifies the name of the env variable that contains driver port.
 	DriverPortEnv = "DRIVER_PORT"
 
-	// EnablePrometheusEnv specifies the name of the env variable that indicates if the
-	// Prometheus data is collected.
-	EnablePrometheusEnv = "ENABLE_PROMETHEUS"
+	// DisablePrometheusEnv specifies the name of the env variable that indicates
+	// if the collection of Prometheus data is disabled.
+	DisablePrometheusEnv = "DISABLE_PROMETHEUS"
 
 	// PoolLabel is the key for a label which will have the name of a pool as
 	// the value.

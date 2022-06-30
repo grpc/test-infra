@@ -63,6 +63,7 @@ RUN apt-get update && apt-get install -y \
   pkg-config \
   gnupg \
   apt-transport-https \
+  dnsutils \
   ca-certificates
 
 RUN apt-get update && apt-get install -y \
