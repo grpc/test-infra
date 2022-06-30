@@ -266,6 +266,15 @@ var _ = Describe("Defaults", func() {
 				Expect(driver.Run[0].Name).To(Equal(loadtest.Spec.Driver.Run[0].Name))
 			})
 
+			It("doesn't override the run container image if set", func() {
+				err := defaults.SetLoadTestDefaults(loadtest)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(driver.Run[0].Image).ToNot(BeEmpty())
+				Expect(driver.Run[0].Image).To(Equal(loadtest.Spec.Driver.Run[0].Image))
+				Expect(driver.Run[0].Image).ToNot(Equal(defaults.DriverImage))
+			})
+
 			It("does not error if run container image cannot be inferred but is set", func() {
 				image := "example-image"
 

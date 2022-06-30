@@ -188,7 +188,10 @@ func (d *Defaults) setDriverDefaults(im *imageMap, testSpec *grpcv1.LoadTestSpec
 	if len(driver.Run) == 0 {
 		driver.Run = []corev1.Container{{Name: RunContainerName}}
 	}
-	driver.Run[0].Image = d.DriverImage
+
+	if driver.Run[0].Image == "" {
+		driver.Run[0].Image = d.DriverImage
+	}
 
 	driver.Name = unwrapStrOrUUID(driver.Name)
 	d.setCloneOrDefault(driver.Clone)
