@@ -35,11 +35,13 @@ if [ -n "${BQ_RESULT_TABLE}" ]; then
   fi
   if [ -r "${NODE_INFO_OUTPUT_FILE}" ]; then
     cp "${NODE_INFO_OUTPUT_FILE}" node_info.json
-    if  [ "$(dig +short -t srv prometheus.test-infra-system.svc.cluster.local)" ] && [ -z "${DISABLE_PROMETHEUS}" ]; then
-      python3 /src/code/tools/run_tests/performance/prometheus.py \
-        --url=http://prometheus.test-infra-system.svc.cluster.local:9090 \
-        --pod_type=clients --container_name=main \
-        --container_name=sidecar
+    if [ -z "${SERVER_TARGET_OVERRIDE}" ] || [ -z "${ENABLE_PROMETHEUS}" ]; then
+      if  [ "$(dig +short -t srv prometheus.test-infra-system.svc.cluster.local)" ]; then
+        python3 /src/code/tools/run_tests/performance/prometheus.py \
+          --url=http://prometheus.test-infra-system.svc.cluster.local:9090 \
+          --pod_type=clients --container_name=main \
+          --container_name=sidecar
+      fi
     fi
   fi
   python3 /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="${BQ_RESULT_TABLE}"

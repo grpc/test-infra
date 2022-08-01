@@ -241,11 +241,11 @@ func (pb *PodBuilder) PodForDriver(driver *grpcv1.Driver) (*corev1.Pod, error) {
 		}
 	}
 
-	disablePrometheus, ok := pb.test.Annotations["disablePrometheus"]
-	if ok && strings.ToLower(disablePrometheus) == "true" {
+	enablePrometheus, ok := pb.test.Annotations["enablePrometheus"]
+	if ok && strings.ToLower(enablePrometheus) == "true" {
 		runContainer.Env = append(runContainer.Env,
 			corev1.EnvVar{
-				Name:  config.DisablePrometheusEnv,
+				Name:  config.EnablePrometheusEnv,
 				Value: "true"})
 	}
 
