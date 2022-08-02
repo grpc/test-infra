@@ -16,3 +16,5 @@ transfer:
       dateField: metadata.created
     - name: ci_master_results_32core
       dateField: metadata.created
+    - name: psm_experimental_results_8core
+      dateField: metadata.created

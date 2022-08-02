@@ -1,0 +1,2435 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": 2,
+    "links": [],
+    "panels": [
+        {
+            "collapsed": true,
+            "datasource": null,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 8,
+            "panels": [
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 0,
+                        "y": 2
+                    },
+                    "hiddenSeries": false,
+                    "id": 28,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT CAST(summary ->> 'qps' AS DOUBLE PRECISION) as qps, jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'cpuSeconds'AS cpuSeconds, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'proxied' AS metric, time, qps / NULLIF(SUM(CAST(cpuSeconds AS DOUBLE PRECISION)),0) as value FROM cpu_prep_temp WHERE clientName LIKE '%proxied%'\nGROUP BY clientName, time, metric, qps\nORDER BY time;\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT CAST(summary ->> 'qps' AS DOUBLE PRECISION) as qps, jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'cpuSeconds'AS cpuSeconds, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'proxyless' AS metric, time, qps /NULLIF( SUM(CAST(cpuSeconds AS DOUBLE PRECISION)) ,0)as value FROM cpu_prep_temp WHERE clientName LIKE '%proxyless%'\nGROUP BY clientName, time, metric, qps\nORDER BY time;\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT CAST(summary ->> 'qps' AS DOUBLE PRECISION) as qps, jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'cpuSeconds'AS cpuSeconds, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'regular' AS metric, time, qps / NULLIF(SUM(CAST(cpuSeconds AS DOUBLE PRECISION)) ,0) as value FROM cpu_prep_temp WHERE clientName LIKE '%regular%'\nGROUP BY clientName, time, metric, qps\nORDER BY time;\n\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Queries/CPU-Seconds_Java",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 12,
+                        "y": 2
+                    },
+                    "hiddenSeries": false,
+                    "id": 30,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT CAST(summary ->> 'qps' AS DOUBLE PRECISION) as qps, jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'cpuSeconds'AS cpuSeconds, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'proxied' AS metric, time, qps / NULLIF(SUM(CAST(cpuSeconds AS DOUBLE PRECISION)), 0) as value FROM cpu_prep_temp WHERE clientName LIKE '%proxied%'\nGROUP BY clientName, time, metric, qps\nORDER BY time;\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT CAST(summary ->> 'qps' AS DOUBLE PRECISION) as qps, jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'cpuSeconds'AS cpuSeconds, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'proxyless' AS metric, time, qps /NULLIF( SUM(CAST(cpuSeconds AS DOUBLE PRECISION)) ,0)as value FROM cpu_prep_temp WHERE clientName LIKE '%proxyless%'\nGROUP BY clientName, time, metric, qps\nORDER BY time;\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT CAST(summary ->> 'qps' AS DOUBLE PRECISION) as qps, jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'cpuSeconds'AS cpuSeconds, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'regular' AS metric, time, qps / NULLIF(SUM(CAST(cpuSeconds AS DOUBLE PRECISION)) ,0) as value FROM cpu_prep_temp WHERE clientName LIKE '%regular%'\nGROUP BY clientName, time, metric, qps\nORDER BY time;\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Queries/CPU-Seconds_cpp",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                }
+            ],
+            "title": "Queries/CPU-Seconds",
+            "type": "row"
+        },
+        {
+            "collapsed": true,
+            "datasource": null,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 1
+            },
+            "id": 26,
+            "panels": [
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 0,
+                        "y": 1
+                    },
+                    "hiddenSeries": false,
+                    "id": 32,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'memoryMean' AS memoryMean, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'proxied' AS metric, time, SUM(CAST(memoryMean AS DOUBLE PRECISION)) as value FROM cpu_prep_temp WHERE clientName LIKE '%proxied%'\nGROUP BY clientName, time, metric\nORDER BY time;\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'memoryMean' AS memoryMean, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT  'proxyless'  AS metric, time, SUM(CAST(memoryMean AS DOUBLE PRECISION)) as value FROM cpu_prep_temp WHERE clientName LIKE '%proxyless%'\nGROUP BY clientName, time, metric\nORDER BY time;\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'memoryMean' AS memoryMean, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'regular' AS metric, time, SUM(CAST(memoryMean AS DOUBLE PRECISION)) as value FROM cpu_prep_temp WHERE clientName LIKE '%regular%'\nGROUP BY clientName, time, metric\nORDER BY time;\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Memory_java",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 12,
+                        "y": 1
+                    },
+                    "hiddenSeries": false,
+                    "id": 34,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'memoryMean' AS memoryMean, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'proxied' AS metric, time, SUM(CAST(memoryMean AS DOUBLE PRECISION)) as value FROM cpu_prep_temp WHERE clientName LIKE '%proxied%'\nGROUP BY clientName, time, metric\nORDER BY time;\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'memoryMean' AS memoryMean, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'proxyless' AS metric, time, SUM(CAST(memoryMean AS DOUBLE PRECISION)) as value FROM cpu_prep_temp WHERE clientName LIKE '%proxyless%'\nGROUP BY clientName, time, metric\nORDER BY time;\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH cpu_prep_temp AS(\nSELECT jsonb_array_elements((jsonb_array_elements(clientsprometheusdata::jsonb)->> 'containers')::jsonb)->>'memoryMean' AS memoryMean, (metadata->>'created')::timestamp AS time, (scenario->>'name') AS metric,\njson_array_elements(clientsprometheusdata) ->>'name'  AS clientName   \nFROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n) \nSELECT 'regular' AS metric, time, SUM(CAST(memoryMean AS DOUBLE PRECISION)) as value FROM cpu_prep_temp WHERE clientName LIKE '%regular%'\nGROUP BY clientName, time, metric\nORDER BY time;\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Memory_cpp",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                }
+            ],
+            "title": "Memory",
+            "type": "row"
+        },
+        {
+            "collapsed": true,
+            "datasource": null,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 2
+            },
+            "id": 4,
+            "panels": [
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 0,
+                        "y": 3
+                    },
+                    "hiddenSeries": false,
+                    "id": 2,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000 as latency50,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency50 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000 as latency50,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency50 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000 as latency50,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'regular' AS metric, time, latency50 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency50_us_java",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 12,
+                        "y": 3
+                    },
+                    "hiddenSeries": false,
+                    "id": 6,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000 as latency50,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency50 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000 as latency50,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency50 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000 as latency50,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'regular' AS metric, time, latency50 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency50_us_cpp",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 0,
+                        "y": 11
+                    },
+                    "hiddenSeries": false,
+                    "id": 10,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency90' AS DOUBLE PRECISION) / 1000 as latency90,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency90 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency90' AS DOUBLE PRECISION) / 1000 as latency90,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency90 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%'\nORDER BY time\n\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency90' AS DOUBLE PRECISION) / 1000 as latency90,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'regular' AS metric, time, latency90 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency90_us_java",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 12,
+                        "y": 11
+                    },
+                    "hiddenSeries": false,
+                    "id": 12,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency90' AS DOUBLE PRECISION) / 1000 as latency90,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency90 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency90' AS DOUBLE PRECISION) / 1000 as latency90,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency90 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency90' AS DOUBLE PRECISION) / 1000 as latency90,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'regular' AS metric, time, latency90 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency90_us_cpp",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 0,
+                        "y": 19
+                    },
+                    "hiddenSeries": false,
+                    "id": 14,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency95' AS DOUBLE PRECISION) / 1000 as latency95,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency95 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency95' AS DOUBLE PRECISION) / 1000 as latency95,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency95 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency95' AS DOUBLE PRECISION) / 1000 as latency95,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'regular' AS metric, time, latency95 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency95_us_java",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 12,
+                        "y": 19
+                    },
+                    "hiddenSeries": false,
+                    "id": 16,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": " \nWITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency95' AS DOUBLE PRECISION) / 1000 as latency95,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency95 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency95' AS DOUBLE PRECISION) / 1000 as latency95,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency95 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency95' AS DOUBLE PRECISION) / 1000 as latency95,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'regular' AS metric, time, latency95 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency95_us_cpp",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 0,
+                        "y": 27
+                    },
+                    "hiddenSeries": false,
+                    "id": 18,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency99' AS DOUBLE PRECISION) / 1000 as latency99,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency99 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency99' AS DOUBLE PRECISION) / 1000 as latency99,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency99 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency99' AS DOUBLE PRECISION) / 1000 as latency99,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT 'regular' AS metric, time, latency99 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency99_us_java",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 12,
+                        "y": 27
+                    },
+                    "hiddenSeries": false,
+                    "id": 20,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency99' AS DOUBLE PRECISION) / 1000 as latency99,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency99 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency99' AS DOUBLE PRECISION) / 1000 as latency99,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency99 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency99' AS DOUBLE PRECISION) / 1000 as latency99,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT 'regular' AS metric, time, latency99 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n \n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency99_us_cpp",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 0,
+                        "y": 35
+                    },
+                    "hiddenSeries": false,
+                    "id": 22,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency999' AS DOUBLE PRECISION) / 1000 as latency999,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency999 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency999' AS DOUBLE PRECISION) / 1000 as latency999,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency999 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency999' AS DOUBLE PRECISION) / 1000 as latency999,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'java_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'regular' AS metric, time, latency999 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n \n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency999_us_java",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                },
+                {
+                    "aliasColors": {},
+                    "bars": false,
+                    "dashLength": 10,
+                    "dashes": false,
+                    "datasource": "Postgres",
+                    "fieldConfig": {
+                        "defaults": {},
+                        "overrides": []
+                    },
+                    "fill": 1,
+                    "fillGradient": 0,
+                    "gridPos": {
+                        "h": 8,
+                        "w": 12,
+                        "x": 12,
+                        "y": 35
+                    },
+                    "hiddenSeries": false,
+                    "id": 24,
+                    "legend": {
+                        "avg": false,
+                        "current": false,
+                        "max": false,
+                        "min": false,
+                        "show": true,
+                        "total": false,
+                        "values": false
+                    },
+                    "lines": true,
+                    "linewidth": 1,
+                    "nullPointMode": "null",
+                    "options": {
+                        "alertThreshold": true
+                    },
+                    "percentage": false,
+                    "pluginVersion": "7.5.5",
+                    "pointradius": 2,
+                    "points": false,
+                    "renderer": "flot",
+                    "seriesOverrides": [],
+                    "spaceLength": 10,
+                    "stack": false,
+                    "steppedLine": false,
+                    "targets": [
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "metricColumn": "none",
+                            "queryType": "randomWalk",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency999' AS DOUBLE PRECISION) / 1000 as latency999,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxied' AS metric, time, latency999 as value FROM latency_prep_temp WHERE clientName LIKE '%proxied%' \nORDER BY time\n",
+                            "refId": "A",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency999' AS DOUBLE PRECISION) / 1000 as latency999,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'proxyless' AS metric, time, latency999 as value FROM latency_prep_temp WHERE clientName LIKE '%proxyless%' \nORDER BY time\n",
+                            "refId": "B",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        },
+                        {
+                            "format": "time_series",
+                            "group": [],
+                            "hide": false,
+                            "metricColumn": "none",
+                            "rawQuery": true,
+                            "rawSql": "WITH latency_prep_temp AS(\n    SELECT CAST(summary->>'latency999' AS DOUBLE PRECISION) / 1000 as latency999,jsonb_array_elements(clientsprometheusdata::jsonb) ->>'name'  AS clientName, (metadata->>'created')::timestamp AS time\n    FROM psm_experimental_results_8core \n    WHERE metadata ->> 'jobName' = 'grpc/core/master/linux/grpc_psm_performance_gke_experiment' AND scenario->>'name'= 'cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_10000load'\n)\nSELECT  'regular' AS metric, time, latency999 as value FROM latency_prep_temp WHERE clientName LIKE '%regular%' \nORDER BY time\n",
+                            "refId": "C",
+                            "select": [
+                                [
+                                    {
+                                        "params": [
+                                            "value"
+                                        ],
+                                        "type": "column"
+                                    }
+                                ]
+                            ],
+                            "timeColumn": "time",
+                            "where": [
+                                {
+                                    "name": "$__timeFilter",
+                                    "params": [],
+                                    "type": "macro"
+                                }
+                            ]
+                        }
+                    ],
+                    "thresholds": [],
+                    "timeFrom": null,
+                    "timeRegions": [],
+                    "timeShift": null,
+                    "title": "Latency999_us_cpp",
+                    "tooltip": {
+                        "shared": true,
+                        "sort": 0,
+                        "value_type": "individual"
+                    },
+                    "type": "graph",
+                    "xaxis": {
+                        "buckets": null,
+                        "mode": "time",
+                        "name": null,
+                        "show": true,
+                        "values": []
+                    },
+                    "yaxes": [
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        },
+                        {
+                            "format": "short",
+                            "label": null,
+                            "logBase": 1,
+                            "max": null,
+                            "min": null,
+                            "show": true
+                        }
+                    ],
+                    "yaxis": {
+                        "align": false,
+                        "alignLevel": null
+                    }
+                }
+            ],
+            "title": "Latency",
+            "type": "row"
+        }
+    ],
+    "refresh": false,
+    "schemaVersion": 27,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "2022-02-23T20:55:16.801Z",
+        "to": "2022-08-22T20:55:16.801Z"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "PSM dataplane performance on GKE(@upstream/master)",
+    "uid": "Qb8s8b6nz",
+    "version": 1
+}
