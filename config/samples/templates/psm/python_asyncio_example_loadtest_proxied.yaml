@@ -5,6 +5,7 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
+    enablePrometheus: 'true'
     scenario: python_asyncio_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
     uniquifier: proxied
   labels:
