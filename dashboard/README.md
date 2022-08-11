@@ -40,22 +40,31 @@ dashboards with different configurations.
 [replicator]: cmd/postgres_replicator/README.md
 [replicatorconfig]: config/postgres_replicator/default/config.yaml
 
+## Deploy dashboard with PSM
+
+PSM dashboard is not included in the deployment by default, following command is
+needed to deploy PSM dashboard together with OSS dashboard.
+
+```shell
+export PSM=true
+```
+
 ## Manual build
 
 Several environment variables must be set before building and deploying. The
 table below shows the names and values of the variables in our main dashboard:
 
-| Variable                    | Value                                         |
-| --------------------------- | --------------------------------------------- |
-| `BQ_PROJECT_ID`             | `grpc-testing`                                |
+| Variable                    | Value                                   |
+| --------------------------- | --------------------------------------- |
+| `BQ_PROJECT_ID`             | `grpc-testing`                          |
 | `CLOUD_SQL_INSTANCE`        | `grpc-testing:us-central1:grafana-data` |
-| `GCP_DATA_TRANSFER_SERVICE` | `postgres-replicator`                         |
-| `GCP_GRAFANA_SERVICE`       | `grafana`                                     |
-| `GCP_PROJECT_ID`            | `grpc-testing`                                |
-| `GRAFANA_ADMIN_PASS`        | ...                                           |
-| `PG_DATABASE`               | `datasource`                                  |
-| `PG_PASS`                   | ...                                           |
-| `PG_USER`                   | `grafana-user`                                |
+| `GCP_DATA_TRANSFER_SERVICE` | `postgres-replicator`                   |
+| `GCP_GRAFANA_SERVICE`       | `grafana`                               |
+| `GCP_PROJECT_ID`            | `grpc-testing`                          |
+| `GRAFANA_ADMIN_PASS`        | ...                                     |
+| `PG_DATABASE`               | `datasource`                            |
+| `PG_PASS`                   | ...                                     |
+| `PG_USER`                   | `grafana-user`                          |
 
 Docker files that can be used to build and deploy the Postgres replicator and
 Grafana dashboard are then created with the following commands:
