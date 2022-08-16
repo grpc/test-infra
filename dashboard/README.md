@@ -40,15 +40,6 @@ dashboards with different configurations.
 [replicator]: cmd/postgres_replicator/README.md
 [replicatorconfig]: config/postgres_replicator/default/config.yaml
 
-## Deploy dashboard with PSM
-
-PSM dashboard is not included in the deployment by default, following command is
-needed to deploy PSM dashboard together with OSS dashboard.
-
-```shell
-export PSM=true
-```
-
 ## Manual build
 
 Several environment variables must be set before building and deploying. The
@@ -65,6 +56,10 @@ table below shows the names and values of the variables in our main dashboard:
 | `PG_DATABASE`               | `datasource`                            |
 | `PG_PASS`                   | ...                                     |
 | `PG_USER`                   | `grafana-user`                          |
+| `PSM`                       | `true`                                  |
+
+The dashboard for PSM benchmarks is only deployed if the PSM variable is set to
+a non-empty value, for instance PSM=true.
 
 Docker files that can be used to build and deploy the Postgres replicator and
 Grafana dashboard are then created with the following commands:
