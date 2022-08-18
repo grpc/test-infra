@@ -53,7 +53,7 @@ The client pod in PSM benchmarks includes a
 control plane. The client pod in the proxied case also includes an Envoy
 [sidecar](containers/runtime/sidecar/).
 
-[Prometheus](config/prometheus/README.md) is required to monitor CPU and memory
+[Prometheus](config/prometheus/README.md) is used to monitor CPU and memory
 utilization in PSM benchmarks.
 
 [Examples](config/samples/templates/psm/README.md) of proxied and proxyless

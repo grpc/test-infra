@@ -26,12 +26,11 @@ For more information, please visit the [gRPC OSS benchmarks README] on
 Examples for [PSM benchmarks](../../README.md#psm-benchmarks) can be found
 [here](templates/psm/README.md).
 
-[Prometheus](../prometheus/README.md) is enabled by default for all
-[PSM benchmarks](../../README.md#psm-benchmarks) tests. Prometheus monitoring
-can be enabled to by adding an annotation `enablePrometheus: 'true'` to the load
-test configurations. See
-[example](config/samples/templates/psm/cxx_example_loadtest_proxied.yaml#l8)
-usage of the `enablePrometheus` annotation.
+[Prometheus](../prometheus/README.md) is used to monitor CPU and memory
+utilization in [PSM benchmarks](../../README.md#psm-benchmarks). Prometheus
+monitoring can be enabled for any other test by adding the annotation
+`enablePrometheus: 'true'` to the LoadTest configuration. For context, see
+<https://github.com/grpc/test-infra/pull/315>.
 
 Special considerations is required for running `csharp` examples. These examples
 correspond to the legacy C# implementation in [grpc/grpc]. This implementation
