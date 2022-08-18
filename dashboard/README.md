@@ -15,6 +15,9 @@ These components can be built and deployed manually using the
 
 Notice that the dashboard build is independent from the top-level build.
 
+[bigquery]: https://cloud.google.com/bigquery
+[replicator]: cmd/postgres_replicator/README.md
+
 ## Configuration
 
 The configuration of the Postgres replicator is defined in a YAML file. The
@@ -35,9 +38,7 @@ benchmarking][benchmarking] page uses the default configuration. The variables
 dashboards with different configurations.
 
 [benchmarking]: https://grpc.io/docs/guides/benchmarking/
-[bigquery]: https://cloud.google.com/bigquery
 [grafanaconfig]: config/grafana/dashboards/default/
-[replicator]: cmd/postgres_replicator/README.md
 [replicatorconfig]: config/postgres_replicator/default/config.yaml
 
 ## Manual build

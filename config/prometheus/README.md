@@ -1,7 +1,7 @@
 # Prometheus installation
 
 [Prometheus](https://prometheus.io) is used to monitor CPU and memory
-utilization in [PSM benchmarks](../README.md#psm-benchmarks).
+utilization in [PSM benchmarks](../../README.md#psm-benchmarks).
 
 [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)
 is used to install Prometheus. A prometheus operator is a custom controller that
