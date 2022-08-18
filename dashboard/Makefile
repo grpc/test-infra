@@ -1,8 +1,17 @@
 GOCMD ?= go
 GOARGS = -trimpath
 CONFIG_TEMPLATE_DIR ?= config
-DASHBOARDS_CONFIG_DIR ?= $(CONFIG_TEMPLATE_DIR)/grafana/dashboards/default
-REPLICATOR_CONFIG_TEMPLATE ?= $(CONFIG_TEMPLATE_DIR)/postgres_replicator/default/config.yaml
+
+default_dashboards_config_dir = $(CONFIG_TEMPLATE_DIR)/grafana/dashboards/default
+ifeq ($(PSM),)
+default_replicator_config_template = $(CONFIG_TEMPLATE_DIR)/postgres_replicator/default/config.yaml
+else
+default_dashboards_config_dir += $(CONFIG_TEMPLATE_DIR)/grafana/dashboards/psm
+default_replicator_config_template = $(CONFIG_TEMPLATE_DIR)/postgres_replicator/psm/config.yaml
+endif
+DASHBOARDS_CONFIG_DIR ?= $(default_dashboards_config_dir)
+REPLICATOR_CONFIG_TEMPLATE ?= $(default_replicator_config_template)
+
 REPLICATOR_OUTPUT_DIR ?= bin
 GRAFANA_CONTAINER_OUTPUT_DIR ?= containers/grafana
 REPLICATOR_CONTAINER_OUTPUT_DIR ?= containers/replicator
@@ -12,7 +21,7 @@ MAKEFLAGS += --always-make
 
 configure-grafana:
 	scripts/check_env.sh GCP_GRAFANA_SERVICE PG_USER PG_PASS PG_DATABASE GRAFANA_ADMIN_PASS CLOUD_SQL_INSTANCE
-	mkdir -p $(GRAFANA_CONTAINER_OUTPUT_DIR)
+	mkdir -p $(GRAFANA_CONTAINER_OUTPUT_DIR)/dashboards
 	cp -r $(DASHBOARDS_CONFIG_DIR) $(GRAFANA_CONTAINER_OUTPUT_DIR)/dashboards
 	cp -r grafana/* $(GRAFANA_CONTAINER_OUTPUT_DIR)
 	cp $(CONFIG_TEMPLATE_DIR)/grafana/Dockerfile $(GRAFANA_CONTAINER_OUTPUT_DIR)/Dockerfile

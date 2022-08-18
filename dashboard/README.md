@@ -45,24 +45,28 @@ dashboards with different configurations.
 Several environment variables must be set before building and deploying. The
 table below shows the names and values of the variables in our main dashboard:
 
-| Variable                    | Value                                         |
-| --------------------------- | --------------------------------------------- |
-| `BQ_PROJECT_ID`             | `grpc-testing`                                |
-| `CLOUD_SQL_INSTANCE`        | `grpc-testing:us-central1:grafana-datasource` |
-| `GCP_DATA_TRANSFER_SERVICE` | `postgres-replicator`                         |
-| `GCP_GRAFANA_SERVICE`       | `grafana`                                     |
-| `GCP_PROJECT_ID`            | `grpc-testing`                                |
-| `GRAFANA_ADMIN_PASS`        | ...                                           |
-| `PG_DATABASE`               | `datasource`                                  |
-| `PG_PASS`                   | ...                                           |
-| `PG_USER`                   | `grafana-user`                                |
+| Variable                    | Value                                   |
+| --------------------------- | --------------------------------------- |
+| `BQ_PROJECT_ID`             | `grpc-testing`                          |
+| `CLOUD_SQL_INSTANCE`        | `grpc-testing:us-central1:grafana-data` |
+| `GCP_DATA_TRANSFER_SERVICE` | `postgres-replicator`                   |
+| `GCP_GRAFANA_SERVICE`       | `grafana`                               |
+| `GCP_PROJECT_ID`            | `grpc-testing`                          |
+| `GRAFANA_ADMIN_PASS`        | ...                                     |
+| `PG_DATABASE`               | `datasource`                            |
+| `PG_PASS`                   | ...                                     |
+| `PG_USER`                   | `grafana-user`                          |
+| `PSM`                       | `true`                                  |
+
+The dashboard for PSM benchmarks is only deployed if the PSM variable is set to
+a non-empty value, for instance PSM=true.
 
 Docker files that can be used to build and deploy the Postgres replicator and
 Grafana dashboard are then created with the following commands:
 
 ```shell
 make configure-replicator
-make configure-dashboard
+make configure-grafana
 ```
 
 ## Cloud build
