@@ -2,11 +2,11 @@ GOCMD ?= go
 GOARGS = -trimpath
 CONFIG_TEMPLATE_DIR ?= config
 
-default_dashboards_config_dir = $(CONFIG_TEMPLATE_DIR)/grafana/dashboards/default
+default_dashboards_config_dir = $(CONFIG_TEMPLATE_DIR)/grafana/dashboards/default/.
 ifeq ($(PSM),)
 default_replicator_config_template = $(CONFIG_TEMPLATE_DIR)/postgres_replicator/default/config.yaml
 else
-default_dashboards_config_dir += $(CONFIG_TEMPLATE_DIR)/grafana/dashboards/psm
+default_dashboards_config_dir += $(CONFIG_TEMPLATE_DIR)/grafana/dashboards/psm/.
 default_replicator_config_template = $(CONFIG_TEMPLATE_DIR)/postgres_replicator/psm/config.yaml
 endif
 DASHBOARDS_CONFIG_DIR ?= $(default_dashboards_config_dir)
