@@ -4,8 +4,9 @@ The tools contained in this folder enable a user to run multiple tests, wait for
 them to finish, and generate an xml report with pass/fail results.
 
 These tools are intended to work with load test configurations generated from
-load test scenarios by tools stored in the [gRPC Core][grpccore] repository. For information
-on those tools and examples of the tools being used together, see the
+load test scenarios by tools stored in the [gRPC Core][grpccore] repository. For
+information on those tools and examples of the tools being used together, see
+the
 [gRPC OSS benchmarks README](https://github.com/grpc/grpc/blob/master/tools/run_tests/performance/README.md#grpc-oss-benchmarks)
 in that repository.
 
