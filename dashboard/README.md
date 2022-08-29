@@ -59,8 +59,8 @@ table below shows the names and values of the variables in our main dashboard:
 | `PG_USER`                   | `grafana-user`                          |
 | `PSM`                       | `true`                                  |
 
-The dashboard for PSM benchmarks is only deployed if the PSM variable is set to
-a non-empty value, for instance PSM=true.
+The dashboard for PSM benchmarks is only deployed if the `PSM` variable is set
+to a non-empty value, for instance `PSM=true`.
 
 Docker files that can be used to build and deploy the Postgres replicator and
 Grafana dashboard are then created with the following commands:
