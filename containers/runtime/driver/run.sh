@@ -35,7 +35,7 @@ if [ -n "${BQ_RESULT_TABLE}" ]; then
   fi
   if [ -r "${NODE_INFO_OUTPUT_FILE}" ]; then
     cp "${NODE_INFO_OUTPUT_FILE}" node_info.json
-    if [ -z "${SERVER_TARGET_OVERRIDE}" ] || [ -z "${ENABLE_PROMETHEUS}" ]; then
+    if [ -n "${SERVER_TARGET_OVERRIDE}" ] || [ -n "${ENABLE_PROMETHEUS}" ]; then
       if  [ "$(dig +short -t srv prometheus.test-infra-system.svc.cluster.local)" ]; then
         python3 /src/code/tools/run_tests/performance/prometheus.py \
           --url=http://prometheus.test-infra-system.svc.cluster.local:9090 \
