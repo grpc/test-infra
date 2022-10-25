@@ -13,14 +13,14 @@ spec:
   endpoints:
     - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       honorLabels: true
-      interval: 15s
+      interval: 1s
       port: http-metrics
       scheme: http
       tlsConfig:
         insecureSkipVerify: true
     - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       honorLabels: true
-      interval: 15s
+      interval: 1s
       relabelings:
         - sourceLabels: [job]
           action: replace
@@ -62,7 +62,7 @@ spec:
   endpoints:
     - port: http-metric
       scheme: http
-      interval: 15s
+      interval: 1s
       honorLabels: true
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       tlsConfig:
