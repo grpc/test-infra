@@ -4,6 +4,9 @@ This repository contains code for systems that test [gRPC][grpc] which are
 versioned, released or deployed separately from the [gRPC Core][grpccore]
 codebase.
 
+For an overview, see
+[blog post](https://grpc.io/blog/performance-benchmarks-gke/).
+
 [grpc]: https://grpc.io
 [grpccore]: https://github.com/grpc/grpc
 
