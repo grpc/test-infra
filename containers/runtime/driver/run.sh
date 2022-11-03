@@ -37,6 +37,9 @@ if [ -n "${BQ_RESULT_TABLE}" ]; then
     cp "${NODE_INFO_OUTPUT_FILE}" node_info.json
     if [ -n "${SERVER_TARGET_OVERRIDE}" ] || [ -n "${ENABLE_PROMETHEUS}" ]; then
       if  [ "$(dig +short -t srv prometheus.test-infra-system.svc.cluster.local)" ]; then
+        # Ask driver to wait for 16s, this is the combination of cAdvisor housekeeping
+        # interval: 15s, Prometheus scrap interval: 1s.
+        sleep 16s
         python3 /src/code/tools/run_tests/performance/prometheus.py \
           --url=http://prometheus.test-infra-system.svc.cluster.local:9090 \
           --pod_type=clients --container_name=main \
