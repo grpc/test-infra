@@ -76,7 +76,7 @@ it must be the only queue and all tests must be assigned to it.
 ## Using prebuilt images with gRPC OSS benchmarks
 
 The tools [prepare_prebuilt_workers](cmd/prepare_prebuilt_workers/main.go) and
-[delete_prebuilt_workers](cmd/delete_prebuiilt_workers/main.go):
+[delete_prebuilt_workers](cmd/delete_prebuilt_workers/main.go):
 
 - Build the images with the worker executables compiled and embedded.
 - Push the images to specified registry.
