@@ -29,3 +29,20 @@ The files [install-prometheus.yaml](install-prometheus.yaml) and
 [servicemonitors.yaml](servicemonitors.yaml) are taken from
 [istio/tools](https://github.com/istio/tools/), with configuration related to
 Istio left out.
+
+### Prometheus scrape_interval
+
+`scrape_interval` is how frequently the Prometheus to scrape targets, by default
+it is set to
+[1m](https://prometheus.io/docs/prometheus/latest/configuration/configuration/).
+We set Prometheus scrape interval to be 1s as our tests typically last 30s. See
+<https://github.com/grpc/test-infra/pull/325> for details.
+
+### Delay to query
+
+We add 20s delay before collecting data for the test used Prometheus, see
+details in <https://github.com/grpc/test-infra/pull/330>. This time allows data
+to become available
+([cAdvisor housekeeping interval](https://github.com/google/cadvisor/blob/master/docs/runtime_options.md#housekeeping))
+and pulled by Prometheus
+([Prometheus scrape interval](https://github.com/grpc/test-infra/pull/325)).
