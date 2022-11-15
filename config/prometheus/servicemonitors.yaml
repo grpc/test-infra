@@ -14,13 +14,6 @@ spec:
     - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       honorLabels: true
       interval: 1s
-      port: http-metrics
-      scheme: http
-      tlsConfig:
-        insecureSkipVerify: true
-    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-      honorLabels: true
-      interval: 1s
       relabelings:
         - sourceLabels: [job]
           action: replace
@@ -43,27 +36,3 @@ spec:
   selector:
     matchLabels:
       k8s-app: kubelet
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: kube-state-metrics
-  namespace: test-infra-system
-  labels:
-    k8s-app: kube-state-metrics
-spec:
-  jobLabel: k8s-app
-  selector:
-    matchLabels:
-      k8s-app: kube-state-metrics
-  namespaceSelector:
-    matchNames:
-      - prometheus
-  endpoints:
-    - port: http-metric
-      scheme: http
-      interval: 1s
-      honorLabels: true
-      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-      tlsConfig:
-        insecureSkipVerify: true
