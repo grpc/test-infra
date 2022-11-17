@@ -38,11 +38,11 @@ targets. The default value for this interval is
 We change this interval in our configuration to 1s, since our tests typically
 last only 30s. See <https://github.com/grpc/test-infra/pull/325> for details.
 
-### Delay to query
+### Query delay
 
 We add 20s delay before collecting data from Prometheus, in the tests that use
 Prometheus. This delay allows data to become available
 ([cAdvisor housekeeping interval](https://github.com/google/cadvisor/blob/master/docs/runtime_options.md#housekeeping))
 and pulled by Prometheus
 ([Prometheus scrape interval](https://github.com/grpc/test-infra/pull/325)). See
-details in <https://github.com/grpc/test-infra/pull/330>.
+<https://github.com/grpc/test-infra/pull/330> for details.
