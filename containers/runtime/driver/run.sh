@@ -40,7 +40,7 @@ if [ -n "${BQ_RESULT_TABLE}" ]; then
         python3 /src/code/tools/run_tests/performance/prometheus.py \
           --url=http://prometheus.test-infra-system.svc.cluster.local:9090 \
           --pod_type=clients --container_name=main \
-          --container_name=sidecar
+          --container_name=sidecar --delay_seconds=20
       fi
     fi
   fi
