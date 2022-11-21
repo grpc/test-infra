@@ -15,7 +15,7 @@
 # syntax=docker/dockerfile:1
 
 # Build replicator
-FROM golang:1.16 AS builder
+FROM golang:1.17 AS builder
 
 ARG REPOSITORY=grpc/test-infra
 ARG GITREF=master
@@ -25,7 +25,7 @@ RUN git clone https://github.com/$REPOSITORY.git src \
     && make replicator REPLICATOR_OUTPUT_DIR=/
 
 # Copy replicator binary and run it
-FROM golang:1.16
+FROM golang:1.17
 WORKDIR /app
 COPY --from=builder /replicator /app
 COPY config.yaml /app
