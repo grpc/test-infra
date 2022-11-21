@@ -137,7 +137,7 @@ func newDefaults() *config.Defaults {
 			},
 			{
 				Language:   "go",
-				BuildImage: "golang:1.16",
+				BuildImage: "golang:1.17",
 				RunImage:   "gcr.io/grpc-fake-project/test-infra/go",
 			},
 			{
