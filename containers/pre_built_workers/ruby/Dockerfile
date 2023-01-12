@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM ruby:2.5
+FROM ruby:3.1
 
 # TODO: when running on kokoro, this build step will not be cached
 # since we'll always be on a fresh VM. Re-running this command each
@@ -47,7 +47,7 @@ ADD build_qps_worker.sh /build_scripts
 RUN bash /build_scripts/build_qps_worker.sh
 
 # Copy node modules to a new image
-FROM ruby:2.5
+FROM ruby:3.1
 
 RUN mkdir -p /execute
 WORKDIR /execute
