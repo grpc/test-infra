@@ -84,7 +84,7 @@ ENVTEST_ASSETS_DIR = $(PROJECT_DIR)/testbin
 test: manifests generate fmt vet ## Run tests.
 	mkdir -p $(ENVTEST_ASSETS_DIR)
 	test -f $(ENVTEST_ASSETS_DIR)/setup-envtest.sh || curl -sSLo $(ENVTEST_ASSETS_DIR)/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source $(ENVTEST_ASSETS_DIR)/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out -race -v
+	source $(ENVTEST_ASSETS_DIR)/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); $(GOCMD) test ./... -coverprofile cover.out -race -v
 
 ##@ Build executables
 
@@ -282,7 +282,7 @@ define go-install-tool
 set -e ;\
 TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
-go mod init tmp ;\
+$(GOCMD) mod init tmp ;\
 echo "Downloading $(2)" ;\
 GOBIN=$(PROJECT_DIR)/bin $(GOCMD) install $(2) ;\
 rm -rf $$TMP_DIR ;\
