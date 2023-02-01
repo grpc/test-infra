@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM php:7.2.34-buster
+FROM php:7.4-buster
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
@@ -22,19 +22,19 @@ RUN apt-get update && apt-get install -y \
   build-essential \
   lcov \
   make \
-  gnupg2 && \
+  gnupg2 \
+  procps && \
   apt-get clean
 
 # Install rvm
 RUN gpg2 --recv-keys 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
 RUN \curl -sSL https://get.rvm.io | bash -s stable
 
-# Install Ruby 2.5
-RUN apt-get --allow-releaseinfo-change update && apt-get install -y procps && apt-get clean
-RUN /bin/bash -l -c "rvm install ruby-2.5"
-RUN /bin/bash -l -c "rvm use --default ruby-2.5"
+# Install Ruby 3
+RUN /bin/bash -l -c "rvm install ruby-3"
+RUN /bin/bash -l -c "rvm use --default ruby-3"
 RUN /bin/bash -l -c "echo 'gem: --no-document' > ~/.gemrc"
-RUN /bin/bash -l -c "gem install bundler --no-document -v 1.9"
+RUN /bin/bash -l -c "gem install bundler --no-document -v 2.4"
 
 # Install composer
 RUN \curl -sS https://getcomposer.org/installer | php
