@@ -79,7 +79,7 @@ The following environment variables must be set before starting the build:
 - `KILL_AFTER`
 
 The variable `GOCMD` may be set to build with a [specific version of
-`go`][goversion].
+Go][goversion]. `GOCMD` defaults to `go`.
 
 `TEST_INFRA_VERSION` is used to tag the images created by the controller build,
 and defaults to `latest`.
@@ -339,8 +339,7 @@ metrics endpoint: http://localhost:9090/graph.
 
 ## Running an example test
 
-Verify that the deployment is able to run a test by running the example `go`
-test.
+Verify that the deployment is able to run a test by running the example Go test.
 
 The easiest way to run the test is with the [test runner][]:
 
