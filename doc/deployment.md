@@ -78,6 +78,9 @@ The following environment variables must be set before starting the build:
 - `RUN_IMAGE_PREFIX`
 - `KILL_AFTER`
 
+The variable `GOCMD` may be set to build with a [specific version of
+`go`][goversion].
+
 `TEST_INFRA_VERSION` is used to tag the images created by the controller build,
 and defaults to `latest`.
 
@@ -94,9 +97,6 @@ sent to test components, if they have not terminated after timeout. Component
 timeout is set in the LoadTest configuration. `KILL_AFTER` is set in the
 [controller configuration](#controller-configuration), as a safeguard for
 components that may hang and consume resources after test timeout.
-
-The environment variable `GOCMD` may be set to build with a [specific version of
-`go`][goversion].
 
 The variables used to build the `v1.5.1` release are as follows:
 
@@ -356,7 +356,7 @@ The easiest way to run the test is with the [test runner][]:
    ./bin/runner -i config/samples/ruby_example_loadtest.yaml -c :1 --delete-successful-tests -o sponge_log.xml
    ```
 
-Alternatively, you can run the test manually with `kubectl`:
+Alternatively, you can apply the test to the cluster and monitor for completion:
 
 1. Start the test:
 
