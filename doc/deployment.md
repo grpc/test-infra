@@ -60,11 +60,11 @@ and how to deploy it to the cluster.
 
 In order to build a specific version of the controller, you must check out the
 desired version. The following commands clone the repo and check out version
-`v1.1.0`:
+`v1.5.1`:
 
 ```shell
 git clone https://github.com/grpc/test-infra && cd test-infra
-git checkout --detach v1.1.0
+git checkout --detach v1.5.1
 ```
 
 ### Environment variables
@@ -95,14 +95,18 @@ timeout is set in the LoadTest configuration. `KILL_AFTER` is set in the
 [controller configuration](#controller-configuration), as a safeguard for
 components that may hang and consume resources after test timeout.
 
-The variables used to build the `v1.1.0` release are as follows:
+The environment variable `GOCMD` may be set to build with a [specific version of
+`go`][goversion].
+
+The variables used to build the `v1.5.1` release are as follows:
 
 ```shell
-export TEST_INFRA_VERSION=v1.1.0
+export TEST_INFRA_VERSION=v1.5.1
 export INIT_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/
 export BUILD_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/build/
 export RUN_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/runtime/
 export KILL_AFTER=30
+export GOCMD=go1.19.5
 ```
 
 Our images are pushed to `gcr.io`. You can push to any image repository by
@@ -113,13 +117,15 @@ images.
 
 [grpccore]: https://github.com/grpc/grpc
 
+[goversion][https://go.dev/doc/manage-install]
+
 ### Controller configuration
 
 The controller requires a configuration file to be included in the controller
 image. This configuration file can be generated from a template as follows:
 
 ```shell
-go run config/cmd/configure.go \
+${GOCMD:-go} run config/cmd/configure.go \
     -version="${TEST_INFRA_VERSION}" \
     -init-image-prefix="${INIT_IMAGE_PREFIX}" \
     -build-image-prefix="${BUILD_IMAGE_PREFIX}" \
@@ -168,24 +174,26 @@ language, plus a language-agnostic clone container image. These images are
 necessary to run any tests that do not use [pre-built images][], such as the
 [examples][].
 
-The complete set of images built for `v1.1.0` is as follows:
+The complete set of images built for `v1.5.1` is as follows:
 
 ```shell
-gcr.io/grpc-testing/e2etest/init/build/csharp:v1.1.0
-gcr.io/grpc-testing/e2etest/init/build/node:v1.1.0
-gcr.io/grpc-testing/e2etest/init/build/php7:v1.1.0
-gcr.io/grpc-testing/e2etest/init/build/ruby:v1.1.0
-gcr.io/grpc-testing/e2etest/init/clone:v1.1.0
-gcr.io/grpc-testing/e2etest/init/ready:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/controller:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/cxx:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/driver:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/go:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/java:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/node:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/php7:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/python:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/ruby:v1.1.0
+gcr.io/grpc-testing/e2etest/init/build/csharp:v1.5.1
+gcr.io/grpc-testing/e2etest/init/build/dotnet:v1.5.1
+gcr.io/grpc-testing/e2etest/init/build/node:v1.5.1
+gcr.io/grpc-testing/e2etest/init/build/php7:v1.5.1
+gcr.io/grpc-testing/e2etest/init/build/ruby:v1.5.1
+gcr.io/grpc-testing/e2etest/init/clone:v1.5.1
+gcr.io/grpc-testing/e2etest/init/ready:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/controller:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/cxx:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/dotnet:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/driver:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/go:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/java:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/node:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/php7:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/python:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/ruby:v1.5.1
 ```
 
 This should match what is included in the
@@ -205,11 +213,11 @@ Images can be built and pushed with the following command:
 make all-psm-images push-all-psm-images
 ```
 
-The complete set of PSM images built for `v1.1.0` is as follows:
+The complete set of PSM images built for `v1.5.1` is as follows:
 
 ```shell
-gcr.io/grpc-testing/e2etest/runtime/sidecar:v1.1.0
-gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.1.0
+gcr.io/grpc-testing/e2etest/runtime/sidecar:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.5.1
 ```
 
 > Note: PSM images are pushed by default to the location specified by
@@ -221,7 +229,7 @@ gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.1.0
 The following command deletes all previous deployments from the cluster:
 
 ```shell
-kubectl -n test-infra-system delete deployments --all
+kubectl -n test-infra-system delete deployments,prometheus --all
 ```
 
 This is an optional step, but may be advisable, so we can start from a clean
@@ -332,7 +340,24 @@ metrics endpoint: http://localhost:9090/graph.
 
 ## Running an example test
 
-Verify that the deployment is able to run a test by running the example Go test:
+Verify that the deployment is able to run a test by running the example `go`
+test.
+
+The easiest way to run the test is with the [test runner][]:
+
+1. Build the test runner binary:
+
+   ```shell
+   make runner
+   ```
+
+1. Run the example test:
+
+   ```shell
+   ./bin/runner -i config/samples/ruby_example_loadtest.yaml -c :1 --delete-successful-tests -o sponge_log.xml
+   ```
+
+Alternatively, you can run the test manually with `kubectl`:
 
 1. Start the test:
 
@@ -358,3 +383,4 @@ Verify that the deployment is able to run a test by running the example Go test:
 
 [examples]: ../config/samples/README.md
 [prometheusoperator]: ../config/prometheus/README.md
+[test runner]: ../tools/README.md#test-runner
