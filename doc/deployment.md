@@ -78,8 +78,8 @@ The following environment variables must be set before starting the build:
 - `RUN_IMAGE_PREFIX`
 - `KILL_AFTER`
 
-The variable `GOCMD` may be set to build with a [specific version of
-Go][goversion]. `GOCMD` defaults to `go`.
+`GOCMD` may be set to build with a [specific version of Go][goversion]. This
+variable defaults to `go`.
 
 `TEST_INFRA_VERSION` is used to tag the images created by the controller build,
 and defaults to `latest`.
@@ -101,12 +101,12 @@ components that may hang and consume resources after test timeout.
 The variables used to build the `v1.5.1` release are as follows:
 
 ```shell
+export GOCMD=go1.19.5
 export TEST_INFRA_VERSION=v1.5.1
 export INIT_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/
 export BUILD_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/build/
 export RUN_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/runtime/
 export KILL_AFTER=30
-export GOCMD=go1.19.5
 ```
 
 Our images are pushed to `gcr.io`. You can push to any image repository by
