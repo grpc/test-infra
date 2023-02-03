@@ -116,8 +116,7 @@ You can change `TEST_INFRA_VERSION` to any label you would like to apply to your
 images.
 
 [grpccore]: https://github.com/grpc/grpc
-
-[goversion][https://go.dev/doc/manage-install]
+[goversion]: https://go.dev/doc/manage-install
 
 ### Controller configuration
 
