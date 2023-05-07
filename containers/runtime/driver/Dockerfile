@@ -34,7 +34,8 @@ RUN git clone https://github.com/$REPOSITORY.git .
 RUN git submodule update --init
 RUN git checkout $GITREF
 
-FROM l.gcr.io/google/bazel:3.5.0
+# See https://github.com/grpc/grpc/blob/master/tools/dockerfile/README.md
+FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:0f909e43012a80faa92e07b7871268841ce56ebc
 
 COPY --from=0 /src/code /src/code
 RUN mkdir -p /tmp/build_output

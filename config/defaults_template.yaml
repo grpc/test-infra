@@ -23,7 +23,7 @@ languages:
   runImage: "{{ .RunImagePrefix }}dotnet:{{ .Version }}"
 
 - language: cxx
-  buildImage: l.gcr.io/google/bazel:3.5.0
+  buildImage: us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:0f909e43012a80faa92e07b7871268841ce56ebc
   runImage: "{{ .RunImagePrefix }}cxx:{{ .Version }}"
 
 - language: go
@@ -47,11 +47,11 @@ languages:
   runImage: "{{ .RunImagePrefix }}php7:{{ .Version }}"
 
 - language: python
-  buildImage: l.gcr.io/google/bazel:3.5.0
+  buildImage: us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:0f909e43012a80faa92e07b7871268841ce56ebc
   runImage: "{{ .RunImagePrefix }}python:{{ .Version }}"
 
 - language: python_asyncio
-  buildImage: l.gcr.io/google/bazel:3.5.0
+  buildImage: us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:0f909e43012a80faa92e07b7871268841ce56ebc
   runImage: "{{ .RunImagePrefix }}python:{{ .Version }}"
 
 - language: ruby
