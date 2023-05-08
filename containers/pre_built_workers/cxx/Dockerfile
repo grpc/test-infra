@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # See https://github.com/grpc/grpc/blob/master/tools/dockerfile/README.md
-FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:0f909e43012a80faa92e07b7871268841ce56ebc
+FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:0f909e43012a80faa92e07b7871268841ce56ebc:1118150d9d9479787165fff49f660a3dc633f1c57604305460172fc1916aa022
 
 RUN mkdir -p /source/code
 WORKDIR /source/code
