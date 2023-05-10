@@ -40,12 +40,13 @@ RUN mkdir /executables
 RUN bazel --output_user_root=/executables build -c opt --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests/qps:qps_worker
 RUN bazel --output_user_root=/executables build -c opt --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests_aio/benchmark:worker
 
-FROM python:3.7-buster
+# See https://github.com/grpc/grpc/blob/master/tools/dockerfile/README.md
+FROM us-docker.pkg.dev/grpc-testing/testing-images-public/python_debian11_default_x64:ee6a567ba2dee1502abec2d08b87b0c0caba8a42@sha256:df00d587bda7cbe4308e18def313fe893cffbeb5a807ab14a90ff0d87b1a001c
 
-RUN mkdir -p /execute
-WORKDIR /execute
 COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker
 COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker /execute/benchmark_worker
 COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
+
+WORKDIR /execute
 
 CMD ["bash"]
