@@ -40,7 +40,7 @@ RUN mkdir /executables
 RUN bazel --output_user_root=/executables build -c opt --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests/qps:qps_worker
 RUN bazel --output_user_root=/executables build -c opt --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests_aio/benchmark:worker
 
-FROM python3.9-slim-bullseye
+FROM python:3.9-slim-bullseye
 
 COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker
 COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker /execute/benchmark_worker
