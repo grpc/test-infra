@@ -43,13 +43,12 @@ RUN mkdir /executables
 RUN bazel --output_user_root=/executables build //test/cpp/qps:qps_worker --config opt
 
 # Copy executables to a new image
-FROM debian:buster
-
-RUN mkdir -p /source/code
-WORKDIR /source/code
+FROM marketplace.gcr.io/google/debian11
 
 COPY --from=0 /source/code/bazel-bin/test/cpp/ /source/code/bazel-bin/test/cpp/
 COPY --from=0 /source/code/GRPC_GIT_COMMIT.txt /source/code/GRPC_GIT_COMMIT.txt
+
+WORKDIR /source/code
 
 # make sure client and server workers produce a small amount of useful logs
 ENV GRPC_VERBOSITY=debug
