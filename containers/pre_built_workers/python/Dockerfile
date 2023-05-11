@@ -40,12 +40,12 @@ RUN mkdir /executables
 RUN bazel --output_user_root=/executables build -c opt --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests/qps:qps_worker
 RUN bazel --output_user_root=/executables build -c opt --nobuild_runfile_links --nobuild_runfile_manifests --build_python_zip //src/python/grpcio_tests/tests_aio/benchmark:worker
 
-FROM python:3.7-buster
+FROM python3.9-slim-bullseye
 
-RUN mkdir -p /execute
-WORKDIR /execute
 COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker
 COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker /execute/benchmark_worker
 COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
+
+WORKDIR /execute
 
 CMD ["bash"]
