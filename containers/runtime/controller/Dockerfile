@@ -16,7 +16,7 @@ RUN chmod 777 /workspace/config/defaults.yaml
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o bin/controller cmd/controller/main.go
 
-FROM gcr.io/distroless/static-debian11
+FROM gcr.io/distroless/base-debian11
 WORKDIR /workspace
 COPY --from=builder /workspace .
 CMD ["/workspace/bin/controller"]
