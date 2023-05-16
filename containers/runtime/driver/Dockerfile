@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM debian:buster
+FROM marketplace.gcr.io/google/debian11
 
 ARG REPOSITORY=grpc/grpc
 ARG GITREF=master
@@ -42,7 +42,7 @@ RUN mkdir -p /tmp/build_output
 WORKDIR /src/code
 RUN bazel --output_user_root=/tmp/build_output build --config opt //test/cpp/qps:qps_json_driver
 
-FROM debian:buster
+FROM marketplace.gcr.io/google/debian11
 
 RUN mkdir -p /src/driver
 RUN mkdir -p /src/code
