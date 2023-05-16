@@ -2,9 +2,7 @@
 TEST_INFRA_VERSION ?= latest
 
 # Version of gRPC core used for the gRPC driver
-# Pinned to include the following PR:
-# https://github.com/grpc/grpc/pull/31611
-DRIVER_VERSION ?= d44e1520a73e928cf6d57de16ca821614c3c642b
+DRIVER_VERSION ?= v1.53.1
 
 # Prefix for all images used as clone and ready containers, enabling use with
 # registries other than Docker Hub
