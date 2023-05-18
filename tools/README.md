@@ -91,15 +91,15 @@ the following shows this process (building and pushing prebuilt images) for
 
 ```shell
 bin/prepare_prebuilt_workers \
-     -l cxx:master \
-     -l go:master \
+     -l cxx:grpc/grpc:master \
+     -l go:grpc/grpc-go:master \
      -p "${image_registry}" \
      -t "${tag}" \
      -r containers/pre_built_workers
 ```
 
-This builds `cxx` and `go` images contain workers built from the commit/branch
-we wish to test.
+This builds `cxx` and `go` images contain workers built from the specific repo 
+and commit/branch we wish to test.
 
 The tool `prepare_prebuilt_workers` takes the following options:
 

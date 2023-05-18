@@ -37,11 +37,18 @@ import (
 // Tests contains the values for fields that are accessible by
 // flags.
 type Tests struct {
-	preBuiltImagePrefix string
-	testTag             string
-	dockerfileRoot      string
-	buildOnly           bool
-	languagesToGitref   map[string]string
+	preBuiltImagePrefix       string
+	testTag                   string
+	dockerfileRoot            string
+	buildOnly                 bool
+	languagesToLanguageDetail map[string]LanguageDetail
+}
+
+// LanguageDetail containers the details of each tested language.
+type LanguageDetail struct {
+	Name   string `json:"name"`
+	Repo   string `json:"repo"`
+	Gitref string `json:"gitref"`
 }
 
 type langFlags []string
@@ -72,7 +79,7 @@ func main() {
 
 	flag.StringVar(&test.dockerfileRoot, "r", "", "root directory of Dockerfiles to build prebuilt images")
 
-	flag.Var(&languagesSelected, "l", "languages and its GITREF wish to run tests, example: cxx:<commit-sha>")
+	flag.Var(&languagesSelected, "l", "languages, its repository and GITREF wish to run tests, example: cxx:grpc/grpc:<commit-sha>")
 
 	flag.Parse()
 
@@ -94,7 +101,7 @@ func main() {
 		log.Fatalf("Failed preparing prebuilt images: no language and its gitref pair specified, please provide languages and the GITREF as cxx:master")
 	}
 
-	test.languagesToGitref = map[string]string{}
+	test.languagesToLanguageDetail = map[string]LanguageDetail{}
 	converterToImageLanguage := map[string]string{
 		"c++":             "cxx",
 		"node_purejs":     "node",
@@ -105,41 +112,43 @@ func main() {
 	for _, pair := range languagesSelected {
 		split := strings.Split(pair, ":")
 
-		if len(split) != 2 || split[len(split)-1] == "" {
-			log.Fatalf("Input error in language and gitref selection, please follow the format as language:gitref, for example: c++:<commit-sha>")
+		if len(split) != 3 || split[len(split)-1] == "" {
+			log.Fatalf("Input error in language and gitref selection, please follow the format as language:repository:gitref, for example: c++:grpc/grpc/<commit-sha>")
 		}
-
+		var detail LanguageDetail
 		lang := split[0]
-		gitref := split[1]
-
 		if convertedLang, ok := converterToImageLanguage[lang]; ok {
-			test.languagesToGitref[convertedLang] = gitref
+			detail.Name = convertedLang
 		} else {
-			test.languagesToGitref[lang] = gitref
+			detail.Name = lang
 		}
+		detail.Repo = split[1]
+		detail.Gitref = split[2]
+		test.languagesToLanguageDetail[detail.Name] = detail
 	}
 
-	log.Println("Selected language : GITREF")
-	formattedMap, _ := json.MarshalIndent(test.languagesToGitref, "", "  ")
+	log.Println("Selected language : REPOSITORY: GITREF")
+	formattedMap, _ := json.MarshalIndent(test.languagesToLanguageDetail, "", "  ")
 	log.Print(string(formattedMap))
 
 	var wg sync.WaitGroup
-	wg.Add(len(test.languagesToGitref))
+	wg.Add(len(test.languagesToLanguageDetail))
 
 	uniqueCacheBreaker := time.Now().String()
 
-	for lang, gitRef := range test.languagesToGitref {
-		go func(lang string, gitRef string) {
+	for lang, detail := range test.languagesToLanguageDetail {
+		go func(lang string, detail LanguageDetail) {
 			defer wg.Done()
 
 			image := fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
 			dockerfileLocation := fmt.Sprintf("%s/%s/", test.dockerfileRoot, lang)
 
 			// build image
-			log.Println(fmt.Sprintf("building %s image", lang))
-			// TODO(jtattermusch): allow setting REPOSITORY arg to allow building from user forks e.g. https://github.com/USER_NAME/grpc.git
+			log.Printf("building %s image\n", lang)
 			buildCommandTimeoutSeconds := 30 * 60 // 30 mins should be enough for all languages
-			buildDockerImage := exec.Command("timeout", fmt.Sprintf("%ds", buildCommandTimeoutSeconds), "docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", gitRef), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker))
+			cmd := fmt.Sprintf("docker build %s -t %s --build-arg REPOSITORY=%s --build-arg GITREF=%s --build-arg BREAK_CACHE=VAR", dockerfileLocation, image, detail.Repo, detail.Gitref)
+			log.Printf("Running: %s", cmd)
+			buildDockerImage := exec.Command("timeout", fmt.Sprintf("%ds", buildCommandTimeoutSeconds), "docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("REPOSITORY=%s", detail.Repo), "--build-arg", fmt.Sprintf("GITREF=%s", detail.Gitref), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker))
 			buildOutput, err := buildDockerImage.CombinedOutput()
 			if err != nil {
 				log.Printf("Failed building %s image. Dump of command's output will follow:\n", lang)
@@ -152,7 +161,7 @@ func main() {
 
 			if !test.buildOnly {
 				// push image
-				log.Println(fmt.Sprintf("pushing %s image", lang))
+				log.Printf("pushing %s image\n", lang)
 				pushDockerImage := exec.Command("docker", "push", image)
 				pushOutput, err := pushDockerImage.CombinedOutput()
 				if err != nil {
@@ -164,7 +173,7 @@ func main() {
 				log.Println(string(pushOutput))
 				log.Printf("Succeeded pushing %s image to %s\n", lang, image)
 			}
-		}(lang, gitRef)
+		}(lang, detail)
 	}
 
 	wg.Wait()
