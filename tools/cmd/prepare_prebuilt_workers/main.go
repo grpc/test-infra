@@ -109,12 +109,12 @@ func main() {
 		"python_asyncio":  "python",
 	}
 
-	for _, pair := range languagesSelected {
-		split := strings.SplitN(pair, ":", 3)
+	for _, s := range languagesSelected {
+		split := strings.SplitN(s, ":", 3)
 
 		// C++:master will be split to 2 items, c++:grpc/grpc:master will be
 		// split to 3 items.
-		if (len(split) == 0 || split[len(split)-1] == "" ){
+		if len(split) < 2 || split[len(split)-1] == "" {
 			log.Fatalf("Input error in language and gitref selection. Please follow the format language:gitref or language:repository:gitref, for example c++:master or c++:grpc/grpc:master")
 		}
 		var spec LanguageSpec

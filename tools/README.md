@@ -107,8 +107,8 @@ the repo. The following command pulls the source code from forked repos
 
 ```shell
 bin/prepare_prebuilt_workers \
-     -l cxx:${USER}/grpc:master \
-     -l go:${USER}/grpc-go:master \
+     -l cxx:"${USER}"/grpc:master \
+     -l go:"${USER}"/grpc-go:master \
      -p "${image_registry}" \
      -t "${tag}" \
      -r containers/pre_built_workers
