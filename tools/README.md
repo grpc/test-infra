@@ -91,20 +91,34 @@ the following shows this process (building and pushing prebuilt images) for
 
 ```shell
 bin/prepare_prebuilt_workers \
-     -l cxx:grpc/grpc:master \
-     -l go:grpc/grpc-go:master \
+     -l cxx:master \
+     -l go:master \
      -p "${image_registry}" \
      -t "${tag}" \
      -r containers/pre_built_workers
 ```
 
-This builds `cxx` and `go` images contain workers built from the specific repo 
-and commit/branch we wish to test.
+This builds `cxx` and `go` images contain workers built from the specific
+commit/branch we wish to test.
+
+You may also specify the repo where the source code is pulled from by specifying
+the repo, the following command would pull the source code from a forked repo
+to build `cxx` and `go` images.
+
+```shell
+bin/prepare_prebuilt_workers \
+     -l cxx:<user-name>/grpc:master \
+     -l go:<user-name>/grpc-go:master \
+     -p "${image_registry}" \
+     -t "${tag}" \
+     -r containers/pre_built_workers
+```
 
 The tool `prepare_prebuilt_workers` takes the following options:
 
 - `-l`<br> Language and GITREF to benchmark. The language and its specific
-  GITREF wish to build workers from can be specified as `language:COMMIT_SHA`.
+  GITREF wish to build workers from can be specified as `language:COMMIT_SHA` or
+  `language:repo:COMMIT_SHA`.
   May be repeated. Valid input for language names are all in lower case:
   `csharp`, `c++`/`cxx`, `go`, `java`, `node`, `node_purejs`, `php7`.
   `php7_protobuf_c`, `python`, `python_asyncio` and `ruby`.
