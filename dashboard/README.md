@@ -37,8 +37,16 @@ benchmarking][benchmarking] page uses the default configuration. The variables
 `REPLICATOR_CONFIG_TEMPLATE` and `DASHBOARDS_CONFIG_DIR` can be set to build
 dashboards with different configurations.
 
+There is also a second default dashboard for
+[PSM benchmarks](../README.md#psm-benchmarks). Deployment of this dashboard is
+optional, as described below. The configuration of this dashboard is defined
+here:
+
+- [config/grafana/dashboards/psm/][psmgrafanaconfig]
+
 [benchmarking]: https://grpc.io/docs/guides/benchmarking/
 [grafanaconfig]: config/grafana/dashboards/default/
+[psmgrafanaconfig]: config/grafana/dashboards/psm/
 [replicatorconfig]: config/postgres_replicator/default/config.yaml
 
 ## Manual build
