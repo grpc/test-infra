@@ -110,10 +110,12 @@ func main() {
 	}
 
 	for _, pair := range languagesSelected {
-		split := strings.Split(pair, ":")
+		split := strings.SplitN(pair, ":", 3)
 
-		if len(split) < 2 || split[len(split)-1] == "" {
-			log.Fatalf("Input error in language and gitref selection, please follow the format as language:repository:gitref, for example: c++:grpc/grpc/<commit-sha>")
+		// C++:master will be split to 2 items, c++:grpc/grpc:master will be
+		// split to 3 items.
+		if (len(split) == 0 || split[len(split)-1] == "" ){
+			log.Fatalf("Input error in language and gitref selection. Please follow the format language:gitref or language:repository:gitref, for example c++:master or c++:grpc/grpc:master")
 		}
 		var spec LanguageSpec
 		lang := split[0]
@@ -148,12 +150,11 @@ func main() {
 			image := fmt.Sprintf("%s/%s:%s", test.preBuiltImagePrefix, lang, test.testTag)
 			dockerfileLocation := fmt.Sprintf("%s/%s/", test.dockerfileRoot, lang)
 
-			// build image
+			// Build image
 			log.Printf("building %s image\n", lang)
 			buildCommandTimeoutSeconds := 30 * 60 // 30 mins should be enough for all languages
 			buildDockerImage := exec.Command("timeout", fmt.Sprintf("%ds", buildCommandTimeoutSeconds), "docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", spec.Gitref), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker))
 			if spec.Repo != "" {
-				//cmd = fmt.Sprintf("docker build %s -t %s --build-arg REPOSITORY=%s --build-arg GITREF=%s --build-arg BREAK_CACHE=VAR", dockerfileLocation, image, spec.Repo, spec.Gitref)
 				buildDockerImage.Args = append(buildDockerImage.Args, "--build-arg", fmt.Sprintf("REPOSITORY=%s", spec.Repo))
 			}
 			log.Printf("Running command: %s", strings.Join(buildDockerImage.Args, " "))
@@ -168,7 +169,7 @@ func main() {
 			log.Printf("Succeeded building %s image: %s\n", lang, image)
 
 			if !test.buildOnly {
-				// push image
+				// Push image
 				log.Printf("pushing %s image\n", lang)
 				pushDockerImage := exec.Command("docker", "push", image)
 				pushOutput, err := pushDockerImage.CombinedOutput()

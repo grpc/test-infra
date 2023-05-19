@@ -102,13 +102,13 @@ This builds `cxx` and `go` images contain workers built from the specific
 commit/branch we wish to test.
 
 You may also specify the repo where the source code is pulled from by specifying
-the repo, the following command would pull the source code from a forked repo
-to build `cxx` and `go` images.
+the repo. The following command pulls the source code from forked repos
+`${USER}/grpc` and `${USER}/grpc-go` to build cxx and go images
 
 ```shell
 bin/prepare_prebuilt_workers \
-     -l cxx:<user-name>/grpc:master \
-     -l go:<user-name>/grpc-go:master \
+     -l cxx:${USER}/grpc:master \
+     -l go:${USER}/grpc-go:master \
      -p "${image_registry}" \
      -t "${tag}" \
      -r containers/pre_built_workers
