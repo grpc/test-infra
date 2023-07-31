@@ -49,6 +49,18 @@ here:
 [psmgrafanaconfig]: config/grafana/dashboards/psm/
 [replicatorconfig]: config/postgres_replicator/default/config.yaml
 
+## Cloud build
+
+The continuous integration dashboard is built and deployed with [Cloud
+Build][cloudbuild], using the configuration specified in
+[cloudbuild.yaml](cloudbuild.yaml).
+
+The use of Cloud Build allows the dashboard to be redeployed automatically on
+configuration changes. In addition, it allows passwords such as `PG_PASS` and
+`GRAFANA_ADMIN_PASS` to be stored as secrets in the cloud project.
+
+[cloudbuild]: https://cloud.google.com/build
+
 ## Manual build
 
 Several environment variables must be set before building and deploying. The
@@ -77,15 +89,3 @@ Grafana dashboard are then created with the following commands:
 make configure-replicator
 make configure-grafana
 ```
-
-## Cloud build
-
-The continuous integration dashboard is built and deployed with [Cloud
-Build][cloudbuild], using the configuration specified in
-[cloudbuild.yaml](cloudbuild.yaml).
-
-The use of Cloud Build allows the dashboard to be redeployed automatically on
-configuration changes. In addition, it allows passwords such as `PG_PASS` and
-`GRAFANA_ADMIN_PASS` to be stored as secrets in the cloud project.
-
-[cloudbuild]: https://cloud.google.com/build
