@@ -16,3 +16,13 @@ transfer:
       dateField: metadata.created
     - name: ci_master_results_32core
       dateField: metadata.created
+  - name: e2e_benchmark_cxx_experiments
+    tables:
+    - name: results_32core_event_engine_listener
+      dateField: metadata.created
+    - name: results_8core_event_engine_listener
+      dateField: metadata.created
+    - name: results_32core_work_stealing
+      dateField: metadata.created
+    - name: results_8core_work_stealing
+      dateField: metadata.created
