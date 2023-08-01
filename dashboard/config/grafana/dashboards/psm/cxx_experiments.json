@@ -66,15 +66,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -263,15 +263,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -457,15 +457,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -651,15 +651,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -843,15 +843,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -1035,15 +1035,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -1227,15 +1227,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -1419,15 +1419,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -1611,15 +1611,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -1803,15 +1803,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -1995,15 +1995,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -2187,15 +2187,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -2379,15 +2379,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -2571,15 +2571,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -2763,15 +2763,15 @@
         "seriesOverrides": [
           {
             "alias": "baseline",
-            "color": "#37872D"
+            "color": "#8AB8FF"
           },
           {
             "alias": "event_engine_listener",
-            "color": "#67cfde"
+            "color": "#FFEE52"
           },
           {
             "alias": "work_stealing",
-            "color": "#5794F2"
+            "color": "#E02F44"
           }
         ],
         "spaceLength": 10,
@@ -2921,7 +2921,7 @@
     },
     "timepicker": {},
     "timezone": "browser",
-    "title": "gRPC C++ Experiments: Performance Dashboard",
-    "uid": "hork-20230731",
+    "title": "gRPC-Core Experiments - Performance Dashboard",
+    "uid": "cxx_experiments",
     "version": 0
   }
