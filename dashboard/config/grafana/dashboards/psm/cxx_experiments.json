@@ -1,0 +1,4413 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "Language comparison of unary ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone). Secure connection is used.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_sync_unary_ping_pong_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_sync_to_async_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_sync_to_async_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_unary_ping_pong_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_unary_ping_pong_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "µs"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "hiddenSeries": false,
+        "id": 2,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:374",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:383",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:388",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:393",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:398",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:403",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "hide": false,
+            "metricColumn": "none",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n  (metadata->>'created')::timestamp AS time,\n  (scenario->>'name') AS metric,\n  MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM\n ci_master_results_8core\nWHERE\n $__timeFilter(metadata->>'created') AND\n scenario->>'name' IN (\n   'java_protobuf_unary_ping_pong_secure',\n   'ruby_protobuf_unary_ping_pong',\n   'node_to_node_protobuf_async_unary_ping_pong_secure',\n   'node_purejs_to_node_protobuf_async_unary_ping_pong_secure',\n   'csharp_protobuf_sync_to_async_unary_ping_pong',\n   'dotnet_protobuf_sync_to_async_unary_ping_pong',\n   'cpp_protobuf_sync_unary_ping_pong_secure',\n   'go_protobuf_sync_unary_ping_pong_secure',\n   'python_protobuf_sync_unary_ping_pong',\n   'netperf_tcp_rr'\n )\n \n GROUP BY\n     time, metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "servercpuusage"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "metadata->>'created'",
+            "timeColumnType": "float8",
+            "where": [
+              {
+                "name": "$__unixEpochFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure ping pong median latency - Language comparison (in microsec)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "$$hashKey": "object:126",
+            "format": "µs",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "$$hashKey": "object:127",
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "Language comparison of unary ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone) when running language-specific clients against a C++ server. Secure connection is used.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_to_cpp_protobuf_sync_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_to_cpp_protobuf_sync_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_sync_unary_ping_pong_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_to_cpp_protobuf_sync_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_to_cpp_protobuf_sync_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "μs"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 9
+        },
+        "hiddenSeries": false,
+        "id": 4,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:919",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:924",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:929",
+            "alias": "PHP Sync (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:934",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:939",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:944",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n    'csharp_to_cpp_protobuf_sync_unary_ping_pong',\n    'dotnet_to_cpp_protobuf_sync_unary_ping_pong',\n    'ruby_to_cpp_protobuf_sync_unary_ping_pong',\n    'cpp_protobuf_sync_unary_ping_pong_secure',\n    'python_to_cpp_protobuf_sync_unary_ping_pong',\n    'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong',\n    'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong',\n    'netperf_tcp_rr'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure ping pong median latency - Language-specific clients against C++ server (in microsec)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "μs",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "Language comparison of streaming ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone). Secure connection is used.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_streaming_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_streaming_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_streaming_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_streaming_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP 7 (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_ping_pong"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byType",
+                "options": "number"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "μs"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_streaming_ping_pong_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_streaming_ping_pong_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_streaming_ping_pong_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 18
+        },
+        "hiddenSeries": false,
+        "id": 8,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n    'cpp_protobuf_async_streaming_ping_pong_secure',\n    'csharp_protobuf_async_streaming_ping_pong',\n    'dotnet_protobuf_async_streaming_ping_pong',\n    'ruby_protobuf_sync_streaming_ping_pong',\n    'node_to_node_protobuf_async_streaming_ping_pong_secure',\n    'node_purejs_to_node_protobuf_async_streaming_ping_pong_secure',\n    'java_protobuf_async_streaming_ping_pong_secure',\n    'go_protobuf_sync_streaming_ping_pong_secure',\n    'python_protobuf_sync_streaming_ping_pong',\n    'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_ping_pong',\n    'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_ping_pong',\n    'netperf_tcp_rr'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Streaming secure ping pong median latency (in microsec)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "$$hashKey": "object:1707",
+            "format": "μs",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "$$hashKey": "object:1708",
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "Throughput as number of unary RPCs per second between two GKE nodes in the same cluster (each node resides on a separate 8core VM, both VMs are located in the same compute zone). Secure connection is used.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 0,
+          "y": 27
+        },
+        "hiddenSeries": false,
+        "id": 26,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:3474",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:3479",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:3484",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:3489",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:3494",
+            "alias": "PHP Sync (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:3499",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:3504",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:3509",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure throughput QPS (8 core client to 8 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "$$hashKey": "object:3544",
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "$$hashKey": "object:3545",
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 8,
+          "y": 27
+        },
+        "hiddenSeries": false,
+        "id": 13,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure server CPU (8 core client to 8 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 16,
+          "y": 27
+        },
+        "hiddenSeries": false,
+        "id": 14,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure client CPU (8 core client to 8 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "Throughput as streaming ping-pong operations per second between two GKE nodes in the same cluster (each node resides on a separate 8core VM, both VMs are located in the same compute zone). Secure connection is used.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 0,
+          "y": 36
+        },
+        "hiddenSeries": false,
+        "id": 6,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Streaming secure throughput QPS (8 core client to 8 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 8,
+          "y": 36
+        },
+        "hiddenSeries": false,
+        "id": 19,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Streaming secure server CPU (8 core client to 8 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 16,
+          "y": 36
+        },
+        "hiddenSeries": false,
+        "id": 20,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Streaming secure client CPU (8 core client to 8 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "Throughput as number of unary RPCs per second between two GKE nodes in the same cluster (each node resides on a separate 32core VM, both VMs are located in the same compute zone). Secure connection is used.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 0,
+          "y": 45
+        },
+        "hiddenSeries": false,
+        "id": 15,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure throughput QPS (32 core client to 32 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 8,
+          "y": 45
+        },
+        "hiddenSeries": false,
+        "id": 21,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure server CPU (32 core client to 32 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 16,
+          "y": 45
+        },
+        "hiddenSeries": false,
+        "id": 17,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_qps_unconstrained_secure',\n     'java_protobuf_async_unary_qps_unconstrained_secure',\n     'csharp_protobuf_async_unary_qps_unconstrained',\n     'dotnet_protobuf_async_unary_qps_unconstrained',\n     'node_protobuf_unary_qps_unconstrained',\n     'ruby_protobuf_sync_unary_qps_unconstrained',\n     'python_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained',\n     'go_protobuf_sync_unary_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure client CPU (32 core client to 32 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "Throughput as streaming ping-pong operations per second between two GKE nodes in the same cluster (each node resides on a separate 32core VM, both VMs are located in the same compute zone). Secure connection is used.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 0,
+          "y": 54
+        },
+        "hiddenSeries": false,
+        "id": 22,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Streaming secure throughput QPS (32 core client to 32 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 8,
+          "y": 54
+        },
+        "hiddenSeries": false,
+        "id": 23,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Streaming secure server CPU (32 core client to 32 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_streaming_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_streaming_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 16,
+          "y": 54
+        },
+        "hiddenSeries": false,
+        "id": 24,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM ci_master_results_32core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_streaming_qps_unconstrained_secure',\n     'java_protobuf_async_streaming_qps_unconstrained_secure',\n     'csharp_protobuf_async_streaming_qps_unconstrained',\n     'dotnet_protobuf_async_streaming_qps_unconstrained',\n     'node_protobuf_streaming_qps_unconstrained',\n     'ruby_protobuf_sync_streaming_qps_unconstrained',\n     'python_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_c_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'php7_protobuf_php_extension_to_cpp_protobuf_sync_streaming_qps_unconstrained',\n     'go_protobuf_sync_streaming_qps_unconstrained_secure'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Streaming secure client CPU (32 core client to 32 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      },
+      {
+        "aliasColors": {},
+        "bars": false,
+        "dashLength": 10,
+        "dashes": false,
+        "datasource": "Postgres",
+        "description": "Throughput as number of unary RPCs per second between two GKE nodes in the same cluster (each node resides on a separate VM, but both VMs are located in the same compute zone). Secure connection is used. Both request & response are 1MB large.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "python_protobuf_sync_unary_ping_pong_1MB"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Python"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ruby_protobuf_unary_ping_pong_1MB"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Ruby"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf php)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_qps_unconstrained"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "PHP Sync (protobuf c)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "cpp_protobuf_async_unary_ping_pong_secure_1MB"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C++"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "go_protobuf_sync_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Go"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "java_protobuf_async_unary_qps_unconstrained_secure"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Java"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "csharp_protobuf_async_unary_ping_pong_1MB"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (Grpc.Core)"
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "dotnet_protobuf_async_unary_ping_pong_1MB"
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "C# (grpc-dotnet)"
+                }
+              ]
+            }
+          ]
+        },
+        "fill": 0,
+        "fillGradient": 0,
+        "gridPos": {
+          "h": 9,
+          "w": 24,
+          "x": 0,
+          "y": 63
+        },
+        "hiddenSeries": false,
+        "id": 25,
+        "legend": {
+          "alignAsTable": true,
+          "avg": false,
+          "current": false,
+          "max": false,
+          "min": false,
+          "rightSide": true,
+          "show": true,
+          "total": false,
+          "values": false
+        },
+        "lines": true,
+        "linewidth": 1,
+        "nullPointMode": "null",
+        "options": {
+          "alertThreshold": true
+        },
+        "percentage": false,
+        "pluginVersion": "7.5.5",
+        "pointradius": 2,
+        "points": false,
+        "renderer": "flot",
+        "seriesOverrides": [
+          {
+            "$$hashKey": "object:1754",
+            "alias": "C++",
+            "color": "rgb(115, 105, 105)"
+          },
+          {
+            "$$hashKey": "object:1759",
+            "alias": "C# (Grpc.Core)",
+            "color": "#73BF69"
+          },
+          {
+            "alias": "C# (grpc-dotnet)",
+            "color": "#37872D"
+          },
+          {
+            "$$hashKey": "object:1764",
+            "alias": "Go",
+            "color": "#67cfde"
+          },
+          {
+            "$$hashKey": "object:1791",
+            "alias": "Java",
+            "color": "#5794F2"
+          },
+          {
+            "$$hashKey": "object:1796",
+            "alias": "PHP 7 (protobuf php)",
+            "color": "#DEB6F2"
+          },
+          {
+            "$$hashKey": "object:1823",
+            "alias": "PHP Sync (protobuf c)",
+            "color": "#8F3BB8"
+          },
+          {
+            "$$hashKey": "object:1877",
+            "alias": "Python",
+            "color": "#FADE2A"
+          },
+          {
+            "$$hashKey": "object:1882",
+            "alias": "Ruby",
+            "color": "#F2495C"
+          }
+        ],
+        "spaceLength": 10,
+        "stack": false,
+        "steppedLine": false,
+        "targets": [
+          {
+            "format": "time_series",
+            "group": [],
+            "metricColumn": "scenario",
+            "queryType": "randomWalk",
+            "rawQuery": true,
+            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    scenario->>'name' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM ci_master_results_8core\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' IN (\n     'cpp_protobuf_async_unary_ping_pong_secure_1MB',\n     'csharp_protobuf_async_unary_ping_pong_1MB',\n     'dotnet_protobuf_async_unary_ping_pong_1MB',\n     'python_protobuf_sync_unary_ping_pong_1MB',\n     'ruby_protobuf_unary_ping_pong_1MB',\n     'node_protobuf_unary_ping_pong_1MB'\n  )\n\nGROUP BY\n  \"time\", metric;",
+            "refId": "A",
+            "select": [
+              [
+                {
+                  "params": [
+                    "value"
+                  ],
+                  "type": "column"
+                }
+              ]
+            ],
+            "table": "ci_master_results_8core",
+            "timeColumn": "date",
+            "timeColumnType": "timestamptz",
+            "where": [
+              {
+                "name": "$__timeFilter",
+                "params": [],
+                "type": "macro"
+              }
+            ]
+          }
+        ],
+        "thresholds": [],
+        "timeFrom": null,
+        "timeRegions": [],
+        "timeShift": null,
+        "title": "Unary secure throughput QPS with 1MB message (8 core client to 8 core server)",
+        "tooltip": {
+          "shared": false,
+          "sort": 0,
+          "value_type": "individual"
+        },
+        "type": "graph",
+        "xaxis": {
+          "buckets": null,
+          "mode": "time",
+          "name": null,
+          "show": true,
+          "values": []
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          },
+          {
+            "format": "short",
+            "label": null,
+            "logBase": 1,
+            "max": null,
+            "min": null,
+            "show": true
+          }
+        ],
+        "yaxis": {
+          "align": false,
+          "alignLevel": null
+        }
+      }
+    ],
+    "refresh": false,
+    "schemaVersion": 27,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-14d",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "gRPC Performance Multi-language on GKE (@upstream/master)",
+    "uid": "18sWlbd7z",
+    "version": 9
+  }
