@@ -2922,6 +2922,6 @@
     "timepicker": {},
     "timezone": "browser",
     "title": "gRPC-Core Experiments - Performance Dashboard",
-    "uid": "cxx_experiments",
+    "uid": "cxx-experiments",
     "version": 0
   }
