@@ -6,12 +6,12 @@ kind: LoadTest
 metadata:
   annotations:
     pool: ${workers_pool}
-    scenario: node_to_node_generic_async_streaming_ping_pong_secure
+    scenario: node_purejs_to_node_generic_async_streaming_ping_pong_secure
     uniquifier: prebuilt
   labels:
     language: node
     prefix: examples
-  name: examples-node-to-node-generic-async-streaming-ping-pong-secure-prebuilt
+  name: examples-node-purejs-to-node-generic-async-streaming-ping-pong-secure-prebuilt
 spec:
   clients:
   - language: node
@@ -40,7 +40,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "node_to_node_generic_async_streaming_ping_pong_secure",
+        "name": "node_purejs_to_node_generic_async_streaming_ping_pong_secure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
