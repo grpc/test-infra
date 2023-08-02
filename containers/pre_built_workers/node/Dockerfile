@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:10-buster
+FROM node:18-bookworm
 
 RUN mkdir -p /pre
 WORKDIR /pre
@@ -45,15 +45,12 @@ ADD pkg_config.json /pre
 RUN pkg -c pkg_config.json ./test/performance/worker.js
 
 # Copy node modules to a new image
-FROM debian:buster
+FROM debian:bookworm
 
 RUN mkdir -p /pre
 WORKDIR /execute
 
 COPY --from=0 /pre/worker-linux /execute
-COPY --from=0 /pre/test/fixtures/native_native.js /execute/test/fixtures/native_native.js
 COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
-
-ENV NODE_OPTIONS='--require /execute/test/fixtures/native_native.js'
 
 CMD ["bash"]
