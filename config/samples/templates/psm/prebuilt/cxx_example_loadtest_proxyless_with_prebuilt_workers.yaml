@@ -105,7 +105,7 @@ spec:
             }
           ]
         },
-        "warmup_seconds": 5,
+        "warmup_seconds": 30,
         "benchmark_seconds": 30
       }
     }
