@@ -24,7 +24,7 @@
         "dashLength": 10,
         "dashes": false,
         "datasource": "Postgres",
-        "description": "Language comparison of unary ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone). Secure connection is used.",
+        "description": "Comparison of unary ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone). Secure connection is used.",
         "fieldConfig": {
           "defaults": {
             "unit": "short"
@@ -71,10 +71,6 @@
           {
             "alias": "event_engine_listener",
             "color": "#FFEE52"
-          },
-          {
-            "alias": "work_stealing",
-            "color": "#E02F44"
           },
           {
             "alias": "event_engine_listener,work_stealing",
@@ -152,36 +148,6 @@
             "metricColumn": "none",
             "queryType": "randomWalk",
             "rawQuery": true,
-            "rawSql": "SELECT\n  (metadata->>'created')::timestamp AS time,\n  'work_stealing' AS metric,\n  MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM\n results_8core_work_stealing\nWHERE\n $__timeFilter(metadata->>'created') AND\n scenario->>'name' = 'cpp_protobuf_sync_unary_ping_pong_secure'\n GROUP BY\n     time, metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "servercpuusage"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
-            "timeColumn": "metadata->>'created'",
-            "timeColumnType": "float8",
-            "where": [
-              {
-                "name": "$__unixEpochFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "hide": false,
-            "metricColumn": "none",
-            "queryType": "randomWalk",
-            "rawQuery": true,
             "rawSql": "SELECT\n  (metadata->>'created')::timestamp AS time,\n  'event_engine_listener,work_stealing' AS metric,\n  MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM\n results_8core_event_engine_listener__work_stealing\nWHERE\n $__timeFilter(metadata->>'created') AND\n scenario->>'name' = 'cpp_protobuf_sync_unary_ping_pong_secure'\n GROUP BY\n     time, metric;",
             "refId": "event_engine_listener,work_stealing",
             "select": [
@@ -210,7 +176,7 @@
         "timeFrom": null,
         "timeRegions": [],
         "timeShift": null,
-        "title": "Unary secure ping pong median latency - Language comparison (in microsec)",
+        "title": "Unary secure ping pong median latency (in microsec)",
         "tooltip": {
           "shared": false,
           "sort": 0,
@@ -255,7 +221,7 @@
         "dashLength": 10,
         "dashes": false,
         "datasource": "Postgres",
-        "description": "Language comparison of streaming ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone). Secure connection is used.",
+        "description": "Comparison of streaming ping pong between two GKE nodes in the same cluster (each node resides on a separate VM, both VMs are located in the same compute zone). Secure connection is used.",
         "fieldConfig": {
           "defaults": {
             "unit": "short"
@@ -302,10 +268,6 @@
           {
             "alias": "event_engine_listener",
             "color": "#FFEE52"
-          },
-          {
-            "alias": "work_stealing",
-            "color": "#E02F44"
           },
           {
             "alias": "event_engine_listener,work_stealing",
@@ -364,35 +326,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(CAST(summary->>'latency50' AS DOUBLE PRECISION) / 1000) as latency_us\nFROM results_8core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_streaming_ping_pong_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -531,10 +464,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -591,35 +520,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM results_8core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_unary_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -758,10 +658,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -818,35 +714,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM results_8core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_unary_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -983,10 +850,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -1043,35 +906,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM results_8core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_unary_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -1208,10 +1042,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -1268,35 +1098,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM results_8core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_streaming_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -1433,10 +1234,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -1493,35 +1290,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM results_8core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_streaming_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -1658,10 +1426,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -1718,35 +1482,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM results_8core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_streaming_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -1883,10 +1618,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -1943,35 +1674,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM results_32core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_unary_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -2108,10 +1810,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -2168,35 +1866,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM results_32core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_unary_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -2333,10 +2002,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -2393,35 +2058,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM results_32core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_unary_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -2558,10 +2194,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -2618,35 +2250,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM results_32core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_streaming_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -2783,10 +2386,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -2843,35 +2442,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(ROUND(CAST(summary->>'serverSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'serverUserTime' AS DOUBLE PRECISION))) / 100 as server_cpu\nFROM results_32core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_streaming_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -3008,10 +2578,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -3068,35 +2634,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MAX(ROUND(CAST(summary->>'clientSystemTime' AS DOUBLE PRECISION) + CAST(summary->>'clientUserTime' AS DOUBLE PRECISION)) / 100) as client_cpu\nFROM results_32core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_streaming_qps_unconstrained_secure'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
@@ -3233,10 +2770,6 @@
             "color": "#FFEE52"
           },
           {
-            "alias": "work_stealing",
-            "color": "#E02F44"
-          },
-          {
             "alias": "event_engine_listener,work_stealing",
             "color": "#96D98D"
           }
@@ -3293,35 +2826,6 @@
               ]
             ],
             "table": "results_8core_event_engine_listener",
-            "timeColumn": "date",
-            "timeColumnType": "timestamptz",
-            "where": [
-              {
-                "name": "$__timeFilter",
-                "params": [],
-                "type": "macro"
-              }
-            ]
-          },
-          {
-            "format": "time_series",
-            "group": [],
-            "metricColumn": "scenario",
-            "queryType": "randomWalk",
-            "rawQuery": true,
-            "rawSql": "SELECT\n    (metadata->>'created')::timestamp AS \"time\",\n    'work_stealing' as metric,\n    MIN(ROUND(CAST(summary->>'qps' AS DOUBLE PRECISION))) as throughput_qps\nFROM results_8core_work_stealing\nWHERE\n  $__timeFilter(metadata->>'created') AND\n  scenario->>'name' = 'cpp_protobuf_async_unary_ping_pong_secure_1MB'\nGROUP BY\n  \"time\", metric;",
-            "refId": "work_stealing",
-            "select": [
-              [
-                {
-                  "params": [
-                    "value"
-                  ],
-                  "type": "column"
-                }
-              ]
-            ],
-            "table": "results_8core_work_stealing",
             "timeColumn": "date",
             "timeColumnType": "timestamptz",
             "where": [
