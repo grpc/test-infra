@@ -93,9 +93,6 @@ RUN pip3 install \
 COPY . /src/driver
 RUN chmod a+x /src/driver/run.sh
 
-# TODO(paulosjca): Remove this when prometheus.py is executable at driver commit.
-RUN chmod a+x /src/code/tools/run_tests/performance/prometheus.py
-
 ENV QPS_WORKERS=""
 ENV QPS_WORKERS_FILE=""
 ENV SCENARIOS_FILE="/src/driver/example.json"
