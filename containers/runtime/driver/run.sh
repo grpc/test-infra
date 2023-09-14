@@ -28,6 +28,7 @@ fi
   --scenario_result_file=scenario_result.json --qps_server_target_override="${SERVER_TARGET_OVERRIDE}"
 
 /src/code/bazel-bin/test/cpp/qps/qps_json_driver --quit=true
+declare -r PROMETHEUS_QUERY_RESULT_FILE=prometheus_query_result.json
 
 if [ -n "${SERVER_TARGET_OVERRIDE}" ] || [ -n "${ENABLE_PROMETHEUS}" ]; then
   if  [ "$(dig +short -t srv prometheus.test-infra-system.svc.cluster.local)" ]; then
@@ -35,7 +36,7 @@ if [ -n "${SERVER_TARGET_OVERRIDE}" ] || [ -n "${ENABLE_PROMETHEUS}" ]; then
       --url=http://prometheus.test-infra-system.svc.cluster.local:9090 \
       --pod_type=clients --container_name=main \
       --container_name=sidecar --delay_seconds=20 \
-      --export_file_name=prometheus_query_results.json
+      --export_file_name="${PROMETHEUS_QUERY_RESULT_FILE}"
   fi
 fi
 
@@ -46,5 +47,6 @@ if [ -n "${BQ_RESULT_TABLE}" ]; then
   if [ -r "${NODE_INFO_OUTPUT_FILE}" ]; then
     cp "${NODE_INFO_OUTPUT_FILE}" node_info.json
   fi
-  /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="${BQ_RESULT_TABLE}"
+  /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="${BQ_RESULT_TABLE}" \
+  --prometheus_query_results_to_upload="${PROMETHEUS_QUERY_RESULT_FILE}"
 fi
