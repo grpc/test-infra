@@ -35,7 +35,7 @@ if [ -n "${SERVER_TARGET_OVERRIDE}" ] || [ -n "${ENABLE_PROMETHEUS}" ]; then
       --url=http://prometheus.test-infra-system.svc.cluster.local:9090 \
       --pod_type=clients --container_name=main \
       --container_name=sidecar --delay_seconds=20 \
-      --export_file_name=prometheus_query_results.json
+      --export_file_name=prometheus_query_result.json
   fi
 fi
 
@@ -46,5 +46,6 @@ if [ -n "${BQ_RESULT_TABLE}" ]; then
   if [ -r "${NODE_INFO_OUTPUT_FILE}" ]; then
     cp "${NODE_INFO_OUTPUT_FILE}" node_info.json
   fi
-  /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="${BQ_RESULT_TABLE}"
+  /src/code/tools/run_tests/performance/bq_upload_result.py --bq_result_table="${BQ_RESULT_TABLE}" \
+  --prometheus_query_results_to_upload=prometheus_query_result.json
 fi
