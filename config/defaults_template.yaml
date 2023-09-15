@@ -27,7 +27,7 @@ languages:
   runImage: "{{ .RunImagePrefix }}cxx:{{ .Version }}"
 
 - language: go
-  buildImage: golang:1.17
+  buildImage: golang:1.20
   runImage: "{{ .RunImagePrefix }}go:{{ .Version }}"
 
 - language: java
