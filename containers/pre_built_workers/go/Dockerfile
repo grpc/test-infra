@@ -35,11 +35,11 @@ RUN git submodule update --init
 RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
 RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
-# Build go excutables
+# Build go executables
 RUN go build -o /executable/bin/worker ./benchmark/worker
 
-# Copy go excuatable to a new image
-FROM debian:buster
+# Copy go executable to a new image
+FROM debian:bookworm
 
 RUN mkdir -p /executable
 WORKDIR /executable
