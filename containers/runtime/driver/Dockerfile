@@ -52,6 +52,8 @@ WORKDIR /src/workspace
 COPY --from=1 /tmp/build_output /tmp/build_output
 COPY --from=1 /src/code /src/code
 
+RUN apt-get update && apt-get upgrade -y
+
 RUN apt-get update && apt-get install -y \
   autoconf \
   build-essential \
