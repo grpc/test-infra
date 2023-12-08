@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-preview-bookworm-slim
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace

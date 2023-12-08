@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-preview-bookworm-slim
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim
 
 RUN mkdir -p /pre
 WORKDIR /pre
@@ -40,7 +40,7 @@ RUN dotnet publish -c Release -o qps_worker perf/benchmarkapps/QpsWorker/
 
 # Note that the QpsWorker built by "dotnet publish" in the previous step needs to be runnable
 # with the runtime image below.
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-preview-bookworm-slim
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-bookworm-slim
 
 # Enable dynamic profile-guided optimization
 # https://gist.github.com/EgorBo/dc181796683da3d905a5295bfd3dd95b
