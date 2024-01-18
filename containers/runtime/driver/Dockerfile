@@ -34,7 +34,7 @@ RUN git clone https://github.com/$REPOSITORY.git .
 RUN git checkout -f $GITREF
 
 # See https://github.com/grpc/grpc/blob/master/tools/dockerfile/README.md
-FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:0f909e43012a80faa92e07b7871268841ce56ebc@sha256:1118150d9d9479787165fff49f660a3dc633f1c57604305460172fc1916aa022
+FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:cacad91746cd598d8756de89b912be291de1f019@sha256:32bde2dcb2087f2a32afab59e4dfedf7e8c76a52c69881f63a239d311f0e5ecf
 
 COPY --from=0 /src/code /src/code
 RUN mkdir -p /tmp/build_output
