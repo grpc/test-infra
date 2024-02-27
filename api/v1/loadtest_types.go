@@ -181,6 +181,8 @@ type Server struct {
 	// Run describes a list of run containers. The container for the test server is always
 	// the first container on the list.
 	Run []corev1.Container `json:"run"`
+
+	MetricsPort int32 `json:"metricsPort,omitempty"`
 }
 
 // Client defines a component that sends traffic to a server component.
@@ -235,6 +237,8 @@ type Client struct {
 	// Run describes a list of run containers. The container for the test client is always
 	// the first container on the list.
 	Run []corev1.Container `json:"run"`
+
+	MetricsPort int32 `json:"metricsPort,omitempty"`
 }
 
 // Results defines where and how test results and artifacts should be

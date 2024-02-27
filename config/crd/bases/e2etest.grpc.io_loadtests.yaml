@@ -232,6 +232,9 @@ spec:
                         image. If the user intends for the operator to clone and build
                         code, it must also manually set a build image."
                       type: string
+                    metricsPort:
+                      format: int32
+                      type: integer
                     name:
                       description: "Name is a string that distinguishes this client
                         from others in the test. Explicitly setting a name is recommended
@@ -2896,6 +2899,9 @@ spec:
                         image. If the user intends for the operator to clone and build
                         code, it must also manually set a build image."
                       type: string
+                    metricsPort:
+                      format: int32
+                      type: integer
                     name:
                       description: Name is a string that distinguishes this server
                         from others in the test. Since tests are currently limited
