@@ -388,7 +388,7 @@ var _ = Describe("PodBuilder", func() {
 				Expect(getNames(runContainer.Ports)).NotTo(ContainElement("metrics"))
 			})
 
-			It("does not expose the metrics port if not set", func() {
+			It("exposes the metrics port if set", func() {
 				client.Run = []corev1.Container{{}}
 				client.Run[0].Name = config.RunContainerName
 				client.Run[0].Command = []string{"go"}
