@@ -177,6 +177,14 @@ func (pb *PodBuilder) PodForClient(client *grpcv1.Client) (*corev1.Pod, error) {
 		ContainerPort: config.DriverPort,
 	})
 
+	if client.MetricsPort != 0 {
+		runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
+			Name:          "metrics",
+			Protocol:      corev1.ProtocolTCP,
+			ContainerPort: client.MetricsPort,
+		})
+	}
+
 	return pod, nil
 }
 
@@ -284,6 +292,14 @@ func (pb *PodBuilder) PodForServer(server *grpcv1.Server) (*corev1.Pod, error) {
 		Protocol:      corev1.ProtocolTCP,
 		ContainerPort: config.DriverPort,
 	})
+
+	if server.MetricsPort != 0 {
+		runContainer.Ports = append(runContainer.Ports, corev1.ContainerPort{
+			Name:          "metrics",
+			Protocol:      corev1.ProtocolTCP,
+			ContainerPort: server.MetricsPort,
+		})
+	}
 
 	return pod, nil
 }
