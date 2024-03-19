@@ -1,5 +1,5 @@
 /*
-Copyright 2020 gRPC authors.
+Copyright 2024 gRPC authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,29 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package controller
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	ctrl "sigs.k8s.io/controller-runtime"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
@@ -225,9 +224,7 @@ func newLoadTest() *grpcv1.LoadTest {
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Controller Suite",
-		[]Reporter{printer.NewlineReporter{}})
+	RunSpecs(t, "Controller Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -238,49 +235,39 @@ var _ = BeforeSuite(func() {
 	SetDefaultConsistentlyDuration(200 * time.Millisecond)
 
 	By("bootstrapping test environment")
-	var err error
 	defaults = newDefaults()
 	testEnv = &envtest.Environment{
-		CRDDirectoryPaths: []string{
-			filepath.Join("..", "config", "crd", "bases"),
-		},
+		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
+		ErrorIfCRDPathMissing: true,
+
+		// The BinaryAssetsDirectory is only required if you want to run the tests directly
+		// without call the makefile target test. If not informed it will look for the
+		// default path defined in controller-runtime which is /usr/local/kubebuilder/.
+		// Note that you must have the required binaries setup under the bin directory to perform
+		// the tests directly. When we run make test it will be setup and used automatically.
+		BinaryAssetsDirectory: filepath.Join("..", "..", "bin", "k8s",
+			fmt.Sprintf("1.29.0-%s-%s", runtime.GOOS, runtime.GOARCH)),
 	}
 
+	var err error
+	// cfg is defined in this file globally.
 	cfg, err = testEnv.Start()
-	Expect(err).ToNot(HaveOccurred())
-	Expect(cfg).ToNot(BeNil())
+	Expect(err).NotTo(HaveOccurred())
+	Expect(cfg).NotTo(BeNil())
 
 	err = grpcv1.AddToScheme(scheme.Scheme)
-	Expect(err).ToNot(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
 
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme:             scheme.Scheme,
-		MetricsBindAddress: ":3777",
-		Port:               9445,
-	})
-	Expect(err).ToNot(HaveOccurred())
+	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	Expect(err).NotTo(HaveOccurred())
+	Expect(k8sClient).NotTo(BeNil())
 
-	k8sClient = k8sManager.GetClient()
-	Expect(k8sClient).ToNot(BeNil())
-
-	reconciler := &LoadTestReconciler{
-		Client:   k8sClient,
-		Scheme:   k8sManager.GetScheme(),
-		Defaults: defaults,
-	}
-	err = reconciler.SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
-
-	go func() {
-		err := k8sManager.Start(context.Background())
-		Expect(err).ToNot(HaveOccurred())
-	}()
-}, 60)
+})
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	err := testEnv.Stop()
-	Expect(err).ToNot(HaveOccurred())
-}, 60)
+	Expect(err).NotTo(HaveOccurred())
+})

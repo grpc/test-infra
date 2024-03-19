@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	endpoint "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
@@ -66,7 +66,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 			}})
 		Expect(err).ToNot(HaveOccurred())
 
-		originalConfig = customSnapshot{endpointOnly}
+		originalConfig = customSnapshot{*endpointOnly}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -97,7 +97,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 			}})
 		Expect(err).ToNot(HaveOccurred())
 
-		originalConfig = customSnapshot{routeConfigOnly}
+		originalConfig = customSnapshot{*routeConfigOnly}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -128,7 +128,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 			}})
 		Expect(err).ToNot(HaveOccurred())
 
-		originalConfig = customSnapshot{clusterConfigOnly}
+		originalConfig = customSnapshot{*clusterConfigOnly}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -164,7 +164,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 			}})
 		Expect(err).ToNot(HaveOccurred())
 
-		originalConfig = customSnapshot{listenerOnly}
+		originalConfig = customSnapshot{*listenerOnly}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -208,7 +208,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 			}})
 		Expect(err).ToNot(HaveOccurred())
 
-		originalConfig = customSnapshot{runtimeConfigOnly}
+		originalConfig = customSnapshot{*runtimeConfigOnly}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -245,7 +245,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 		})
 		Expect(err).ToNot(HaveOccurred())
 
-		originalConfig = customSnapshot{secretConfigOnly}
+		originalConfig = customSnapshot{*secretConfigOnly}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -277,7 +277,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 			}})
 		Expect(err).ToNot(HaveOccurred())
 
-		originalConfig = customSnapshot{extensionConfigOnly}
+		originalConfig = customSnapshot{*extensionConfigOnly}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -303,13 +303,13 @@ var _ = Describe("config marshal and unmarshal", func() {
 		scopedRouteConfigOnly, err := cache.NewSnapshotWithTTLs(currentVersion, map[resource.Type][]types.ResourceWithTTL{
 			currentResourceType: {
 				types.ResourceWithTTL{
-					Resource: testres.MakeScopedRoute("scopedRouteName", testRouteName, []string{"1.2.3.4"}),
+					Resource: testres.MakeScopedRouteConfig("scopedRouteName", testRouteName, []string{"1.2.3.4"}),
 					TTL:      &testTTL,
 				},
 			}})
 		Expect(err).ToNot(HaveOccurred())
 
-		originalConfig = customSnapshot{scopedRouteConfigOnly}
+		originalConfig = customSnapshot{*scopedRouteConfigOnly}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -340,7 +340,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 				resource.EndpointType: {makeEndpoint(testEndpointName, endpoints[0].TestUpstreamHost, endpoints[0].TestUpstreamPort)},
 			})
 
-		originalConfig = customSnapshot{fullSet}
+		originalConfig = customSnapshot{*fullSet}
 		marshalConfig, err := json.Marshal(originalConfig)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -355,7 +355,7 @@ var _ = Describe("config marshal and unmarshal", func() {
 })
 var _ = Describe("Update Endpoint", func() {
 
-	var snap cache.Snapshot
+	var snap *cache.Snapshot
 	var endpoints []TestEndpoint
 
 	currentVersion := "testVersion"
@@ -388,7 +388,7 @@ var _ = Describe("Update Endpoint", func() {
 			TestUpstreamPort: 2,
 		}}
 
-		err := UpdateEndpoint(&snap, endpoints)
+		err := UpdateEndpoint(snap, endpoints)
 
 		Expect(err).To(HaveOccurred())
 	})
@@ -398,7 +398,7 @@ var _ = Describe("Update Endpoint", func() {
 			TestUpstreamPort: uint32(1),
 		}}
 
-		err := UpdateEndpoint(&snap, endpoints)
+		err := UpdateEndpoint(snap, endpoints)
 
 		endpointResource := snap.Resources[int(cache.GetResponseType(resource.EndpointType))].Items[testEndpointName].Resource
 		endpointData, err := protojson.Marshal(endpointResource)
@@ -414,7 +414,7 @@ var _ = Describe("Update Endpoint", func() {
 })
 
 var _ = Describe("SocketListenerOnly", func() {
-	var snap cache.Snapshot
+	var snap *cache.Snapshot
 
 	currentVersion := "testVersion"
 	testServiceClusterName := "defaultTestServiceClusterName"
@@ -438,7 +438,7 @@ var _ = Describe("SocketListenerOnly", func() {
 			})
 	})
 	It("leaves only the socket listeners", func() {
-		err := IncludeSocketListenerOnly(&snap)
+		err := IncludeSocketListenerOnly(snap)
 		Expect(err).ToNot(HaveOccurred())
 
 		_, grpcListenerExist := snap.Resources[int(cache.GetResponseType(resource.ListenerType))].Items[testGrpcListenerName]
@@ -451,7 +451,7 @@ var _ = Describe("SocketListenerOnly", func() {
 })
 
 var _ = Describe("ConstructProxylessTestTarget", func() {
-	var snap cache.Snapshot
+	var snap *cache.Snapshot
 
 	currentVersion := "testVersion"
 	testServiceClusterName := "defaultTestServiceClusterName"
@@ -475,7 +475,7 @@ var _ = Describe("ConstructProxylessTestTarget", func() {
 			})
 	})
 	It("finds the proxyless test server target ", func() {
-		target, err := ConstructProxylessTestTarget(&snap)
+		target, err := ConstructProxylessTestTarget(snap)
 
 		Expect(err).ToNot(HaveOccurred())
 
@@ -486,7 +486,7 @@ var _ = Describe("ConstructProxylessTestTarget", func() {
 })
 
 var _ = Describe("ConstructProxiedTestTarget", func() {
-	var snap cache.Snapshot
+	var snap *cache.Snapshot
 
 	currentVersion := "testVersion"
 	testServiceClusterName := "defaultTestServiceClusterName"
@@ -510,7 +510,7 @@ var _ = Describe("ConstructProxiedTestTarget", func() {
 			})
 	})
 	It("finds the proxied test server target ", func() {
-		target, err := ConstructProxiedTestTarget(&snap)
+		target, err := ConstructProxiedTestTarget(snap)
 		Expect(err).ToNot(HaveOccurred())
 
 		expected := "localhost:" + fmt.Sprint(testEnvoyListenerPort)

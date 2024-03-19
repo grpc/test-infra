@@ -1,4 +1,2 @@
 resources:
-- install-prometheus-operator.yaml
-- install-prometheus.yaml
-- servicemonitors.yaml
+- monitor.yaml

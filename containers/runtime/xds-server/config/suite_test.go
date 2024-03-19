@@ -23,9 +23,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	cluster "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
@@ -186,8 +185,5 @@ func makeEnvoyHTTPListener(testRouteName string, testEnvoyListenerName string, t
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
-
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"Config Suite",
-		[]Reporter{printer.NewlineReporter{}})
+	RunSpecs(t, "Config Suite")
 }

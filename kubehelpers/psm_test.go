@@ -14,7 +14,7 @@ limitations under the License.
 package kubehelpers
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"

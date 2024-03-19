@@ -17,7 +17,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -90,15 +89,15 @@ func main() {
 	// in xds server image to a shared volume between xds server and proxyless client at
 	// /bootstrap/bootstrap.json. From the root of the test-infra
 	// repo, the bootstrap file was originally stored in the path of
-	// contaners/runtime/xds/bootstrap.json, user can provide other path within
+	// containers/runtime/xds/bootstrap.json, user can provide other path within
 	// test-infra, any changes related to this requires building a new xds server image.
 	if pathToBootstrap != "" {
-		bootstrapBytes, err := ioutil.ReadFile(pathToBootstrap)
+		bootstrapBytes, err := os.ReadFile(pathToBootstrap)
 		if err != nil {
 			l.Errorf("fail to read bootstrap: %v", err)
 		}
 		//Copy all the contents to the desitination file
-		err = ioutil.WriteFile(fmt.Sprintf("%v/bootstrap.json", "/bootstrap"), bootstrapBytes, 0755)
+		err = os.WriteFile(fmt.Sprintf("%v/bootstrap.json", "/bootstrap"), bootstrapBytes, 0755)
 		if err != nil {
 			l.Errorf("fail to output bootstrap.json to /bootstrap: %v", err)
 		}
@@ -139,7 +138,7 @@ func main() {
 		l.Infof("will serve snapshot %+v", snapshot)
 
 		// Add the snapshot to the cache
-		if err := cache.SetSnapshot(context.Background(), nodeID, snapshot); err != nil {
+		if err := cache.SetSnapshot(context.Background(), nodeID, &snapshot); err != nil {
 			l.Errorf("snapshot error %q for %+v", err, snapshot)
 		}
 		ctx := context.Background()

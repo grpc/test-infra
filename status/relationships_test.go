@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
