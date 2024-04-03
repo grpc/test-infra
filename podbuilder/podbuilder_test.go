@@ -374,6 +374,36 @@ var _ = Describe("PodBuilder", func() {
 				Expect(getValue("driver", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(config.DriverPort))
 			})
 
+			It("does not expose the metrics port if not set", func() {
+				client.Run = []corev1.Container{{}}
+				client.Run[0].Name = config.RunContainerName
+				client.Run[0].Command = []string{"go"}
+				client.Run[0].Args = []string{"run", "main.go"}
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				Expect(getNames(runContainer.Ports)).NotTo(ContainElement("metrics"))
+			})
+
+			It("exposes the metrics port if set", func() {
+				client.Run = []corev1.Container{{}}
+				client.Run[0].Name = config.RunContainerName
+				client.Run[0].Command = []string{"go"}
+				client.Run[0].Args = []string{"run", "main.go"}
+				client.MetricsPort = 4242
+
+				pod, err := builder.PodForClient(client)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(pod.Spec.Containers).ToNot(BeEmpty())
+
+				runContainer := kubehelpers.ContainerForName(config.RunContainerName, pod.Spec.Containers)
+				Expect(getNames(runContainer.Ports)).To(ContainElement("metrics"))
+				Expect(getValue("metrics", "ContainerPort", runContainer.Ports)).To(BeEquivalentTo(client.MetricsPort))
+			})
+
 			It("attached the env to other run containers", func() {
 				pod, err := builder.PodForClient(client)
 				Expect(err).ToNot(HaveOccurred())
