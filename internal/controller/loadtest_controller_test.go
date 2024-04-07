@@ -77,7 +77,7 @@ func deleteTestPods(test *grpcv1.LoadTest) {
 	}
 	pod, err := builder.PodForDriver(test.Spec.Driver)
 	if err != nil {
-		k8sClient.Delete(context.Background(), pod)
+		_ = k8sClient.Delete(context.Background(), pod)
 	}
 }
 
@@ -119,7 +119,7 @@ var _ = Describe("LoadTest controller", func() {
 		Consistently(getTestStatus).Should(Equal(test.Status))
 	})
 
-	It("creates a scenarios ConfigMap", func() {
+	It("creates a scenarios ConfigMap", func(ctx SpecContext) {
 		Expect(k8sClient.Create(context.Background(), test)).To(Succeed())
 
 		type expectedFields struct {
@@ -128,9 +128,9 @@ var _ = Describe("LoadTest controller", func() {
 			scenariosJSON string
 			owner         string
 		}
-		getConfigMapFields := func() (expectedFields, error) {
+		getConfigMapFields := func(ctx SpecContext) (expectedFields, error) {
 			cfgMap := new(corev1.ConfigMap)
-			err := k8sClient.Get(context.Background(), namespacedName, cfgMap)
+			err := k8sClient.Get(ctx, namespacedName, cfgMap)
 
 			var owner string
 			if len(cfgMap.OwnerReferences) > 0 {
@@ -144,10 +144,10 @@ var _ = Describe("LoadTest controller", func() {
 			}, err
 		}
 
-		expectedScenario := "{\"scenarios\":{\"name\":\"scenariso-1\",\"server_config\":{\"port\":\"10010\",\"server_type\":\"ASYNC_GENERIC_SERVER\"}}}"
+		expectedScenario := "{\"scenarios\":{\"name\":\"scenario-1\",\"server_config\":{\"port\":\"10010\",\"server_type\":\"ASYNC_GENERIC_SERVER\"}}}"
 
 		By("checking that the ConfigMap was created correctly")
-		Eventually(getConfigMapFields).Should(Equal(expectedFields{
+		Eventually(getConfigMapFields(ctx)).Should(Equal(expectedFields{
 			name:          test.Name,
 			namespace:     test.Namespace,
 			scenariosJSON: expectedScenario,
@@ -822,7 +822,7 @@ var _ = Describe("LoadTest controller", func() {
 		}).ShouldNot(BeNil())
 
 		By("ensuring the test state becomes succeeded")
-		Eventually(func() (grpcv1.LoadTestState, error) {
+		Eventually(func(ctx SpecContext) (grpcv1.LoadTestState, error) {
 			fetchedTest := new(grpcv1.LoadTest)
 			if err := k8sClient.Get(context.Background(), namespacedName, fetchedTest); err != nil {
 				return grpcv1.Unknown, err

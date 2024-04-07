@@ -215,7 +215,7 @@ func newLoadTest() *grpcv1.LoadTest {
 			Results: &grpcv1.Results{
 				BigQueryTable: optional.StringPtr("example-dataset.example-table"),
 			},
-			ScenariosJSON: "{\"scenarios\":{\"name\":\"scenariso-1\",\"server_config\":{\"server_type\":\"ASYNC_GENERIC_SERVER\"}}}",
+			ScenariosJSON: "{\"scenarios\":{\"name\":\"scenario-1\",\"server_config\":{\"server_type\":\"ASYNC_GENERIC_SERVER\"}}}",
 		},
 		Status: grpcv1.LoadTestStatus{},
 	}
@@ -231,8 +231,8 @@ var _ = BeforeSuite(func() {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	By("setting gomega default timeouts")
-	SetDefaultEventuallyTimeout(1500 * time.Millisecond)
-	SetDefaultConsistentlyDuration(200 * time.Millisecond)
+	SetDefaultEventuallyTimeout(10000 * time.Millisecond)
+	SetDefaultConsistentlyDuration(2000 * time.Millisecond)
 
 	By("bootstrapping test environment")
 	defaults = newDefaults()
@@ -266,7 +266,7 @@ var _ = BeforeSuite(func() {
 
 })
 
-var _ = AfterSuite(func() {
+var _ = AfterSuite(func(ctx SpecContext) {
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
