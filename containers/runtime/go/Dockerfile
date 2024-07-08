@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.20
+FROM golang:1.22
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
