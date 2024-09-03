@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # See https://github.com/grpc/grpc/blob/master/tools/dockerfile/README.md
-FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:cacad91746cd598d8756de89b912be291de1f019@sha256:32bde2dcb2087f2a32afab59e4dfedf7e8c76a52c69881f63a239d311f0e5ecf
+FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:de71ae928884a4697890b8ff8eda4f7fe59abec2@sha256:be25af8c0e5faf39a585e7ddd657c4fd66513e4eba0ee0c687109b19ed462518
 
 RUN mkdir -p /source/code
 WORKDIR /source/code
@@ -43,7 +43,7 @@ RUN mkdir /executables
 RUN bazel --output_user_root=/executables build //test/cpp/qps:qps_worker --config opt
 
 # Copy executables to a new image
-FROM marketplace.gcr.io/google/debian11
+FROM us-docker.pkg.dev/grpc-testing/testing-images-public/cxx_debian11_x64:a9c5d062364adc836b4068cad93a3e448b25c37c@sha256:9f9285da21c1053ac715027e0cee66c20c70ebf016053328a4cee61ffd37e59b
 
 COPY --from=0 /source/code/bazel-bin/test/cpp/ /source/code/bazel-bin/test/cpp/
 COPY --from=0 /source/code/GRPC_GIT_COMMIT.txt /source/code/GRPC_GIT_COMMIT.txt
