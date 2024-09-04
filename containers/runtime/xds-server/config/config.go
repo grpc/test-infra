@@ -318,7 +318,7 @@ func GenerateSnapshotFromConfigFiles(defaultConfigPath string, userSuppliedConfi
 	}
 
 	// compare default config and user supplied config, if user have supplied
-	// the resouce the xDS server will server user supplied config, otherwise
+	// the resource the xDS server will server user supplied config, otherwise
 	// the default config will be supplied
 	var resources *[types.UnknownType]cache.Resources
 	snap := customSnapshot{

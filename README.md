@@ -1,78 +1,114 @@
-# test-infra - gRPC test infrastructure
+# test-infra
+// TODO(user): Add simple overview of use/purpose
 
-This repository contains code for systems that test [gRPC][grpc] which are
-versioned, released or deployed separately from the [gRPC Core][grpccore]
-codebase.
+## Description
+// TODO(user): An in-depth paragraph about your project and overview of use
 
-For an overview, see
-[blog post](https://grpc.io/blog/performance-benchmarks-gke/).
+## Getting Started
 
-[grpc]: https://grpc.io
-[grpccore]: https://github.com/grpc/grpc
+### Prerequisites
+- go version v1.21.0+
+- docker version 17.03+.
+- kubectl version v1.11.3+.
+- Access to a Kubernetes v1.11.3+ cluster.
 
-## gRPC OSS benchmarks
+### To Deploy on the cluster
+**Build and push your image to the location specified by `IMG`:**
 
-gRPC OSS benchmarks are a collection of libraries and executables to schedule,
-run and monitor [gRPC performance benchmarking][benchmarking] tests on a
-Kubernetes cluster.
+```sh
+make docker-build docker-push IMG=<some-registry>/test-infra:tag
+```
 
-### Controller
+**NOTE:** This image ought to be published in the personal registry you specified. 
+And it is required to have access to pull the image from the working environment. 
+Make sure you have the proper permission to the registry if the above commands don’t work.
 
-The main executable is a [custom controller][] that manages resources of kind
-[LoadTest][loadtest]. This controller must be deployed to the cluster before
-load tests can be run on it. For deployment information, see [deployment][]. The
-controller is implemented with [kubebuilder][].
+**Install the CRDs into the cluster:**
 
-[custom controller]: cmd/controller/main.go
-[deployment]: doc/deployment.md
-[kubebuilder]: https://kubebuilder.io
-[loadtest]: config/crd/bases/e2etest.grpc.io_loadtests.yaml
+```sh
+make install
+```
 
-### Tools
+**Deploy the Manager to the cluster with the image specified by `IMG`:**
 
-There is a set of [tools](tools/README.md) used to generate load test
-configurations, prepare prebuilt images and run batches of tests. These tools
-are used to run batches of tests for continuous integration.
+```sh
+make deploy IMG=<some-registry>/test-infra:tag
+```
 
-### Examples
+> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin 
+privileges or be logged in as admin.
 
-[Examples](config/samples/README.md) of load test configurations in the
-supported languages are also provided.
+**Create instances of your solution**
+You can apply the samples (examples) from the config/sample:
 
-## Dashboard
+```sh
+kubectl apply -k config/samples/
+```
 
-The data generated in continuous integration are saved to [BigQuery][bigquery],
-and displayed on a public dashboard linked from the [gRPC performance
-benchmarking][benchmarking] page.
+>**NOTE**: Ensure that the samples has default values to test it out.
 
-For more information, and to build your own dashboard, see
-[dashboard](dashboard/README.md).
+### To Uninstall
+**Delete the instances (CRs) from the cluster:**
 
-[bigquery]: https://cloud.google.com/bigquery
+```sh
+kubectl delete -k config/samples/
+```
 
-## PSM benchmarks
+**Delete the APIs(CRDs) from the cluster:**
 
-This repository now includes infrastructure to support
-[service mesh](https://istio.io/latest/about/service-mesh/) benchmarks comparing
-dataplane performance of proxyless gRPC service mesh (PSM) deployments and that
-of proxied deployments using an Envoy sidecar.
+```sh
+make uninstall
+```
 
-The client pod in PSM benchmarks includes a
-[fake xDS server](containers/runtime/xds-server/README.md) that serves as a gRPC
-control plane. The client pod in the proxied case also includes an Envoy
-[sidecar](containers/runtime/sidecar/).
+**UnDeploy the controller from the cluster:**
 
-[Prometheus](config/prometheus/README.md) is used to monitor CPU and memory
-utilization in PSM benchmarks.
+```sh
+make undeploy
+```
 
-[Examples](config/samples/templates/psm/README.md) of proxied and proxyless
-tests are now available.
+## Project Distribution
 
-This is only an initial release. Additional features and more detailed
-documentation will be added in a future release.
+Following are the steps to build the installer and distribute this project to users.
+
+1. Build the installer for the image built and published in the registry:
+
+```sh
+make build-installer IMG=<some-registry>/test-infra:tag
+```
+
+NOTE: The makefile target mentioned above generates an 'install.yaml'
+file in the dist directory. This file contains all the resources built
+with Kustomize, which are necessary to install this project without
+its dependencies.
+
+2. Using the installer
+
+Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project, i.e.:
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/<org>/test-infra/<tag or branch>/dist/install.yaml
+```
 
 ## Contributing
+// TODO(user): Add detailed information on how you would like others to contribute to this project
 
-Welcome! Please read [how to contribute](CONTRIBUTING.md) before proceeding.
+**NOTE:** Run `make help` for more information on all potential `make` targets
 
-[benchmarking]: https://grpc.io/docs/guides/benchmarking/
+More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+
+## License
+
+Copyright 2024 gRPC authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+

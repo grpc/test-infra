@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.7-buster
+FROM python:3.9-slim-bullseye
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace

@@ -26,7 +26,7 @@ import (
 	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/optional"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -44,7 +44,7 @@ var _ = Describe("StateForContainerStatus", func() {
 
 		It("returns a pending state and nil exit code", func() {
 			state, exitCode := StateForContainerStatus(status)
-			Expect(state).To(Equal(Pending))
+			Expect(state).To(Equal(PendingState))
 			Expect(exitCode).To(BeNil())
 		})
 	})
@@ -70,7 +70,7 @@ var _ = Describe("StateForContainerStatus", func() {
 		Context("no crash detected", func() {
 			It("returns a pending state and nil exit code", func() {
 				state, exitCode := StateForContainerStatus(status)
-				Expect(state).To(Equal(Pending))
+				Expect(state).To(Equal(PendingState))
 				Expect(exitCode).To(BeNil())
 			})
 		})
@@ -150,7 +150,7 @@ var _ = Describe("StateForPodStatus", func() {
 			initContainer2.State.Running = &corev1.ContainerStateRunning{}
 
 			state, _, _ := StateForPodStatus(podStatus)
-			Expect(state).To(Equal(Pending))
+			Expect(state).To(Equal(PendingState))
 		})
 
 		It("marks pod as pending when init containers succeeded", func() {
@@ -158,7 +158,7 @@ var _ = Describe("StateForPodStatus", func() {
 			initContainer2.State.Terminated = &corev1.ContainerStateTerminated{ExitCode: 0}
 
 			state, _, _ := StateForPodStatus(podStatus)
-			Expect(state).To(Equal(Pending))
+			Expect(state).To(Equal(PendingState))
 		})
 
 		It("marks pod as errored when init containers errored", func() {
@@ -182,7 +182,7 @@ var _ = Describe("StateForPodStatus", func() {
 			container.State.Running = &corev1.ContainerStateRunning{}
 
 			state, _, _ := StateForPodStatus(podStatus)
-			Expect(state).To(Equal(Pending))
+			Expect(state).To(Equal(PendingState))
 		})
 
 		It("marks pod as succeeded when containers succeeded", func() {
@@ -214,7 +214,7 @@ var _ = Describe("StateForPodStatus", func() {
 			})
 
 			state, _, _ := StateForPodStatus(podStatus)
-			Expect(state).To(Equal(Pending))
+			Expect(state).To(Equal(PendingState))
 		})
 	})
 })
