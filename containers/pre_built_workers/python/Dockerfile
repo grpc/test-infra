@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # See https://github.com/grpc/grpc/blob/master/tools/dockerfile/README.md
-FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:cacad91746cd598d8756de89b912be291de1f019@sha256:32bde2dcb2087f2a32afab59e4dfedf7e8c76a52c69881f63a239d311f0e5ecf
+FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:de71ae928884a4697890b8ff8eda4f7fe59abec2@sha256:be25af8c0e5faf39a585e7ddd657c4fd66513e4eba0ee0c687109b19ed462518
 
 RUN mkdir -p /pre
 WORKDIR /pre
