@@ -34,9 +34,9 @@ import (
 type State string
 
 const (
-	// Pending indicates that the resource has not yet been observed as
-	// succeeding or failing.
-	Pending State = "Pending"
+	// PendingState indicates that the resource has not yet been observed as
+	// succeeding or failing. "State" is appended due to a conflict with ginkgo.
+	PendingState State = "Pending"
 
 	// Succeeded indicates that the resource has terminated successfully,
 	// marked by a zero exit code.
@@ -67,7 +67,7 @@ func StateForContainerStatus(status *corev1.ContainerStatus) (State, *int32) {
 		}
 	}
 
-	return Pending, nil
+	return PendingState, nil
 }
 
 // StateForPodStatus accepts the status of a pod and returns a State, as well
@@ -76,7 +76,7 @@ func StateForContainerStatus(status *corev1.ContainerStatus) (State, *int32) {
 // terminated or it terminated successfully, the reason and message strings will
 // be empty.
 func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, message string) {
-	podState := Pending
+	podState := PendingState
 
 	for i := range status.InitContainerStatuses {
 		initContStat := &status.InitContainerStatuses[i]
@@ -97,7 +97,7 @@ func StateForPodStatus(status *corev1.PodStatus) (state State, reason string, me
 			return Errored, grpcv1.ContainerError, message
 		}
 
-		if (i == 0 && podState == Pending) || contState != Succeeded {
+		if (i == 0 && podState == PendingState) || contState != Succeeded {
 			podState = contState
 		}
 	}

@@ -1,3 +1,4 @@
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -5,6 +6,7 @@
 *.so
 *.dylib
 bin/*
+Dockerfile.cross
 dashboard/containers/**
 dashboard/bin/*
 **/main
@@ -12,19 +14,22 @@ dashboard/bin/*
 
 # Test binary, built with `go test -c`
 *.test
-testbin/
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Editor files
+# Go workspace file
+go.work
+
+# Kubernetes Generated files - skip generated files, except for vendored files
+!vendor/**/zz_generated.*
+
+# Editor and IDE paraphernalia
+.idea
+.vscode
+*.swp
+*.swo
 *~
-*.orig
-.idea/
-.vscode/
 
-# Hide internal configs
+# Internal configs
 config/defaults.yaml
-
-# Dependency directories (remove the comment below to include it)
-# vendor/

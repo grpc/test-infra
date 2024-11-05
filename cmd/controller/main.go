@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"io/ioutil"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,7 +37,7 @@ import (
 
 	grpcv1 "github.com/grpc/test-infra/api/v1"
 	"github.com/grpc/test-infra/config"
-	"github.com/grpc/test-infra/controllers"
+	"github.com/grpc/test-infra/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -83,7 +82,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	defaultsBytes, err := ioutil.ReadFile(defaultsFile)
+	defaultsBytes, err := os.ReadFile(defaultsFile)
 	if err != nil {
 		logger.Error(err, "could not read defaults file")
 		os.Exit(1)
@@ -102,19 +101,16 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "284e7070.e2etest.grpc.io",
-		Namespace:              namespace,
 	})
 	if err != nil {
 		logger.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	if err = (&controllers.LoadTestReconciler{
+	if err = (&controller.LoadTestReconciler{
 		Defaults: &defaultOptions,
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),

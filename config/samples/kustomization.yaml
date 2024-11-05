@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- e2etest.grpc.io_v1_loadtest.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

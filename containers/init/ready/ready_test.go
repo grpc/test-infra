@@ -29,7 +29,7 @@ import (
 	"github.com/grpc/test-infra/config"
 	"github.com/grpc/test-infra/kubehelpers"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

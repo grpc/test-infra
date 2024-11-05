@@ -1,5 +1,5 @@
 /*
-Copyright 2020 gRPC authors.
+Copyright 2024 gRPC authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package controller
 
 import (
 	"context"
@@ -62,9 +62,14 @@ type LoadTestReconciler struct {
 // +kubebuilder:rbac:groups="",resources=events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
 
-// Reconcile attempts to bring the current state of the load test into agreement
-// with its declared spec. This may mean provisioning resources, doing nothing
-// or handling the termination of its pods.
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state. This may
+// mean provisioning resources, doing nothing or handling the termination of its
+// pods.
+//
+// For more details, check Reconcile and its Result here:
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.0/pkg/reconcile
+
 func (r *LoadTestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var err error
 	logger := log.FromContext(ctx).WithValues("loadtest", req.NamespacedName)

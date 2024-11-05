@@ -1,0 +1,12 @@
+apiVersion: e2etest.grpc.io/v1
+kind: LoadTest
+metadata:
+  labels:
+    app.kubernetes.io/name: loadtest
+    app.kubernetes.io/instance: loadtest-sample
+    app.kubernetes.io/part-of: test-infra
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: test-infra
+  name: loadtest-sample
+spec:
+  # TODO(user): Add fields here

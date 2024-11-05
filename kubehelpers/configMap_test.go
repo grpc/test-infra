@@ -17,7 +17,7 @@ limitations under the License.
 package kubehelpers
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"strings"
@@ -28,7 +28,7 @@ var _ = Describe("IsPSMTest", func() {
 	var serverPort = "10010"
 
 	It("returns updated string when given a single scenario and a port", func() {
-		scenarios = "{\"scenarios\":{\"name\":\"scenariso-1\",\"server_config\":{\"server_type\":\"ASYNC_GENERIC_SERVER\"}}}"
+		scenarios = "{\"scenarios\":{\"name\":\"scenario-1\",\"server_config\":{\"server_type\":\"ASYNC_GENERIC_SERVER\"}}}"
 		actual, err := UpdateConfigMapWithServerPort(serverPort, scenarios)
 		insertedField := "\"port\":\"10010\""
 		Expect(strings.Contains(actual, insertedField)).To(BeTrue())
