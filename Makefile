@@ -100,7 +100,7 @@ delete_prebuilt_workers: fmt vet ## Build the delete_prebuilt_workers tool binar
 
 ##@ Build container images
 
-all-images: clone-image controller-image csharp-build-image cxx-image dotnet-build-image dotnet-image driver-image go-image java-image node-build-image node-image php7-build-image php7-image python-image ready-image ruby-build-image ruby-image ## Build all container images.
+all-images: clone-image controller-image csharp-build-image cxx-image dotnet-build-image dotnet-image driver-image java-image node-build-image node-image php7-build-image php7-image python-image ready-image ruby-build-image ruby-image ## Build all container images.
 
 clone-image: ## Build the clone init container image.
 	docker build -t $(INIT_IMAGE_PREFIX)clone:$(TEST_INFRA_VERSION) containers/init/clone
@@ -122,9 +122,6 @@ dotnet-image: ## Build the grpc-dotnet test runtime container image.
 
 driver-image: ## Build the driver container image.
 	docker build --build-arg GITREF=$(DRIVER_VERSION) --build-arg BREAK_CACHE="$(date +%Y%m%d%H%M%S)" -t $(RUN_IMAGE_PREFIX)driver:$(TEST_INFRA_VERSION) containers/runtime/driver
-
-go-image: ## Build the Go test runtime container image.
-	docker build -t $(RUN_IMAGE_PREFIX)go:$(TEST_INFRA_VERSION) containers/runtime/go
 
 java-image: ## Build the Java test runtime container image.
 	docker build -t $(RUN_IMAGE_PREFIX)java:$(TEST_INFRA_VERSION) containers/runtime/java
@@ -155,7 +152,7 @@ ruby-image: ## Build the Ruby test runtime container image.
 
 ##@ Publish container images
 
-push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-dotnet-build-image push-dotnet-image push-driver-image push-go-image push-java-image push-node-build-image push-node-image push-php7-build-image push-php7-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
+push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-dotnet-build-image push-dotnet-image push-driver-image push-java-image push-node-build-image push-node-image push-php7-build-image push-php7-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
 
 push-clone-image: ## Push the clone init container image to a registry.
 	docker push $(INIT_IMAGE_PREFIX)clone:$(TEST_INFRA_VERSION)
@@ -177,9 +174,6 @@ push-dotnet-image: ## Push the grpc-dotnet.js test runtime container image to a 
 
 push-driver-image: ## Push the driver container image to a registry.
 	docker push $(RUN_IMAGE_PREFIX)driver:$(TEST_INFRA_VERSION)
-
-push-go-image: ## Push the Go test runtime container image to a registry.
-	docker push $(RUN_IMAGE_PREFIX)go:$(TEST_INFRA_VERSION)
 
 push-java-image: ## Push the Java test runtime container image to a registry.
 	docker push $(RUN_IMAGE_PREFIX)java:$(TEST_INFRA_VERSION)
