@@ -60,11 +60,11 @@ and how to deploy it to the cluster.
 
 In order to build a specific version of the controller, you must check out the
 desired version. The following commands clone the repo and check out version
-`v1.5.1`:
+`v1.5.7`:
 
 ```shell
 git clone https://github.com/grpc/test-infra && cd test-infra
-git checkout --detach v1.5.1
+git checkout --detach v1.5.7
 ```
 
 ### Environment variables
@@ -98,11 +98,11 @@ timeout is set in the LoadTest configuration. `KILL_AFTER` is set in the
 [controller configuration](#controller-configuration), as a safeguard for
 components that may hang and consume resources after test timeout.
 
-The variables used to build the `v1.5.1` release are as follows:
+The variables used to build the `v1.5.7` release are as follows:
 
 ```shell
 export GOCMD=go1.19.5
-export TEST_INFRA_VERSION=v1.5.1
+export TEST_INFRA_VERSION=v1.5.7
 export INIT_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/
 export BUILD_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/build/
 export RUN_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/runtime/
@@ -173,26 +173,25 @@ language, plus a language-agnostic clone container image. These images are
 necessary to run any tests that do not use [pre-built images][], such as the
 [examples][].
 
-The complete set of images built for `v1.5.1` is as follows:
+The complete set of images built for `v1.5.7` is as follows:
 
 ```shell
-gcr.io/grpc-testing/e2etest/init/build/csharp:v1.5.1
-gcr.io/grpc-testing/e2etest/init/build/dotnet:v1.5.1
-gcr.io/grpc-testing/e2etest/init/build/node:v1.5.1
-gcr.io/grpc-testing/e2etest/init/build/php7:v1.5.1
-gcr.io/grpc-testing/e2etest/init/build/ruby:v1.5.1
-gcr.io/grpc-testing/e2etest/init/clone:v1.5.1
-gcr.io/grpc-testing/e2etest/init/ready:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/controller:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/cxx:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/dotnet:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/driver:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/go:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/java:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/node:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/php7:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/python:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/ruby:v1.5.1
+gcr.io/grpc-testing/e2etest/init/build/csharp:v1.5.7
+gcr.io/grpc-testing/e2etest/init/build/dotnet:v1.5.7
+gcr.io/grpc-testing/e2etest/init/build/node:v1.5.7
+gcr.io/grpc-testing/e2etest/init/build/php7:v1.5.7
+gcr.io/grpc-testing/e2etest/init/build/ruby:v1.5.7
+gcr.io/grpc-testing/e2etest/init/clone:v1.5.7
+gcr.io/grpc-testing/e2etest/init/ready:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/controller:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/cxx:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/dotnet:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/driver:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/java:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/node:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/php7:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/python:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/ruby:v1.5.7
 ```
 
 This should match what is included in the
@@ -212,11 +211,11 @@ Images can be built and pushed with the following command:
 make all-psm-images push-all-psm-images
 ```
 
-The complete set of PSM images built for `v1.5.1` is as follows:
+The complete set of PSM images built for `v1.5.7` is as follows:
 
 ```shell
-gcr.io/grpc-testing/e2etest/runtime/sidecar:v1.5.1
-gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.5.1
+gcr.io/grpc-testing/e2etest/runtime/sidecar:v1.5.7
+gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.5.7
 ```
 
 > Note: PSM images are pushed by default to the location specified by
