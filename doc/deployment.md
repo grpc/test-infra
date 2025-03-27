@@ -176,22 +176,22 @@ necessary to run any tests that do not use [pre-built images][], such as the
 The complete set of images built for `v1.5.7` is as follows:
 
 ```shell
-gcr.io/grpc-testing/e2etest/init/build/csharp:v1.5.7
-gcr.io/grpc-testing/e2etest/init/build/dotnet:v1.5.7
-gcr.io/grpc-testing/e2etest/init/build/node:v1.5.7
-gcr.io/grpc-testing/e2etest/init/build/php7:v1.5.7
-gcr.io/grpc-testing/e2etest/init/build/ruby:v1.5.7
-gcr.io/grpc-testing/e2etest/init/clone:v1.5.7
-gcr.io/grpc-testing/e2etest/init/ready:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/controller:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/cxx:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/dotnet:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/driver:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/java:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/node:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/php7:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/python:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/ruby:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/init-build-csharp:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/init-build-dotnet:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/init-build-node:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/init-build-php7:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/init-build-ruby:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/init-clone:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/init-ready:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/controller:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/cxx:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/dotnet:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/driver:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/java:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/node:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/php7:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/python:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/ruby:v1.5.7
 ```
 
 This should match what is included in the
@@ -214,8 +214,8 @@ make all-psm-images push-all-psm-images
 The complete set of PSM images built for `v1.5.7` is as follows:
 
 ```shell
-gcr.io/grpc-testing/e2etest/runtime/sidecar:v1.5.7
-gcr.io/grpc-testing/e2etest/runtime/xds-server:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/sidecar:v1.5.7
+us-docker.pkg.dev/grpc-testing/e2etest/xds-server:v1.5.7
 ```
 
 > Note: PSM images are pushed by default to the location specified by
