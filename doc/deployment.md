@@ -101,11 +101,11 @@ components that may hang and consume resources after test timeout.
 The variables used to build the `v1.5.7` release are as follows:
 
 ```shell
-export GOCMD=go1.19.5
+export GOCMD=go1.21.13
 export TEST_INFRA_VERSION=v1.5.7
-export INIT_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/
-export BUILD_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/build/
-export RUN_IMAGE_PREFIX=gcr.io/grpc-testing/e2etest/init/runtime/
+export INIT_IMAGE_PREFIX=us-docker.pkg.dev/grpc-testing/e2etest/init-
+export BUILD_IMAGE_PREFIX=us-docker.pkg.dev/grpc-testing/e2etest/init-build-
+export RUN_IMAGE_PREFIX=us-docker.pkg.dev/grpc-testing/e2etest/
 export KILL_AFTER=30
 ```
 
