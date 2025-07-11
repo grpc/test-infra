@@ -11,9 +11,9 @@ for general contribution guidelines.
 ## Maintainers (in alphabetical order)
 
 - [paulosjca](https://github.com/paulosjca), Google LLC
-- [wanlin31](https://github.com/wanlin31), Google LLC
-- [ybbbby](https://github.com/ybbbby), Google LLC
 
 ## Emeritus Maintainers (in alphabetical order)
 
 - [codeblooded](https://github.com/codeblooded), Google LLC
+- [wanlin31](https://github.com/wanlin31), Google LLC
+- [ybbbby](https://github.com/ybbbby), Google LLC
