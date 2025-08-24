@@ -27,7 +27,7 @@ languages:
   runImage: "{{ .RunImagePrefix }}cxx:{{ .Version }}"
 
 - language: go
-  buildImage: golang:1.23
+  buildImage: golang:1.24
   runImage: debian:bookworm
 
 - language: java
