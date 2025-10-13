@@ -152,7 +152,7 @@ func main() {
 
 			// Build image
 			log.Printf("building %s image\n", lang)
-			buildCommandTimeoutSeconds := 30 * 60 // 30 mins should be enough for all languages
+			buildCommandTimeoutSeconds := 80 * 60 // 1 hour and 20 minutes should be enough for all languages
 			buildDockerImage := exec.Command("timeout", fmt.Sprintf("%ds", buildCommandTimeoutSeconds), "docker", "build", dockerfileLocation, "-t", image, "--build-arg", fmt.Sprintf("GITREF=%s", spec.Gitref), "--build-arg", fmt.Sprintf("BREAK_CACHE=%s", uniqueCacheBreaker))
 			if spec.Repo != "" {
 				buildDockerImage.Args = append(buildDockerImage.Args, "--build-arg", fmt.Sprintf("REPOSITORY=%s", spec.Repo))
