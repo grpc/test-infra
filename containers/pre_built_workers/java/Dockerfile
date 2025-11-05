@@ -12,7 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:11-jdk-bullseye
+FROM eclipse-temurin:11-jdk
+
+# Install dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /pre
 WORKDIR /pre
@@ -37,7 +44,7 @@ RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
 RUN ./gradlew -PskipAndroid=true -PskipCodegen=true -Dorg.gradle.jvmargs=-Xmx2g :grpc-benchmarks:installDist
 
-FROM openjdk:11-jdk-slim-bullseye
+FROM eclipse-temurin:11-jdk-jammy
 
 RUN mkdir -p /execute
 WORKDIR /execute
