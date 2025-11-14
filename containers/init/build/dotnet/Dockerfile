@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0-preview
+FROM mcr.microsoft.com/dotnet/sdk:10.0
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
