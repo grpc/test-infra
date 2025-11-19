@@ -40,7 +40,7 @@ RUN dotnet publish -c Release -o qps_worker perf/benchmarkapps/QpsWorker/
 
 # Note that the QpsWorker built by "dotnet publish" in the previous step needs to be runnable
 # with the runtime image below.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
 
 # Enable dynamic profile-guided optimization
 # https://gist.github.com/EgorBo/dc181796683da3d905a5295bfd3dd95b
