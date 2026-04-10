@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM node:18-bookworm
+FROM node:25.9.0-bookworm
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
