@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM marketplace.gcr.io/google/debian11
+FROM debian:11-slim
 
 ARG REPOSITORY=grpc/grpc
 ARG GITREF=master
@@ -34,14 +34,14 @@ RUN git clone https://github.com/$REPOSITORY.git .
 RUN git checkout -f $GITREF
 
 # See https://github.com/grpc/grpc/blob/master/tools/dockerfile/README.md
-FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:de71ae928884a4697890b8ff8eda4f7fe59abec2@sha256:be25af8c0e5faf39a585e7ddd657c4fd66513e4eba0ee0c687109b19ed462518
+FROM us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:17f63c84b86ac41f70f86cac931fffc785a474e0@sha256:814f79b30656de4627c88e53bbf1c457037748971055702a74745a5828de12fa
 
 COPY --from=0 /src/code /src/code
 RUN mkdir -p /tmp/build_output
 WORKDIR /src/code
 RUN bazel --output_user_root=/tmp/build_output build --config opt //test/cpp/qps:qps_json_driver
 
-FROM marketplace.gcr.io/google/debian11
+FROM debian:11-slim
 
 RUN mkdir -p /src/driver
 RUN mkdir -p /src/code
