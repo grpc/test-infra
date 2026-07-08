@@ -32,6 +32,10 @@ RUN git clone https://github.com/$REPOSITORY.git .
 # checkout, but skip updating the submodules since they're not use by bazel build
 RUN git checkout $GITREF
 
+# Patch python files to fix shadowing of 'src' package by other Bazel dependencies (like typing_extensions)
+RUN python3 -c "f=open('src/python/grpcio_tests/tests/qps/qps_worker.py', 'r+'); content=f.read(); f.seek(0, 0); f.write('import sys\nfor p in list(sys.path):\n  if p.endswith(\"/_main\") or p.endswith(\"/com_github_grpc_grpc\"):\n    sys.path.remove(p)\n    sys.path.insert(0, p)\n    break\n' + content); f.close()"
+RUN python3 -c "f=open('src/python/grpcio_tests/tests_aio/benchmark/worker.py', 'r+'); content=f.read(); f.seek(0, 0); f.write('import sys\nfor p in list(sys.path):\n  if p.endswith(\"/_main\") or p.endswith(\"/com_github_grpc_grpc\"):\n    sys.path.remove(p)\n    sys.path.insert(0, p)\n    break\n' + content); f.close()"
+
 # Save commit sha for debug use
 RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
 RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
@@ -40,15 +44,28 @@ RUN mkdir /executables
 RUN bazel --output_user_root=/executables build -c opt //src/python/grpcio_tests/tests/qps:qps_worker
 RUN bazel --output_user_root=/executables build -c opt //src/python/grpcio_tests/tests_aio/benchmark:worker
 
+RUN mkdir -p /execute && \
+    cp -r -L /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker && \
+    cp -r -L /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker.runfiles /execute/qps_worker.runfiles && \
+    cp -r -L /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker /execute/benchmark_worker && \
+    cp -r -L /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker.runfiles /execute/benchmark_worker.runfiles && \
+    cp /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
+
 FROM python:3.9-slim-bullseye
 
-COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker
-COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker.runfiles /execute/qps_worker.runfiles
+RUN ln -s /usr/local/bin/python3 /usr/bin/python3 || true && \
+    ln -s /usr/local/bin/python /usr/bin/python || true
 
-COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker /execute/benchmark_worker
-COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker.runfiles /execute/benchmark_worker.runfiles
+COPY --from=0 /execute /execute
 
-COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
+# Recreate the symlinks inside the virtualenvs to fix Python's virtualenv detection
+RUN rm -f /execute/qps_worker.runfiles/_main/src/python/grpcio_tests/tests/qps/_qps_worker.venv/bin/python3 && \
+    ln -s /execute/qps_worker.runfiles/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/python3 \
+          /execute/qps_worker.runfiles/_main/src/python/grpcio_tests/tests/qps/_qps_worker.venv/bin/python3
+
+RUN rm -f /execute/benchmark_worker.runfiles/_main/src/python/grpcio_tests/tests_aio/benchmark/_worker.venv/bin/python3 && \
+    ln -s /execute/benchmark_worker.runfiles/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/python3 \
+          /execute/benchmark_worker.runfiles/_main/src/python/grpcio_tests/tests_aio/benchmark/_worker.venv/bin/python3
 
 WORKDIR /execute
 
