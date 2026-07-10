@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.7-buster
+FROM python:3.9-slim-bullseye
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
@@ -21,5 +21,8 @@ RUN apt-get update && apt-get install -y \
   git \
   time && \
   apt-get clean
+
+# Prioritize the workspace root and runfiles _main in PYTHONPATH to prevent 'src' package shadowing
+ENV PYTHONPATH="/src/workspace/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker.runfiles/_main:/src/workspace/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker.runfiles/_main:/src/workspace"
 
 CMD ["bash"]

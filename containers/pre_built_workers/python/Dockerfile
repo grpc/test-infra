@@ -40,15 +40,31 @@ RUN mkdir /executables
 RUN bazel --output_user_root=/executables build -c opt //src/python/grpcio_tests/tests/qps:qps_worker
 RUN bazel --output_user_root=/executables build -c opt //src/python/grpcio_tests/tests_aio/benchmark:worker
 
+RUN mkdir -p /execute && \
+    cp -r -L /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker && \
+    cp -r -L /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker.runfiles /execute/qps_worker.runfiles && \
+    cp -r -L /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker /execute/benchmark_worker && \
+    cp -r -L /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker.runfiles /execute/benchmark_worker.runfiles && \
+    cp /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
+
 FROM python:3.9-slim-bullseye
 
-COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker /execute/qps_worker
-COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker.runfiles /execute/qps_worker.runfiles
+RUN ln -s /usr/local/bin/python3 /usr/bin/python3 || true && \
+    ln -s /usr/local/bin/python /usr/bin/python || true
 
-COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker /execute/benchmark_worker
-COPY --from=0 /pre/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker.runfiles /execute/benchmark_worker.runfiles
+COPY --from=0 /execute /execute
 
-COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
+# Recreate the symlinks inside the virtualenvs to fix Python's virtualenv detection
+RUN rm -f /execute/qps_worker.runfiles/_main/src/python/grpcio_tests/tests/qps/_qps_worker.venv/bin/python3 && \
+    ln -s /execute/qps_worker.runfiles/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/python3 \
+          /execute/qps_worker.runfiles/_main/src/python/grpcio_tests/tests/qps/_qps_worker.venv/bin/python3
+
+RUN rm -f /execute/benchmark_worker.runfiles/_main/src/python/grpcio_tests/tests_aio/benchmark/_worker.venv/bin/python3 && \
+    ln -s /execute/benchmark_worker.runfiles/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/python3 \
+          /execute/benchmark_worker.runfiles/_main/src/python/grpcio_tests/tests_aio/benchmark/_worker.venv/bin/python3
+
+# Prioritize the main repository root (_main) in PYTHONPATH so top-level 'src' imports are never shadowed
+ENV PYTHONPATH="/execute/qps_worker.runfiles/_main:/execute/benchmark_worker.runfiles/_main"
 
 WORKDIR /execute
 
