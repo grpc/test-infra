@@ -40,7 +40,7 @@ RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
 RUN  cargo build -p grpc-benchmark --release --bin worker
 
-# Copy go executable to a new image
+# Copy executable to a new image
 FROM debian:bookworm
 
 RUN mkdir -p /executable
