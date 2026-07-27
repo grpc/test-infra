@@ -19,10 +19,8 @@ RUN apt-get update && apt-get install -y cmake && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /executable
 WORKDIR /executable
 
-# TODO: arjan-bal - point to official repo once https://github.com/grpc/grpc-rust/pull/2737
-# is merged.
-ARG REPOSITORY=arjan-bal/tonic
-ARG GITREF=grpc-benchmark-client
+ARG REPOSITORY=grpc/grpc-rust
+ARG GITREF=master
 # when BREAK_CACHE arg is set to a random value (e.g. by "--build-arg BREAK_CACHE=$(uuidgen)"),
 # it makes sure the docker cache breaks at this command, and all the following
 # commands in this Dockerfile will be forced to re-run on each build.
@@ -38,7 +36,7 @@ RUN git checkout $GITREF
 RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
 RUN git rev-parse $GITREF >> GRPC_GIT_COMMIT.txt
 
-RUN  cargo build -p grpc-benchmark --release --bin worker
+RUN cargo build -p grpc-benchmark --release --bin worker
 
 # Copy executable to a new image
 FROM debian:bookworm

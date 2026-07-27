@@ -24,8 +24,8 @@ spec:
       command:
       - cargo
     clone:
-      gitRef: grpc-benchmark-client
-      repo: https://github.com/arjan-bal/tonic.git
+      gitRef: master
+      repo: https://github.com/grpc/grpc-rust.git
     language: rust
     name: '0'
     run:
@@ -117,8 +117,8 @@ spec:
       command:
       - cargo
     clone:
-      gitRef: grpc-benchmark-client
-      repo: https://github.com/arjan-bal/tonic.git
+      gitRef: master
+      repo: https://github.com/grpc/grpc-rust.git
     language: rust
     name: '0'
     run:
@@ -132,4 +132,3 @@ spec:
       name: main
   timeoutSeconds: 900
   ttlSeconds: 86400
-
