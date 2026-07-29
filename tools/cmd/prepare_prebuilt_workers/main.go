@@ -105,7 +105,7 @@ func main() {
 	converterToImageLanguage := map[string]string{
 		"c++":             "cxx",
 		"node_purejs":     "node",
-		"php7_protobuf_c": "php7",
+		"php8_protobuf_c": "php8",
 		"python_asyncio":  "python",
 	}
 

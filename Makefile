@@ -100,7 +100,7 @@ delete_prebuilt_workers: fmt vet ## Build the delete_prebuilt_workers tool binar
 
 ##@ Build container images
 
-all-images: clone-image controller-image csharp-build-image cxx-image dotnet-build-image dotnet-image driver-image java-image node-build-image node-image php7-build-image php7-image python-image ready-image ruby-build-image ruby-image ## Build all container images.
+all-images: clone-image controller-image csharp-build-image cxx-image dotnet-build-image dotnet-image driver-image java-image node-build-image node-image php8-build-image php8-image python-image ready-image ruby-build-image ruby-image ## Build all container images.
 
 clone-image: ## Build the clone init container image.
 	docker build -t $(INIT_IMAGE_PREFIX)clone:$(TEST_INFRA_VERSION) containers/init/clone
@@ -132,11 +132,11 @@ node-build-image: ## Build the Node.js build image
 node-image: ## Build the Node.js test runtime container image.
 	docker build -t $(RUN_IMAGE_PREFIX)node:$(TEST_INFRA_VERSION) containers/runtime/node
 
-php7-build-image: ## Build the PHP7 build-time container image.
-	docker build -t $(BUILD_IMAGE_PREFIX)php7:$(TEST_INFRA_VERSION) containers/init/build/php7
+php8-build-image: ## Build the PHP8 build-time container image.
+	docker build -t $(BUILD_IMAGE_PREFIX)php8:$(TEST_INFRA_VERSION) containers/init/build/php8
 
-php7-image: ## Build the PHP7 test runtime container image.
-	docker build -t $(RUN_IMAGE_PREFIX)php7:$(TEST_INFRA_VERSION) containers/runtime/php7
+php8-image: ## Build the PHP8 test runtime container image.
+	docker build -t $(RUN_IMAGE_PREFIX)php8:$(TEST_INFRA_VERSION) containers/runtime/php8
 
 python-image: ## Build the Python test runtime container image.
 	docker build -t $(RUN_IMAGE_PREFIX)python:$(TEST_INFRA_VERSION) containers/runtime/python
@@ -152,7 +152,7 @@ ruby-image: ## Build the Ruby test runtime container image.
 
 ##@ Publish container images
 
-push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-dotnet-build-image push-dotnet-image push-driver-image push-java-image push-node-build-image push-node-image push-php7-build-image push-php7-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
+push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-dotnet-build-image push-dotnet-image push-driver-image push-java-image push-node-build-image push-node-image push-php8-build-image push-php8-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
 
 push-clone-image: ## Push the clone init container image to a registry.
 	docker push $(INIT_IMAGE_PREFIX)clone:$(TEST_INFRA_VERSION)
@@ -184,11 +184,11 @@ push-node-build-image: ## Push the Node.js build image to a docker registry
 push-node-image: ## Push the Node.js test runtime container image to a registry.
 	docker push $(RUN_IMAGE_PREFIX)node:$(TEST_INFRA_VERSION)
 
-push-php7-build-image: ## Push the PHP7 build-time container image to a registry.
-	docker push $(BUILD_IMAGE_PREFIX)php7:$(TEST_INFRA_VERSION)
+push-php8-build-image: ## Push the PHP8 build-time container image to a registry.
+	docker push $(BUILD_IMAGE_PREFIX)php8:$(TEST_INFRA_VERSION)
 
-push-php7-image: ## Push the PHP7 test runtime container image to a registry.
-	docker push $(RUN_IMAGE_PREFIX)php7:$(TEST_INFRA_VERSION)
+push-php8-image: ## Push the PHP8 test runtime container image to a registry.
+	docker push $(RUN_IMAGE_PREFIX)php8:$(TEST_INFRA_VERSION)
 
 push-python-image: ## Push the Python test runtime container image to a registry.
 	docker push $(RUN_IMAGE_PREFIX)python:$(TEST_INFRA_VERSION)

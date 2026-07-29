@@ -5,41 +5,40 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    pool: ${workers_pool}
-    scenario: php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong
-    uniquifier: prebuilt
+    scenario: php8_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong
+    uniquifier: basic
   labels:
-    language: php7_protobuf_c
+    language: php8
     prefix: examples
-  name: examples-php7-protobuf-c-extension-to-cpp-protobuf-sync-unary-ping-pong-prebuilt
+  name: examples-php8-protobuf-php-extension-to-cpp-protobuf-sync-unary-ping-pong-basic
 spec:
   clients:
-  - language: php7_protobuf_c
+  - build:
+      command:
+      - bash
+      - /build_scripts/build_qps_worker.sh
+    clone:
+      gitRef: master
+      repo: https://github.com/grpc/grpc.git
+    language: php8
     name: '0'
-    pool: ${workers_pool}
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-        /run_scripts/run_protobuf_c_worker.sh
+        /run_scripts/run_worker.sh
       command:
       - bash
-      image: ${prebuilt_image_prefix}/php7:${prebuilt_image_tag}
       name: main
   driver:
     language: cxx
     name: '0'
-    pool: ${driver_pool}
-    run:
-    - image: ${driver_image}
-      name: main
-  results:
-    bigQueryTable: ${big_query_table}
+    run: []
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "php7_protobuf_c_extension_to_cpp_protobuf_sync_unary_ping_pong",
+        "name": "php8_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -95,19 +94,28 @@ spec:
       }
     }
   servers:
-  - language: cxx
+  - build:
+      args:
+      - build
+      - --config
+      - opt
+      - //test/cpp/qps:qps_worker
+      command:
+      - bazel
+    clone:
+      gitRef: master
+      repo: https://github.com/grpc/grpc.git
+    language: cxx
     name: '0'
-    pool: ${workers_pool}
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            /source/code/bazel-bin/test/cpp/qps/qps_worker \
-            --driver_port="${DRIVER_PORT}" --server_port=10010
+            bazel-bin/test/cpp/qps/qps_worker --driver_port="${DRIVER_PORT}" \
+            --server_port=10010
       command:
       - bash
-      image: ${prebuilt_image_prefix}/cxx:${prebuilt_image_tag}
       name: main
   timeoutSeconds: 900
   ttlSeconds: 86400

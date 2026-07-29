@@ -6,23 +6,18 @@ kind: LoadTest
 metadata:
   annotations:
     enablePrometheus: 'true'
-    scenario: php7_protobuf_php_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
-    uniquifier: proxyless
+    pool: ${workers_pool}
+    scenario: php8_protobuf_php_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
+    uniquifier: prebuilt-proxied
   labels:
-    language: php7
+    language: php8
     prefix: psm-examples
-  name: psm-examples-php7-protobuf-php-extension-to-cpp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxyless
+  name: psm-examples-php8-protobuf-php-extension-to-cpp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-prebuilt-proxied
 spec:
   clients:
-  - build:
-      command:
-      - bash
-      - /build_scripts/build_qps_worker.sh
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: php7
+  - language: php8
     name: '0'
+    pool: ${workers_pool}
     run:
     - args:
       - -c
@@ -31,9 +26,7 @@ spec:
         /run_scripts/run_worker.sh
       command:
       - bash
-      env:
-      - name: GRPC_XDS_BOOTSTRAP
-        value: /bootstrap/bootstrap.json
+      image: ${prebuilt_image_prefix}/php8:${prebuilt_image_tag}
       name: main
     - args:
       - -default-config-path
@@ -49,14 +42,26 @@ spec:
         tcpSocket:
           port: 10000
       name: xds-server
+    - image: ${psm_image_prefix}/sidecar:${psm_image_tag}
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        tcpSocket:
+          port: 10000
+      name: sidecar
   driver:
     language: cxx
     name: '0'
-    run: []
+    pool: ${driver_pool}
+    run:
+    - image: ${driver_image}
+      name: main
+  results:
+    bigQueryTable: ${big_query_table}
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "php7_protobuf_php_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
+        "name": "php8_protobuf_php_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -108,28 +113,19 @@ spec:
       }
     }
   servers:
-  - build:
-      args:
-      - build
-      - --config
-      - opt
-      - //test/cpp/qps:qps_worker
-      command:
-      - bazel
-    clone:
-      gitRef: master
-      repo: https://github.com/grpc/grpc.git
-    language: cxx
+  - language: cxx
     name: '0'
+    pool: ${workers_pool}
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-            bazel-bin/test/cpp/qps/qps_worker --driver_port="${DRIVER_PORT}" \
-            --server_port=10010
+            /source/code/bazel-bin/test/cpp/qps/qps_worker \
+            --driver_port="${DRIVER_PORT}" --server_port=10010
       command:
       - bash
+      image: ${prebuilt_image_prefix}/cxx:${prebuilt_image_tag}
       name: main
   timeoutSeconds: 900
   ttlSeconds: 86400
