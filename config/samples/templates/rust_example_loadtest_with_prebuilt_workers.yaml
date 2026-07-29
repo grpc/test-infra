@@ -6,12 +6,12 @@ kind: LoadTest
 metadata:
   annotations:
     pool: ${workers_pool}
-    scenario: rust_generic_sync_streaming_ping_pong_secure
+    scenario: rust_protobuf_sync_streaming_ping_pong_secure
     uniquifier: prebuilt
   labels:
     language: rust
     prefix: examples
-  name: examples-rust-generic-sync-streaming-ping-pong-secure-prebuilt
+  name: examples-rust-protobuf-sync-streaming-ping-pong-secure-prebuilt
 spec:
   clients:
   - language: rust
@@ -40,7 +40,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "rust_generic_sync_streaming_ping_pong_secure",
+        "name": "rust_protobuf_sync_streaming_ping_pong_secure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -76,7 +76,7 @@ spec:
           }
         },
         "server_config": {
-          "server_type": "ASYNC_GENERIC_SERVER",
+          "server_type": "SYNC_SERVER",
           "security_params": {
             "use_test_ca": true,
             "server_host_override": "foo.test.google.fr"
@@ -89,13 +89,7 @@ spec:
               "name": "grpc.optimization_target",
               "str_value": "latency"
             }
-          ],
-          "payload_config": {
-            "simple_params": {
-              "req_size": 0,
-              "resp_size": 0
-            }
-          }
+          ]
         },
         "warmup_seconds": 5,
         "benchmark_seconds": 30

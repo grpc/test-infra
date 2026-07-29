@@ -5,12 +5,12 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: rust_generic_sync_streaming_ping_pong_secure
+    scenario: rust_protobuf_sync_streaming_ping_pong_secure
     uniquifier: basic
   labels:
     language: rust
     prefix: examples
-  name: examples-rust-generic-sync-streaming-ping-pong-secure-basic
+  name: examples-rust-protobuf-sync-streaming-ping-pong-secure-basic
 spec:
   clients:
   - build:
@@ -44,7 +44,7 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "rust_generic_sync_streaming_ping_pong_secure",
+        "name": "rust_protobuf_sync_streaming_ping_pong_secure",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
@@ -66,7 +66,7 @@ spec:
           "channel_args": [
             {
               "name": "grpc.optimization_target",
-               "str_value": "latency"
+              "str_value": "latency"
             }
           ],
           "payload_config": {
@@ -80,7 +80,7 @@ spec:
           }
         },
         "server_config": {
-          "server_type": "ASYNC_GENERIC_SERVER",
+          "server_type": "SYNC_SERVER",
           "security_params": {
             "use_test_ca": true,
             "server_host_override": "foo.test.google.fr"
@@ -93,13 +93,7 @@ spec:
               "name": "grpc.optimization_target",
               "str_value": "latency"
             }
-          ],
-          "payload_config": {
-            "simple_params": {
-              "req_size": 0,
-              "resp_size": 0
-            }
-          }
+          ]
         },
         "warmup_seconds": 5,
         "benchmark_seconds": 30
