@@ -21,6 +21,7 @@ spec:
       - //src/python/grpcio_tests/tests_aio/benchmark:worker
       command:
       - bazel
+      image: us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:ac0cf07a320bb1f337986fd312a1785614cc1e4e
     clone:
       gitRef: master
       repo: https://github.com/grpc/grpc.git
@@ -35,6 +36,10 @@ spec:
             --driver_port="${DRIVER_PORT}"
       command:
       - bash
+      image: python:3.9-slim-bullseye
+      env:
+      - name: PYTHONPATH
+        value: "/src/workspace/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker.runfiles/_main:/src/workspace/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker.runfiles/_main:/src/workspace"
       name: main
   driver:
     language: cxx
@@ -113,6 +118,7 @@ spec:
       - //src/python/grpcio_tests/tests_aio/benchmark:worker
       command:
       - bazel
+      image: us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:ac0cf07a320bb1f337986fd312a1785614cc1e4e
     clone:
       gitRef: master
       repo: https://github.com/grpc/grpc.git
@@ -127,6 +133,10 @@ spec:
             --driver_port="${DRIVER_PORT}"
       command:
       - bash
+      image: python:3.9-slim-bullseye
+      env:
+      - name: PYTHONPATH
+        value: "/src/workspace/bazel-bin/src/python/grpcio_tests/tests/qps/qps_worker.runfiles/_main:/src/workspace/bazel-bin/src/python/grpcio_tests/tests_aio/benchmark/worker.runfiles/_main:/src/workspace"
       name: main
   timeoutSeconds: 900
   ttlSeconds: 86400
