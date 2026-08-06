@@ -5,12 +5,13 @@ apiVersion: e2etest.grpc.io/v1
 kind: LoadTest
 metadata:
   annotations:
-    scenario: php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong
-    uniquifier: basic
+    enablePrometheus: 'true'
+    scenario: php8_protobuf_c_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load
+    uniquifier: proxyless
   labels:
-    language: php7
-    prefix: examples
-  name: examples-php7-protobuf-php-extension-to-cpp-protobuf-sync-unary-ping-pong-basic
+    language: php8_protobuf_c
+    prefix: psm-examples
+  name: psm-examples-php8-protobuf-c-extension-to-cpp-protobuf-async-unary-5000rpcs-1kb-psm-8channels-16threads-5000load-proxyless
 spec:
   clients:
   - build:
@@ -20,17 +21,34 @@ spec:
     clone:
       gitRef: master
       repo: https://github.com/grpc/grpc.git
-    language: php7
+    language: php8_protobuf_c
     name: '0'
     run:
     - args:
       - -c
       - |
         timeout --kill-after="${KILL_AFTER}" "${POD_TIMEOUT}" \
-        /run_scripts/run_worker.sh
+        /run_scripts/run_protobuf_c_worker.sh
       command:
       - bash
+      env:
+      - name: GRPC_XDS_BOOTSTRAP
+        value: /bootstrap/bootstrap.json
       name: main
+    - args:
+      - -default-config-path
+      - containers/runtime/xds-server/config/default_config.json
+      - -path-to-bootstrap
+      - containers/runtime/xds-server/bootstrap.json
+      command:
+      - main
+      image: ${psm_image_prefix}/xds-server:${psm_image_tag}
+      livenessProbe:
+        initialDelaySeconds: 30
+        periodSeconds: 5
+        tcpSocket:
+          port: 10000
+      name: xds-server
   driver:
     language: cxx
     name: '0'
@@ -38,17 +56,14 @@ spec:
   scenariosJSON: |
     {
       "scenarios": {
-        "name": "php7_protobuf_php_extension_to_cpp_protobuf_sync_unary_ping_pong",
+        "name": "php8_protobuf_c_extension_to_cpp_protobuf_async_unary_5000rpcs_1KB_psm_8channels_16threads_5000load",
         "num_servers": 1,
         "num_clients": 1,
         "client_config": {
-          "client_type": "SYNC_CLIENT",
-          "security_params": {
-            "use_test_ca": true,
-            "server_host_override": "foo.test.google.fr"
-          },
+          "client_type": "ASYNC_CLIENT",
+          "security_params": null,
           "outstanding_rpcs_per_channel": 1,
-          "client_channels": 1,
+          "client_channels": 8,
           "async_client_threads": 1,
           "client_processes": 0,
           "threads_per_cq": 0,
@@ -65,21 +80,20 @@ spec:
           ],
           "payload_config": {
             "simple_params": {
-              "req_size": 0,
-              "resp_size": 0
+              "req_size": 1024,
+              "resp_size": 1024
             }
           },
           "load_params": {
-            "closed_loop": {}
+            "poisson": {
+              "offered_load": 5000
+            }
           }
         },
         "server_config": {
-          "server_type": "SYNC_SERVER",
-          "security_params": {
-            "use_test_ca": true,
-            "server_host_override": "foo.test.google.fr"
-          },
-          "async_server_threads": 1,
+          "server_type": "ASYNC_SERVER",
+          "security_params": null,
+          "async_server_threads": 16,
           "server_processes": 0,
           "threads_per_cq": 0,
           "channel_args": [

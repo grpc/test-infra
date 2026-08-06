@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM php:7.4-buster
+FROM php:8.1-bullseye
 
 # TODO: when running on kokoro, the "Install" build steps will not be cached
 # since we'll always be on a fresh VM. Re-running this command each
@@ -24,16 +24,17 @@ RUN apt-get update && apt-get install -y \
   lcov \
   make \
   gnupg2 \
+  unzip \
   procps && \
   apt-get clean
 
 # Install rvm
 RUN gpg2 --recv-keys 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-RUN \curl -sSL https://get.rvm.io | bash -s stable
+RUN \curl -sSL https://get.rvm.io | bash -s master
 
-# Install Ruby 3
-RUN /bin/bash -l -c "rvm install ruby-3"
-RUN /bin/bash -l -c "rvm use --default ruby-3"
+# Install Ruby 3.2
+RUN /bin/bash -l -c "rvm install 3.2"
+RUN /bin/bash -l -c "rvm use --default 3.2"
 RUN /bin/bash -l -c "echo 'gem: --no-document' > ~/.gemrc"
 RUN /bin/bash -l -c "gem install bundler --no-document -v 2.4"
 
@@ -57,6 +58,8 @@ ARG BREAK_CACHE
 RUN git clone https://github.com/$REPOSITORY.git .
 RUN git checkout $GITREF
 RUN git submodule update --init
+# protobuf has a utf_range submodule.
+RUN git submodule update --init --recursive third_party/protobuf
 
 # Save commit sha for debug use
 RUN echo 'COMMIT SHA' > GRPC_GIT_COMMIT.txt
@@ -66,7 +69,7 @@ RUN mkdir /build_scripts
 ADD build_qps_worker.sh /build_scripts
 RUN /build_scripts/build_qps_worker.sh
 
-FROM php:7.4-buster
+FROM php:8.1-bullseye
 
 # TODO: when running on kokoro, the "Install" build steps will not be cached
 # since we'll always be on a fresh VM. Re-running this command each
@@ -77,16 +80,17 @@ RUN apt-get update && apt-get install -y \
   lcov \
   make \
   gnupg2 \
+  unzip \
   procps && \
   apt-get clean
 
 # Install rvm
 RUN gpg2 --recv-keys 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-RUN \curl -sSL https://get.rvm.io | bash -s stable
+RUN \curl -sSL https://get.rvm.io | bash -s master
 
 # Install Ruby 3
-RUN /bin/bash -l -c "rvm install ruby-3"
-RUN /bin/bash -l -c "rvm use --default ruby-3"
+RUN /bin/bash -l -c "rvm install 3.2"
+RUN /bin/bash -l -c "rvm use --default 3.2"
 RUN /bin/bash -l -c "echo 'gem: --no-document' > ~/.gemrc"
 RUN /bin/bash -l -c "gem install bundler --no-document -v 2.4"
 
@@ -96,6 +100,10 @@ COPY --from=0 /pre/src /execute/src
 COPY --from=0 /pre/etc /execute/etc
 COPY --from=0 /pre/saved/bundle/ /execute/saved/bundle/
 COPY --from=0 /pre/GRPC_GIT_COMMIT.txt /execute/GRPC_GIT_COMMIT.txt
+
+# Since grpc.so dynamically links to libgrpc.so, it must be discoverable.
+COPY --from=0 /pre/libs/opt/libgrpc.so* /execute/libs/opt/
+ENV LD_LIBRARY_PATH=/execute/libs/opt
 
 RUN mkdir /run_scripts
 ADD run_worker.sh /run_scripts

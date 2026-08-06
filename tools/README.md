@@ -120,8 +120,8 @@ The tool `prepare_prebuilt_workers` takes the following options:
   GITREF wish to build workers from can be specified as `language:COMMIT_SHA` or
   `language:repo:COMMIT_SHA`.
   May be repeated. Valid input for language names are all in lower case:
-  `csharp`, `c++`/`cxx`, `go`, `java`, `node`, `node_purejs`, `php7`.
-  `php7_protobuf_c`, `python`, `python_asyncio` and `ruby`.
+  `csharp`, `c++`/`cxx`, `go`, `java`, `node`, `node_purejs`, `php8`.
+  `php8_protobuf_c`, `python`, `python_asyncio` and `ruby`.
 - `-t`<br> Tag for prebuilt images. Tag is a required field. Tag complies with
   [Docker's tag restrictions](https://docs.docker.com/engine/reference/commandline/tag/#extended-description).
 - `-r`<br> Root directory of Dockerfiles.
