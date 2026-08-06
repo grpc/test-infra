@@ -100,7 +100,7 @@ delete_prebuilt_workers: fmt vet ## Build the delete_prebuilt_workers tool binar
 
 ##@ Build container images
 
-all-images: clone-image controller-image csharp-build-image cxx-image dotnet-build-image dotnet-image driver-image java-image node-build-image node-image php8-build-image php8-image python-image ready-image ruby-build-image ruby-image ## Build all container images.
+all-images: clone-image controller-image csharp-build-image cxx-image dotnet-build-image dotnet-image driver-image java-image node-build-image node-image php8-build-image php8-image python-image ready-image ruby-build-image ruby-image rust-build-image ## Build all container images.
 
 clone-image: ## Build the clone init container image.
 	docker build -t $(INIT_IMAGE_PREFIX)clone:$(TEST_INFRA_VERSION) containers/init/clone
@@ -150,9 +150,12 @@ ruby-build-image: ## Build the Ruby build-time container image.
 ruby-image: ## Build the Ruby test runtime container image.
 	docker build -t $(RUN_IMAGE_PREFIX)ruby:$(TEST_INFRA_VERSION) containers/runtime/ruby
 
+rust-build-image: ## Build the Rust build-time container image.
+	docker build -t $(BUILD_IMAGE_PREFIX)rust:$(TEST_INFRA_VERSION) containers/init/build/rust
+
 ##@ Publish container images
 
-push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-dotnet-build-image push-dotnet-image push-driver-image push-java-image push-node-build-image push-node-image push-php8-build-image push-php8-image push-python-image push-ready-image push-ruby-build-image push-ruby-image ## Push all container images to a registry.
+push-all-images: push-clone-image push-controller-image push-csharp-build-image push-cxx-image push-dotnet-build-image push-dotnet-image push-driver-image push-java-image push-node-build-image push-node-image push-php8-build-image push-php8-image push-python-image push-ready-image push-ruby-build-image push-ruby-image push-rust-build-image ## Push all container images to a registry.
 
 push-clone-image: ## Push the clone init container image to a registry.
 	docker push $(INIT_IMAGE_PREFIX)clone:$(TEST_INFRA_VERSION)
@@ -201,6 +204,9 @@ push-ruby-build-image: ## Push the Ruby build-time container image to a registry
 
 push-ruby-image: ## Push the Ruby test runtime container image to a registry.
 	docker push $(RUN_IMAGE_PREFIX)ruby:$(TEST_INFRA_VERSION)
+
+push-rust-build-image: ## Push the Rust build-time container image to a registry.
+	docker push $(BUILD_IMAGE_PREFIX)rust:$(TEST_INFRA_VERSION)
 
 ##@ Build PSM related container images
 

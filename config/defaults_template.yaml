@@ -57,3 +57,7 @@ languages:
 - language: ruby
   buildImage: "{{ .BuildImagePrefix }}ruby:{{ .Version }}"
   runImage: "{{ .RunImagePrefix }}ruby:{{ .Version }}"
+
+- language: rust
+  buildImage: "{{ .BuildImagePrefix }}rust:{{ .Version }}"
+  runImage: debian:bookworm
