@@ -1,5 +1,5 @@
 steps:
-- name: debian:buster
+- name: debian:bookworm
   entrypoint: /bin/bash
   args:
   - -c
