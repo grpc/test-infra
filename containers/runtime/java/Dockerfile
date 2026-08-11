@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM openjdk:11
+FROM eclipse-temurin:11-jdk-jammy
 
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
