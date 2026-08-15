@@ -38,13 +38,13 @@ languages:
   buildImage: "{{ .BuildImagePrefix }}node:{{ .Version }}"
   runImage: "{{ .RunImagePrefix }}node:{{ .Version }}"
 
-- language: php7
-  buildImage: "{{ .BuildImagePrefix }}php7:{{ .Version }}"
-  runImage: "{{ .RunImagePrefix }}php7:{{ .Version }}"
+- language: php8
+  buildImage: "{{ .BuildImagePrefix }}php8:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}php8:{{ .Version }}"
 
-- language: php7_protobuf_c
-  buildImage: "{{ .BuildImagePrefix }}php7:{{ .Version }}"
-  runImage: "{{ .RunImagePrefix }}php7:{{ .Version }}"
+- language: php8_protobuf_c
+  buildImage: "{{ .BuildImagePrefix }}php8:{{ .Version }}"
+  runImage: "{{ .RunImagePrefix }}php8:{{ .Version }}"
 
 - language: python
   buildImage: us-docker.pkg.dev/grpc-testing/testing-images-public/bazel:ac0cf07a320bb1f337986fd312a1785614cc1e4e@sha256:4b64295380d6c951f3761273344e256f44daab35dd7182ff431a1802695368da

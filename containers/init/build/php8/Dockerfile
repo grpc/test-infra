@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM php:7.4-buster
+FROM php:8.1-bullseye
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
@@ -23,16 +23,17 @@ RUN apt-get update && apt-get install -y \
   lcov \
   make \
   gnupg2 \
+  unzip \
   procps && \
   apt-get clean
 
 # Install rvm
 RUN gpg2 --recv-keys 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-RUN \curl -sSL https://get.rvm.io | bash -s stable
+RUN \curl -sSL https://get.rvm.io | bash -s master
 
-# Install Ruby 3
-RUN /bin/bash -l -c "rvm install ruby-3"
-RUN /bin/bash -l -c "rvm use --default ruby-3"
+# Install Ruby 3.2
+RUN /bin/bash -l -c "rvm install 3.2"
+RUN /bin/bash -l -c "rvm use --default 3.2"
 RUN /bin/bash -l -c "echo 'gem: --no-document' > ~/.gemrc"
 RUN /bin/bash -l -c "gem install bundler --no-document -v 2.4"
 
