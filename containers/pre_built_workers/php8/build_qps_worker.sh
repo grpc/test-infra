@@ -22,7 +22,7 @@ EXTRA_DEFINES=GRPC_POSIX_FORK_ALLOW_PTHREAD_ATFORK make -j8 static_c shared_c EM
 cd src/php/ext/grpc
 
 phpize
-./configure --enable-grpc="${root}" --enable-coverage --enable-tests
+./configure --enable-grpc="${root}" --enable-tests
 make -j8
 
 cd /pre/src/php/tests/qps
