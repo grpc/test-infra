@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM php:8.1-bookworm
+FROM php:8.2-bookworm
 RUN mkdir -p /src/workspace
 WORKDIR /src/workspace
 
